@@ -1,4 +1,4 @@
-# คันจิ N5 🈶
+# Kotoneko 🐱 (言葉ねこ)
 
 เว็บแอปทบทวนภาษาญี่ปุ่นระดับ N5 ใช้บน iPad ได้เหมือนแอปจริง และเปิดได้ตอนออฟไลน์
 
@@ -30,13 +30,14 @@ python3 -m http.server
 แล้วเปิด http://localhost:8000
 
 ## เผยแพร่
-repo นี้เป็นแบบ private บัญชี GitHub ฟรีจะใช้ GitHub Pages กับ repo private ไม่ได้ มีทางเลือก 2 ทาง
-1. **Cloudflare Pages (แนะนำ):** ฟรี ใช้กับ repo private ได้ เชื่อมกับ GitHub แล้วไม่ต้องตั้งค่าการ build (Build command เว้นว่าง, Output directory = `/`)
-2. **GitHub Pages:** ต้องเปลี่ยน repo เป็น public ก่อน
+repo นี้เป็น public จึงใช้ GitHub Pages ได้ฟรี
+1. ไปที่ **Settings → Pages**
+2. Source: **Deploy from a branch** → Branch: `main` โฟลเดอร์ `/ (root)` → Save
+3. รอ 1–2 นาที ลิงก์จะเป็น `https://tsuketee.github.io/kotoneko/`
 
 ได้ลิงก์แล้ว ให้เปิดใน Safari บน iPad → กดปุ่มแชร์ → **เพิ่มไปยังหน้าจอโฮม**
 
-> ความคืบหน้าจากเวอร์ชันเก่า (artifact บน claude.ai) จะไม่ย้ายมาเอง เพราะเก็บแยกตามเว็บไซต์ ต้องรอฟีเจอร์ส่งออก/นำเข้าใน ROADMAP เฟส 1
+ย้ายความคืบหน้าจากเครื่องเก่า: หน้าสถิติ → **ส่งออก** แล้วไปหน้าสถิติของเครื่องใหม่ → **นำเข้า**
 
 ## ปล่อยเวอร์ชันใหม่
 ทุกครั้งที่แก้ไฟล์ ให้เพิ่มเลข `VERSION` ใน `sw.js` ไม่งั้นเครื่องที่เคยเปิดแอปแล้วจะยังเห็นไฟล์เก่า

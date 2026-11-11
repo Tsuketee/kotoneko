@@ -1,5 +1,5 @@
 {
-  "name": "kanji-app",
+  "name": "kotoneko",
   "private": true,
   "description": "เว็บแอป PWA ทบทวนภาษาญี่ปุ่น N5 (ไม่มีขั้นตอน build ไฟล์นี้มีไว้รันชุดทดสอบเท่านั้น)",
   "scripts": {
