@@ -35,14 +35,17 @@ test('ข้อมูล: คำคันจิใช้เฉพาะคัน
     const bad = [];
     W.forEach(x => kj(x.k).forEach(c => ok.has(c) || bad.push(x.k + ':' + c)));
     D.forEach(d => d.turns.forEach(t => kj(t[1]).forEach(c => ok.has(c) || bad.push(t[1] + ':' + c))));
+    const noSV = K.filter(x => !SV[x.k]).map(x => x.k), noEX = K.filter(x => !EX[x.k]).map(x => x.k);
+    const dupK = K.map(x => x.k).filter((k, i, a) => a.indexOf(k) !== i), badRow = K.filter(x => !x.o || !x.m || !x.c).length;
     const keys = [...W, ...V].map(x => x.k);
-    return { bad, dup: keys.filter((k, i) => keys.indexOf(k) !== i), w: W.length, v: V.length, d: D.length, k: K.length,
+    return { noSV, noEX, dupK, badRow, bad, dup: keys.filter((k, i) => keys.indexOf(k) !== i), w: W.length, v: V.length, d: D.length, k: K.length,
       emptyV: V.filter(x => !x.m || !x.c).length, emptyW: W.filter(x => !x.o || !x.m || !x.c).length,
       unbalanced: D.filter(d => d.turns.some(t => (t[1].match(/\{/g) || []).length !== (t[1].match(/\}/g) || []).length)).length };
   });
   assert.deepStrictEqual(r.bad, []); assert.deepStrictEqual(r.dup, []);
+  assert.deepStrictEqual([r.noSV, r.noEX, r.dupK, r.badRow], [[], [], [], 0], 'คันจิทุกตัวต้องมีลำดับขีดและตัวอย่างคำ และไม่ซ้ำ');
   assert.strictEqual(r.emptyV + r.emptyW + r.unbalanced, 0);
-  assert(r.w >= 100 && r.v >= 100 && r.d >= 10 && r.k === 103, JSON.stringify(r));
+  assert(r.w >= 100 && r.v >= 100 && r.d >= 10 && r.k === 105, JSON.stringify(r));
 });
 
 test('ข้อมูล: ไฟล์ที่ index.html โหลดและ sw.js แคชตรงกัน และ VERSION ถูกรูปแบบ', async () => {
@@ -110,12 +113,14 @@ test('บทสนทนา: ไล่ทุกบทได้ สลับฟ�
 test('เครดิต KanjiVG: มีในหน้าสถิติพร้อมลิงก์และสัญญาอนุญาต และอยู่ในหัวไฟล์ strokes.js', async (b, base) => {
   const hd = fs.readFileSync(path.join(ROOT, 'js/data/strokes.js'), 'utf8').slice(0, 1500);
   assert(hd.includes('kanjivg.tagaini.net') && hd.includes('CC BY-SA 3.0') && hd.includes('Ulrich Apel'));
-  assert(fs.readFileSync(path.join(ROOT, 'NOTICE.md'), 'utf8').includes('KanjiVG'));
+  const notice = fs.readFileSync(path.join(ROOT, 'NOTICE.md'), 'utf8');
+  assert(notice.includes('KanjiVG') && notice.includes('KANJIDIC2'));
   const p = await fresh(b, base);
   await p.evaluate(() => goTab('stats'));
   const links = await p.locator('#credits a').evaluateAll(a => a.map(x => x.href));
   assert(links.includes('https://kanjivg.tagaini.net/') && links.some(l => l.includes('creativecommons.org/licenses/by-sa/3.0')), links.join());
-  assert(await p.locator('#credits a[target=_blank][rel~=noopener]').count() === 2);
+  assert(links.some(l => l.includes('edrdg.org/wiki') && l.includes('KANJIDIC')) && links.some(l => l.includes('edrdg.org/edrdg/licence')), 'ขาดเครดิต KANJIDIC2');
+  assert.strictEqual(await p.locator('#credits a[target=_blank][rel~=noopener]').count(), links.length, 'ลิงก์ภายนอกทุกลิงก์ต้องมี target=_blank rel=noopener');
   assert.deepStrictEqual(p.errors, []);
 });
 
