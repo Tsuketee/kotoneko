@@ -124,6 +124,47 @@ test('เครดิต KanjiVG: มีในหน้าสถิติพร�
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('ทบทวนแบบเว้นระยะ: ขั้นบันได ตอบผิดลดครึ่ง ฝึกก่อนครบกำหนดไม่ขยับ และเกณฑ์จำได้แม่น', async (b, base) => {
+  const p = await fresh(b, base);
+  const r = await p.evaluate(() => {
+    const DAY = 864e5, T = 1e12, mid = () => 0.5, o = {};
+    // ข้อใหม่ตอบถูก -> ขั้น 1 นัดใน 10 นาที
+    let s = srsNext(undefined, true, T, mid); o.first = [s.b, s.d - T];
+    // ตอบถูกตอนครบกำหนดทุกครั้ง: ขั้นขึ้นทีละ 1 ช่วงห่างเพิ่มขึ้นเรื่อยๆ ถึงขั้นสูงสุดแล้วไม่เกิน
+    const steps = []; let t = T; s = undefined;
+    for (let i = 0; i < 12; i++) { s = srsNext(s, true, t, mid); steps.push([s.b, Math.round((s.d - t) / DAY * 100) / 100]); t = s.d; }
+    o.steps = steps;
+    // ช่วงห่างที่ขั้น >=3 สุ่มเยื้องได้ไม่เกิน ±10%
+    const lo = srsNext({ b: 3, d: 0 }, true, T, () => 0), hi = srsNext({ b: 3, d: 0 }, true, T, () => 0.999999);
+    o.jit = [(lo.d - T) / IV[4], (hi.d - T) / IV[4]];
+    // ตอบผิด: ขั้นลดครึ่ง (ปัดลง) ผิดนับเพิ่ม นัดใน 30 วินาที
+    o.wrong = [8, 5, 3, 1, 0].map(b => { const w = srsNext({ b, w: 1, d: T }, false, T, mid); return [w.b, w.w, w.d - T]; });
+    // ตอบถูกตอนยังไม่ครบกำหนด (ฝึกสุ่ม): ไม่ขยับขั้นและนัดเดิม
+    const early = srsNext({ b: 2, w: 0, d: T + 5 * DAY }, true, T, mid); o.early = [early.b, early.d - T];
+    // ถึง MASTERY ล้างจำนวนผิด
+    o.master = srsNext({ b: MASTERY - 1, w: 4, d: T }, true, T, mid).w;
+    // ข้อมูลเดิมที่เก็บไว้ (b สูงสุด 5) ยังใช้ต่อได้ และ input ไม่ถูกแก้
+    const old = { b: 5, w: 0, d: T }; const next = srsNext(old, true, T, mid); o.old = [old.b, next.b];
+    o.cfg = [IV.length, MASTERY, IV.every((v, i) => i < 2 || v > IV[i - 1])];
+    return o;
+  });
+  assert.deepStrictEqual(r.first, [1, 600000]);
+  assert.deepStrictEqual(r.steps.map(x => x[0]), [1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8, 8]);
+  assert.deepStrictEqual(r.steps.slice(0, 5).map(x => x[1]), [0.01, 1, 3, 7, 16]);
+  assert(r.steps[7][1] === 150 && r.steps[11][1] === 150, 'ขั้นสูงสุดต้องคงที่ 150 วัน ' + JSON.stringify(r.steps));
+  assert(r.jit[0] >= 0.9 - 1e-9 && r.jit[1] <= 1.1 + 1e-9 && r.jit[0] < r.jit[1], JSON.stringify(r.jit));
+  assert.deepStrictEqual(r.wrong, [[4, 2, 30000], [2, 2, 30000], [1, 2, 30000], [0, 2, 30000], [0, 2, 30000]]);
+  assert.deepStrictEqual(r.early, [2, 5 * 864e5]);
+  assert.strictEqual(r.master, 0);
+  assert.deepStrictEqual(r.old, [5, 6]);
+  assert.deepStrictEqual(r.cfg, [9, 4, true]);
+  // นำไปใช้จริงในหน้าเรียน: ตอบถูกในการ์ดแล้วบันทึกขั้น 1 และผิดแล้วลดขั้น
+  await p.evaluate(() => { openDs('k'); cur = K[0]; fl = true; render(); });
+  await p.locator('button:text-is("จำได้")').click();
+  assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn5'))[K[0].k].b), 1);
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('สถิติ: เปลี่ยนเป้าหมายต่อวันแล้วค่าถูกจำ', async (b, base) => {
   const p = await fresh(b, base);
   await p.evaluate(() => goTab('stats'));

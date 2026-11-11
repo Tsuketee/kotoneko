@@ -17,7 +17,7 @@ function ptrack(k){if(!M.pet||!M.pet.name)return;pens();const p=M.pet;p.d[k]++;P
 function pdd(i){if(!M.pet||!M.pet.name)return;pens();if(!M.pet.d.r.includes(i)){M.pet.d.r.push(i);ptrack('dlg')}render()}
 function pfeed(){const p=M.pet;if(p.energy<30){toast('Energy ไม่พอ ไปเรียนเก็บเพิ่มก่อนนะ')}else{p.energy-=30;p.bond+=10;toast('🍙 '+ptr(p)[7])}saveM();render()}
 function pgo(x){tab='learn';nv(x)}
-function pmast(){let n=0;for(const k in DS){try{n+=Object.values(JSON.parse(localStorage.getItem(DS[k].key)||'{}')).filter(v=>v.b>=3).length}catch(e){}}return n}
+function pmast(){let n=0;for(const k in DS){try{n+=Object.values(JSON.parse(localStorage.getItem(DS[k].key)||'{}')).filter(v=>v.b>=MASTERY).length}catch(e){}}return n}
 function ptr(p){if(p.trait==null||!TR[p.trait]){p.trait=Math.floor(Math.random()*TR.length);p.rv=dstr(new Date());saveM()}return TR[p.trait]}
 function psay(p,dn){const t=ptr(p),k=dstr(new Date()),hr=new Date().getHours();
  if(p.last!==k){if(p.lastTs&&(Date.now()-p.lastTs)/864e5>=3)p.back=k;p.last=k}

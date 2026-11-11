@@ -1,5 +1,17 @@
 // การเรียน: เลือกข้อ/ทบทวนแบบเว้นระยะ, การ์ด/ควิซ/ตารางคานะ, เสียงอ่าน, ที่ตอบผิดบ่อย, แผนที่การเรียนและสถิติรายชุด
-const IV=[0,600000,86400000,259200000,604800000,1209600000];
+// ระบบทบทวนแบบเว้นระยะ (Leitner แบบมีขั้น 0-8)
+// IV[b] = ช่วงห่างก่อนทบทวนครั้งถัดไป เมื่อตอบถูกจนอยู่ขั้น b : 10 นาที, 1, 3, 7, 16, 35, 75, 150 วัน
+const IV=[0,600000,86400000,259200000,604800000,1382400000,3024000000,6480000000,12960000000];
+const MASTERY=4; // ขั้นที่นับว่า "จำได้แม่น" = ช่วงห่าง 7 วันขึ้นไป (ผ่านการทบทวนถูกต่อเนื่องมาแล้วหลายวัน)
+const RELEARN=30000; // ตอบผิด: ให้เจออีกครั้งใน 30 วินาที
+// คืนสถานะใหม่ของข้อหนึ่งหลังตอบ (ฟังก์ชันล้วน ทดสอบได้) s = {b: ขั้น, w: จำนวนครั้งที่ผิด, d: เวลาครบกำหนดทบทวน}
+// - ตอบถูกตอนครบกำหนด (หรือข้อใหม่): ขึ้น 1 ขั้น และนัดทบทวนตามช่วงห่างของขั้นนั้น (ขั้น 3 ขึ้นไปสุ่มเยื้อง ±10% ไม่ให้ทบทวนกระจุกวันเดียว)
+// - ตอบถูกตอนยังไม่ครบกำหนด (เช่นโหมดฝึกสุ่ม): ไม่ขยับขั้น ไม่ได้เลื่อนนัด เพราะยังไม่ได้พิสูจน์ว่าจำได้นานพอ
+// - ตอบผิด: ลดขั้นลงครึ่งหนึ่ง (ไม่ล้างเป็น 0) เพราะส่วนใหญ่ยังจำได้บางส่วน แล้วให้เจออีกใน 30 วินาที
+function srsNext(s,ok,now=Date.now(),rnd=Math.random){s=s?{...s}:{b:0};
+ if(ok){if(s.d===undefined||s.d<=now){s.b=Math.min(IV.length-1,s.b+1);s.d=now+(s.b>=3?Math.round(IV[s.b]*(.9+rnd()*.2)):IV[s.b]);if(s.b>=MASTERY)s.w=0}}
+ else{s.b=Math.floor(s.b/2);s.w=(s.w||0)+1;s.d=now+RELEARN}
+ return s}
 const pool=()=>K.filter(x=>(ds!=='a'||ks==='all'||x.sc===ks)&&(cat==='ทั้งหมด'||(cat==='ผิดบ่อย'?(S[x.k]&&S[x.k].w>=2):x.c===cat)));
 const rd=x=>x.o+(x.u!=='-'?' ・ '+x.u:'');
 const sh=a=>a.map(v=>[Math.random(),v]).sort((p,q)=>p[0]-q[0]).map(v=>v[1]);
@@ -17,7 +29,7 @@ function renderMis(){const L=allMis();let h=NAV()+`<h1>ที่ตอบผิ�
   h+=`<div class="card" style="text-align:left;min-height:0;padding:6px 14px;margin-top:12px">${L.slice(0,50).map(o=>`<div class="mi"><span class="mk">${o.x.k}</span><span class="mt"><b>${rd(o.x)}</b><br>${o.x.m}</span><span class="mw">ผิด ${o.w}</span></div>`).join('')}</div>`}
  document.getElementById('app').innerHTML=h}
 function goMis(k){tab='learn';nv(k);mode='card';cat='ผิดบ่อย';go()}
-function rec(ok){const nw=!S[cur.k],s=S[cur.k]||{b:0};s.b=ok?Math.min(5,s.b+1):0;if(!ok)s.w=(s.w||0)+1;else if(s.b>=3)s.w=0;s.d=Date.now()+(ok?IV[s.b]:30000);S[cur.k]=s;save();tick();if(ok)ptrack('rev');if(nw)ptrack('neu')}
+function rec(ok){const nw=!S[cur.k];S[cur.k]=srsNext(S[cur.k],ok);save();tick();if(ok)ptrack('rev');if(nw)ptrack('neu')}
 function grade(ok){rec(ok);go()}
 function pick(i){if(ans!==null)return;ans=i;rec(ch[i].ok);render();if(ch[i].ok){const c0=cur;setTimeout(()=>{if(cur===c0&&ans!==null)go()},700)}}
 function mkch(){const f=x=>(ds==='a'||qt==='read')?rd(x):x.m;const c=f(cur);
@@ -33,7 +45,7 @@ const mnHtml=x=>ds==='a'&&MN[x.k]?`<div class="ex"><div class="exh">เคล็
 function catOpts(){const o=c=>`<option value="${c}"${c===cat?' selected':''}>${c}</option>`;if(ds!=='a')return[...CATS,'ผิดบ่อย'].map(o).join('');const G={b:'พื้นฐาน',d:'เสียงขุ่น・กึ่งขุ่น',y:'เสียงควบ'};let s=o('ทั้งหมด');for(const g in G){const cs=[...new Set(K.filter(x=>x.g===g).map(x=>x.c))];s+=`<optgroup label="${G[g]}">${cs.map(o).join('')}</optgroup>`}return s+o('ผิดบ่อย')}
 const scriptRow=()=>`<div class="seg" style="display:flex;margin-bottom:12px">${[['h','ฮิระงะนะ'],['k','คะตะคะนะ'],['all','ทั้งสองแบบ']].map(x=>`<button style="flex:1" class="${ks===x[0]?'on':''}" onclick="ks='${x[0]}';wi=0;go()">${x[1]}</button>`).join('')}</div>`;
 function chartHtml(){const sc=ks==='k'?'k':'h',G={b:'พื้นฐาน',d:'เสียงขุ่น・กึ่งขุ่น',y:'เสียงควบ'},R={};K.filter(x=>x.sc===sc).forEach(x=>{(R[x.c]=R[x.c]||[]).push(x)});
- const tint=x=>{const r=S[x.k];return!r?'':r.w>=2?'background:rgba(239,107,91,.3)':r.b>=3?'background:rgba(92,184,127,.3)':r.b>=1?'background:rgba(224,149,47,.28)':''};
+ const tint=x=>{const r=S[x.k];return!r?'':r.w>=2?'background:rgba(239,107,91,.3)':r.b>=MASTERY?'background:rgba(92,184,127,.3)':r.b>=1?'background:rgba(224,149,47,.28)':''};
  let h=`<div class="seg" style="display:flex;margin-bottom:12px"><button style="flex:1" class="${sc==='h'?'on':''}" onclick="ks='h';render()">ฮิระงะนะ</button><button style="flex:1" class="${sc==='k'?'on':''}" onclick="ks='k';render()">คะตะคะนะ</button></div><div class="st" style="margin-bottom:8px">แตะตัวอักษรเพื่อฟังเสียง · สีบอกความแม่น</div>`;
  for(const g in G){h+=`<div class="kt">${G[g]}</div>`;Object.keys(R).filter(c=>R[c][0].g===g).forEach(c=>{const cols=g==='y'?3:5;h+=`<div class="kr" style="grid-template-columns:repeat(${cols},1fr)">${R[c].map((x,i)=>`<div class="kc" style="grid-column:${(c==='や/ヤ'||c==='わ/ワ')?[1,3,5][i]:i+1};${tint(x)}" data-t="${x.k}" onclick="speak(this.dataset.t)"><b>${x.k}</b><span>${x.o}</span></div>`).join('')}</div>`})}
  return h+`<div class="lg"><i style="background:rgba(92,184,127,.55)"></i>แม่นแล้ว<i style="background:rgba(224,149,47,.55)"></i>กำลังเรียน<i style="background:rgba(239,107,91,.55)"></i>ผิดบ่อย</div>`}
@@ -46,11 +58,11 @@ function renderLv(){const m=Object.fromEntries(Object.keys(DS).map(k=>[k,dsStat(
  const sec=(k,s,g)=>`<div class="pc" onclick="openDs('${k}')"><div class="pb"><b>${k==='d'?'บทสนทนา':DS[k].n}</b><div class="st">${k==='d'?D.length+' บทสนทนา':m[k].lr+'/'+m[k].t+' จำได้แม่น'+(m[k].due?' · ทบทวน '+m[k].due:'')}</div>${k==='d'?'':`<div class="bar"><i style="width:${m[k].t?m[k].lr/m[k].t*100:0}%"></i></div>`}</div><div class="pg2">${g}</div></div>`,
  soon=(n,s,g)=>`<div class="pc lk0"><div class="pb"><b>🔒 ${n}</b><div class="st">${s}</div></div><div class="pg2">${g}</div></div>`;
  document.getElementById('app').innerHTML=NAV()+`<div class="st">จำได้แม่นรวม ${l}/${t} · เนื้อหาเขียนเอง</div><div class="bar"><i style="width:${t?l/t*100:0}%"></i></div><div class="path" style="margin-top:14px">${sec('k','','漢')}${sec('w','','語')}${sec('v','','文')}${sec('d','','話')}${soon('ไวยากรณ์','เนื้อหากำลังมา','法')}${soon('ซ้อมสอบ N5','ปลดล็อกเมื่อเรียนครบทุกหมวด','試')}</div>`}
-function dsStat(k){let s={};try{s=JSON.parse(localStorage.getItem(DS[k].key)||'{}')}catch(e){}const n=Date.now();let seen=0,lr=0,due=0;const L=k==='a'?DS[k].d.filter(x=>x.g==='b'):DS[k].d;L.forEach(x=>{const r=s[x.k];if(r){seen++;if(r.b>=3)lr++;if(r.d<=n)due++}});return{seen,lr,due,t:L.length}}
+function dsStat(k){let s={};try{s=JSON.parse(localStorage.getItem(DS[k].key)||'{}')}catch(e){}const n=Date.now();let seen=0,lr=0,due=0;const L=k==='a'?DS[k].d.filter(x=>x.g==='b'):DS[k].d;L.forEach(x=>{const r=s[x.k];if(r){seen++;if(r.b>=MASTERY)lr++;if(r.d<=n)due++}});return{seen,lr,due,t:L.length}}
 function openDs(k){M.last=k;saveM();tab='learn';nv(k);window.scrollTo(0,0)}
 function resume(){openDs(M.last&&(DS[M.last]||M.last==='d')?M.last:'k')}
 function renderLearn(){
- const p=pool(),seen=p.filter(x=>S[x.k]).length,lr=p.filter(x=>S[x.k]&&S[x.k].b>=3).length;
+ const p=pool(),seen=p.filter(x=>S[x.k]).length,lr=p.filter(x=>S[x.k]&&S[x.k].b>=MASTERY).length;
  if(!cur)cur=pick1();
  if(cur&&mode==='quiz'&&!ch)mkch();
  let h=NAV()+`<div class="st">เจอแล้ว ${seen}/${p.length} · จำได้แม่น ${lr}</div><div class="bar"><i style="width:${p.length?lr/p.length*100:0}%"></i></div>`;
@@ -71,5 +83,5 @@ function renderLearn(){
   h+=`</div>`;
   if(ans!==null&&!ch[ans].ok)h+=`<div class="btns"><button class="nx" onclick="go()">ข้อต่อไป</button></div>`;
   h+=`</div>`}
- h+=`<div class="ft">ระบบทบทวนแบบเว้นระยะ: ข้อที่ตอบผิดจะกลับมาเร็วขึ้น · ความคืบหน้าเก็บในเบราว์เซอร์เครื่องนี้<br>ข้อมูลเวอร์ชันทดลอง ควรตรวจกับตำราที่ใช้อยู่อีกครั้ง<br>คำศัพท์และบทสนทนาเขียนขึ้นเองสำหรับแอปนี้<br>ลำดับขีดจาก <a href="https://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a> (CC BY-SA 3.0) · ดูเครดิตเต็มในหน้าสถิติ</div>`;
+ h+=`<div class="ft">ระบบทบทวนแบบเว้นระยะ: ตอบถูกต่อเนื่องจะห่างขึ้นเรื่อยๆ (10 นาที → 1 → 3 → 7 → 16 → 35 → 75 → 150 วัน) ตอบผิดจะกลับมาเร็วขึ้น · &quot;จำได้แม่น&quot; = ตอบถูกจนช่วงห่างถึง 7 วัน · ความคืบหน้าเก็บในเบราว์เซอร์เครื่องนี้<br>ข้อมูลเวอร์ชันทดลอง ควรตรวจกับตำราที่ใช้อยู่อีกครั้ง<br>คำศัพท์และบทสนทนาเขียนขึ้นเองสำหรับแอปนี้<br>ลำดับขีดจาก <a href="https://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a> (CC BY-SA 3.0) · ดูเครดิตเต็มในหน้าสถิติ</div>`;
  document.getElementById('app').innerHTML=h;if(mode==='write')initCv()}
