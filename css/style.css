@@ -138,3 +138,5 @@ h2{font-size:16px;margin:20px 0 10px}
 .db{background:var(--card);border:1px solid var(--bd);border-radius:4px 16px 16px 16px;padding:9px 13px}.dr.r .db{border-radius:16px 4px 16px 16px;background:var(--ac);color:#fff;border-color:var(--ac)}
 .dj{font-size:18px;line-height:2}.dro{font-size:12px;opacity:.7;margin-top:2px}
 .dnav{display:flex;gap:10px;margin:18px 0}.dnav button{flex:1;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font-size:15px}.dnav button:disabled{opacity:.35}
+#credits a{color:var(--ac)}
+.ft a{color:inherit;text-decoration:underline}

@@ -103,6 +103,18 @@ test('บทสนทนา: ไล่ทุกบทได้ สลับฟ�
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('เครดิต KanjiVG: มีในหน้าสถิติพร้อมลิงก์และสัญญาอนุญาต และอยู่ในหัวไฟล์ strokes.js', async (b, base) => {
+  const hd = fs.readFileSync(path.join(ROOT, 'js/data/strokes.js'), 'utf8').slice(0, 1500);
+  assert(hd.includes('kanjivg.tagaini.net') && hd.includes('CC BY-SA 3.0') && hd.includes('Ulrich Apel'));
+  assert(fs.readFileSync(path.join(ROOT, 'NOTICE.md'), 'utf8').includes('KanjiVG'));
+  const p = await fresh(b, base);
+  await p.evaluate(() => goTab('stats'));
+  const links = await p.locator('#credits a').evaluateAll(a => a.map(x => x.href));
+  assert(links.includes('https://kanjivg.tagaini.net/') && links.some(l => l.includes('creativecommons.org/licenses/by-sa/3.0')), links.join());
+  assert(await p.locator('#credits a[target=_blank][rel~=noopener]').count() === 2);
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('สถิติ: เปลี่ยนเป้าหมายต่อวันแล้วค่าถูกจำ', async (b, base) => {
   const p = await fresh(b, base);
   await p.evaluate(() => goTab('stats'));
