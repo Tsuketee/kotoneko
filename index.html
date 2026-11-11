@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>คันจิ N5</title>
+<meta name="theme-color" content="#c0392b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="คันจิ N5">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+</head><body><main id="app"></main><nav id="nav"></nav>
+<!-- ลำดับสำคัญ: ไฟล์ข้อมูลต้องโหลดก่อน app.js เพราะ app.js ใช้ตัวแปร global จากไฟล์เหล่านี้ -->
+<script src="js/data/kanji-n5.js"></script>
+<script src="js/data/content.js"></script>
+<script src="js/data/strokes.js"></script>
+<script src="js/app.js"></script>
+<script>
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body></html>
