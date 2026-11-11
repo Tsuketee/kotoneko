@@ -29,7 +29,7 @@ function renderMis(){const L=allMis();let h=NAV()+`<h1>ที่ตอบผิ�
   h+=`<div class="card" style="text-align:left;min-height:0;padding:6px 14px;margin-top:12px">${L.slice(0,50).map(o=>`<div class="mi"><span class="mk">${o.x.k}</span><span class="mt"><b>${rd(o.x)}</b><br>${o.x.m}</span><span class="mw">ผิด ${o.w}</span></div>`).join('')}</div>`}
  document.getElementById('app').innerHTML=h}
 function goMis(k){tab='learn';nv(k);mode='card';cat='ผิดบ่อย';go()}
-function rec(ok){const nw=!S[cur.k];S[cur.k]=srsNext(S[cur.k],ok);save();tick();if(ok)ptrack('rev');if(nw)ptrack('neu')}
+function rec(ok){const nw=!S[cur.k];S[cur.k]=srsNext(S[cur.k],ok);save();tick();pbadge();if(ok)ptrack('rev');if(nw)ptrack('neu')}
 function grade(ok){rec(ok);go()}
 function pick(i){if(ans!==null)return;ans=i;rec(ch[i].ok);render();if(ch[i].ok){const c0=cur;setTimeout(()=>{if(cur===c0&&ans!==null)go()},700)}}
 function mkch(){const f=x=>(ds==='a'||qt==='read')?rd(x):x.m;const c=f(cur);

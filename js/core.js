@@ -8,8 +8,12 @@ let S=load(),st=[],lc=0,tool='pen',esz=14,ep=null,wi=0,ci=0,guide=2,cat='ทั�
 document.onselectstart=e=>e.preventDefault();const MK='kn_meta';let M={};try{M=JSON.parse(localStorage.getItem(MK)||'{}')}catch(e){}M.goal=M.goal||20;M.days=M.days||{};
 const dstr=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
 function saveM(){try{localStorage.setItem(MK,JSON.stringify(M))}catch(e){}}
-function toast(m){const e=document.createElement('div');e.className='toast';e.innerHTML=m;document.body.appendChild(e);setTimeout(()=>e.remove(),2300)}
-function tick(){const k=dstr(new Date());M.days[k]=(M.days[k]||0)+1;saveM();if(M.days[k]===M.goal)toast(IC.star+' ถึงเป้าวันนี้แล้ว!')}
+// ข้อความเด้ง: ถ้ามีหลายข้อความพร้อมกันให้ต่อคิวทีละอัน (ข้อความเดี่ยวแสดงทันทีเหมือนเดิม)
+let toastFree=0;
+function toast(m){const now=Date.now(),at=Math.max(now,toastFree);toastFree=at+2400;
+ const show=()=>{const e=document.createElement('div');e.className='toast';e.innerHTML=m;document.body.appendChild(e);setTimeout(()=>e.remove(),2300)};
+ if(at<=now)show();else setTimeout(show,at-now)}
+function tick(){const k=dstr(new Date());M.days[k]=(M.days[k]||0)+1;saveM();if(M.days[k]===M.goal)pgoal()}
 function streak(){let n=0;const d=new Date();if((M.days[dstr(d)]||0)<M.goal)d.setDate(d.getDate()-1);while((M.days[dstr(d)]||0)>=M.goal){n++;d.setDate(d.getDate()-1)}return n}
 function setGoal(){const g=[10,20,30,50,100];M.goal=g[(g.indexOf(M.goal)+1)%g.length];saveM();render()}
 function goalHtml(){const t=M.days[dstr(new Date())]||0,g=M.goal;return `<div class="gl" onclick="setGoal()"><span>${IC.flame} ${streak()} วัน</span><div class="bar"><i style="width:${Math.min(100,t/g*100)}%"></i></div><span>${t}/${g}${t>=g?' '+IC.check:''}</span></div>`}

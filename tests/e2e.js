@@ -35,6 +35,18 @@ test('ข้อมูล: คำคันจิใช้เฉพาะคัน
     const bad = [];
     W.forEach(x => kj(x.k).forEach(c => ok.has(c) || bad.push(x.k + ':' + c)));
     D.forEach(d => d.turns.forEach(t => kj(t[1]).forEach(c => ok.has(c) || bad.push(t[1] + ':' + c))));
+    const EXP = { first: 1, morning: 2, noon: 2, evening: 2, night: 2, late: 1, partial: 2, done: 2, back: 2, feed: 3, hungry: 1, lv2: 1, lv3: 1, s3: 1, s7: 1, s30: 1, b25: 1, b100: 1, b250: 1, goal: 1 };
+    const FORBID = ['อิตาโดริ', 'ลูฟี่', 'โจรสลัด', 'วันพีซ', 'วันพืช', 'Luffy', 'One Piece', 'Itadori'];
+    const tbad = [];
+    if (TR.length !== 10) tbad.push('จำนวนนิสัย ' + TR.length);
+    TR.forEach((t, i) => {
+      if (!t.n || /แนว/.test(t.n)) tbad.push('ป้ายชื่อนิสัย ' + i + ' ห้ามอ้างอิงผลงาน/ตัวละครด้วยคำว่า "แนว...": ' + t.n);
+      const got = Object.fromEntries(Object.entries(t.s).map(([k, v]) => [k, v.length]));
+      if (JSON.stringify(got) !== JSON.stringify(EXP)) tbad.push('ช่อง/จำนวนประโยคนิสัย ' + i + ' ' + JSON.stringify(got));
+      const all = [t.n, ...Object.values(t.s).flat()];
+      all.forEach(l => { if (!l || !l.trim()) tbad.push('ประโยคว่าง ' + i); FORBID.forEach(w => { if (l.includes(w)) tbad.push('ห้ามใช้ชื่อเฉพาะ "' + w + '" ในนิสัย ' + i); }); });
+      if (new Set(Object.values(t.s).flat()).size !== 29) tbad.push('ประโยคซ้ำในนิสัย ' + i);
+    });
     const gbad = [];
     G.forEach((g, i) => {
       const txt = [g.t, g.s, ...g.notes, ...g.ex.flat(), ...g.qs.flatMap(q => [q.q, q.why, ...q.opts])].join('');
@@ -50,12 +62,12 @@ test('ข้อมูล: คำคันจิใช้เฉพาะคัน
     const noSV = K.filter(x => !SV[x.k]).map(x => x.k), noEX = K.filter(x => !EX[x.k]).map(x => x.k);
     const dupK = K.map(x => x.k).filter((k, i, a) => a.indexOf(k) !== i), badRow = K.filter(x => !x.o || !x.m || !x.c).length;
     const keys = [...W, ...V].map(x => x.k);
-    return { gbad, g: G.length, noSV, noEX, dupK, badRow, bad, dup: keys.filter((k, i) => keys.indexOf(k) !== i), w: W.length, v: V.length, d: D.length, k: K.length,
+    return { tbad, gbad, g: G.length, noSV, noEX, dupK, badRow, bad, dup: keys.filter((k, i) => keys.indexOf(k) !== i), w: W.length, v: V.length, d: D.length, k: K.length,
       emptyV: V.filter(x => !x.m || !x.c).length, emptyW: W.filter(x => !x.o || !x.m || !x.c).length,
       unbalanced: D.filter(d => d.turns.some(t => (t[1].match(/\{/g) || []).length !== (t[1].match(/\}/g) || []).length)).length };
   });
   assert.deepStrictEqual(r.bad, []); assert.deepStrictEqual(r.dup, []);
-  assert.deepStrictEqual(r.gbad, [], 'เนื้อหาไวยากรณ์'); assert(r.g >= 10);
+  assert.deepStrictEqual(r.tbad, [], 'บทพูดสัตว์เลี้ยง'); assert.deepStrictEqual(r.gbad, [], 'เนื้อหาไวยากรณ์'); assert(r.g >= 10);
   assert.deepStrictEqual([r.noSV, r.noEX, r.dupK, r.badRow], [[], [], [], 0], 'คันจิทุกตัวต้องมีลำดับขีดและตัวอย่างคำ และไม่ซ้ำ');
   assert.strictEqual(r.emptyV + r.emptyW + r.unbalanced, 0);
   assert(r.w >= 100 && r.v >= 100 && r.d >= 10 && r.k === 105, JSON.stringify(r));
@@ -225,6 +237,68 @@ test('ไวยากรณ์: เปิดรายการ อ่านบ�
   const f = path.join(require('os').tmpdir(), 'kanji-e2e-g-' + Date.now() + '.json'); await dl.saveAs(f);
   const o = JSON.parse(fs.readFileSync(f, 'utf8')); fs.unlinkSync(f);
   assert(o.data.kg1 && o.data.kg1['1'] && o.data.kg1['2']);
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('สัตว์เลี้ยง: บทพูดตามช่วงเวลาคงที่ในชั่วโมงเดียว, เหตุการณ์ต่างๆ, ข้อความเด้งต่อคิว', async (b, base) => {
+  const p = await fresh(b, base);
+  const at = async (iso) => { await p.clock.setFixedTime(new Date(iso)); };
+  const lines = await p.evaluate(() => TR[0].s);
+  const say = (dn = 0) => p.evaluate(dn => { const q = M.pet; return psay(q, dn); }, dn);
+  // นิสัย 0 เจอกันวันนี้: dn=0 และ rv=วันนี้ => first ; ปิดโดยตั้ง rv เป็นวันเก่า
+  await p.evaluate(() => { M.pet.trait = 0; M.pet.rv = '2000-01-01'; M.pet.back = null; });
+  const slots = [['2026-11-11T09:10:00', 'morning'], ['2026-11-11T13:00:00', 'noon'], ['2026-11-11T17:30:00', 'evening'], ['2026-11-11T22:00:00', 'night'], ['2026-11-11T02:00:00', 'late']];
+  for (const [iso, key] of slots) {
+    await at(iso);
+    const a = await say(), b2 = await say(), c = await say();
+    assert(lines[key].includes(a), key + ' ต้องอยู่ในรายการ: ' + a);
+    assert(a === b2 && b2 === c, key + ' ต้องคงที่ภายในชั่วโมงเดียว');
+  }
+  // ต่างชั่วโมง/ต่างวัน อย่างน้อยหนึ่งช่วงที่มีสองประโยคต้องเลือกได้ครบทั้งสองประโยคในหลายวัน
+  const seen = new Set();
+  for (let d = 1; d <= 20; d++) { await at(`2026-11-${String(d).padStart(2, '0')}T09:10:00`); seen.add(await say()); }
+  assert.strictEqual(seen.size, 2, 'ควรเห็นทั้งสองประโยคเช้าในหลายวัน');
+  // ภารกิจ: บางส่วน / ครบ
+  await at('2026-11-11T09:10:00');
+  await p.evaluate(() => { pens(); M.pet.d.done = { rev: 1 }; });
+  assert(lines.partial.includes(await say(1)));
+  assert(lines.done.includes(await say(3)));
+  // เจอกันครั้งแรก / กลับมาหลังหาย
+  await p.evaluate(() => { M.pet.rv = dstr(new Date()); });
+  assert(lines.first.includes(await say(0)));
+  await p.evaluate(() => { M.pet.rv = '2000-01-01'; M.pet.last = '2026-11-01'; M.pet.lastTs = Date.now() - 5 * 864e5; });
+  assert(lines.back.includes(await say(0)));
+  // ให้อาหาร: Energy พอ -> ประโยค feed + ความสนิท +10 ; ไม่พอ -> ประโยค hungry
+  const toastText = () => p.evaluate(() => { const e = document.querySelectorAll('.toast'); return e.length ? e[e.length - 1].innerText : ''; });
+  await p.evaluate(() => { M.pet.energy = 100; M.pet.bond = 0; pfeed(); });
+  let tx = await toastText(); assert(lines.feed.some(l => tx.includes(l)), 'feed: ' + tx);
+  assert.deepStrictEqual(await p.evaluate(() => [M.pet.energy, M.pet.bond]), [70, 10]);
+  await p.evaluate(() => { document.querySelectorAll('.toast').forEach(e => e.remove()); M.pet.energy = 5; pfeed(); });
+  await p.waitForTimeout(2500); tx = await toastText();
+  assert(lines.hungry.some(l => tx.includes(l)), 'hungry: ' + tx);
+  // โตเป็นร่าง 2 และ 3 : เด้งเฉพาะตอนข้ามขั้น
+  await p.evaluate(() => { document.querySelectorAll('.toast').forEach(e => e.remove()); toastFree = 0; M.pet.bond = 30; pbond(5); });
+  assert.strictEqual(await p.locator('.toast').count(), 0, 'ยังไม่ข้ามขั้นต้องไม่เด้ง');
+  await p.evaluate(() => pbond(10)); tx = await toastText(); assert(lines.lv2.some(l => tx.includes(l)), 'lv2: ' + tx);
+  await p.evaluate(() => { document.querySelectorAll('.toast').forEach(e => e.remove()); toastFree = 0; M.pet.bond = 115; pbond(10); });
+  tx = await toastText(); assert(lines.lv3.some(l => tx.includes(l)), 'lv3: ' + tx);
+  // เหรียญ: ครั้งแรกจำระดับไว้เฉยๆ ; พอข้าม 25 ข้อค่อยเด้ง ; ไม่เด้งซ้ำ
+  await p.evaluate(() => { document.querySelectorAll('.toast').forEach(e => e.remove()); toastFree = 0; delete M.pet.bd; pbadge(); });
+  assert.strictEqual(await p.locator('.toast').count(), 0); assert.strictEqual(await p.evaluate(() => M.pet.bd), 0);
+  await p.evaluate(() => { const o = {}; for (let i = 0; i < 25; i++) o['k' + i] = { b: MASTERY, w: 0, d: 1 }; localStorage.setItem('kw1', JSON.stringify(o)); pbadge(); });
+  tx = await toastText(); assert(lines.b25.some(l => tx.includes(l)), 'b25: ' + tx);
+  await p.evaluate(() => { document.querySelectorAll('.toast').forEach(e => e.remove()); pbadge(); });
+  assert.strictEqual(await p.locator('.toast').count(), 0, 'ไม่ควรเด้งเหรียญซ้ำ');
+  // ถึงเป้ารายวัน: streak 3 -> ประโยค s3 ; ไม่ใช่ milestone -> goal
+  await p.evaluate(() => { document.querySelectorAll('.toast').forEach(e => e.remove()); toastFree = 0; const g = M.goal; M.days = {}; for (const n of [1, 2]) { const d = new Date(); d.setDate(d.getDate() - n); M.days[dstr(d)] = g; } M.days[dstr(new Date())] = g - 1; tick(); });
+  tx = await toastText(); assert(lines.s3.some(l => tx.includes(l)), 's3: ' + tx);
+  await p.evaluate(() => { document.querySelectorAll('.toast').forEach(e => e.remove()); toastFree = 0; M.days = {}; M.days[dstr(new Date())] = M.goal - 1; tick(); });
+  tx = await toastText(); assert(lines.goal.some(l => tx.includes(l)), 'goal: ' + tx);
+  // ข้อความเด้งหลายอันต่อคิว: แสดงอันแรกทันที อันสองรอจนอันแรกหาย
+  await p.evaluate(() => { document.querySelectorAll('.toast').forEach(e => e.remove()); toastFree = 0; toast('คิว1'); toast('คิว2'); });
+  assert.deepStrictEqual(await p.locator('.toast').allInnerTexts(), ['คิว1']);
+  await p.waitForTimeout(2600);
+  assert.deepStrictEqual(await p.locator('.toast').allInnerTexts(), ['คิว2']);
   assert.deepStrictEqual(p.errors, []);
 });
 
