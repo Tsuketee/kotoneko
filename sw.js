@@ -1,6 +1,6 @@
 // Service worker: ทำให้แอปเปิดได้ตอนออฟไลน์
 // ⚠️ ทุกครั้งที่แก้ไฟล์แล้วจะปล่อยเวอร์ชันใหม่ ให้เพิ่มเลข VERSION ไม่งั้นเครื่องผู้ใช้จะยังเห็นไฟล์เก่า
-const VERSION = 'v9';
+const VERSION = 'v10';
 const CACHE = 'kotoneko-' + VERSION;
 const FILES = [
   './',
@@ -9,7 +9,17 @@ const FILES = [
   'js/data/kanji-n5.js',
   'js/data/content.js',
   'js/data/strokes.js',
-  'js/app.js',
+  'js/data/kana.js',
+  'js/data/examples.js',
+  'js/data/mnemonics.js',
+  'js/data/pet-lines.js',
+  'js/core.js',
+  'js/learn.js',
+  'js/dialogue.js',
+  'js/write.js',
+  'js/pet.js',
+  'js/stats.js',
+  'js/main.js',
   'manifest.webmanifest',
   'icons/icon.svg',
   'icons/apple-touch-icon.png',

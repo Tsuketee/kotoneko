@@ -51,7 +51,11 @@ test('ข้อมูล: ไฟล์ที่ index.html โหลดและ
   srcs.forEach(s => { assert(fs.existsSync(path.join(ROOT, s)), 'ไม่พบไฟล์ ' + s); assert(sw.includes(`'${s}'`), 'sw.js ไม่ได้แคช ' + s); });
   assert(/const VERSION = 'v\d+'/.test(sw));
   const order = [...html.matchAll(/<script src="(js\/[^"]+)"/g)].map(m => m[1]);
-  assert.strictEqual(order[order.length - 1], 'js/app.js', 'app.js ต้องโหลดหลังไฟล์ข้อมูล');
+  assert.strictEqual(order[order.length - 1], 'js/main.js', 'main.js ต้องโหลดท้ายสุด');
+  assert(order.indexOf('js/core.js') > order.indexOf('js/data/content.js'), 'core.js ต้องโหลดหลังไฟล์ข้อมูล');
+  assert(order.indexOf('js/core.js') < order.indexOf('js/learn.js'), 'core.js ต้องโหลดก่อนไฟล์ตรรกะ');
+  assert(!fs.existsSync(path.join(ROOT, 'js/app.js')), 'js/app.js ถูกแยกแล้ว ไม่ควรมีอีก');
+  fs.readdirSync(path.join(ROOT, 'js')).filter(f => f.endsWith('.js')).forEach(f => assert(order.includes('js/' + f), 'index.html ไม่ได้โหลด js/' + f));
 });
 
 // ---------- การใช้งานหลัก ----------

@@ -17,7 +17,17 @@ css/style.css           หน้าตาแอป
 js/data/kanji-n5.js     รายการคันจิ N5
 js/data/content.js      คำศัพท์และบทสนทนา (เขียนเอง)
 js/data/strokes.js      ข้อมูลลำดับขีดสำหรับโหมดฝึกเขียน
-js/app.js               ตรรกะทั้งหมดของแอป
+js/data/kana.js        ตารางคานะ
+js/data/examples.js    ตัวอย่างคำที่ใช้คันจิ
+js/data/mnemonics.js   เคล็ดจำคานะ
+js/data/pet-lines.js   บทพูดสัตว์เลี้ยง
+js/core.js              แกนกลาง: ชุดข้อมูล ที่เก็บความคืบหน้า ไอคอน นำทาง หน้าแรก
+js/learn.js             การเรียน: การ์ด ควิซ ทบทวน ผิดบ่อย แผนที่การเรียน
+js/dialogue.js          บทสนทนา
+js/write.js             ฝึกเขียน
+js/pet.js               สัตว์เลี้ยงและการตั้งค่าครั้งแรก
+js/stats.js             สถิติ เครดิต ส่งออก/นำเข้า
+js/main.js              จุดเริ่มต้นแอป (ต้องโหลดท้ายสุด)
 sw.js, manifest.webmanifest, icons/   ส่วนของ PWA (ใช้ออฟไลน์ และเพิ่มลงหน้าจอโฮม)
 docs/ROADMAP.md         รายการงานที่จะทำต่อ
 CLAUDE.md               คำสั่งสำหรับ Claude Code

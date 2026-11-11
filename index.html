@@ -11,11 +11,21 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="css/style.css">
 </head><body><main id="app"></main><nav id="nav"></nav>
-<!-- ลำดับสำคัญ: ไฟล์ข้อมูลต้องโหลดก่อน app.js เพราะ app.js ใช้ตัวแปร global จากไฟล์เหล่านี้ -->
+<!-- ลำดับสำคัญ: ทุกไฟล์ใช้ตัวแปร global ร่วมกัน ต้องโหลดข้อมูลก่อน แล้วค่อย core.js ตามด้วยไฟล์ตรรกะ และ main.js ต้องอยู่ท้ายสุด -->
 <script src="js/data/kanji-n5.js"></script>
 <script src="js/data/content.js"></script>
 <script src="js/data/strokes.js"></script>
-<script src="js/app.js"></script>
+<script src="js/data/kana.js"></script>
+<script src="js/data/examples.js"></script>
+<script src="js/data/mnemonics.js"></script>
+<script src="js/data/pet-lines.js"></script>
+<script src="js/core.js"></script>
+<script src="js/learn.js"></script>
+<script src="js/dialogue.js"></script>
+<script src="js/write.js"></script>
+<script src="js/pet.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/main.js"></script>
 <script>
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
