@@ -30,9 +30,9 @@ function renderGL(){const g=G[gi];let h=NAV();
  else if(gqi<gq.length){const q=gq[gqi];
   h+=`<div class="st" style="margin-top:6px">${g.t.replace(/\{([^|}]*)\|[^}]*\}/g,'$1')} · ข้อ ${gqi+1}/${gq.length}</div><div class="bar"><i style="width:${gqi/gq.length*100}%"></i></div>
   <div class="card" style="min-height:0"><div class="k gq">${gblank(q.q)}</div><div class="ch">${q.opts.map((o,i)=>`<button class="${gans===null?'':o.ok?'r':gans===i?'w':''}" onclick="gpick(${i})">${rb(o.t)}</button>`).join('')}</div>
-  ${gans!==null?`<div class="d gw">${q.opts[gans].ok?'✅ ถูกต้อง! ':'❌ ยังไม่ถูก '}${rb(q.why)}</div><div class="btns"><button class="nx" onclick="gnext()">${gqi+1<gq.length?'ข้อต่อไป':'ดูผล'}</button></div>`:''}</div>`}
+  ${gans!==null?`<div class="d gw">${q.opts[gans].ok?icx('ok',18,'ok-i')+' <b>ถูกต้อง!</b> ':icx('no',18,'no-i')+' <b>ยังไม่ถูก</b> '}${rb(q.why)}</div><div class="btns"><button class="nx" onclick="gnext()">${gqi+1<gq.length?'ข้อต่อไป':'ดูผล'}</button></div>`:''}</div>`}
  else{const pass=gscore>=gpass(gq.length),r=GS[g.id];
-  h+=`<div class="card" style="min-height:0"><div class="k">${pass?'🎉':'💪'}</div><div class="d"><b>${gscore}/${gq.length} ข้อ</b><br>${pass?'ผ่านแล้ว!':'เกือบแล้ว ทบทวนบทเรียนแล้วลองใหม่นะ'}</div>
+  h+=`<div class="card" style="min-height:0"><div class="k">${pass?icx('sparkle',44,'hl-i big'):icx('sprout',44,'ok-i big')}</div><div class="d"><b>${gscore}/${gq.length} ข้อ</b><br>${pass?'ผ่านแล้ว!':'เกือบแล้ว ทบทวนบทเรียนแล้วลองใหม่นะ'}</div>
   <div class="st" style="margin-top:8px">${pass&&r?(r.b>=MASTERY?'จำได้แม่นแล้ว':'ขั้นการทบทวน '+r.b+'/'+(IV.length-1))+' · ทบทวนอีกครั้งใน '+gnextTxt(r.d):'ต้องตอบถูกอย่างน้อย '+gpass(gq.length)+' ข้อ'}</div>
   <div class="btns"><button onclick="gq=null;render()">อ่านบทเรียน</button><button class="g" onclick="gstart()">ทำอีกครั้ง</button></div>
   ${gi<G.length-1?`<button class="lk" style="display:block;margin:14px auto 0" onclick="gOpen(gi+1)">บทถัดไป →</button>`:''}</div>`}

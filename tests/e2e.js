@@ -47,6 +47,8 @@ test('ข้อมูล: คำคันจิใช้เฉพาะคัน
       all.forEach(l => { if (!l || !l.trim()) tbad.push('ประโยคว่าง ' + i); FORBID.forEach(w => { if (l.includes(w)) tbad.push('ห้ามใช้ชื่อเฉพาะ "' + w + '" ในนิสัย ' + i); }); });
       if (new Set(Object.values(t.s).flat()).size !== 29) tbad.push('ประโยคซ้ำในนิสัย ' + i);
     });
+    const EMO = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}\uFE0F]/u;
+    TR.forEach((t, i) => { if (!P[t.i]) tbad.push('นิสัย ' + i + ' ไม่มีไอคอน ' + t.i); [t.n, ...Object.values(t.s).flat()].forEach(l => { if (EMO.test(l)) tbad.push('ห้ามมีอิโมจิในบทพูด (ใช้ไอคอนเส้นแทน) นิสัย ' + i + ': ' + l); }); });
     const gbad = [];
     G.forEach((g, i) => {
       const txt = [g.t, g.s, ...g.notes, ...g.ex.flat(), ...g.qs.flatMap(q => [q.q, q.why, ...q.opts])].join('');
@@ -204,7 +206,7 @@ test('ไวยากรณ์: เปิดรายการ อ่านบ�
   for (let i = 0; i < n; i++) {
     const wrong = await p.evaluate(() => gq[gqi].opts.findIndex(o => !o.ok));
     await p.locator('.ch button').nth(wrong).click();
-    assert((await p.locator('.gw').innerText()).includes('❌'));
+    assert(await p.locator('.gw .no-i').count() === 1 && await p.locator('.gw .ok-i').count() === 0);
     await p.locator('.btns .nx').click();
   }
   assert((await p.locator('.card').innerText()).includes('0/' + n));
@@ -215,7 +217,7 @@ test('ไวยากรณ์: เปิดรายการ อ่านบ�
   for (let i = 0; i < n; i++) {
     const right = await p.evaluate(() => gq[gqi].opts.findIndex(o => o.ok));
     await p.locator('.ch button').nth(right).click();
-    assert((await p.locator('.gw').innerText()).includes('✅'));
+    assert(await p.locator('.gw .ok-i').count() === 1 && await p.locator('.gw .no-i').count() === 0);
     await p.locator('.btns .nx').click();
   }
   assert((await p.locator('.card').innerText()).includes('ผ่านแล้ว'));
@@ -299,6 +301,33 @@ test('สัตว์เลี้ยง: บทพูดตามช่วงเ
   assert.deepStrictEqual(await p.locator('.toast').allInnerTexts(), ['คิว1']);
   await p.waitForTimeout(2600);
   assert.deepStrictEqual(await p.locator('.toast').allInnerTexts(), ['คิว2']);
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ธีม A และไอคอนเส้น: ตัวแปรสีครบทั้งสองโหมด, สีตอบผิดแยกจากสีหลัก, ไม่มีอิโมจิในหน้าจอ (ยกเว้นตัวสัตว์เลี้ยงชั่วคราว)', async (b, base) => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8');
+  for (const v of ['--bg', '--fg', '--mut', '--card', '--ac', '--onac', '--ok', '--err', '--hl', '--bd']) assert((css.match(new RegExp(v + ':', 'g')) || []).length >= 3, 'ธีมต้องกำหนด ' + v + ' ทั้งสว่าง/มืด(2 แบบ)');
+  assert(/--ac:#b45428/.test(css), 'สีหลักของธีม A');
+  assert(!/\.ch \.w\{[^}]*var\(--ac\)/.test(css), 'สีตอบผิดต้องใช้ --err ไม่ใช่ --ac');
+  const lum = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+  const cr = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + .05) / (y + .05); };
+  const tok = (src, name) => (src.match(new RegExp(name + ':(#[0-9a-fA-F]{6})')) || [])[1];
+  const light = css.split('\n')[0], dark = css.split('\n')[1];
+  for (const [src, nm] of [[light, 'สว่าง'], [dark, 'มืด']]) {
+    for (const [fg, bg, min] of [['--fg', '--bg', 7], ['--mut', '--bg', 4.5], ['--ac', '--bg', 4.5], ['--err', '--bg', 4.5], ['--ok', '--bg', 4.5], ['--onac', '--ac', 4.5], ['--onac', '--ok', 3.5], ['--onac', '--err', 3.5]]) {
+      const f = tok(src, fg), g = tok(src, bg); assert(f && g, nm + ' ไม่พบ ' + fg + '/' + bg);
+      assert(cr(f, g) >= min, `${nm}: ${fg} บน ${bg} คอนทราสต์ ${cr(f, g).toFixed(2)} < ${min}`);
+    }
+  }
+  const p = await fresh(b, base);
+  const emo = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}\uFE0F]/u, bad = [];
+  const scan = async (label) => { const t = (await p.evaluate(() => document.getElementById('app').innerText + document.getElementById('nav').innerText)).replace(/[\u{1F431}\u{1F430}\u{1F436}]/gu, ''); const m = t.match(new RegExp(emo.source, 'gu')) || []; if (m.length) bad.push(label + ': ' + m.join('')); };
+  await p.evaluate(() => { M.pet.energy = 100; }); await scan('home');
+  for (const t of ['learn', 'mis', 'stats']) { await p.evaluate(t => goTab(t), t); await scan(t); }
+  await p.evaluate(() => { tab = 'learn'; nv('n5'); }); await scan('path');
+  await p.evaluate(() => openDs('g')); await scan('grammar'); await p.evaluate(() => { gOpen(0); gstart(); gpick(0); }); await scan('quiz'); await p.evaluate(() => { gqi = gq.length; gfinish(); render(); }); await scan('result');
+  await p.evaluate(() => { openDs('d'); dgo(0); }); await scan('dialogue');
+  assert.deepStrictEqual(bad, [], 'อิโมจิหลงเหลือ');
   assert.deepStrictEqual(p.errors, []);
 });
 
