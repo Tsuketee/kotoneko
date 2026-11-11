@@ -35,14 +35,27 @@ test('ข้อมูล: คำคันจิใช้เฉพาะคัน
     const bad = [];
     W.forEach(x => kj(x.k).forEach(c => ok.has(c) || bad.push(x.k + ':' + c)));
     D.forEach(d => d.turns.forEach(t => kj(t[1]).forEach(c => ok.has(c) || bad.push(t[1] + ':' + c))));
+    const gbad = [];
+    G.forEach((g, i) => {
+      const txt = [g.t, g.s, ...g.notes, ...g.ex.flat(), ...g.qs.flatMap(q => [q.q, q.why, ...q.opts])].join('');
+      kj(txt).forEach(c => ok.has(c) || bad.push('G' + g.id + ':' + c));
+      if (g.id !== i + 1 || g.notes.length < 3 || g.ex.length < 4 || g.qs.length < 4) gbad.push('โครงสร้างบท ' + g.id);
+      if ((txt.match(/\{/g) || []).length !== (txt.match(/\}/g) || []).length) gbad.push('วงเล็บฟุริงะนะบท ' + g.id);
+      g.ex.forEach(e => { if (!e[0] || !e[1]) gbad.push('ตัวอย่างว่าง ' + g.id); });
+      g.qs.forEach(q => {
+        if ((q.q.match(/___/g) || []).length !== 1) gbad.push('ช่องว่างโจทย์ ' + g.id + ' ' + q.q);
+        if (q.opts.length < 2 || q.opts.length > 4 || new Set(q.opts).size !== q.opts.length || !q.why) gbad.push('ตัวเลือก/คำอธิบาย ' + g.id + ' ' + q.q);
+      });
+    });
     const noSV = K.filter(x => !SV[x.k]).map(x => x.k), noEX = K.filter(x => !EX[x.k]).map(x => x.k);
     const dupK = K.map(x => x.k).filter((k, i, a) => a.indexOf(k) !== i), badRow = K.filter(x => !x.o || !x.m || !x.c).length;
     const keys = [...W, ...V].map(x => x.k);
-    return { noSV, noEX, dupK, badRow, bad, dup: keys.filter((k, i) => keys.indexOf(k) !== i), w: W.length, v: V.length, d: D.length, k: K.length,
+    return { gbad, g: G.length, noSV, noEX, dupK, badRow, bad, dup: keys.filter((k, i) => keys.indexOf(k) !== i), w: W.length, v: V.length, d: D.length, k: K.length,
       emptyV: V.filter(x => !x.m || !x.c).length, emptyW: W.filter(x => !x.o || !x.m || !x.c).length,
       unbalanced: D.filter(d => d.turns.some(t => (t[1].match(/\{/g) || []).length !== (t[1].match(/\}/g) || []).length)).length };
   });
   assert.deepStrictEqual(r.bad, []); assert.deepStrictEqual(r.dup, []);
+  assert.deepStrictEqual(r.gbad, [], 'เนื้อหาไวยากรณ์'); assert(r.g >= 10);
   assert.deepStrictEqual([r.noSV, r.noEX, r.dupK, r.badRow], [[], [], [], 0], 'คันจิทุกตัวต้องมีลำดับขีดและตัวอย่างคำ และไม่ซ้ำ');
   assert.strictEqual(r.emptyV + r.emptyW + r.unbalanced, 0);
   assert(r.w >= 100 && r.v >= 100 && r.d >= 10 && r.k === 105, JSON.stringify(r));
@@ -165,6 +178,56 @@ test('ทบทวนแบบเว้นระยะ: ขั้นบันไ
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('ไวยากรณ์: เปิดรายการ อ่านบท ทำแบบฝึกหัด ผ่าน/ไม่ผ่าน บันทึกและส่งออกความคืบหน้า', async (b, base) => {
+  const p = await fresh(b, base);
+  await p.evaluate(() => goTab('learn')); await p.evaluate(() => { tab = 'learn'; nv('n5'); });
+  await p.locator('.pc:has-text("ไวยากรณ์")').click();
+  assert.strictEqual(await p.locator('.pc .gp').count(), await p.evaluate(() => G.length));
+  await p.locator('.pc').first().click();
+  assert(await p.locator('.gn').count() >= 3 && await p.locator('.ge').count() >= 4 && await p.locator('ruby').count() > 0);
+  await p.locator('button:text-is("ふりがな")').click(); assert.strictEqual(await p.locator('ruby').count(), 0);
+  // ตอบผิดหมด -> ไม่ผ่าน ขั้นไม่ขึ้น
+  await p.locator('button:has-text("ลองทำแบบฝึกหัด")').click();
+  const n = await p.evaluate(() => gq.length);
+  for (let i = 0; i < n; i++) {
+    const wrong = await p.evaluate(() => gq[gqi].opts.findIndex(o => !o.ok));
+    await p.locator('.ch button').nth(wrong).click();
+    assert((await p.locator('.gw').innerText()).includes('❌'));
+    await p.locator('.btns .nx').click();
+  }
+  assert((await p.locator('.card').innerText()).includes('0/' + n));
+  let kg = await p.evaluate(() => JSON.parse(localStorage.getItem('kg1'))['1']);
+  assert.strictEqual(kg.b, 0); assert.strictEqual(kg.w, 1); assert.strictEqual(kg.best, 0);
+  // ตอบถูกหมด -> ผ่าน ขั้น 1
+  await p.locator('button:text-is("ทำอีกครั้ง")').click();
+  for (let i = 0; i < n; i++) {
+    const right = await p.evaluate(() => gq[gqi].opts.findIndex(o => o.ok));
+    await p.locator('.ch button').nth(right).click();
+    assert((await p.locator('.gw').innerText()).includes('✅'));
+    await p.locator('.btns .nx').click();
+  }
+  assert((await p.locator('.card').innerText()).includes('ผ่านแล้ว'));
+  kg = await p.evaluate(() => JSON.parse(localStorage.getItem('kg1'))['1']);
+  assert.strictEqual(kg.b, 1); assert.strictEqual(kg.best, n);
+  // ผิดได้ 1 ข้อยังผ่าน
+  await p.evaluate(() => { gi = 1; gstart(); });
+  const m = await p.evaluate(() => gq.length);
+  for (let i = 0; i < m; i++) {
+    const idx = await p.evaluate(i => gq[gqi].opts.findIndex(o => i === 0 ? !o.ok : o.ok), i);
+    await p.locator('.ch button').nth(idx).click(); await p.locator('.btns .nx').click();
+  }
+  assert((await p.locator('.card').innerText()).includes('ผ่านแล้ว'));
+  // ไม่ล้นจอ iPad และส่งออกมี kg1
+  assert(await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth) <= 0);
+  await p.evaluate(() => goTab('stats'));
+  assert(await p.locator('.mi:has-text("ไวยากรณ์")').count() === 1);
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.locator('button:text-is("ส่งออก")').click()]);
+  const f = path.join(require('os').tmpdir(), 'kanji-e2e-g-' + Date.now() + '.json'); await dl.saveAs(f);
+  const o = JSON.parse(fs.readFileSync(f, 'utf8')); fs.unlinkSync(f);
+  assert(o.data.kg1 && o.data.kg1['1'] && o.data.kg1['2']);
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('สถิติ: เปลี่ยนเป้าหมายต่อวันแล้วค่าถูกจำ', async (b, base) => {
   const p = await fresh(b, base);
   await p.evaluate(() => goTab('stats'));
@@ -226,7 +289,7 @@ test('PWA: manifest ถูกต้องและ service worker ติดต�
   let fail = 0;
   for (const [name, fn] of tests) {
     try { await Promise.race([fn(browser, base), new Promise((_, j) => setTimeout(() => j(new Error('หมดเวลา 30 วินาที')), 30000))]); console.log('  ✓', name); }
-    catch (e) { fail++; console.log('  ✗', name, '\n     ', (e.message || e).split('\n')[0]); }
+    catch (e) { fail++; console.log('  ✗', name, '\n     ', (e.stack || e.message || e).split("\n").slice(0, 4).join(" | ")); }
   }
   await browser.close(); server.close();
   console.log(fail ? `\nไม่ผ่าน ${fail}/${tests.length}` : `\nผ่านทั้งหมด ${tests.length} ข้อ`);

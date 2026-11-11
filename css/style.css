@@ -140,3 +140,8 @@ h2{font-size:16px;margin:20px 0 10px}
 .dnav{display:flex;gap:10px;margin:18px 0}.dnav button{flex:1;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font-size:15px}.dnav button:disabled{opacity:.35}
 #credits a{color:var(--ac)}
 .ft a{color:inherit;text-decoration:underline}
+.gp{display:inline-block;font-size:13px;color:var(--ac);background:rgba(192,57,43,.08);border-radius:8px;padding:2px 9px;margin:4px 0;font-family:"Hiragino Sans","Noto Sans JP",sans-serif}
+.gn{font-size:15px;line-height:1.75;margin:10px 0}
+.ge .ew{font-size:18px;margin-right:6px}.ge{flex-wrap:wrap}
+.gq{font-size:24px;line-height:1.9}.gb{display:inline-block;min-width:3em;border-bottom:2px solid var(--ac);text-align:center;color:var(--ac)}
+.gw{font-size:15px;text-align:left;margin-top:14px}

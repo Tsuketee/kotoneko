@@ -35,7 +35,7 @@ function pick(i){if(ans!==null)return;ans=i;rec(ch[i].ok);render();if(ch[i].ok){
 function mkch(){const f=x=>(ds==='a'||qt==='read')?rd(x):x.m;const c=f(cur);
  const o=sh(K.filter(x=>x.k!==cur.k&&f(x)!==c)).filter((x,i,a)=>a.findIndex(y=>f(y)===f(x))===i).slice(0,3);
  ch=sh([{t:c,ok:true},...o.map(x=>({t:f(x),ok:false}))])}
-function nv(i){if(i==='d'||i==='m'||i==='n5'){view=i}else{view='s';ds=i;K=DS[i].d;CATS=['ทั้งหมด',...new Set(K.map(x=>x.c))];cat='ทั้งหมด';S=load();mode=i==='a'?'chart':'card';wi=0;ci=0;st=[];prac=0;cur=null;ch=null;ans=null;fl=false}render()}
+function nv(i){if(i==='d'||i==='m'||i==='n5'||i==='g'){view=i}else{view='s';ds=i;K=DS[i].d;CATS=['ทั้งหมด',...new Set(K.map(x=>x.c))];cat='ทั้งหมด';S=load();mode=i==='a'?'chart':'card';wi=0;ci=0;st=[];prac=0;cur=null;ch=null;ans=null;fl=false}render()}
 const EXT={o:['ออน','on'],k:['คุน','kun'],s:['พิเศษ','sp']};
 function exHtml(c){if(ds!=='k'||!EX[c.k])return'';return `<div class="ex"><div class="exh">ตัวอย่างการใช้</div>${EX[c.k].map(e=>`<div class="er" data-t="${e[1]}" onclick="event.stopPropagation();speak(this.dataset.t)"><span class="et ${EXT[e[3]][1]}">${EXT[e[3]][0]}</span><span class="ew">${e[0]}</span><span class="ed"><b>${e[1]}</b> ${e[2]}</span></div>`).join('')}</div>`}
 function speakFor(x){if(ds==='a')return x.k;if(ds==='k')return x.u&&x.u!=='-'?x.u.split('・')[0].replace(/\(.*?\)/g,''):x.o.split('/')[0];return x.o}
@@ -54,13 +54,14 @@ function pathHtml(sts){const m=Object.fromEntries(sts),L=['k','w','v'],A=m.a||{l
  <div class="pc" onclick="openLv()"><div class="pn">2</div><div class="pb"><b>N5</b>${p5>=.8?'<span class="bd b2">ผ่านแล้ว</span>':pa>=.8?'<span class="bd b3">พร้อมแล้ว</span>':''}<div class="st">คำศัพท์ · คันจิ · บทสนทนา · ไวยากรณ์ · ซ้อมสอบ</div><div class="st">${l5}/${t5} จำได้แม่น${d5?' · ทบทวน '+d5:''}</div><div class="bar"><i style="width:${p5*100}%"></i></div></div><div class="pg2">五</div></div>
  ${lock('N4','ปลดล็อกเมื่อ N5 จำได้แม่น 80% · เนื้อหากำลังมา','四')}${lock('N3','เนื้อหากำลังมา','三')}</div>`}
 function openLv(){tab='learn';nv('n5');window.scrollTo(0,0)}
+function gsec(){const s=gstat();return `<div class="pc" onclick="openDs('g')"><div class="pb"><b>ไวยากรณ์</b><div class="st">${s.lr}/${s.t} บทจำได้แม่น${s.due?' · ทบทวน '+s.due:''}</div><div class="bar"><i style="width:${s.t?s.lr/s.t*100:0}%"></i></div></div><div class="pg2">法</div></div>`}
 function renderLv(){const m=Object.fromEntries(Object.keys(DS).map(k=>[k,dsStat(k)])),L=['k','w','v'],t=L.reduce((a,k)=>a+m[k].t,0),l=L.reduce((a,k)=>a+m[k].lr,0);
  const sec=(k,s,g)=>`<div class="pc" onclick="openDs('${k}')"><div class="pb"><b>${k==='d'?'บทสนทนา':DS[k].n}</b><div class="st">${k==='d'?D.length+' บทสนทนา':m[k].lr+'/'+m[k].t+' จำได้แม่น'+(m[k].due?' · ทบทวน '+m[k].due:'')}</div>${k==='d'?'':`<div class="bar"><i style="width:${m[k].t?m[k].lr/m[k].t*100:0}%"></i></div>`}</div><div class="pg2">${g}</div></div>`,
  soon=(n,s,g)=>`<div class="pc lk0"><div class="pb"><b>🔒 ${n}</b><div class="st">${s}</div></div><div class="pg2">${g}</div></div>`;
- document.getElementById('app').innerHTML=NAV()+`<div class="st">จำได้แม่นรวม ${l}/${t} · เนื้อหาเขียนเอง</div><div class="bar"><i style="width:${t?l/t*100:0}%"></i></div><div class="path" style="margin-top:14px">${sec('k','','漢')}${sec('w','','語')}${sec('v','','文')}${sec('d','','話')}${soon('ไวยากรณ์','เนื้อหากำลังมา','法')}${soon('ซ้อมสอบ N5','ปลดล็อกเมื่อเรียนครบทุกหมวด','試')}</div>`}
+ document.getElementById('app').innerHTML=NAV()+`<div class="st">จำได้แม่นรวม ${l}/${t} · เนื้อหาเขียนเอง</div><div class="bar"><i style="width:${t?l/t*100:0}%"></i></div><div class="path" style="margin-top:14px">${sec('k','','漢')}${sec('w','','語')}${sec('v','','文')}${sec('d','','話')}${gsec()}${soon('ซ้อมสอบ N5','ปลดล็อกเมื่อเรียนครบทุกหมวด','試')}</div>`}
 function dsStat(k){let s={};try{s=JSON.parse(localStorage.getItem(DS[k].key)||'{}')}catch(e){}const n=Date.now();let seen=0,lr=0,due=0;const L=k==='a'?DS[k].d.filter(x=>x.g==='b'):DS[k].d;L.forEach(x=>{const r=s[x.k];if(r){seen++;if(r.b>=MASTERY)lr++;if(r.d<=n)due++}});return{seen,lr,due,t:L.length}}
 function openDs(k){M.last=k;saveM();tab='learn';nv(k);window.scrollTo(0,0)}
-function resume(){openDs(M.last&&(DS[M.last]||M.last==='d')?M.last:'k')}
+function resume(){openDs(M.last&&(DS[M.last]||M.last==='d'||M.last==='g')?M.last:'k')}
 function renderLearn(){
  const p=pool(),seen=p.filter(x=>S[x.k]).length,lr=p.filter(x=>S[x.k]&&S[x.k].b>=MASTERY).length;
  if(!cur)cur=pick1();
@@ -83,5 +84,5 @@ function renderLearn(){
   h+=`</div>`;
   if(ans!==null&&!ch[ans].ok)h+=`<div class="btns"><button class="nx" onclick="go()">ข้อต่อไป</button></div>`;
   h+=`</div>`}
- h+=`<div class="ft">ระบบทบทวนแบบเว้นระยะ: ตอบถูกต่อเนื่องจะห่างขึ้นเรื่อยๆ (10 นาที → 1 → 3 → 7 → 16 → 35 → 75 → 150 วัน) ตอบผิดจะกลับมาเร็วขึ้น · &quot;จำได้แม่น&quot; = ตอบถูกจนช่วงห่างถึง 7 วัน · ความคืบหน้าเก็บในเบราว์เซอร์เครื่องนี้<br>ข้อมูลเวอร์ชันทดลอง ควรตรวจกับตำราที่ใช้อยู่อีกครั้ง<br>คำศัพท์และบทสนทนาเขียนขึ้นเองสำหรับแอปนี้<br>ลำดับขีดจาก <a href="https://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a> (CC BY-SA 3.0) · ดูเครดิตเต็มในหน้าสถิติ</div>`;
+ h+=`<div class="ft">ระบบทบทวนแบบเว้นระยะ: ตอบถูกต่อเนื่องจะห่างขึ้นเรื่อยๆ (10 นาที → 1 → 3 → 7 → 16 → 35 → 75 → 150 วัน) ตอบผิดจะกลับมาเร็วขึ้น · &quot;จำได้แม่น&quot; = ตอบถูกจนช่วงห่างถึง 7 วัน · ความคืบหน้าเก็บในเบราว์เซอร์เครื่องนี้<br>ข้อมูลเวอร์ชันทดลอง ควรตรวจกับตำราที่ใช้อยู่อีกครั้ง<br>คำศัพท์ บทสนทนา และไวยากรณ์เขียนขึ้นเองสำหรับแอปนี้<br>ลำดับขีดจาก <a href="https://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a> (CC BY-SA 3.0) · ดูเครดิตเต็มในหน้าสถิติ</div>`;
  document.getElementById('app').innerHTML=h;if(mode==='write')initCv()}

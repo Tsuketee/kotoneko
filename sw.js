@@ -1,6 +1,6 @@
 // Service worker: ทำให้แอปเปิดได้ตอนออฟไลน์
 // ⚠️ ทุกครั้งที่แก้ไฟล์แล้วจะปล่อยเวอร์ชันใหม่ ให้เพิ่มเลข VERSION ไม่งั้นเครื่องผู้ใช้จะยังเห็นไฟล์เก่า
-const VERSION = 'v13';
+const VERSION = 'v15';
 const CACHE = 'kotoneko-' + VERSION;
 const FILES = [
   './',
@@ -13,11 +13,13 @@ const FILES = [
   'js/data/examples.js',
   'js/data/mnemonics.js',
   'js/data/pet-lines.js',
+  'js/data/grammar.js',
   'js/core.js',
   'js/learn.js',
   'js/dialogue.js',
   'js/write.js',
   'js/pet.js',
+  'js/grammar.js',
   'js/stats.js',
   'js/main.js',
   'manifest.webmanifest',

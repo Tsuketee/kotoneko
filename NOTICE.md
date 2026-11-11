@@ -1,5 +1,8 @@
 # แหล่งที่มาของข้อมูล
 
+## บทเรียนไวยากรณ์ (`js/data/grammar.js`)
+เขียนขึ้นเองทั้งหมดสำหรับแอปนี้ (คำอธิบาย ประโยคตัวอย่าง และแบบฝึกหัด) ไม่ได้คัดลอกจากตำราหรือเว็บไซต์ใด หัวข้อไวยากรณ์เป็นความรู้ทั่วไปของภาษา ใช้เฉพาะคันจิ N5 ที่แอปสอนในประโยคตัวอย่าง
+
 ## รายการคันจิและคำอ่าน (`js/data/kanji-n5.js`)
 **แหล่งที่ใช้ตรวจสอบและเสริม:** [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project) · Copyright © Electronic Dictionary Research and Development Group (EDRDG) ใช้ตามสัญญาอนุญาต [EDRDG General Dictionary Licence](https://www.edrdg.org/edrdg/licence.html) (Creative Commons Attribution-ShareAlike — สำเนาสัญญาที่ได้รับมาพร้อมข้อมูลระบุเวอร์ชัน 3.0 ให้ตรวจเวอร์ชันล่าสุดที่หน้าสัญญาของ EDRDG)
 **ที่มาของข้อมูลที่ตรวจ:** ไฟล์ฐานข้อมูล `jamdict-data` 1.5 (แพ็กเกจ PyPI ที่บรรจุ KANJIDIC2 ไว้ทั้งชุด 13,108 ตัวอักษร ไฟล์ KANJIDIC2 เวอร์ชัน 1.6) ตรวจเมื่อ 2026-11-11 ระดับ JLPT ใน KANJIDIC2 เป็นระดับแบบเก่า (4 ระดับ) และไม่มีการปรับปรุงมานานแล้ว
