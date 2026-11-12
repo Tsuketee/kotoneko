@@ -601,7 +601,8 @@ async function home(p) { await p.evaluate(() => { tab = 'home'; render() }); ret
 
 test('ระดับ N4: ยังไม่เข้าสู่ระบบ การ์ดล็อก กดแล้วพาไปเข้าสู่ระบบ ไม่ดาวน์โหลดอะไร', async (b, base) => {
   const db = mockCloud(), p = await cloudPage(b, base, db);
-  assert((await home(p)).includes('เข้าสู่ระบบเพื่อตรวจสิทธิ์'));
+  const h0 = await home(p);
+  assert(h0.includes('เข้าสู่ระบบเพื่อตรวจสิทธิ์') && h0.includes('กำลังเรียนระดับ N5'));
   await p.locator('.pc.lk0:has-text("N4")').click();
   assert.strictEqual(await p.evaluate(() => tab), 'stats');
   assert(!db.calls.some(c => c.includes('content_packs')));
@@ -628,7 +629,7 @@ test('ระดับ N4: มีสิทธิ์ → ดาวน์โหล�
   const s = await p.evaluate(() => ({ LV, k: DS.k.d.length, key: DS.k.key, wk: DS.w.key, w: W.length, v: V.length, g: G.length, gk: GK, d: D.length, dt: DT[1], ex: !!EX['試'], cats: CATS }));
   assert.deepStrictEqual(s, { LV: 'n4', k: 2, key: 'kn4', wk: 'kw4', w: 2, v: 1, g: 1, gk: 'kg4', d: 1, dt: 'หมวดทดสอบ', ex: true, cats: ['ทั้งหมด', 'หมวดทดสอบ'] });
   const h = await home(p);
-  assert(h.includes('กำลังเรียน') && h.includes('แตะเพื่อกลับไปเรียน N5'));
+  assert(h.includes('กำลังเรียน') && h.includes('แตะเพื่อกลับไปเรียน N5') && h.includes('กำลังเรียนระดับ N4'));
   // เรียนคันจิในระดับ N4 แล้วความคืบหน้าไปอยู่ที่ kn4 ไม่แตะ kn5
   await p.evaluate(() => openDs('k')); await p.locator('#app .card').first().click(); await p.locator('button:text-is("จำได้")').click();
   assert.deepStrictEqual(await p.evaluate(() => [Object.keys(JSON.parse(localStorage.getItem('kn4'))), Object.keys(JSON.parse(localStorage.getItem('kn5')))]), [['試'], ['日']]);
@@ -671,6 +672,20 @@ test('ระดับ N4: ถูกถอนสิทธิ์ หรืออ�
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('ระดับ N4: มีสิทธิ์แต่ยังไม่มีแพ็กบนเซิร์ฟเวอร์ → บอกว่าเนื้อหายังไม่พร้อม ไม่ใช่ยังไม่ปลดล็อก', async (b, base) => {
+  const db = mockCloud(); db.ent = ['n4']; const p = await cloudPage(b, base, db);
+  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  const h = await home(p);
+  assert(h.includes('เนื้อหายังไม่พร้อม') && !h.includes('เปิดขายเร็วๆ นี้'), h.slice(-300));
+  await p.evaluate(() => lvSwitch('n4'));
+  await p.waitForSelector('.toast:has-text("เนื้อหายังไม่พร้อมบนเซิร์ฟเวอร์")', { timeout: 8000 });
+  assert.strictEqual(await p.evaluate(() => LV), 'n5');
+  // ผู้ดูแลอัปโหลดแล้ว → พร้อมเรียน
+  db.packs.n4 = FAKE_PACK; await p.evaluate(() => packCheck());
+  assert((await home(p)).includes('ปลดล็อกแล้ว'));
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('ระดับ N4: แพ็กในเครื่องเสีย → เปิดแอปเป็น N5 ไม่มี error', async (b, base) => {
   const db = mockCloud(), ctx = await b.newContext({ serviceWorkers: 'block' }), p = await ctx.newPage(); p.errors = [];
   p.on('pageerror', e => p.errors.push(e.message)); await db.attach(p);
@@ -707,6 +722,19 @@ test('schema.sql: แพ็กอ่านได้เฉพาะผู้ม�
   assert(!/policy[^;]*on public\.entitlements for (insert|update|delete|all)/.test(sql), 'ห้ามมี policy ให้แอปเขียน entitlements');
   assert(/grant select on public\.entitlements to authenticated;/.test(sql) && /revoke all on public\.admins from anon, authenticated;/.test(sql));
   assert(/function public\.is_admin\(\)[\s\S]*security definer set search_path = ''/.test(sql));
+});
+
+test('บทสนทนา: ฟุริงะนะบนกรอบข้อความสีส้มมองเห็นได้ทั้งโหมดสว่างและมืด', async (b, base) => {
+  for (const colorScheme of ['light', 'dark']) {
+    const ctx = await b.newContext({ colorScheme, serviceWorkers: 'block' }), p = await ctx.newPage();
+    await p.addInitScript(s => localStorage.setItem('kn_meta', JSON.stringify(s)), SEED);
+    await p.goto(base); await p.evaluate(() => { tab = 'learn'; view = 'd'; fur = true; dgo(0) });
+    const r = await p.evaluate(() => { const rt = document.querySelector('.dr.r .db rt'), db = rt.closest('.db'), cs = getComputedStyle;
+      return { rt: cs(rt).color, txt: cs(db).color, bg: cs(db).backgroundColor, op: +cs(rt).opacity } });
+    assert.strictEqual(r.rt, r.txt, colorScheme + ': สีฟุริงะนะต้องเหมือนตัวอักษรในกรอบ ' + JSON.stringify(r));
+    assert(r.rt !== r.bg && r.op >= .8, colorScheme + JSON.stringify(r));
+    await ctx.close();
+  }
 });
 
 // ---------- iPad / PWA ----------

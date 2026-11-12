@@ -5,21 +5,25 @@ let PS = {}; try { PS = JSON.parse(localStorage.getItem(PSK) || '{}') } catch (e
 const psave = () => { try { localStorage.setItem(PSK, JSON.stringify(PS)) } catch (e) {} };
 const PAID = ['n4'];  // ระดับที่มีแพ็กแล้ว (N3 ยังไม่มีเนื้อหา)
 function packLocal(l) { try { const p = JSON.parse(localStorage.getItem(PACKK(l)) || 'null'); return p && p.level === l ? p : null } catch (e) { return null } }
-const packHas = l => (PS.ent || []).includes(l) || !!packLocal(l);
+const packEnt = l => (PS.ent || []).includes(l);
+// พร้อมเรียน = มีแพ็กในเครื่อง หรือมีสิทธิ์ (ผู้ดูแลถือว่ามีสิทธิ์) และมีแพ็กบนเซิร์ฟเวอร์
+const packReady = l => !!packLocal(l) || ((packEnt(l) || PS.admin) && !!(PS.ver || {})[l]);
+const packWait = l => !packReady(l) && packEnt(l);   // ปลดล็อกแล้ว แต่ผู้ดูแลยังไม่ได้อัปโหลดเนื้อหา
 function lvGo(l, msg) { try { localStorage.setItem(LVK, l); if (msg) sessionStorage.setItem('kn_lvmsg', msg) } catch (e) {} location.reload() }
 
 // ---------- การ์ดระดับในหน้าแรก (เรียกจาก pathHtml) ----------
 function lvCard(l) {
   const L = LEVELS[l];
   if (l === 'n5') return `<div class="pc" onclick="lvSwitch('n5')"><div class="pb"><b>N5</b><div class="st">แตะเพื่อกลับไปเรียน N5 · ความคืบหน้าแต่ละระดับเก็บแยกกัน</div></div><div class="pg2">${L.g}</div></div>`;
-  if (PAID.includes(l) && packHas(l)) return `<div class="pc" onclick="lvSwitch('${l}')"><div class="pb"><b>${L.n}</b><span class="bd b3">ปลดล็อกแล้ว</span><div class="st">แตะเพื่อเปลี่ยนไปเรียน ${L.n}</div></div><div class="pg2">${L.g}</div></div>`;
-  const s = !PAID.includes(l) || !cloudOn() ? 'เนื้อหากำลังมา' : !cloudIn() ? 'เนื้อหาเสียเงิน · เข้าสู่ระบบเพื่อตรวจสิทธิ์' : 'เนื้อหาเสียเงิน · เปิดขายเร็วๆ นี้';
+  if (PAID.includes(l) && packReady(l)) return `<div class="pc" onclick="lvSwitch('${l}')"><div class="pb"><b>${L.n}</b><span class="bd b3">ปลดล็อกแล้ว</span><div class="st">แตะเพื่อเปลี่ยนไปเรียน ${L.n}</div></div><div class="pg2">${L.g}</div></div>`;
+  const s = !PAID.includes(l) || !cloudOn() ? 'เนื้อหากำลังมา' : !cloudIn() ? 'เนื้อหาเสียเงิน · เข้าสู่ระบบเพื่อตรวจสิทธิ์' : packWait(l) ? 'ปลดล็อกแล้ว · เนื้อหายังไม่พร้อม รออัปเดตสักครู่นะคะ' : 'เนื้อหาเสียเงิน · เปิดขายเร็วๆ นี้';
   return `<div class="pc lk0" onclick="lvLocked('${l}')"><div class="pn">${icx('lock', 16)}</div><div class="pb"><b>${L.n}</b><div class="st">${s}</div></div><div class="pg2">${L.g}</div></div>`;
 }
 function lvLocked(l) {
   const n = LEVELS[l].n;
   if (!PAID.includes(l) || !cloudOn()) return toast(n + ' กำลังเตรียมเนื้อหาอยู่ค่ะ');
   if (!cloudIn()) { tab = 'stats'; render(); setTimeout(() => { const c = document.getElementById('cloud'); if (c) c.scrollIntoView({ block: 'center' }) }, 50); return toast('เข้าสู่ระบบก่อนนะคะ แล้วระบบจะตรวจสิทธิ์ ' + n + ' ให้') }
+  if (packWait(l)) return toast('บัญชีนี้ปลดล็อก ' + n + ' แล้ว แต่เนื้อหายังไม่พร้อมบนเซิร์ฟเวอร์ ลองใหม่ภายหลังนะคะ');
   toast('บัญชีนี้ยังไม่ได้ปลดล็อก ' + n + ' ค่ะ ระบบซื้อกำลังจะเปิดเร็วๆ นี้');
 }
 let lvBusy = false;
@@ -32,7 +36,7 @@ async function lvSwitch(l) {
   if (lvBusy) return; lvBusy = true;
   toast('กำลังดาวน์โหลดเนื้อหา ' + LEVELS[l].n + '…');
   try { await packFetch(l); lvGo(l, 'เปลี่ยนเป็นระดับ ' + LEVELS[l].n + ' แล้วค่ะ') }
-  catch (e) { lvBusy = false; toast(e.noEnt ? 'บัญชีนี้ยังไม่ได้ปลดล็อก ' + LEVELS[l].n + ' ค่ะ' : 'ดาวน์โหลดไม่สำเร็จ: ' + e.message) }
+  catch (e) { lvBusy = false; if (e.noEnt) { await packCheck(); return lvLocked(l) } toast('ดาวน์โหลดไม่สำเร็จ: ' + e.message) }
 }
 
 // ---------- เซิร์ฟเวอร์ ----------
