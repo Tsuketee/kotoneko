@@ -500,11 +500,19 @@ test('นโยบายความเป็นส่วนตัว: เปิ
   const db = mockCloud(), p = await cloudPage(b, base, db);
   await p.evaluate(() => goTab('stats'));
   assert.strictEqual(await p.locator('#cloud a[href="privacy.html"]').count(), 1);
+  assert.strictEqual(await p.locator('#cloud a[href="terms.html"]').count(), 1);
   assert.strictEqual(await p.locator('#app a[href="privacy.html"]').count(), 2);
+  assert.strictEqual(await p.locator('#app a[href="terms.html"]').count(), 2);
   await p.goto(base + 'privacy.html');
   const txt = await p.locator('main.doc').innerText();
   ['อีเมล', 'Supabase', 'Brevo', 'GitHub Pages', 'PDPA', 'ลบบัญชี'].forEach(k => assert(txt.includes(k), 'ขาดหัวข้อ ' + k));
   assert(await p.locator('a[href="./"]').count(), 'ต้องมีลิงก์กลับแอป');
+  await p.goto(base + 'terms.html');
+  const tx = await p.locator('main.doc').innerText();
+  ['JLPT', 'KanjiVG', 'ข้อจำกัดความรับผิด', 'กฎหมายไทย', 'ลบบัญชี'].forEach(k => assert(tx.includes(k), 'terms ขาด ' + k));
+  assert(await p.locator('a[href="privacy.html"]').count() && await p.locator('a[href="./"]').count());
+  assert(fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8').includes("'terms.html'"), 'sw.js ต้องแคช terms.html');
+  await p.goto(base + 'privacy.html');
   for (const w of [390, 820]) { await p.setViewportSize({ width: w, height: 900 }); assert(await p.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 0, 'เกินจอ ' + w); }
 });
 

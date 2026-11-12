@@ -145,7 +145,7 @@ const cloudBack = () => { CU = { ...CU, step: 'email', err: '' }; render() };
 
 // ---------- หน้าจอ ----------
 const INP = 'width:100%;box-sizing:border-box;padding:11px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font-size:16px';
-const PRIV = `<div class="st" style="margin-top:10px">การเข้าสู่ระบบถือว่ารับทราบ<a href="privacy.html" target="_blank" rel="noopener" style="color:var(--ac)">นโยบายความเป็นส่วนตัว</a></div>`;
+const PRIV = `<div class="st" style="margin-top:10px">การเข้าสู่ระบบถือว่ารับทราบ<a href="terms.html" target="_blank" rel="noopener" style="color:var(--ac)">ข้อกำหนดการใช้งาน</a>และ<a href="privacy.html" target="_blank" rel="noopener" style="color:var(--ac)">นโยบายความเป็นส่วนตัว</a></div>`;
 function cloudFormHtml() { return cloudFormInner() + PRIV }
 function cloudFormInner() {
   const dis = CU.busy ? ' disabled' : '', err = CU.err ? `<div class="cer">${CU.err}</div>` : '';
