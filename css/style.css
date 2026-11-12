@@ -148,3 +148,11 @@ h2{font-size:16px;margin:20px 0 10px}
 /* ไอคอนเส้น: สีตามสถานะ */
 .ok-i{color:var(--ok)}.no-i{color:var(--err)}.hl-i{color:var(--hl)}.m1{color:var(--m1)}.m2{color:var(--m2)}.m3{color:var(--m3)}
 .ic2.big{display:block;margin:0 auto 6px}.ico-t{display:inline-flex;align-items:center;gap:5px}
+
+/* บัญชีและซิงก์ */
+.cer{color:var(--err);font-size:14px;margin-top:8px}
+.btns button:disabled{opacity:.6}
+.cov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));z-index:20}
+.cdl{background:var(--card);color:var(--fg);border-radius:18px;padding:20px 16px;max-width:460px;width:100%;box-sizing:border-box}
+.cbs{display:flex;gap:10px;margin-top:14px}
+.cbx{flex:1;border:1px solid var(--bd);border-radius:12px;padding:10px;font-size:14px;line-height:1.7}
