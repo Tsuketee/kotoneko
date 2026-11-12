@@ -7,14 +7,23 @@
 
 1. **สร้างโปรเจกต์** ที่ https://supabase.com → New project (เลือก Region ใกล้ไทย เช่น Singapore) ตั้งรหัสผ่านฐานข้อมูลแล้วเก็บไว้
 2. **สร้างตาราง:** เมนู SQL Editor → New query → วางเนื้อหาทั้งไฟล์ `supabase/schema.sql` → Run
-3. **ให้อีเมลส่งรหัสตัวเลข:** เมนู Authentication → Emails → Templates
-   แก้ทั้ง **Magic Link** และ **Confirm signup** ให้มี `{{ .Token }}` เช่น
-   ```html
-   <h2>รหัสเข้าสู่ระบบ Kotoneko</h2>
-   <p>กรอกรหัสนี้ในแอป: <b style="font-size:24px;letter-spacing:4px">{{ .Token }}</b></p>
-   <p>รหัสใช้ได้ครั้งเดียว ถ้าคุณไม่ได้ขอรหัสนี้ ไม่ต้องทำอะไรค่ะ</p>
-   ```
-   (ไม่ต้องใส่ลิงก์ เพราะแอปบน iPad ที่เพิ่มลงหน้าจอโฮมแยกที่เก็บข้อมูลจาก Safari ลิงก์จะเปิดใน Safari แทน)
+3. **ตั้ง Custom SMTP ก่อน แล้วค่อยแก้แม่แบบอีเมล** (ข้อนี้ข้ามไม่ได้)
+   Supabase ไม่ให้แก้แม่แบบอีเมลถ้ายังไม่ตั้ง SMTP และอีเมลเริ่มต้นมีแต่ลิงก์ ไม่มีรหัสตัวเลข ซึ่งแอปบน iPad ใช้ไม่ได้ เพราะแอปที่เพิ่มลงหน้าจอโฮมแยกที่เก็บข้อมูลจาก Safari ลิงก์จะไปเปิดใน Safari แทน
+   1. สมัครผู้ให้บริการส่งอีเมล เช่น **Brevo** (ฟรี 300 ฉบับต่อวัน ยืนยันอีเมลผู้ส่งตัวเดียวก็ใช้ได้ ไม่ต้องมีโดเมน) แล้วเพิ่มผู้ส่งที่ Settings → Senders, Domains & Dedicated IPs → Senders และยืนยันด้วยรหัสที่ส่งไปทางอีเมล
+   2. Brevo: Settings → SMTP & API → แท็บ SMTP → **Generate a new SMTP key** (เห็นครั้งเดียว)
+   3. Supabase: Authentication → Emails → **SMTP Settings** → เปิด Custom SMTP แล้วกรอก
+      - Sender email: อีเมลที่ยืนยันกับ Brevo แล้ว · Sender name: `Kotoneko`
+      - Host `smtp-relay.brevo.com` · Port `587`
+      - Username: ค่า **Login** จากหน้า SMTP ของ Brevo (ไม่ใช่ชื่อบัญชี) · Password: SMTP key
+   4. แท็บ **Templates** แก้ทั้ง **Confirm sign up** และ **Magic link or OTP** (โหมด Source) ให้มี `{{ .Token }}`
+      ```html
+      <h2>รหัสเข้าสู่ระบบ Kotoneko</h2>
+      <p>กรอกรหัสนี้ในแอป:</p>
+      <p style="font-size:28px;letter-spacing:6px"><b>{{ .Token }}</b></p>
+      <p>ถ้าคุณไม่ได้ขอรหัสนี้ ไม่ต้องทำอะไรค่ะ</p>
+      ```
+   > ⚠️ SMTP key เป็นความลับ กรอกในหน้า Supabase เท่านั้น ห้ามวางในแชท โค้ด หรือ commit ถ้าเผลอเปิดเผย ให้ลบคีย์นั้นใน Brevo แล้วสร้างใหม่ทันที
+   > อีเมลที่ส่งจาก Gmail อาจเข้าสแปม ก่อนเปิดขายจริงควรใช้โดเมนของตัวเอง
 4. **คัดลอกคีย์:** เมนู Project Settings → API (หรือ Data API / API Keys)
    - Project URL เช่น `https://abcdefgh.supabase.co`
    - คีย์ **anon / publishable** (ห้ามใช้ `service_role` / secret เด็ดขาด)
@@ -24,8 +33,14 @@
    ```
    แล้วเพิ่มเลข `VERSION` ใน `sw.js` → commit → push เข้า `main`
 
+## แก้ปัญหา
+- **อีเมลมีแต่ลิงก์ ไม่มีรหัส:** ยังไม่ได้ตั้ง SMTP หรือยังไม่ได้แก้แม่แบบตามข้อ 3
+- **ช่อง Host ขึ้นแดง:** ใส่ชื่อบัญชีแทนที่อยู่เซิร์ฟเวอร์ Host ต้องเป็น `smtp-relay.brevo.com`
+- **อีเมลไม่มา:** ดูกล่องสแปม แล้วเช็กที่ Brevo → Transactional → Logs ถ้าไม่มีรายการ แปลว่าค่า SMTP ใน Supabase ผิด (มักเป็น Username หรือ Password)
+- **หน้าพรีวิวแม่แบบว่าง:** เป็นปกติของหน้านั้น ดูผลจากอีเมลจริง
+
 ## ก่อนเปิดขายจริง
-- อีเมลในตัวของ Supabase ส่งได้ไม่กี่ฉบับต่อชั่วโมง ใช้ทดสอบได้ แต่ก่อนมีผู้ใช้จริงควรตั้ง **Custom SMTP** (Authentication → Emails → SMTP Settings) เช่น Resend, Brevo, Amazon SES
+- ใช้โดเมนของตัวเองเป็นผู้ส่ง (ยืนยันโดเมนกับ Brevo หรือเปลี่ยนไปใช้ Resend, Amazon SES) เพื่อไม่ให้อีเมลรหัสเข้าสแปม
 - โปรเจกต์ฟรีจะถูกพักถ้าไม่มีการใช้งาน 7 วัน (ข้อมูลไม่หาย กดเปิดใหม่ได้) ถ้ามีผู้ใช้จ่ายเงินแล้วควรอัปเกรดเป็นแพ็กเกจ Pro
 - อัปเดตนโยบายความเป็นส่วนตัว: เก็บอีเมลและความคืบหน้าการเรียนไว้ที่ Supabase (ข้อในเฟส 4)
 
