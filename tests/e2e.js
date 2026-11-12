@@ -556,6 +556,25 @@ test('เอกสารกฎหมาย: ใส่อีเมลติดต
   assert(sql.includes("delete from auth.users where id = (select auth.uid())"));
 });
 
+test('หน้าแนะนำแอป: เปิดได้ รูปโหลดครบ ลิงก์ถูก ไม่ล้นจอ แคชออฟไลน์ และมีลิงก์จากแอป', async (b, base) => {
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  ['about.html', 'img/home.jpg', 'img/kanji.jpg', 'img/stats.jpg'].forEach(f => { assert(sw.includes("'" + f + "'"), 'sw.js ต้องแคช ' + f); assert(fs.existsSync(path.join(ROOT, f)), 'ไม่พบ ' + f); });
+  const p = await fresh(b, base);
+  await p.goto(base + 'about.html');
+  const txt = await p.locator('.ab').textContent();
+  ['เริ่มเรียนเลย', 'คันจิ N5 105 ตัว', 'คำศัพท์ 422 คำ', 'บทสนทนา 20 บท', 'ไวยากรณ์ 11 บท', 'เพิ่มไปยังหน้าจอโฮม', 'ไม่รับรอง', 'KanjiVG'].forEach(k => assert(txt.includes(k), 'ขาด ' + k));
+  assert.strictEqual(await p.locator('a.cta[href="./"]').count(), 2);
+  for (const l of ['privacy.html', 'terms.html']) assert(await p.locator(`a[href="${l}"]`).count(), 'ขาดลิงก์ ' + l);
+  await p.waitForLoadState('load'); await p.evaluate(() => document.querySelectorAll('img').forEach(i => { i.loading = 'eager' })); await p.waitForTimeout(500);
+  assert.deepStrictEqual(await p.evaluate(() => [...document.images].filter(i => !i.naturalWidth).map(i => i.src)), [], 'รูปโหลดไม่ขึ้น');
+  for (const w of [360, 820, 1180]) { await p.setViewportSize({ width: w, height: 900 }); assert(await p.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 0, 'เกินจอ ' + w); }
+  // ตัวเลขที่อ้างบนหน้าต้องตรงกับข้อมูลจริงในแอป
+  await p.goto(base);
+  assert.deepStrictEqual(await p.evaluate(() => [K.length, W.length + V.length, D.length, G.length]), [105, 422, 20, 11]);
+  await p.evaluate(() => goTab('stats'));
+  assert.strictEqual(await p.locator('#app a[href="about.html"]').count(), 1);
+});
+
 // ---------- iPad / PWA ----------
 test('iPad แนวตั้งและแนวนอน: หน้าหลักไม่มีแถบเลื่อนแนวนอน', async (b, base) => {
   for (const vp of [{ width: 820, height: 1180 }, { width: 1180, height: 820 }]) {
