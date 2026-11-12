@@ -145,7 +145,9 @@ const cloudBack = () => { CU = { ...CU, step: 'email', err: '' }; render() };
 
 // ---------- หน้าจอ ----------
 const INP = 'width:100%;box-sizing:border-box;padding:11px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font-size:16px';
-function cloudFormHtml() {
+const PRIV = `<div class="st" style="margin-top:10px">การเข้าสู่ระบบถือว่ารับทราบ<a href="privacy.html" target="_blank" rel="noopener" style="color:var(--ac)">นโยบายความเป็นส่วนตัว</a></div>`;
+function cloudFormHtml() { return cloudFormInner() + PRIV }
+function cloudFormInner() {
   const dis = CU.busy ? ' disabled' : '', err = CU.err ? `<div class="cer">${CU.err}</div>` : '';
   if (CU.step === 'code') return `<div class="st">ส่งรหัสไปที่ <b>${esc(CU.email)}</b> แล้ว กรอกรหัสตัวเลขจากอีเมล</div><input id="ccd" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="รหัสจากอีเมล" style="${INP};margin-top:10px;letter-spacing:4px;text-align:center" onkeydown="if(event.key==='Enter')cloudVerify()">${err}<div class="btns" style="margin-top:10px"><button${dis} onclick="cloudVerify()">${CU.busy ? 'กำลังตรวจ…' : 'ยืนยัน'}</button></div><button class="lk" onclick="cloudBack()">เปลี่ยนอีเมล / ส่งรหัสใหม่</button>`;
   return `<div class="st">ใช้อีเมลเข้าสู่ระบบ เราจะส่งรหัสไปให้ ไม่ต้องตั้งรหัสผ่าน</div><input id="cem" type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="อีเมล" value="${esc(CU.email)}" style="${INP};margin-top:10px" onkeydown="if(event.key==='Enter')cloudSend()">${err}<div class="btns" style="margin-top:10px"><button${dis} onclick="cloudSend()">${CU.busy ? 'กำลังส่ง…' : 'ส่งรหัส'}</button></div>`;

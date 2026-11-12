@@ -495,6 +495,19 @@ test('ซิงก์: สองเครื่องแก้พร้อมก
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('นโยบายความเป็นส่วนตัว: เปิดได้ มีลิงก์จากหน้าสถิติและฟอร์มเข้าสู่ระบบ แคชออฟไลน์ และไม่มีแถบเลื่อนแนวนอน', async (b, base) => {
+  assert(fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8').includes("'privacy.html'"), 'sw.js ต้องแคช privacy.html');
+  const db = mockCloud(), p = await cloudPage(b, base, db);
+  await p.evaluate(() => goTab('stats'));
+  assert.strictEqual(await p.locator('#cloud a[href="privacy.html"]').count(), 1);
+  assert.strictEqual(await p.locator('#app a[href="privacy.html"]').count(), 2);
+  await p.goto(base + 'privacy.html');
+  const txt = await p.locator('main.doc').innerText();
+  ['อีเมล', 'Supabase', 'Brevo', 'GitHub Pages', 'PDPA', 'ลบบัญชี'].forEach(k => assert(txt.includes(k), 'ขาดหัวข้อ ' + k));
+  assert(await p.locator('a[href="./"]').count(), 'ต้องมีลิงก์กลับแอป');
+  for (const w of [390, 820]) { await p.setViewportSize({ width: w, height: 900 }); assert(await p.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 0, 'เกินจอ ' + w); }
+});
+
 // ---------- iPad / PWA ----------
 test('iPad แนวตั้งและแนวนอน: หน้าหลักไม่มีแถบเลื่อนแนวนอน', async (b, base) => {
   for (const vp of [{ width: 820, height: 1180 }, { width: 1180, height: 820 }]) {
