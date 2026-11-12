@@ -360,7 +360,7 @@ test('ส่งออก/นำเข้า: ข้อมูลกลับม�
 // ---------- บัญชีและซิงก์คลาวด์ (จำลอง Supabase ไม่ต่อเน็ตจริง) ----------
 // เซิร์ฟเวอร์จำลองใช้ร่วมกันหลายเครื่อง (หลาย browser context) เพื่อทดสอบการซิงก์ข้ามเครื่อง
 function mockCloud() {
-  const db = { row: null, calls: [], n: 0 };
+  const db = { row: null, calls: [], n: 0, ent: [], packs: {}, admin: false, uploads: 0 };
   const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS' };
   const json = (route, status, body) => route.fulfill({ status, headers: { ...cors, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const tok = () => ({ access_token: 'at' + (++db.n), refresh_token: 'rt' + db.n, expires_in: 3600, user: { id: 'u1', email: 'a@b.co' } });
@@ -377,6 +377,20 @@ function mockCloud() {
       db.row = null; db.deleted = true; return route.fulfill({ status: 204, headers: cors });
     }
     if (u.pathname === '/auth/v1/logout') return route.fulfill({ status: 204, headers: cors });
+    // ----- เนื้อหาเสียเงิน -----
+    const authed = q.headers().authorization === 'Bearer at' + db.n;
+    if (u.pathname.startsWith('/rest/v1/') && u.pathname !== '/rest/v1/progress' && u.pathname !== '/rest/v1/rpc/delete_my_account' && !authed) return json(route, 401, { message: 'JWT expired' });
+    if (u.pathname === '/rest/v1/rpc/is_admin') return json(route, 200, !!db.admin);
+    if (u.pathname === '/rest/v1/entitlements') return json(route, 200, db.ent.map(level => ({ level })));
+    if (u.pathname === '/rest/v1/content_packs') {
+      const ok = l => db.admin || db.ent.includes(l);
+      if (m === 'GET') {
+        const lv = (u.searchParams.get('level') || '').replace('eq.', '');
+        const rows = Object.entries(db.packs).filter(([l]) => ok(l) && (!lv || l === lv));
+        return json(route, 200, rows.map(([level, p]) => u.searchParams.get('select').includes('data') ? { version: p.version, data: p } : { level, version: p.version }));
+      }
+      if (m === 'POST') { if (!db.admin) return json(route, 403, { message: 'new row violates row-level security policy' }); db.packs[body.level] = body.data; db.uploads++; return route.fulfill({ status: 201, headers: cors }); }
+    }
     if (u.pathname === '/rest/v1/progress') {
       if (q.headers().authorization !== 'Bearer at' + db.n) return json(route, 401, { message: 'JWT expired' });
       if (m === 'GET') return json(route, 200, db.row ? [db.row] : []);
@@ -573,6 +587,126 @@ test('หน้าแนะนำแอป: เปิดได้ รูปโ�
   assert.deepStrictEqual(await p.evaluate(() => [K.length, W.length + V.length, D.length, G.length]), [105, 422, 20, 11]);
   await p.evaluate(() => goTab('stats'));
   assert.strictEqual(await p.locator('#app a[href="about.html"]').count(), 1);
+});
+
+// ---------- ระดับและแพ็กเนื้อหาเสียเงิน (ใช้แพ็กปลอมขนาดเล็ก ห้ามใส่เนื้อหา N4 จริงใน repo นี้) ----------
+const FAKE_PACK = {
+  format: 1, level: 'n4', version: 3, name: 'N4',
+  kanji: '# ทดสอบ\n試,シ,ため(す),ทดสอบ,หมวดทดสอบ\n験,ケン,-,ตรวจ,หมวดทดสอบ',
+  examples: '試:試す|ためす|ลอง|k', vocabW: '試す|ためす|ลอง|หมวดทดสอบ\n試合|しあい|แข่ง|หมวดทดสอบ', vocabV: 'テスト|ทดสอบ|หมวดทดสอบ',
+  grammar: '@1::บททดสอบ::〜テスト\nT::ก\nT::ข\nT::ค\nE::あ::ก\nQ::あ___::い;う::เพราะ', dialogue: '@1|ทดสอบ (สุภาพ)\nA|こんにちは。\nB|こんにちは。',
+  topics: { 1: 'หมวดทดสอบ' }, strokes: {}
+};
+async function home(p) { await p.evaluate(() => { tab = 'home'; render() }); return p.locator('#app').innerText() }
+
+test('ระดับ N4: ยังไม่เข้าสู่ระบบ การ์ดล็อก กดแล้วพาไปเข้าสู่ระบบ ไม่ดาวน์โหลดอะไร', async (b, base) => {
+  const db = mockCloud(), p = await cloudPage(b, base, db);
+  assert((await home(p)).includes('เข้าสู่ระบบเพื่อตรวจสิทธิ์'));
+  await p.locator('.pc.lk0:has-text("N4")').click();
+  assert.strictEqual(await p.evaluate(() => tab), 'stats');
+  assert(!db.calls.some(c => c.includes('content_packs')));
+  assert.strictEqual(await p.evaluate(() => LV), 'n5');
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ระดับ N4: เข้าสู่ระบบแต่ไม่มีสิทธิ์ → ยังล็อก ดาวน์โหลดไม่ได้', async (b, base) => {
+  const db = mockCloud(); db.packs.n4 = FAKE_PACK; const p = await cloudPage(b, base, db);
+  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  assert((await home(p)).includes('เปิดขายเร็วๆ นี้'));
+  await p.evaluate(() => lvSwitch('n4'));
+  await p.waitForSelector('.toast:has-text("ยังไม่ได้ปลดล็อก")', { timeout: 8000 });
+  assert.strictEqual(await p.evaluate(() => [LV, localStorage.getItem('kn_pack_n4')].join()), 'n5,');
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ระดับ N4: มีสิทธิ์ → ดาวน์โหลด สลับระดับ ความคืบหน้าแยก key และกลับ N5 ได้', async (b, base) => {
+  const db = mockCloud(); db.ent = ['n4']; db.packs.n4 = FAKE_PACK; const p = await cloudPage(b, base, db);
+  await p.evaluate(() => { localStorage.setItem('kn5', JSON.stringify({ '日': { b: 2, w: 0, d: 1 } })); goTab('stats') });
+  await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  assert((await home(p)).includes('ปลดล็อกแล้ว'));
+  await Promise.all([p.waitForNavigation(), p.locator('.pc:has-text("ปลดล็อกแล้ว")').click()]);
+  const s = await p.evaluate(() => ({ LV, k: DS.k.d.length, key: DS.k.key, wk: DS.w.key, w: W.length, v: V.length, g: G.length, gk: GK, d: D.length, dt: DT[1], ex: !!EX['試'], cats: CATS }));
+  assert.deepStrictEqual(s, { LV: 'n4', k: 2, key: 'kn4', wk: 'kw4', w: 2, v: 1, g: 1, gk: 'kg4', d: 1, dt: 'หมวดทดสอบ', ex: true, cats: ['ทั้งหมด', 'หมวดทดสอบ'] });
+  const h = await home(p);
+  assert(h.includes('กำลังเรียน') && h.includes('แตะเพื่อกลับไปเรียน N5'));
+  // เรียนคันจิในระดับ N4 แล้วความคืบหน้าไปอยู่ที่ kn4 ไม่แตะ kn5
+  await p.evaluate(() => openDs('k')); await p.locator('#app .card').first().click(); await p.locator('button:text-is("จำได้")').click();
+  assert.deepStrictEqual(await p.evaluate(() => [Object.keys(JSON.parse(localStorage.getItem('kn4'))), Object.keys(JSON.parse(localStorage.getItem('kn5')))]), [['試'], ['日']]);
+  assert(await p.evaluate(() => PK.includes('kn4') && PK.includes('kg4') && PK.includes('kn5')));
+  assert.strictEqual(await p.evaluate(() => cloudSync(false)), 'pushed');
+  assert(db.row.data.kn4 && db.row.data.kn5, 'ซิงก์ความคืบหน้าทั้งสองระดับ');
+  // เปิดแอปใหม่ยังอยู่ระดับ N4 โดยไม่ต้องดาวน์โหลดซ้ำ (แพ็กอยู่ในเครื่อง จึงใช้ออฟไลน์ได้ ส่วนเปลือกแอปออฟไลน์ตรวจในชุด PWA)
+  const n = db.calls.filter(c => c.includes('select=version,data')).length;
+  await p.reload(); await p.waitForFunction(() => PS.t && !cloudBusy);
+  assert.strictEqual(await p.evaluate(() => LV), 'n4');
+  assert.strictEqual(db.calls.filter(c => c.includes('select=version,data')).length, n, 'ไม่ควรดาวน์โหลดแพ็กซ้ำถ้าเวอร์ชันเท่าเดิม');
+  // มีเวอร์ชันใหม่บนเซิร์ฟเวอร์ → ดาวน์โหลดเก็บไว้ ใช้เมื่อเปิดแอปครั้งถัดไป
+  db.packs.n4 = { ...FAKE_PACK, version: 4, kanji: FAKE_PACK.kanji + '\n合,ゴウ,あ(う),รวม,หมวดทดสอบ' };
+  await p.evaluate(() => packCheck());
+  assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_pack_n4')).version), 4);
+  assert.strictEqual(await p.evaluate(() => DS.k.d.length), 2, 'ระหว่างใช้งานยังไม่สลับข้อมูลกลางคัน');
+  await p.reload(); assert.strictEqual(await p.evaluate(() => DS.k.d.length), 3);
+  await Promise.all([p.waitForNavigation(), p.evaluate(() => lvSwitch('n5'))]);
+  assert.deepStrictEqual(await p.evaluate(() => [LV, K.length, DS.k.key, G.length >= 10]), ['n5', 105, 'kn5', true]);
+  assert(await p.evaluate(() => localStorage.getItem('kn4')), 'กลับ N5 แล้วความคืบหน้า N4 ยังอยู่');
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ระดับ N4: ถูกถอนสิทธิ์ หรือออกจากระบบ → ลบแพ็กและกลับ N5', async (b, base) => {
+  const db = mockCloud(); db.ent = ['n4']; db.packs.n4 = FAKE_PACK; const p = await cloudPage(b, base, db);
+  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await Promise.all([p.waitForNavigation(), p.evaluate(() => lvSwitch('n4'))]);
+  assert.strictEqual(await p.evaluate(() => LV), 'n4');
+  db.ent = [];
+  await Promise.all([p.waitForNavigation(), p.reload()]); await p.waitForNavigation({ timeout: 8000 });
+  await p.waitForSelector('.toast:has-text("ไม่มีสิทธิ์")', { timeout: 8000 });
+  assert.deepStrictEqual(await p.evaluate(() => [LV, localStorage.getItem('kn_pack_n4')]), ['n5', null]);
+  db.ent = ['n4']; await p.evaluate(() => packCheck());
+  await Promise.all([p.waitForNavigation(), p.evaluate(() => lvSwitch('n4'))]);
+  assert.strictEqual(await p.evaluate(() => LV), 'n4');
+  p.on('dialog', d => d.accept());
+  await p.evaluate(() => goTab('stats'));
+  await Promise.all([p.waitForNavigation(), p.locator('button:text-is("ออกจากระบบ")').click()]);
+  assert.deepStrictEqual(await p.evaluate(() => [LV, localStorage.getItem('kn_pack_n4'), localStorage.getItem('kn_packs')]), ['n5', null, null]);
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ระดับ N4: แพ็กในเครื่องเสีย → เปิดแอปเป็น N5 ไม่มี error', async (b, base) => {
+  const db = mockCloud(), ctx = await b.newContext({ serviceWorkers: 'block' }), p = await ctx.newPage(); p.errors = [];
+  p.on('pageerror', e => p.errors.push(e.message)); await db.attach(p);
+  await p.addInitScript(s => { localStorage.setItem('kn_meta', JSON.stringify(s)); localStorage.setItem('kn_level', 'n4'); localStorage.setItem('kn_pack_n4', '{"format":1,"level":"n4","version":1,"kanji":""}') }, SEED);
+  await p.goto(base);
+  assert.deepStrictEqual(await p.evaluate(() => [LV, K.length, localStorage.getItem('kn_level')]), ['n5', 105, 'n5']);
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ผู้ดูแล: เห็นส่วนอัปโหลด อัปโหลดแพ็กได้ ไฟล์ผิดถูกปฏิเสธ และผู้ใช้ทั่วไปไม่เห็น', async (b, base) => {
+  const db = mockCloud(); db.admin = true; const p = await cloudPage(b, base, db);
+  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await p.evaluate(() => render());
+  assert((await p.locator('#cloud').innerText()).includes('ผู้ดูแล'));
+  p.on('dialog', d => d.accept());
+  const f = path.join(require('os').tmpdir(), 'kn-pack-' + Date.now() + '.json'); fs.writeFileSync(f, JSON.stringify(FAKE_PACK));
+  await p.setInputFiles('#pku', f);
+  await p.waitForSelector('.toast:has-text("อัปโหลดแพ็ก N4 แล้ว")', { timeout: 8000 });
+  assert.strictEqual(db.uploads, 1); assert.deepStrictEqual(db.packs.n4, FAKE_PACK);
+  const bad = path.join(require('os').tmpdir(), 'kn-pack-bad.json'); fs.writeFileSync(bad, JSON.stringify({ ...FAKE_PACK, grammar: '' }));
+  await p.setInputFiles('#pku', bad);
+  await p.waitForSelector('.toast:has-text("ไฟล์แพ็กไม่ถูกต้อง")', { timeout: 8000 });
+  assert.strictEqual(db.uploads, 1);
+  fs.unlinkSync(f); fs.unlinkSync(bad);
+  db.admin = false; await p.evaluate(() => packCheck().then(() => render()));
+  assert(!(await p.locator('#cloud').innerText()).includes('ผู้ดูแล'));
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('schema.sql: แพ็กอ่านได้เฉพาะผู้มีสิทธิ์ เขียนได้เฉพาะผู้ดูแล และแอปเพิ่มสิทธิ์เองไม่ได้', async () => {
+  const sql = fs.readFileSync(path.join(ROOT, 'supabase/schema.sql'), 'utf8');
+  assert(/content_packs_select_entitled[\s\S]*is_admin\(\)\) or exists \([\s\S]*public\.entitlements e where e\.user_id = \(select auth\.uid\(\)\) and e\.level = content_packs\.level/.test(sql));
+  ['insert', 'update', 'delete'].forEach(op => assert(new RegExp('content_packs_' + op + '_admin" on public.content_packs for ' + op + ' to authenticated').test(sql), op));
+  assert(!/policy[^;]*on public\.entitlements for (insert|update|delete|all)/.test(sql), 'ห้ามมี policy ให้แอปเขียน entitlements');
+  assert(/grant select on public\.entitlements to authenticated;/.test(sql) && /revoke all on public\.admins from anon, authenticated;/.test(sql));
+  assert(/function public\.is_admin\(\)[\s\S]*security definer set search_path = ''/.test(sql));
 });
 
 // ---------- iPad / PWA ----------

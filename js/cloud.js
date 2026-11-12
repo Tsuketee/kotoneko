@@ -184,7 +184,7 @@ function cloudHtml() {
   if (!cloudIn()) b = `<div class="st" style="margin-bottom:6px">เข้าสู่ระบบเพื่อเก็บความคืบหน้าไว้บนคลาวด์ และใช้ต่อบนเครื่องอื่นได้</div>${cloudFormHtml()}`;
   else {
     const last = CS.last ? new Date(CS.last).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : 'ยังไม่เคย';
-    b = `<div class="mi" style="padding:0"><span class="mt" style="flex:1"><b>${esc(CS.email)}</b><div class="st">ซิงก์ล่าสุด: ${last}${navigator.onLine ? '' : ' · ออฟไลน์อยู่'}</div></span></div><div class="btns"><button${cloudBusy ? ' disabled' : ''} onclick="cloudSync(true,{loud:true}).then(r=>{if(r==='pushed'||r==='clean'||r==='empty')toast('ซิงก์แล้วค่ะ')})">${cloudBusy ? 'กำลังซิงก์…' : 'ซิงก์ตอนนี้'}</button><button class="g" onclick="cloudLogout()">ออกจากระบบ</button></div><button class="lk" style="color:var(--err)" onclick="cloudDelAsk()">ลบบัญชี</button>`;
+    b = `<div class="mi" style="padding:0"><span class="mt" style="flex:1"><b>${esc(CS.email)}</b><div class="st">ซิงก์ล่าสุด: ${last}${navigator.onLine ? '' : ' · ออฟไลน์อยู่'}</div></span></div><div class="btns"><button${cloudBusy ? ' disabled' : ''} onclick="cloudSync(true,{loud:true}).then(r=>{if(r==='pushed'||r==='clean'||r==='empty')toast('ซิงก์แล้วค่ะ')})">${cloudBusy ? 'กำลังซิงก์…' : 'ซิงก์ตอนนี้'}</button><button class="g" onclick="cloudLogout()">ออกจากระบบ</button></div><button class="lk" style="color:var(--err)" onclick="cloudDelAsk()">ลบบัญชี</button>${typeof packAdminHtml === 'function' ? packAdminHtml() : ''}`;
   }
   return `<h2>บัญชีและซิงก์</h2><div class="card" id="cloud" style="min-height:0;text-align:left;padding:14px">${b}</div>`;
 }

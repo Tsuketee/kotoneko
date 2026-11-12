@@ -50,3 +50,60 @@ end $$;
 
 revoke all on function public.delete_my_account() from public, anon;
 grant execute on function public.delete_my_account() to authenticated;
+
+-- ===== เนื้อหาเสียเงิน (N4 …) =====
+-- admins: ผู้ดูแลที่อัปโหลดแพ็กเนื้อหาได้ (เพิ่มเองใน SQL Editor เท่านั้น ไม่มีสิทธิ์จากฝั่งแอป)
+create table if not exists public.admins (
+  user_id uuid primary key references auth.users (id) on delete cascade
+);
+alter table public.admins enable row level security;   -- ไม่มี policy = แอปอ่าน/เขียนตรงไม่ได้ ใช้ผ่าน is_admin() เท่านั้น
+revoke all on public.admins from anon, authenticated;
+
+create or replace function public.is_admin() returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.admins where user_id = (select auth.uid()));
+$$;
+revoke all on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated;
+
+-- entitlements: ใครปลดล็อกระดับไหนแล้ว · ผู้ใช้อ่านได้เฉพาะของตัวเอง เพิ่ม/ลบได้จาก SQL Editor หรือฝั่งเซิร์ฟเวอร์ (webhook ชำระเงิน) เท่านั้น
+create table if not exists public.entitlements (
+  user_id    uuid not null references auth.users (id) on delete cascade,
+  level      text not null check (level ~ '^n[1-4]$'),
+  source     text not null default 'manual',   -- manual / stripe
+  created_at timestamptz not null default now(),
+  primary key (user_id, level)
+);
+alter table public.entitlements enable row level security;
+drop policy if exists "entitlements_select_own" on public.entitlements;
+create policy "entitlements_select_own" on public.entitlements for select to authenticated
+  using ((select auth.uid()) = user_id or (select public.is_admin()));
+revoke all on public.entitlements from anon, authenticated;
+grant select on public.entitlements to authenticated;
+
+-- content_packs: แพ็กเนื้อหาแต่ละระดับ (ไฟล์ packs/<ระดับ>.json จาก repo เนื้อหาแบบ private)
+-- อ่านได้เฉพาะผู้มีสิทธิ์ระดับนั้น หรือผู้ดูแล · เขียนได้เฉพาะผู้ดูแล
+create table if not exists public.content_packs (
+  level      text primary key check (level ~ '^n[1-4]$'),
+  version    bigint not null,
+  data       jsonb not null,
+  updated_at timestamptz not null default now(),
+  constraint content_packs_size check (pg_column_size(data) < 5000000)
+);
+alter table public.content_packs enable row level security;
+drop policy if exists "content_packs_select_entitled" on public.content_packs;
+drop policy if exists "content_packs_insert_admin" on public.content_packs;
+drop policy if exists "content_packs_update_admin" on public.content_packs;
+drop policy if exists "content_packs_delete_admin" on public.content_packs;
+create policy "content_packs_select_entitled" on public.content_packs for select to authenticated
+  using ((select public.is_admin()) or exists (
+    select 1 from public.entitlements e where e.user_id = (select auth.uid()) and e.level = content_packs.level));
+create policy "content_packs_insert_admin" on public.content_packs for insert to authenticated with check ((select public.is_admin()));
+create policy "content_packs_update_admin" on public.content_packs for update to authenticated using ((select public.is_admin())) with check ((select public.is_admin()));
+create policy "content_packs_delete_admin" on public.content_packs for delete to authenticated using ((select public.is_admin()));
+revoke all on public.content_packs from anon, authenticated;
+grant select, insert, update, delete on public.content_packs to authenticated;
+
+drop trigger if exists content_packs_touch on public.content_packs;
+create trigger content_packs_touch before insert or update on public.content_packs
+  for each row execute function public.progress_touch();
