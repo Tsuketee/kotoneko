@@ -405,7 +405,12 @@ async function login(p, code = '123456') {
 }
 
 test('ซิงก์: ไม่ได้ตั้งค่าคลาวด์ ซ่อนส่วนบัญชีทั้งหมด และ sw ไม่แคชคำขอข้ามโดเมน', async (b, base) => {
-  const p = await fresh(b, base);
+  const ctx = await b.newContext({ viewport: { width: 820, height: 1100 }, serviceWorkers: 'block' });
+  await ctx.route('**/js/data/cloud-config.js', r => r.fulfill({ contentType: 'text/javascript', body: "const CLOUD={url:'',key:''};" }));
+  const p = await ctx.newPage(); p.errors = [];
+  p.on('pageerror', e => p.errors.push(e.message));
+  await p.addInitScript(s => localStorage.setItem('kn_meta', JSON.stringify(s)), SEED);
+  await p.goto(base);
   await p.evaluate(() => goTab('stats'));
   assert.strictEqual(await p.locator('#cloud').count(), 0);
   assert(!(await p.locator('#app').innerText()).includes('บัญชีและซิงก์'));

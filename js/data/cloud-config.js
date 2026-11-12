@@ -2,4 +2,4 @@
 // url = Project URL, key = anon (public) key ทั้งสองค่าเป็นข้อมูลสาธารณะ ใส่ในโค้ดได้
 // ความปลอดภัยของข้อมูลมาจาก Row Level Security ใน supabase/schema.sql (แต่ละคนเห็นแค่ข้อมูลของตัวเอง)
 // ถ้าเว้นว่างไว้ แอปจะซ่อนส่วนบัญชีทั้งหมด และทำงานแบบเก็บในเครื่องอย่างเดียวเหมือนเดิม
-const CLOUD = { url: '', key: '' };
+const CLOUD = { url: 'https://ppdilnghueuuceldpfli.supabase.co', key: 'sb_publishable_29o72eY0tBofeMV9HqDZHw_lVcN2wVV' };
