@@ -141,6 +141,31 @@ async function cloudLogout() {
   const at = CS.at; cloudForget(); render();
   try { await fetch(CLOUD.url.replace(/\/$/, '') + '/auth/v1/logout', { method: 'POST', headers: { apikey: CLOUD.key, Authorization: 'Bearer ' + at } }) } catch (e) {}
 }
+// ลบบัญชี: เรียกฟังก์ชัน delete_my_account (ดู supabase/schema.sql) ข้อมูลในเครื่องนี้ไม่ถูกลบ
+let cloudDeleting = false;
+function cloudDelAsk() {
+  if (cloudDeleting || document.querySelector('.cov')) return;
+  const o = document.createElement('div'); o.className = 'cov';
+  o.innerHTML = `<div class="cdl" role="dialog" aria-modal="true"><h2 style="margin-top:0">ลบบัญชีถาวร?</h2><div class="st" style="line-height:1.7">บัญชี <b>${esc(CS.email)}</b> และความคืบหน้าที่ซิงก์ไว้บนคลาวด์จะถูกลบทันที <b>กู้คืนไม่ได้</b><br>ความคืบหน้าในเครื่องนี้ยังอยู่ และใช้งานต่อแบบไม่มีบัญชีได้ (แนะนำให้กด "ส่งออก" สำรองไว้ก่อน)</div><div class="btns"><button data-p="no">ยกเลิก</button><button data-p="yes" style="background:var(--err)">ลบบัญชีถาวร</button></div></div>`;
+  o.querySelectorAll('button').forEach(x => x.onclick = () => { if (x.dataset.p === 'yes') { x.disabled = true; x.textContent = 'กำลังลบ…'; cloudDelete(o) } else o.remove() });
+  document.body.appendChild(o);
+}
+async function cloudDelete(o) {
+  cloudDeleting = true;
+  try {
+    if (cloudBusy) await cloudBusy.catch(() => {}); // รอซิงก์ที่ค้างอยู่ให้จบก่อน
+    await cloudToken();
+    await sb('/rest/v1/rpc/delete_my_account', { method: 'POST', body: {} });
+    const at = CS.at; cloudForget();
+    try { await fetch(CLOUD.url.replace(/\/$/, '') + '/auth/v1/logout', { method: 'POST', headers: { apikey: CLOUD.key, Authorization: 'Bearer ' + at } }) } catch (e) {}
+    o.remove(); CU = { step: 'email', email: '', busy: false, err: '' };
+    toast('ลบบัญชีแล้วค่ะ'); render();
+  } catch (e) {
+    o.remove();
+    toast(e.status === 404 || e.code === 'PGRST202' ? 'ยังลบไม่ได้: เซิร์ฟเวอร์ยังไม่ได้ติดตั้งฟังก์ชันลบบัญชี' : 'ลบบัญชีไม่สำเร็จ: ' + e.message);
+  }
+  cloudDeleting = false;
+}
 const cloudBack = () => { CU = { ...CU, step: 'email', err: '' }; render() };
 
 // ---------- หน้าจอ ----------
@@ -159,7 +184,7 @@ function cloudHtml() {
   if (!cloudIn()) b = `<div class="st" style="margin-bottom:6px">เข้าสู่ระบบเพื่อเก็บความคืบหน้าไว้บนคลาวด์ และใช้ต่อบนเครื่องอื่นได้</div>${cloudFormHtml()}`;
   else {
     const last = CS.last ? new Date(CS.last).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : 'ยังไม่เคย';
-    b = `<div class="mi" style="padding:0"><span class="mt" style="flex:1"><b>${esc(CS.email)}</b><div class="st">ซิงก์ล่าสุด: ${last}${navigator.onLine ? '' : ' · ออฟไลน์อยู่'}</div></span></div><div class="btns"><button${cloudBusy ? ' disabled' : ''} onclick="cloudSync(true,{loud:true}).then(r=>{if(r==='pushed'||r==='clean'||r==='empty')toast('ซิงก์แล้วค่ะ')})">${cloudBusy ? 'กำลังซิงก์…' : 'ซิงก์ตอนนี้'}</button><button class="g" onclick="cloudLogout()">ออกจากระบบ</button></div>`;
+    b = `<div class="mi" style="padding:0"><span class="mt" style="flex:1"><b>${esc(CS.email)}</b><div class="st">ซิงก์ล่าสุด: ${last}${navigator.onLine ? '' : ' · ออฟไลน์อยู่'}</div></span></div><div class="btns"><button${cloudBusy ? ' disabled' : ''} onclick="cloudSync(true,{loud:true}).then(r=>{if(r==='pushed'||r==='clean'||r==='empty')toast('ซิงก์แล้วค่ะ')})">${cloudBusy ? 'กำลังซิงก์…' : 'ซิงก์ตอนนี้'}</button><button class="g" onclick="cloudLogout()">ออกจากระบบ</button></div><button class="lk" style="color:var(--err)" onclick="cloudDelAsk()">ลบบัญชี</button>`;
   }
   return `<h2>บัญชีและซิงก์</h2><div class="card" id="cloud" style="min-height:0;text-align:left;padding:14px">${b}</div>`;
 }

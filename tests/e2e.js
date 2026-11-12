@@ -371,6 +371,11 @@ function mockCloud() {
     if (u.pathname === '/auth/v1/otp') return json(route, 200, {});
     if (u.pathname === '/auth/v1/verify') return body.token === '123456' ? json(route, 200, tok()) : json(route, 403, { msg: 'Token has expired or is invalid' });
     if (u.pathname === '/auth/v1/token') return body.refresh_token ? json(route, 200, tok()) : json(route, 400, { msg: 'bad' });
+    if (u.pathname === '/rest/v1/rpc/delete_my_account') {
+      if (db.noRpc) return json(route, 404, { code: 'PGRST202', message: 'Could not find the function' });
+      if (q.headers().authorization !== 'Bearer at' + db.n) return json(route, 401, { message: 'JWT expired' });
+      db.row = null; db.deleted = true; return route.fulfill({ status: 204, headers: cors });
+    }
     if (u.pathname === '/auth/v1/logout') return route.fulfill({ status: 204, headers: cors });
     if (u.pathname === '/rest/v1/progress') {
       if (q.headers().authorization !== 'Bearer at' + db.n) return json(route, 401, { message: 'JWT expired' });
@@ -514,6 +519,41 @@ test('นโยบายความเป็นส่วนตัว: เปิ
   assert(fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8').includes("'terms.html'"), 'sw.js ต้องแคช terms.html');
   await p.goto(base + 'privacy.html');
   for (const w of [390, 820]) { await p.setViewportSize({ width: w, height: 900 }); assert(await p.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 0, 'เกินจอ ' + w); }
+});
+
+test('ลบบัญชี: ยกเลิกไม่ลบ, เซิร์ฟเวอร์ยังไม่มีฟังก์ชันแจ้งชัด, ลบสำเร็จแล้วออกจากระบบแต่ข้อมูลในเครื่องอยู่', async (b, base) => {
+  const db = mockCloud(), p = await cloudPage(b, base, db);
+  await p.evaluate(() => { localStorage.setItem('kw1', JSON.stringify({ 'テスト': { b: 4, w: 0, d: 1 } })); goTab('stats'); });
+  await login(p); await p.waitForSelector('button:text-is("ลบบัญชี")'); await p.waitForFunction(() => !cloudBusy);
+  assert(db.row);
+  await p.locator('button:text-is("ลบบัญชี")').click();
+  await p.waitForSelector('.cov'); assert((await p.locator('.cov').innerText()).includes('กู้คืนไม่ได้'));
+  await p.locator('.cov button:text-is("ยกเลิก")').click();
+  assert.strictEqual(await p.locator('.cov').count(), 0); assert(db.row && !db.deleted);
+  db.noRpc = true;
+  await p.locator('button:text-is("ลบบัญชี")').click(); await p.locator('.cov button:text-is("ลบบัญชีถาวร")').click();
+  await p.waitForFunction(() => !document.querySelector('.cov'));
+  await p.waitForSelector('.toast:has-text("ยังไม่ได้ติดตั้งฟังก์ชัน")', { timeout: 8000 });
+  assert(db.row && await p.evaluate(() => cloudIn()), 'ลบไม่สำเร็จต้องยังเข้าสู่ระบบอยู่');
+  db.noRpc = false;
+  await p.locator('button:text-is("ลบบัญชี")').click(); await p.locator('.cov button:text-is("ลบบัญชีถาวร")').click();
+  await p.waitForSelector('#cem');
+  assert(db.deleted && db.row === null);
+  assert.strictEqual(await p.evaluate(() => localStorage.getItem('kn_cloud')), '{}');
+  assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kw1'))['テスト'].b), 4, 'ข้อมูลในเครื่องต้องอยู่');
+  assert.strictEqual(await p.evaluate(() => cloudSync(true)), 'skip');
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('เอกสารกฎหมาย: ใส่อีเมลติดต่อแล้ว ไม่มีช่องว่างค้าง และ schema.sql มีฟังก์ชันลบบัญชีที่จำกัดสิทธิ์', async () => {
+  for (const f of ['privacy.html', 'terms.html']) {
+    const h = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    assert(!h.includes('[ใส่'), f + ' ยังมีช่องที่ต้องกรอก'); assert(h.includes('mailto:tukdanainn@gmail.com'), f + ' ขออีเมลติดต่อ');
+  }
+  const sql = fs.readFileSync(path.join(ROOT, 'supabase/schema.sql'), 'utf8');
+  assert(/function public\.delete_my_account\(\)[\s\S]*security definer[\s\S]*set search_path = ''/.test(sql));
+  assert(sql.includes('revoke all on function public.delete_my_account() from public, anon') && sql.includes('grant execute on function public.delete_my_account() to authenticated'));
+  assert(sql.includes("delete from auth.users where id = (select auth.uid())"));
 });
 
 // ---------- iPad / PWA ----------
