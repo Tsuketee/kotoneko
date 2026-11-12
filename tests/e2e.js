@@ -360,7 +360,7 @@ test('ส่งออก/นำเข้า: ข้อมูลกลับม�
 // ---------- บัญชีและซิงก์คลาวด์ (จำลอง Supabase ไม่ต่อเน็ตจริง) ----------
 // เซิร์ฟเวอร์จำลองใช้ร่วมกันหลายเครื่อง (หลาย browser context) เพื่อทดสอบการซิงก์ข้ามเครื่อง
 function mockCloud() {
-  const db = { row: null, calls: [], n: 0, ent: [], packs: {}, admin: false, uploads: 0 };
+  const db = { row: null, calls: [], n: 0, ent: [], packs: {}, admin: false, uploads: 0, price: null, checkouts: [] };
   const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS' };
   const json = (route, status, body) => route.fulfill({ status, headers: { ...cors, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const tok = () => ({ access_token: 'at' + (++db.n), refresh_token: 'rt' + db.n, expires_in: 3600, user: { id: 'u1', email: 'a@b.co' } });
@@ -377,6 +377,14 @@ function mockCloud() {
       db.row = null; db.deleted = true; return route.fulfill({ status: 204, headers: cors });
     }
     if (u.pathname === '/auth/v1/logout') return route.fulfill({ status: 204, headers: cors });
+    // ----- Edge Function ชำระเงิน (จำลองพฤติกรรมของ supabase/functions/checkout) -----
+    if (u.pathname === '/functions/v1/checkout') {
+      if (!db.price) return json(route, 404, { error: 'not for sale' });
+      if (body.action === 'price') return json(route, 200, { level: body.level, ...db.price });
+      if (q.headers().authorization !== 'Bearer at' + db.n) return json(route, 401, { error: 'login' });
+      if (db.ent.includes(body.level)) return json(route, 409, { error: 'owned' });
+      db.checkouts.push(body.level); return json(route, 200, { url: 'https://checkout.stripe.com/c/pay/cs_test_1' });
+    }
     // ----- เนื้อหาเสียเงิน -----
     const authed = q.headers().authorization === 'Bearer at' + db.n;
     if (u.pathname.startsWith('/rest/v1/') && u.pathname !== '/rest/v1/progress' && u.pathname !== '/rest/v1/rpc/delete_my_account' && !authed) return json(route, 401, { message: 'JWT expired' });
@@ -713,6 +721,69 @@ test('ผู้ดูแล: เห็นส่วนอัปโหลด อ�
   db.admin = false; await p.evaluate(() => packCheck().then(() => render()));
   assert(!(await p.locator('#cloud').innerText()).includes('ผู้ดูแล'));
   assert.deepStrictEqual(p.errors, []);
+});
+
+// ---------- ซื้อด้วย Stripe Checkout (จำลอง Edge Function และหน้า Stripe ไม่จ่ายเงินจริง) ----------
+test('ซื้อ N4: เห็นราคา → หน้าต่างยืนยัน → ไปหน้า Stripe → กลับมา ?paid=n4 แล้วรอ webhook จนปลดล็อก', async (b, base) => {
+  const db = mockCloud(); db.packs.n4 = FAKE_PACK; db.price = { amount: 39000, currency: 'thb' };
+  const p = await cloudPage(b, base, db);
+  await p.context().route('https://checkout.stripe.com/**', r => r.fulfill({ contentType: 'text/html', body: '<title>stripe</title>หน้าชำระเงินจำลอง' }));
+  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  const h = await home(p);
+  assert(h.includes('แตะเพื่อปลดล็อก') && h.includes('390') && !h.includes('เปิดขายเร็วๆ นี้'), h.slice(-300));
+  await p.locator('.pc.lk0:has-text("N4")').click();
+  const dlg = await p.locator('.cdl').innerText();
+  assert(dlg.includes('ปลดล็อก N4') && dlg.includes('390') && dlg.includes('ซื้อครั้งเดียว') && dlg.includes('a@b.co'), dlg);
+  await p.locator('button:text-is("ไว้ก่อน")').click();
+  assert.strictEqual(await p.locator('.cov').count(), 0); assert.deepStrictEqual(db.checkouts, []);
+  await p.locator('.pc.lk0:has-text("N4")').click();
+  await Promise.all([p.waitForURL('https://checkout.stripe.com/**'), p.locator('button:text-is("ไปหน้าชำระเงิน")').click()]);
+  assert.deepStrictEqual(db.checkouts, ['n4']);
+  // จ่ายแล้วกลับมา: webhook มาช้ากว่าเล็กน้อย แอปต้องตรวจซ้ำจนเห็นสิทธิ์
+  setTimeout(() => { db.ent = ['n4'] }, 2500);
+  await p.goto(base + '?paid=n4');
+  assert.strictEqual(new URL(p.url()).search, '', 'ลบ ?paid ออกจากแถบที่อยู่');
+  await p.waitForSelector('.toast:has-text("ปลดล็อก N4 แล้ว")', { timeout: 12000 });
+  assert.strictEqual(await p.evaluate(() => PS.buy), undefined);
+  assert((await home(p)).includes('ปลดล็อกแล้ว'));
+  await Promise.all([p.waitForNavigation(), p.locator('.pc:has-text("ปลดล็อกแล้ว")').click()]);
+  assert.strictEqual(await p.evaluate(() => LV), 'n4');
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ซื้อ N4: ยกเลิกที่หน้า Stripe · มีสิทธิ์แล้วไม่ให้จ่ายซ้ำ · ยังไม่เปิดขายไม่แสดงราคา · ลบบัญชีเตือนว่าสิทธิ์จะหาย', async (b, base) => {
+  const db = mockCloud(); db.packs.n4 = FAKE_PACK; db.price = { amount: 39000, currency: 'thb' };
+  const p = await cloudPage(b, base, db);
+  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await p.goto(base + '?buy=cancel');
+  await p.waitForSelector('.toast:has-text("ยกเลิกการชำระเงินแล้ว")');
+  assert.strictEqual(new URL(p.url()).search, '');
+  // ระหว่างนั้นได้สิทธิ์จากเครื่องอื่นแล้ว แต่เครื่องนี้ยังไม่รู้ → เซิร์ฟเวอร์ตอบ 409 แอปต้องไม่พาไปจ่าย
+  await p.waitForFunction(() => PS.t && !cloudBusy); db.ent = ['n4'];
+  await p.evaluate(() => lvLocked('n4')); await p.locator('button:text-is("ไปหน้าชำระเงิน")').click();
+  await p.waitForSelector('.toast:has-text("ปลดล็อก N4 อยู่แล้ว")');
+  assert.deepStrictEqual(db.checkouts, []);
+  assert((await home(p)).includes('ปลดล็อกแล้ว'));
+  await p.evaluate(() => { goTab('stats'); cloudDelAsk() });
+  assert((await p.locator('.cdl').innerText()).includes('ระดับที่ปลดล็อกไว้ (N4)'));
+  await p.locator('button:text-is("ยกเลิก")').click();
+  // ยังไม่เปิดขาย (ไม่มีราคา) → ข้อความเดิม
+  db.ent = []; db.price = null; await p.evaluate(() => packCheck());
+  assert((await home(p)).includes('เปิดขายเร็วๆ นี้'));
+  await p.evaluate(() => lvLocked('n4'));
+  await p.waitForSelector('.toast:has-text("ระบบซื้อกำลังจะเปิด")');
+  assert.strictEqual(await p.locator('.cov').count(), 0);
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ซื้อ: Edge Function และ schema ปลอดภัย (ไม่มีความลับในโค้ด purchases แอปเข้าไม่ได้ webhook ตรวจลายเซ็น)', async () => {
+  const sql = fs.readFileSync(path.join(ROOT, 'supabase/schema.sql'), 'utf8');
+  assert(/alter table public\.purchases enable row level security;/.test(sql) && /revoke all on public\.purchases from anon, authenticated;/.test(sql));
+  assert(!/policy[^;]*on public\.purchases/.test(sql), 'ห้ามมี policy ให้แอปอ่าน/เขียน purchases');
+  const wh = fs.readFileSync(path.join(ROOT, 'supabase/functions/stripe-webhook/index.ts'), 'utf8'), co = fs.readFileSync(path.join(ROOT, 'supabase/functions/checkout/index.ts'), 'utf8');
+  assert(/verify\(body, req\.headers\.get\('stripe-signature'\)/.test(wh));
+  for (const t of [wh, co, fs.readFileSync(path.join(ROOT, 'js/packs.js'), 'utf8'), fs.readFileSync(path.join(ROOT, 'js/data/cloud-config.js'), 'utf8')])
+    assert(!/sk_(live|test)_[0-9A-Za-z]{10,}|whsec_[0-9A-Za-z]{10,}/.test(t), 'พบคีย์ลับในโค้ด');
 });
 
 test('schema.sql: แพ็กอ่านได้เฉพาะผู้มีสิทธิ์ เขียนได้เฉพาะผู้ดูแล และแอปเพิ่มสิทธิ์เองไม่ได้', async () => {

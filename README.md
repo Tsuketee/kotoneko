@@ -35,8 +35,9 @@ js/pet.js               สัตว์เลี้ยงและการต�
 js/grammar.js           ไวยากรณ์: รายการบท บทเรียน แบบฝึกหัด
 js/stats.js             สถิติ เครดิต ส่งออก/นำเข้า
 js/cloud.js             บัญชีผู้ใช้และซิงก์คลาวด์ (Supabase)
-js/packs.js             ตรวจสิทธิ์ ดาวน์โหลดแพ็กเนื้อหาเสียเงิน สลับระดับ และอัปโหลดของผู้ดูแล
+js/packs.js             ตรวจสิทธิ์ ดาวน์โหลดแพ็กเนื้อหาเสียเงิน สลับระดับ ปุ่มซื้อ และอัปโหลดของผู้ดูแล
 supabase/schema.sql     ตารางและสิทธิ์ในฐานข้อมูล (ดู docs/CLOUD.md)
+supabase/functions/     Edge Function ชำระเงิน Stripe: checkout, stripe-webhook (ดู docs/PAYMENT.md)
 js/main.js              จุดเริ่มต้นแอป (ต้องโหลดท้ายสุด)
 sw.js, manifest.webmanifest, icons/   ส่วนของ PWA (ใช้ออฟไลน์ และเพิ่มลงหน้าจอโฮม)
 docs/ROADMAP.md         รายการงานที่จะทำต่อ
@@ -64,7 +65,7 @@ repo นี้เป็น public จึงใช้ GitHub Pages ได้ฟ�
 ทุกครั้งที่แก้ไฟล์ ให้เพิ่มเลข `VERSION` ใน `sw.js` ไม่งั้นเครื่องที่เคยเปิดแอปแล้วจะยังเห็นไฟล์เก่า
 
 ## ทดสอบ
-ชุดทดสอบอัตโนมัติ 31 ข้อ (ข้อมูล, การใช้งานหลัก, ส่งออก/นำเข้า, ซิงก์คลาวด์ด้วย Supabase จำลอง, iPad แนวตั้ง/นอน, PWA ออฟไลน์) ใช้ Playwright เปิด Chromium จริง
+ชุดทดสอบอัตโนมัติ 2 ชุด: `tests/payment.mjs` 11 ข้อ (Edge Function ชำระเงิน กับ Stripe/Supabase จำลอง ต้องใช้ Node 22.18 ขึ้นไป) และ `tests/e2e.js` 36 ข้อ (ข้อมูล, การใช้งานหลัก, ส่งออก/นำเข้า, ซิงก์คลาวด์ด้วย Supabase จำลอง, แพ็กเสียเงินและการซื้อ, iPad แนวตั้ง/นอน, PWA ออฟไลน์) ใช้ Playwright เปิด Chromium จริง
 ```
 npm install
 npx playwright install chromium   # ครั้งแรกครั้งเดียว

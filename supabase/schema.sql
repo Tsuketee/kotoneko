@@ -107,3 +107,26 @@ grant select, insert, update, delete on public.content_packs to authenticated;
 drop trigger if exists content_packs_touch on public.content_packs;
 create trigger content_packs_touch before insert or update on public.content_packs
   for each row execute function public.progress_touch();
+
+-- ===== การชำระเงิน (Stripe) =====
+-- purchases: บันทึกการซื้อจาก Stripe Checkout (เขียนโดย Edge Function stripe-webhook ด้วย service role เท่านั้น ดู docs/PAYMENT.md)
+-- ใช้หาว่าการคืนเงิน (charge.refunded) เป็นของใคร ระดับไหน · แอปอ่าน/เขียนตารางนี้ไม่ได้เลย (ไม่มี policy)
+create table if not exists public.purchases (
+  session_id     text primary key,                                           -- cs_… ของ Stripe
+  user_id        uuid references auth.users (id) on delete set null,         -- ลบบัญชีแล้วยังเก็บประวัติการเงินไว้
+  level          text not null check (level ~ '^n[1-4]$'),
+  status         text not null,                                              -- paid / pending / failed / refunded / paid_no_user
+  payment_intent text,
+  amount         bigint,                                                     -- หน่วยย่อยของสกุลเงิน (สตางค์)
+  currency       text,
+  livemode       boolean not null default false,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+create index if not exists purchases_payment_intent on public.purchases (payment_intent);
+alter table public.purchases enable row level security;
+revoke all on public.purchases from anon, authenticated;
+
+drop trigger if exists purchases_touch on public.purchases;
+create trigger purchases_touch before update on public.purchases
+  for each row execute function public.progress_touch();

@@ -1,6 +1,6 @@
 // Service worker: ทำให้แอปเปิดได้ตอนออฟไลน์
 // ⚠️ ทุกครั้งที่แก้ไฟล์แล้วจะปล่อยเวอร์ชันใหม่ ให้เพิ่มเลข VERSION ไม่งั้นเครื่องผู้ใช้จะยังเห็นไฟล์เก่า
-const VERSION = 'v28';
+const VERSION = 'v29';
 const CACHE = 'kotoneko-' + VERSION;
 const FILES = [
   './',
@@ -54,5 +54,6 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (new URL(e.request.url).origin !== location.origin) return; // คำขอไปคลาวด์ (Supabase) ห้ามแคช ให้ไปเน็ตตรงๆ
-  e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request)));
+  // หน้าแอปที่มี ?… ต่อท้าย (เช่นกลับจากหน้าชำระเงิน ?paid=n4) ใช้ index.html ตัวเดียวกันในแคช
+  e.respondWith(caches.match(e.request, { ignoreSearch: e.request.mode === 'navigate' }).then(hit => hit || fetch(e.request)));
 });

@@ -1,5 +1,7 @@
 // แพ็กเนื้อหาเสียเงิน: ตรวจสิทธิ์ ดาวน์โหลด สลับระดับ และหน้าอัปโหลดของผู้ดูแล (ข้อมูลอยู่ใน Supabase ตาราง entitlements / content_packs ดู supabase/schema.sql)
-// สถานะล่าสุดจากเซิร์ฟเวอร์เก็บใน localStorage key 'kn_packs' = {ent:[ระดับที่มีสิทธิ์], ver:{ระดับ:เวอร์ชันบนเซิร์ฟเวอร์}, admin:bool, t:เวลาที่ตรวจ}
+// สถานะล่าสุดจากเซิร์ฟเวอร์เก็บใน localStorage key 'kn_packs' = {ent:[ระดับที่มีสิทธิ์], ver:{ระดับ:เวอร์ชันบนเซิร์ฟเวอร์}, admin:bool, t:เวลาที่ตรวจ,
+//   price:{ระดับ:{amount,currency}} (ระดับที่เปิดขายแล้ว), buy:{l,t} (กำลังไปจ่ายเงิน)}
+// การซื้อ: Edge Function 'checkout' สร้างหน้าชำระเงิน Stripe → 'stripe-webhook' เพิ่มสิทธิ์ใน entitlements (ดู docs/PAYMENT.md)
 const PSK = 'kn_packs';
 let PS = {}; try { PS = JSON.parse(localStorage.getItem(PSK) || '{}') } catch (e) { PS = {} }
 const psave = () => { try { localStorage.setItem(PSK, JSON.stringify(PS)) } catch (e) {} };
@@ -16,7 +18,7 @@ function lvCard(l) {
   const L = LEVELS[l];
   if (l === 'n5') return `<div class="pc" onclick="lvSwitch('n5')"><div class="pb"><b>N5</b><div class="st">แตะเพื่อกลับไปเรียน N5 · ความคืบหน้าแต่ละระดับเก็บแยกกัน</div></div><div class="pg2">${L.g}</div></div>`;
   if (PAID.includes(l) && packReady(l)) return `<div class="pc" onclick="lvSwitch('${l}')"><div class="pb"><b>${L.n}</b><span class="bd b3">ปลดล็อกแล้ว</span><div class="st">แตะเพื่อเปลี่ยนไปเรียน ${L.n}</div></div><div class="pg2">${L.g}</div></div>`;
-  const s = !PAID.includes(l) || !cloudOn() ? 'เนื้อหากำลังมา' : !cloudIn() ? 'เนื้อหาเสียเงิน · เข้าสู่ระบบเพื่อตรวจสิทธิ์' : packWait(l) ? 'ปลดล็อกแล้ว · เนื้อหายังไม่พร้อม รออัปเดตสักครู่นะคะ' : 'เนื้อหาเสียเงิน · เปิดขายเร็วๆ นี้';
+  const s = !PAID.includes(l) || !cloudOn() ? 'เนื้อหากำลังมา' : !cloudIn() ? 'เนื้อหาเสียเงิน · เข้าสู่ระบบเพื่อตรวจสิทธิ์' : packWait(l) ? 'ปลดล็อกแล้ว · เนื้อหายังไม่พร้อม รออัปเดตสักครู่นะคะ' : buyPrice(l) ? 'แตะเพื่อปลดล็อก · ' + buyPrice(l) + ' ซื้อครั้งเดียว' : 'เนื้อหาเสียเงิน · เปิดขายเร็วๆ นี้';
   return `<div class="pc lk0" onclick="lvLocked('${l}')"><div class="pn">${icx('lock', 16)}</div><div class="pb"><b>${L.n}</b><div class="st">${s}</div></div><div class="pg2">${L.g}</div></div>`;
 }
 function lvLocked(l) {
@@ -24,6 +26,7 @@ function lvLocked(l) {
   if (!PAID.includes(l) || !cloudOn()) return toast(n + ' กำลังเตรียมเนื้อหาอยู่ค่ะ');
   if (!cloudIn()) { tab = 'stats'; render(); setTimeout(() => { const c = document.getElementById('cloud'); if (c) c.scrollIntoView({ block: 'center' }) }, 50); return toast('เข้าสู่ระบบก่อนนะคะ แล้วระบบจะตรวจสิทธิ์ ' + n + ' ให้') }
   if (packWait(l)) return toast('บัญชีนี้ปลดล็อก ' + n + ' แล้ว แต่เนื้อหายังไม่พร้อมบนเซิร์ฟเวอร์ ลองใหม่ภายหลังนะคะ');
+  if (buyPrice(l)) return buyAsk(l);
   toast('บัญชีนี้ยังไม่ได้ปลดล็อก ' + n + ' ค่ะ ระบบซื้อกำลังจะเปิดเร็วๆ นี้');
 }
 let lvBusy = false;
@@ -55,8 +58,12 @@ async function packCheck() {
     const ent = (await sb('/rest/v1/entitlements?select=level')).map(r => r.level);
     const ver = {}; (await sb('/rest/v1/content_packs?select=level,version')).forEach(r => ver[r.level] = r.version);
     let admin = false; try { admin = (await sb('/rest/v1/rpc/is_admin', { method: 'POST', body: {} })) === true } catch (e) {}
-    const before = JSON.stringify([PS.ent, PS.admin]);
-    PS = { ent, ver, admin, t: Date.now() }; psave();
+    const price = {};   // ราคามาจาก Stripe ผ่าน Edge Function ระดับที่ยังไม่เปิดขาย (หรือยังไม่ติดตั้งฟังก์ชัน) จะไม่มีราคา
+    for (const l of PAID) if (!ent.includes(l)) { try { const r = await sb(FN, { method: 'POST', body: { action: 'price', level: l } }); if (r && r.amount > 0) price[l] = { amount: r.amount, currency: r.currency } } catch (e) {} }
+    const before = JSON.stringify([PS.ent, PS.admin, PS.price]);
+    PS = { ent, ver, admin, price, buy: PS.buy, t: Date.now() };
+    if (PS.buy && (ent.includes(PS.buy.l) || Date.now() - PS.buy.t > 864e5)) delete PS.buy;
+    psave();
     for (const l of PAID) {
       const p = packLocal(l), allowed = ent.includes(l) || (admin && ver[l]);
       if (p && !allowed) {   // ถูกถอนสิทธิ์: ลบแพ็กออกจากเครื่อง
@@ -66,7 +73,7 @@ async function packCheck() {
         try { await packFetch(l); if (LV === l) toast('อัปเดตเนื้อหา ' + LEVELS[l].n + ' แล้ว จะใช้เมื่อเปิดแอปครั้งถัดไปค่ะ') } catch (e) {}
       }
     }
-    if (before !== JSON.stringify([PS.ent, PS.admin]) && (tab === 'home' || tab === 'stats') && !document.querySelector('.cov')) render();
+    if (before !== JSON.stringify([PS.ent, PS.admin, PS.price]) && (tab === 'home' || tab === 'stats') && !document.querySelector('.cov')) render();
   } catch (e) {}
 }
 // ออกจากระบบ / ลบบัญชี / การเข้าสู่ระบบหมดอายุ: แพ็กผูกกับบัญชี จึงลบออกจากเครื่องและกลับไป N5
@@ -103,7 +110,55 @@ function packUpload(el) {
   r.onerror = () => toast('อ่านไฟล์ไม่สำเร็จ'); r.readAsText(f);
 }
 
+// ---------- ซื้อ (Stripe Checkout) ----------
+const FN = '/functions/v1/checkout';
+const ZERO_DEC = ['jpy', 'krw', 'vnd'];   // สกุลเงินที่ Stripe ไม่มีหน่วยย่อย
+function buyPrice(l) {
+  const p = (PS.price || {})[l]; if (!p) return '';
+  const c = String(p.currency || 'thb').toUpperCase(), a = ZERO_DEC.includes(p.currency) ? p.amount : p.amount / 100;
+  try { return new Intl.NumberFormat('th-TH', { style: 'currency', currency: c, maximumFractionDigits: a % 1 ? 2 : 0 }).format(a) } catch (e) { return a + ' ' + c }
+}
+function buyAsk(l) {
+  if (document.querySelector('.cov')) return;
+  const n = LEVELS[l].n, o = document.createElement('div'); o.className = 'cov';
+  o.innerHTML = `<div class="cdl" role="dialog" aria-modal="true"><h2 style="margin-top:0">ปลดล็อก ${n}</h2><div style="font-size:28px;font-weight:700;color:var(--ac)">${buyPrice(l)}</div><div class="st" style="line-height:1.7;margin-top:6px">คันจิ คำศัพท์ ไวยากรณ์ และบทสนทนาระดับ ${n} ทั้งหมด<br><b>ซื้อครั้งเดียว ไม่มีค่ารายเดือน</b> ผูกกับบัญชี <b>${esc(CS.email)}</b> เข้าสู่ระบบบัญชีนี้บนเครื่องไหนก็เรียนได้<br>ชำระเงินผ่าน Stripe (บัตร หรือ PromptPay) แอปไม่เห็นและไม่เก็บข้อมูลบัตร</div><div class="st" style="margin-top:8px">การซื้อถือว่ายอมรับ<a href="terms.html" target="_blank" rel="noopener" style="color:var(--ac)">ข้อกำหนดการใช้งาน</a> (รวมเงื่อนไขการคืนเงิน)</div><div class="btns" style="margin-top:12px"><button data-p="go">ไปหน้าชำระเงิน</button><button data-p="no" class="g">ไว้ก่อน</button></div></div>`;
+  o.querySelectorAll('button').forEach(x => x.onclick = () => { if (x.dataset.p === 'go') { x.disabled = true; x.textContent = 'กำลังเปิดหน้าชำระเงิน…'; buyGo(l, o) } else o.remove() });
+  document.body.appendChild(o);
+}
+async function buyGo(l, o) {
+  try {
+    await cloudToken();
+    const r = await sb(FN, { method: 'POST', body: { action: 'checkout', level: l } });
+    if (!r || !/^https:\/\/checkout\.stripe\.com\//.test(r.url)) throw new Error('ไม่ได้รับลิงก์ชำระเงิน');
+    PS.buy = { l, t: Date.now() }; psave();
+    location.href = r.url;   // ไปหน้าของ Stripe จ่ายเสร็จจะกลับมาที่ ?paid=<ระดับ>
+  } catch (e) {
+    o.remove();
+    if (e.status === 409) { await packCheck(); return toast('บัญชีนี้ปลดล็อก ' + LEVELS[l].n + ' อยู่แล้วค่ะ') }
+    if (e.status === 401) return toast('การเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่นะคะ');
+    if (e.status === 404) { delete (PS.price || {})[l]; psave(); render(); return toast('ยังไม่เปิดขาย ' + LEVELS[l].n + ' ค่ะ') }
+    toast('เปิดหน้าชำระเงินไม่สำเร็จ ลองใหม่อีกครั้งนะคะ');
+  }
+}
+// หลังจ่ายเงิน: webhook อาจมาช้ากว่าการกลับเข้าแอปเล็กน้อย จึงตรวจสิทธิ์ซ้ำเป็นระยะจนเห็นสิทธิ์ (สูงสุดประมาณ 1 นาที)
+let buyTimer = null;
+function buyWatch(l, tries = 20) {
+  clearTimeout(buyTimer);
+  if (!cloudIn()) return;
+  packCheck().then(() => {
+    if (packEnt(l)) return toast('ปลดล็อก ' + LEVELS[l].n + ' แล้ว ขอบคุณนะคะ แตะการ์ด ' + LEVELS[l].n + ' ในหน้าแรกเพื่อเริ่มเรียนได้เลย');
+    if (tries > 1) buyTimer = setTimeout(() => buyWatch(l, tries - 1), 3000);
+    else toast('ยังไม่เห็นการชำระเงิน ถ้าจ่ายแล้ว ลองเปิดแอปใหม่อีกครั้งภายหลังนะคะ');
+  });
+}
+
 function packStart() {
   try { const m = sessionStorage.getItem('kn_lvmsg'); if (m) { sessionStorage.removeItem('kn_lvmsg'); toast(m) } } catch (e) {}
+  const q = new URLSearchParams(location.search), paid = q.get('paid'), cancel = q.get('buy') === 'cancel';
+  if (paid || cancel) { q.delete('paid'); q.delete('buy'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash) }
+  if (cancel) { delete PS.buy; psave(); toast('ยกเลิกการชำระเงินแล้ว ยังไม่มีการตัดเงินค่ะ') }
+  // กลับเข้าแอปหลังไปจ่ายเงินในหน้าต่างอื่น: ตรวจสิทธิ์ให้ทันที
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && PS.buy && !packEnt(PS.buy.l)) buyWatch(PS.buy.l, 5) });
+  if (paid && LEVELS[paid] && PAID.includes(paid) && cloudOn()) { toast('ขอบคุณค่ะ กำลังตรวจสิทธิ์ ' + LEVELS[paid].n + '…'); return buyWatch(paid) }
   packCheck();
 }
