@@ -357,6 +357,139 @@ test('ส่งออก/นำเข้า: ข้อมูลกลับม�
   fs.unlinkSync(f); fs.unlinkSync(bad);
 });
 
+// ---------- บัญชีและซิงก์คลาวด์ (จำลอง Supabase ไม่ต่อเน็ตจริง) ----------
+// เซิร์ฟเวอร์จำลองใช้ร่วมกันหลายเครื่อง (หลาย browser context) เพื่อทดสอบการซิงก์ข้ามเครื่อง
+function mockCloud() {
+  const db = { row: null, calls: [], n: 0 };
+  const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS' };
+  const json = (route, status, body) => route.fulfill({ status, headers: { ...cors, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const tok = () => ({ access_token: 'at' + (++db.n), refresh_token: 'rt' + db.n, expires_in: 3600, user: { id: 'u1', email: 'a@b.co' } });
+  const handler = async route => {
+    const q = route.request(), u = new URL(q.url()), m = q.method(), body = q.postData() ? JSON.parse(q.postData()) : null;
+    if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+    db.calls.push(m + ' ' + u.pathname + u.search);
+    if (u.pathname === '/auth/v1/otp') return json(route, 200, {});
+    if (u.pathname === '/auth/v1/verify') return body.token === '123456' ? json(route, 200, tok()) : json(route, 403, { msg: 'Token has expired or is invalid' });
+    if (u.pathname === '/auth/v1/token') return body.refresh_token ? json(route, 200, tok()) : json(route, 400, { msg: 'bad' });
+    if (u.pathname === '/auth/v1/logout') return route.fulfill({ status: 204, headers: cors });
+    if (u.pathname === '/rest/v1/progress') {
+      if (q.headers().authorization !== 'Bearer at' + db.n) return json(route, 401, { message: 'JWT expired' });
+      if (m === 'GET') return json(route, 200, db.row ? [db.row] : []);
+      if (m === 'POST') { if (db.row) return json(route, 409, { message: 'duplicate key' }); db.row = { ...body, updated_at: new Date().toISOString() }; return json(route, 201, [db.row]); }
+      if (m === 'PATCH') {
+        const rev = +u.searchParams.get('rev').replace('eq.', '');
+        if (!db.row || db.row.rev !== rev) return json(route, 200, []);
+        db.row = { ...db.row, ...body, updated_at: new Date().toISOString() }; return json(route, 200, [db.row]);
+      }
+    }
+    return json(route, 404, { message: 'not mocked' });
+  };
+  db.attach = async p => {
+    await p.context().route('**/js/data/cloud-config.js', r => r.fulfill({ contentType: 'text/javascript', body: "const CLOUD={url:'https://sb.test',key:'anon'};" }));
+    await p.context().route('https://sb.test/**', handler);
+  };
+  return db;
+}
+async function cloudPage(browser, base, db, opts) {
+  const ctx = await browser.newContext({ viewport: { width: 820, height: 1100 }, serviceWorkers: 'block' });
+  const p = await ctx.newPage(); p.errors = [];
+  p.on('pageerror', e => p.errors.push(e.message));
+  await db.attach(p);
+  if (!opts || opts.seed !== false) await p.addInitScript(s => { if (!localStorage.getItem('kn_meta')) localStorage.setItem('kn_meta', JSON.stringify(s)); }, SEED);
+  await p.goto(base);
+  return p;
+}
+async function login(p, code = '123456') {
+  await p.fill('#cem', 'a@b.co'); await p.locator('button:text-is("ส่งรหัส")').click();
+  await p.waitForSelector('#ccd'); await p.fill('#ccd', code); await p.locator('button:text-is("ยืนยัน")').click();
+}
+
+test('ซิงก์: ไม่ได้ตั้งค่าคลาวด์ ซ่อนส่วนบัญชีทั้งหมด และ sw ไม่แคชคำขอข้ามโดเมน', async (b, base) => {
+  const p = await fresh(b, base);
+  await p.evaluate(() => goTab('stats'));
+  assert.strictEqual(await p.locator('#cloud').count(), 0);
+  assert(!(await p.locator('#app').innerText()).includes('บัญชีและซิงก์'));
+  assert(fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8').includes('origin !== location.origin'));
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ซิงก์: เข้าสู่ระบบด้วยรหัสอีเมล ส่งขึ้นคลาวด์ แก้แล้วส่งรุ่นใหม่ และต่ออายุ token', async (b, base) => {
+  const db = mockCloud(), p = await cloudPage(b, base, db);
+  await p.evaluate(() => { localStorage.setItem('kw1', JSON.stringify({ 'テスト': { b: 4, w: 0, d: 1 } })); goTab('stats'); });
+  await login(p, '000000');
+  await p.waitForSelector('.cer');
+  assert((await p.locator('.cer').innerText()).includes('รหัสไม่ถูกต้อง'));
+  await p.fill('#ccd', '123456'); await p.locator('button:text-is("ยืนยัน")').click();
+  await p.waitForSelector('button:text-is("ออกจากระบบ")');
+  await p.waitForFunction(() => !cloudBusy);
+  assert.strictEqual(db.row.rev, 1); assert.strictEqual(db.row.data.kw1['テスト'].b, 4); assert(db.row.data.kn_meta.pet.name);
+  assert(!('kn_cloud' in db.row.data), 'สถานะการเข้าสู่ระบบต้องไม่ถูกซิงก์');
+  // ไม่มีอะไรเปลี่ยน ไม่ต้องส่งซ้ำ
+  assert.strictEqual(await p.evaluate(() => cloudSync(false)), 'clean');
+  await p.evaluate(() => { localStorage.setItem('kw1', JSON.stringify({ 'テスト': { b: 5, w: 0, d: 1 } })); });
+  assert.strictEqual(await p.evaluate(() => cloudSync(false)), 'pushed');
+  assert.strictEqual(db.row.rev, 2); assert.strictEqual(db.row.data.kw1['テスト'].b, 5);
+  // token หมดอายุ: ต่ออายุอัตโนมัติก่อนเรียก
+  await p.evaluate(() => { CS.exp = 0; csave(); localStorage.setItem('kv1', '{"x":{"b":1,"w":0,"d":1}}'); });
+  assert.strictEqual(await p.evaluate(() => cloudSync(true)), 'pushed');
+  assert(db.calls.some(c => c.startsWith('POST /auth/v1/token')));
+  // ลำดับ key สลับ (เหมือน jsonb) ต้องไม่นับว่ามีของใหม่
+  await p.evaluate(() => { const m = JSON.parse(localStorage.getItem('kn_meta')); const r = {}; Object.keys(m).reverse().forEach(k => r[k] = m[k]); localStorage.setItem('kn_meta', JSON.stringify(r)); });
+  assert.strictEqual(await p.evaluate(() => cloudSync(false)), 'clean');
+  p.on('dialog', d => d.accept());
+  await p.locator('button:text-is("ออกจากระบบ")').click();
+  await p.waitForSelector('#cem');
+  assert.strictEqual(await p.evaluate(() => localStorage.getItem('kn_cloud')), '{}');
+  assert(await p.evaluate(() => localStorage.getItem('kw1')), 'ออกจากระบบแล้วความคืบหน้าต้องยังอยู่');
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ซิงก์: เครื่องใหม่เข้าสู่ระบบจากหน้าตั้งค่าครั้งแรก แล้วได้ความคืบหน้าและสัตว์เลี้ยงเดิม', async (b, base) => {
+  const db = mockCloud();
+  db.row = { user_id: 'u1', rev: 3, updated_at: new Date().toISOString(), data: { kn_meta: SEED, kn5: { '日': { b: 6, w: 0, d: 1 } } } };
+  const p = await cloudPage(b, base, db, { seed: false });
+  await p.locator('button:text-is("มีบัญชีอยู่แล้ว? เข้าสู่ระบบ")').click();
+  await Promise.all([p.waitForNavigation(), login(p)]);
+  await p.waitForSelector('.toast');
+  assert((await p.locator('#app').innerText()).includes('เส้นทางเรียน'), 'ต้องเข้าหน้าแรกได้เลย ไม่ต้องตั้งค่าใหม่');
+  assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn5'))['日'].b), 6);
+  // ข้อมูลทดสอบเป็นสัตว์เลี้ยงที่ยังไม่เคยเปิดหน้าแรก แอปจึงเติมค่าเริ่มต้น (วันล่าสุด เหรียญ) แล้วส่งขึ้นได้ 1 ครั้ง หลังจากนั้นต้องนิ่ง
+  await p.waitForFunction(() => !cloudBusy);
+  const rev = db.row.rev; assert(rev <= 4, 'rev ' + rev);
+  assert.strictEqual(await p.evaluate(() => cloudSync(true)), 'clean');
+  await p.reload(); await p.waitForFunction(() => !cloudBusy);
+  assert.strictEqual(db.row.rev, rev, 'เปิดแอปซ้ำต้องไม่ส่งรุ่นใหม่ขึ้นไปเรื่อยๆ');
+  assert.strictEqual(db.row.data.kn5['日'].b, 6);
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ซิงก์: สองเครื่องแก้พร้อมกัน ถามให้เลือก ทั้ง "ใช้ของเครื่องนี้" และ "ใช้ของคลาวด์"', async (b, base) => {
+  const db = mockCloud(), p = await cloudPage(b, base, db);
+  await p.evaluate(() => goTab('stats')); await login(p);
+  await p.waitForSelector('button:text-is("ออกจากระบบ")'); await p.waitForFunction(() => !cloudBusy);
+  // เครื่องอื่นส่งรุ่นใหม่ขึ้นไป ขณะที่เครื่องนี้ก็เรียนเพิ่ม
+  db.row = { ...db.row, rev: 2, data: { ...db.row.data, kv1: { 'cloud': { b: 9, w: 0, d: 1 } } } };
+  await p.evaluate(() => localStorage.setItem('kv1', JSON.stringify({ 'local': { b: 1, w: 0, d: 1 } })));
+  assert.strictEqual(await p.evaluate(() => cloudSync(false)), 'later', 'ส่งขึ้นเงียบๆ ต้องไม่ทับของเครื่องอื่น');
+  assert.strictEqual(db.row.rev, 2);
+  let r = p.evaluate(() => cloudSync(true));
+  await p.waitForSelector('.cov');
+  assert((await p.locator('.cov').innerText()).includes('ไม่ตรงกัน'));
+  await p.locator('.cov button:text-is("ใช้ของเครื่องนี้")').click();
+  assert.strictEqual(await r, 'pushed');
+  assert.strictEqual(db.row.rev, 3); assert(db.row.data.kv1.local && !db.row.data.kv1.cloud);
+  // รอบสอง: เลือกของคลาวด์
+  db.row = { ...db.row, rev: 4, data: { ...db.row.data, kv1: { 'cloud2': { b: 2, w: 0, d: 1 } } } };
+  await p.evaluate(() => localStorage.setItem('kv1', JSON.stringify({ 'local2': { b: 1, w: 0, d: 1 } })));
+  r = p.evaluate(() => cloudSync(true)).catch(() => 'pulled');
+  await p.waitForSelector('.cov');
+  await Promise.all([p.waitForNavigation(), p.locator('.cov button:text-is("ใช้ของคลาวด์")').click()]);
+  await p.waitForSelector('.toast');
+  assert.deepStrictEqual(Object.keys(await p.evaluate(() => JSON.parse(localStorage.getItem('kv1')))), ['cloud2']);
+  assert.strictEqual(await p.evaluate(() => CS.rev), 4);
+  assert.deepStrictEqual(p.errors, []);
+});
+
 // ---------- iPad / PWA ----------
 test('iPad แนวตั้งและแนวนอน: หน้าหลักไม่มีแถบเลื่อนแนวนอน', async (b, base) => {
   for (const vp of [{ width: 820, height: 1180 }, { width: 1180, height: 820 }]) {

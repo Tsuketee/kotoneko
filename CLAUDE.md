@@ -7,7 +7,8 @@
 ## โครงสร้าง
 - ไม่มีขั้นตอน build: HTML/CSS/JS ล้วน เปิด `index.html` ผ่าน http server ได้เลย (`python3 -m http.server`)
 - `js/data/*.js` เก็บข้อมูล, `js/core.js` เป็นแกนกลาง, ตรรกะแยกตามหน้าที่ใน `js/learn.js` `dialogue.js` `write.js` `pet.js` `stats.js`, `js/main.js` เป็นจุดเริ่มต้น ทุกไฟล์เป็น classic script ใช้ตัวแปร global ร่วมกัน ดังนั้นลำดับ `<script>` ใน `index.html` ต้องคงไว้: data → core → ไฟล์ตรรกะ → main (main ท้ายสุดเสมอ) ไฟล์ใหม่ต้องเพิ่มใน `index.html` และรายการ `FILES` ของ `sw.js` ด้วย
-- ความคืบหน้าเก็บใน `localStorage` (key: `ka1`, `kn5`, `kw1`, `kv1`, `kn_meta`) ห้ามเปลี่ยนชื่อ key โดยไม่มีโค้ดย้ายข้อมูล
+- ความคืบหน้าเก็บใน `localStorage` (key: `ka1`, `kn5`, `kw1`, `kv1`, `kg1`, `kn_meta`) ห้ามเปลี่ยนชื่อ key โดยไม่มีโค้ดย้ายข้อมูล key ใหม่ที่เป็นความคืบหน้าต้องเพิ่มใน `PK` (js/stats.js) ด้วย จึงจะถูกส่งออกและซิงก์
+- ซิงก์คลาวด์ (Supabase) อยู่ใน `js/cloud.js` สถานะการเข้าสู่ระบบเก็บใน key `kn_cloud` วิธีตั้งค่าใน `docs/CLOUD.md`
 
 ## กฎ
 - แก้ไฟล์ไหนก็ตาม ให้เพิ่มเลข `VERSION` ใน `sw.js` ด้วย

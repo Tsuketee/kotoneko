@@ -1,6 +1,6 @@
 // Service worker: ทำให้แอปเปิดได้ตอนออฟไลน์
 // ⚠️ ทุกครั้งที่แก้ไฟล์แล้วจะปล่อยเวอร์ชันใหม่ ให้เพิ่มเลข VERSION ไม่งั้นเครื่องผู้ใช้จะยังเห็นไฟล์เก่า
-const VERSION = 'v18';
+const VERSION = 'v19';
 const CACHE = 'kotoneko-' + VERSION;
 const FILES = [
   './',
@@ -14,6 +14,7 @@ const FILES = [
   'js/data/mnemonics.js',
   'js/data/pet-lines.js',
   'js/data/grammar.js',
+  'js/data/cloud-config.js',
   'js/core.js',
   'js/learn.js',
   'js/dialogue.js',
@@ -21,6 +22,7 @@ const FILES = [
   'js/pet.js',
   'js/grammar.js',
   'js/stats.js',
+  'js/cloud.js',
   'js/main.js',
   'manifest.webmanifest',
   'icons/icon.svg',
@@ -43,5 +45,6 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  if (new URL(e.request.url).origin !== location.origin) return; // คำขอไปคลาวด์ (Supabase) ห้ามแคช ให้ไปเน็ตตรงๆ
   e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request)));
 });
