@@ -1,6 +1,6 @@
 // ไวยากรณ์: รายการบทเรียน, หน้าบทเรียน (คำอธิบาย+ตัวอย่าง), แบบฝึกหัดเลือกคำตอบ, ความคืบหน้าแบบทบทวนเว้นระยะ
 // ความคืบหน้าเก็บใน localStorage key 'kg1' รูปแบบ {เลขบท:{b,w,d,best}} เหมือนชุดข้อมูลอื่น (ใช้ srsNext จาก learn.js)
-const GK='kg1';
+const GK=LKEY[LV].g; // N5 = 'kg1' · N4 = 'kg4' (ดู js/level.js)
 let GS={};try{GS=JSON.parse(localStorage.getItem(GK)||'{}')}catch(e){GS={}}
 function gsave(){try{localStorage.setItem(GK,JSON.stringify(GS))}catch(e){}}
 function gstat(){let lr=0,due=0,seen=0;const n=Date.now();G.forEach(g=>{const r=GS[g.id];if(r){seen++;if(r.b>=MASTERY)lr++;if(r.d<=n)due++}});return{seen,lr,due,t:G.length}}

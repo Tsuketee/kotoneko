@@ -1,6 +1,6 @@
 // แกนกลาง: ชุดข้อมูล DS, ตัวแปรสถานะ, ที่เก็บความคืบหน้า (localStorage), ไอคอน, แถบนำทาง, หน้าแรก, ตัวสลับหน้า render()
 const PAL=['#e05a5a','#3aa65f','#4a86d8','#e0952f','#9b59b6','#16a5a5','#c2528b','#7a8c2e'];
-const DS={a:{n:'ฮิระงะนะ・คะตะคะนะ',d:KA,key:'ka1'},k:{n:'คันจิ N5',d:K,key:'kn5'},w:{n:'คำที่เขียนด้วยคันจิ',d:W,key:'kw1'},v:{n:'คำศัพท์คะนะ',d:V,key:'kv1'}};
+const DS={a:{n:'ฮิระงะนะ・คะตะคะนะ',d:KA,key:'ka1'},k:{n:'คันจิ '+LEVELS[LV].n,d:K,key:LKEY[LV].k},w:{n:'คำที่เขียนด้วยคันจิ',d:W,key:LKEY[LV].w},v:{n:'คำศัพท์คะนะ',d:V,key:LKEY[LV].v}}; // key ตามระดับ ดู js/level.js
 let ks='h',tab='home',ds='k',view='s',fur=true,dl=1,CATS=['ทั้งหมด',...new Set(K.map(x=>x.c))];
 function load(){try{return JSON.parse(localStorage.getItem(DS[ds].key)||'{}')}catch(e){return{}}}
 function save(){try{localStorage.setItem(DS[ds].key,JSON.stringify(S))}catch(e){}}
@@ -18,7 +18,7 @@ function streak(){let n=0;const d=new Date();if((M.days[dstr(d)]||0)<M.goal)d.se
 function setGoal(){const g=[10,20,30,50,100];M.goal=g[(g.indexOf(M.goal)+1)%g.length];saveM();render()}
 function goalHtml(){const t=M.days[dstr(new Date())]||0,g=M.goal;return `<div class="gl" onclick="setGoal()"><span>${IC.flame} ${streak()} วัน</span><div class="bar"><i style="width:${Math.min(100,t/g*100)}%"></i></div><span>${t}/${g}${t>=g?' '+IC.check:''}</span></div>`}
 const DN={a:'คานะ',k:'คันจิ',w:'คำคันจิ',v:'คำศัพท์'};
-const NAV=()=>tab==='learn'?`<div class="top"><button class="bk" onclick="${view==='gl'?'gBack()':"tab='home';render()"}">‹</button><b>${view==='d'?'บทสนทนา':view==='n5'?'N5':view==='g'||view==='gl'?'ไวยากรณ์':DS[ds].n}</b></div>`:'';
+const NAV=()=>tab==='learn'?`<div class="top"><button class="bk" onclick="${view==='gl'?'gBack()':"tab='home';render()"}">‹</button><b>${view==='d'?'บทสนทนา':view==='n5'?LEVELS[LV].n:view==='g'||view==='gl'?'ไวยากรณ์':DS[ds].n}</b></div>`:'';
 const P={home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',book:'<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',alert:'<path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',chart:'<path d="M5 21v-6"/><path d="M12 21V3"/><path d="M19 21V9"/>',vol:'<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9.5 9.5 0 0 1 0 14"/>',flame:'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.4-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',check:'<path d="M21.8 10A10 10 0 1 1 17 3.3"/><path d="m9 11 3 3L22 4"/>',star:'<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.2L5.8 21l1.2-6.8-5-4.9 6.9-1z"/>',eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',eyeoff:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M3 3l18 18"/>'
  ,ok:'<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.7-5.8"/>',no:'<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>',
  lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
