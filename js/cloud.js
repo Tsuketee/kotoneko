@@ -146,7 +146,7 @@ let cloudDeleting = false;
 function cloudDelAsk() {
   if (cloudDeleting || document.querySelector('.cov')) return;
   const o = document.createElement('div'); o.className = 'cov';
-  o.innerHTML = `<div class="cdl" role="dialog" aria-modal="true"><h2 style="margin-top:0">ลบบัญชีถาวร?</h2><div class="st" style="line-height:1.7">บัญชี <b>${esc(CS.email)}</b> และความคืบหน้าที่ซิงก์ไว้บนคลาวด์จะถูกลบทันที <b>กู้คืนไม่ได้</b><br>ความคืบหน้าในเครื่องนี้ยังอยู่ และใช้งานต่อแบบไม่มีบัญชีได้ (แนะนำให้กด "ส่งออก" สำรองไว้ก่อน)</div><div class="btns"><button data-p="no">ยกเลิก</button><button data-p="yes" style="background:var(--err)">ลบบัญชีถาวร</button></div></div>`;
+  o.innerHTML = `<div class="cdl" role="dialog" aria-modal="true"><h2 style="margin-top:0">ลบบัญชีถาวร?</h2><div class="st" style="line-height:1.7">บัญชี <b>${esc(CS.email)}</b> และความคืบหน้าที่ซิงก์ไว้บนคลาวด์จะถูกลบทันที <b>กู้คืนไม่ได้</b><br>ความคืบหน้าในเครื่องนี้ยังอยู่ และใช้งานต่อแบบไม่มีบัญชีได้ (แนะนำให้กด "ส่งออก" สำรองไว้ก่อน)${typeof PS !== 'undefined' && (PS.ent || []).length ? `<br><b style="color:var(--err)">ระดับที่ปลดล็อกไว้ (${PS.ent.map(l => (LEVELS[l] || { n: l }).n).join(', ')}) ผูกกับบัญชีนี้ จะหายไปด้วยและย้ายไปบัญชีอื่นไม่ได้</b>` : ''}</div><div class="btns"><button data-p="no">ยกเลิก</button><button data-p="yes" style="background:var(--err)">ลบบัญชีถาวร</button></div></div>`;
   o.querySelectorAll('button').forEach(x => x.onclick = () => { if (x.dataset.p === 'yes') { x.disabled = true; x.textContent = 'กำลังลบ…'; cloudDelete(o) } else o.remove() });
   document.body.appendChild(o);
 }

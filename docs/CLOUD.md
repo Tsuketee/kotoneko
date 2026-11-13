@@ -56,6 +56,7 @@
 เนื้อหาเสียเงินไม่อยู่ใน repo นี้ (public) ต้นฉบับอยู่ใน repo private `kotoneko-content` และส่งให้ผู้มีสิทธิ์ผ่าน Supabase
 - ตาราง `entitlements` (ใครปลดล็อกระดับไหน) · `content_packs` (แพ็กเนื้อหาแต่ละระดับ) · `admins` (ผู้ดูแลที่อัปโหลดแพ็กได้) อยู่ใน `supabase/schema.sql`
 - RLS: อ่านแพ็กได้เฉพาะผู้มีสิทธิ์ระดับนั้นหรือผู้ดูแล · เขียนแพ็กได้เฉพาะผู้ดูแล · แอปเพิ่มสิทธิ์ให้ตัวเองไม่ได้ (เพิ่มจาก SQL Editor หรือ webhook ชำระเงินฝั่งเซิร์ฟเวอร์เท่านั้น)
+- การซื้อด้วย Stripe (เพิ่มสิทธิ์อัตโนมัติผ่าน Edge Function) ดูวิธีตั้งค่าใน `docs/PAYMENT.md`
 - แอปดาวน์โหลดแพ็กครั้งแรกที่กดเปลี่ยนเป็นระดับนั้น เก็บใน `localStorage` ใช้ออฟไลน์ได้ ตรวจเวอร์ชันใหม่ทุกครั้งที่เปิดแอป · ออกจากระบบ ลบบัญชี หรือถูกถอนสิทธิ์ จะลบแพ็กออกจากเครื่องและกลับไป N5
 
 ### ตั้งค่าครั้งแรก (SQL Editor)
@@ -63,8 +64,9 @@
 2. ตั้งตัวเองเป็นผู้ดูแล: `insert into public.admins (user_id) select id from auth.users where email = 'อีเมลของคุณ' on conflict do nothing;`
 3. ให้สิทธิ์ทดสอบ: `insert into public.entitlements (user_id, level, source) select id, 'n4', 'manual' from auth.users where email = 'อีเมล' on conflict do nothing;`
    ถอนสิทธิ์: `delete from public.entitlements where level = 'n4' and user_id = (select id from auth.users where email = 'อีเมล');`
+   ระดับ N3 ใช้คำสั่งเดียวกัน เปลี่ยน `'n4'` เป็น `'n3'`
 
 ### อัปโหลด / อัปเดตแพ็ก
-1. ใน repo เนื้อหา: รันตัวตรวจทุกตัวให้ผ่าน แล้ว `python3 -I tools/build_pack.py n4` ได้ไฟล์ `packs/n4.json`
+1. ใน repo เนื้อหา: รันตัวตรวจทุกตัวให้ผ่าน แล้ว `python3 -I tools/build_pack.py n4` (หรือ `n3`) ได้ไฟล์ `packs/n4.json` (`packs/n3.json`)
 2. ในแอป (เข้าสู่ระบบด้วยบัญชีผู้ดูแล): สถิติ → บัญชีและซิงก์ → ส่วน "ผู้ดูแล" → อัปโหลดแพ็กเนื้อหา → เลือกไฟล์
 3. ผู้มีสิทธิ์จะได้เวอร์ชันใหม่อัตโนมัติเมื่อเปิดแอปครั้งถัดไป

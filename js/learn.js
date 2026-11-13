@@ -13,7 +13,9 @@ function srsNext(s,ok,now=Date.now(),rnd=Math.random){s=s?{...s}:{b:0};
  else{s.b=Math.floor(s.b/2);s.w=(s.w||0)+1;s.d=now+RELEARN}
  return s}
 const pool=()=>K.filter(x=>(ds!=='a'||ks==='all'||x.sc===ks)&&(cat==='ทั้งหมด'||(cat==='ผิดบ่อย'?(S[x.k]&&S[x.k].w>=2):x.c===cat)));
-const rd=x=>x.o+(x.u!=='-'?' ・ '+x.u:'');
+// คำอ่าน: ออน ・ คุน โดยข้ามช่องที่เป็น '-' (เช่น 込 畑 ของ N3 เป็นคันจิที่ญี่ปุ่นคิดเอง จึงไม่มีอ่านแบบออน)
+const rds=x=>[x.o,x.u].filter(v=>v&&v!=='-');
+const rd=x=>rds(x).join(' ・ ');
 const sh=a=>a.map(v=>[Math.random(),v]).sort((p,q)=>p[0]-q[0]).map(v=>v[1]);
 function pick1(){const p=pool(),n=Date.now();
  const due=p.filter(x=>S[x.k]&&S[x.k].d<=n).sort((a,b)=>S[a.k].d-S[b.k].d);
@@ -70,12 +72,12 @@ function renderLearn(){
  if(mode==='quiz'&&ds!=='a')h+=`<div class="row"><div class="seg" style="flex:1"><button style="flex:1" class="${qt==='read'?'on':''}" onclick="qt='read';go()">ตอบคำอ่าน</button><button style="flex:1" class="${qt==='mean'?'on':''}" onclick="qt='mean';go()">ตอบความหมาย</button></div></div>`;
  if(mode==='chart'&&ds==='a'){h+=chartHtml()}
  else if(mode==='write'&&p.length){const x=p[wi%p.length],cs=[...x.k].filter(c=>SV[c]),c0=cs.length?cs[ci%cs.length]:x.k[0];
-  h+=`<div class="wi"><div class="d" style="margin:0"><b>${x.o}</b>${x.u!=='-'?' ・ '+x.u:''}<br>${x.m}</div>${spHtml(x)}</div><div class="tb"><div class="seg"><button class="${tool==='pen'?'on':''}" onclick="tool='pen';render()">${IPEN}</button><button class="${tool==='er'?'on':''}" onclick="tool='er';render()">${IER}</button></div>${tool==='er'?`<input type="range" min="6" max="40" value="${esz}" oninput="esz=+this.value">`:`<span style="flex:1"></span>`}<button class="ic" onclick="guide=guide?0:1;render()">${guide?IC.eye:IC.eyeoff}</button></div><div class="card nw" style="padding:10px;min-height:0"><div class="sheet">${CELLS.map((sp,i)=>`<div class="cell">${cellSvg(c0,sp)}<canvas data-c="${i}" width="200" height="200"></canvas></div>`).join('')}</div>${cs.length>1?`<div class="btns" style="margin-top:10px">${cs.map((c,i)=>`<button style="background:${c===c0?'var(--ac)':'var(--mut)'};font-size:22px;padding:8px" onclick="ci=${i};st=[];render()">${c}</button>`).join('')}</div>`:''}</div><button class="big" onclick="tick();wi++;ci=0;st=[];render()">ตัวต่อไป →</button>`}
+  h+=`<div class="wi"><div class="d" style="margin:0"><b>${rds(x)[0]}</b>${rds(x)[1]?' ・ '+rds(x)[1]:''}<br>${x.m}</div>${spHtml(x)}</div><div class="tb"><div class="seg"><button class="${tool==='pen'?'on':''}" onclick="tool='pen';render()">${IPEN}</button><button class="${tool==='er'?'on':''}" onclick="tool='er';render()">${IER}</button></div>${tool==='er'?`<input type="range" min="6" max="40" value="${esz}" oninput="esz=+this.value">`:`<span style="flex:1"></span>`}<button class="ic" onclick="guide=guide?0:1;render()">${guide?IC.eye:IC.eyeoff}</button></div><div class="card nw" style="padding:10px;min-height:0"><div class="sheet">${CELLS.map((sp,i)=>`<div class="cell">${cellSvg(c0,sp)}<canvas data-c="${i}" width="200" height="200"></canvas></div>`).join('')}</div>${cs.length>1?`<div class="btns" style="margin-top:10px">${cs.map((c,i)=>`<button style="background:${c===c0?'var(--ac)':'var(--mut)'};font-size:22px;padding:8px" onclick="ci=${i};st=[];render()">${c}</button>`).join('')}</div>`:''}</div><button class="big" onclick="tick();wi++;ci=0;st=[];render()">ตัวต่อไป →</button>`}
  else if(!cur){h+=`<div class="card"><div class="k">${ic(P.star,72)}</div><div class="d">ทบทวนครบตามรอบแล้ว<br>กลับมาใหม่ทีหลังได้เลย</div><button class="lk" onclick="prac=1;go()">ฝึกสุ่มต่ออีกนิด</button></div>`}
  else if(mode==='card'){
   h+=`<div class="card" ${fl?'':'onclick="fl=true;render()"'}><div class="k" style="${cur.k.length>2?'font-size:'+Math.max(34,Math.floor(200/cur.k.length))+'px':''}">${cur.k}</div>`;
   if(!fl)h+=`<div class="hint">แตะเพื่อดูคำอ่านและความหมาย</div>`;
-  else h+=`<div class="d"><b>${cur.o}</b><br>${cur.u!=='-'?cur.u+'<br>':''}${cur.m}${cur.s==='c'?' *':''}<div class="st">หมวด: ${cur.c}</div></div>${spHtml(cur)}${mnHtml(cur)}${exHtml(cur)}<div class="btns"><button onclick="event.stopPropagation();grade(false)">ยังไม่แน่ใจ</button><button class="g" onclick="event.stopPropagation();grade(true)">จำได้</button></div>`;
+  else h+=`<div class="d"><b>${rds(cur)[0]}</b><br>${rds(cur)[1]?rds(cur)[1]+'<br>':''}${cur.m}${cur.s==='c'?' *':''}<div class="st">หมวด: ${cur.c}</div></div>${spHtml(cur)}${mnHtml(cur)}${exHtml(cur)}<div class="btns"><button onclick="event.stopPropagation();grade(false)">ยังไม่แน่ใจ</button><button class="g" onclick="event.stopPropagation();grade(true)">จำได้</button></div>`;
   h+=`</div>`}
  else{
   h+=`<div class="card"><div class="k" style="${cur.k.length>2?'font-size:'+Math.max(34,Math.floor(200/cur.k.length))+'px':''}">${cur.k}</div><div class="q">${(ds==='a'||qt==='read')?'คำอ่านคือข้อไหน':'ความหมายคือข้อไหน'}</div><div class="ch">`;
