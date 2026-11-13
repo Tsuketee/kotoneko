@@ -110,7 +110,7 @@ function render(pose){
   let gx=p.sdf(cx+.5,cy)-p.sdf(cx-.5,cy),gy=p.sdf(cx,cy+.5)-p.sdf(cx,cy-.5);const gl=Math.hypot(gx,gy)||1;gx/=gl;gy/=gl;
   const s=clamp(1+d/p.R,0,1),nz=Math.sqrt(1-s*s),lum=gx*s*L3[0]+gy*s*L3[1]+nz*L3[2];
   let lv=lum>.9?0:lum>.56?1:lum>.22?2:3;
-  if((y>0&&top[y-1][x]>i)||(y>1&&top[y-2][x]>i&&parts[top[y-2][x]].cast!==false))lv++; // เงาจากชิ้นที่ทับอยู่ด้านบน
+  if((y>0&&top[y-1][x]>i&&parts[top[y-1][x]].shade!==false)||(y>1&&top[y-2][x]>i&&parts[top[y-2][x]].cast!==false))lv++; // เงาจากชิ้นที่ทับอยู่ด้านบน
   if(pose.ground&&y>=pose.ground-1&&(p.ground!==false))lv++; // เงาใกล้พื้น
   LV[y][x]=Math.min(3,lv)}
  // ลบจุดเงาเดี่ยวที่ดูเป็นฝุ่น
@@ -144,7 +144,7 @@ const POSES={
   const body={z:0,R:9,name:'body',sdf:(x,y)=>Math.max(smin(sdEll(x,y,28.5,33.6-br*.5,15,9.3+br*.5),sdEll(x,y,35,36,10.5,6.8),3),y-41.6),mat:(x,y)=>{const st=y<35&&fr(x/3.2)<.34;return sdEll(x,y,31,25.5,8,4.3)<0?P('patch',st):P('fur',st)}};
   const haunch={z:1,R:5,name:'haunch',ground:false,contour:null,cIdx:3,sdf:(x,y)=>Math.max(sdEll(x,y,35.6,35.8,6.6,5.3),body.sdf(x,y)+.6),mat:(x,y)=>{const d=Math.hypot((x-35.6)/1.1,y-35.8);return P('fur',d>1.3&&fr(d/2.4)<.36)}};
   const foot={z:1.5,R:2,sdf:(x,y)=>sdEll(x,y,30.8,40.3,2.6,1.6),mat:()=>P('paw'),contour:null};
-  const paws={z:1.6,R:2,ground:false,sdf:(x,y)=>Math.max(Math.min(sdEll(x,y,12.6,40.2,2.7,1.8),sdEll(x,y,18.4,40.2,2.7,1.8)),y-41.6),mat:()=>P('paw'),contour:null};
+  const paws={z:1.6,R:2,ground:false,sdf:(x,y)=>Math.max(Math.min(sdEll(x,y,12.8,39.9,2.8,2.2),sdEll(x,y,18.6,39.9,2.8,2.2)),y-41.6),mat:()=>P('paw'),contour:null};
   const head={z:2,R:7.5,name:'head',sdf:(x,y)=>smin(sdEll(x,y,15.2,hy,10.4,8.5),Math.min(ear(x,y,[5.6,hy-3],[6.4,hy-11.2],[12.2,hy-6.4]),ear(x,y,[17.4,hy-6.6],[22.6+et*.6,hy-11.4-et*.6],[23.6,hy-2.6])),1.6),
    mat:(x,y)=>headMat(x,y,15.2,hy,{lo:[[5.6,hy-3],[6.4,hy-11.2],[12.2,hy-6.4]],ro:[[17.4,hy-6.6],[22.6+et*.6,hy-11.4-et*.6],[23.6,hy-2.6]],li:[[7.3,hy-4.4],[7.6,hy-9.2],[11,hy-6.4]],ri:[[18.9,hy-6.3],[21.8+et*.6,hy-9.5-et*.6],[22.3,hy-4.4]]},[20,hy-6.4,5.4,3.6])};
   const tl=tail([[42.4,32.6],[45.4,36],[45.6,40.2],[42.6,43.8],[37.4,45.4],[31.4,45.2-tw*.6]],2,1.3,3,{tip:.8,base:.16});
@@ -154,7 +154,7 @@ const POSES={
  // หมอบแบบขนมปัง: ตาปรือ สัปหงกแล้วสะดุ้ง
  loaf(f){const nod=[0,.6,1.6,0][f],a=[];const hy=24.5+nod;
   const body={z:0,R:9,sdf:(x,y)=>Math.max(sdEll(x,y,24,34.5,15.2,9.6),y-42.4),mat:(x,y)=>{const st=y<33&&fr(x/3.2+.3)<.34;return sdEll(x,y,36,30,5.5,4.5)<0?P('patch',st):sdEll(x,y,24,40,7.5,5)<0?P('under'):P('fur',st)}};
-  const paws={z:1,R:2,ground:false,sdf:(x,y)=>Math.min(sdEll(x,y,19.4,41.6,2.8,1.6),sdEll(x,y,28.6,41.6,2.8,1.6)),mat:()=>P('paw'),contour:null};
+  const paws={z:1,R:2,ground:false,sdf:(x,y)=>Math.min(sdEll(x,y,19.4,41.4,2.8,2.1),sdEll(x,y,28.6,41.4,2.8,2.1)),mat:()=>P('paw'),contour:null};
   const head={z:2,R:8,sdf:(x,y)=>smin(sdEll(x,y,24,hy,12.2,9.6),Math.min(ear(x,y,[12.6,hy-2.8],[13.6,hy-12],[20.4,hy-7.8]),ear(x,y,[35.4,hy-2.8],[34.4,hy-12],[27.6,hy-7.8])),1.8),
    mat:(x,y)=>headMat(x,y,24,hy,{lo:[[12.6,hy-2.8],[13.6,hy-12],[20.4,hy-7.8]],ro:[[35.4,hy-2.8],[34.4,hy-12],[27.6,hy-7.8]],li:[[14.4,hy-4],[15,hy-9.6],[18.8,hy-7.4]],ri:[[33.6,hy-4],[33,hy-9.6],[29.2,hy-7.4]]},[29.5,hy-7,5.6,3.6])};
   const tl=tail([[36.6,31.6],[39.6,35.4],[39.8,39.8],[37,43],[31.6,44.6],[25.6,44.4]],2,1.2,3,{tip:.8,base:.14});
@@ -166,7 +166,7 @@ const POSES={
   const body={z:0,R:8.5,sdf:(x,y)=>sdEll(x,y,24,19.6-br*.3,10.6,9.2+br*.3),mat:(x,y)=>{if(sdEll(x,y,24,19.4,6.6,6.8)<0)return P('under');const st=fr(y/2.8)<.34;return sdEll(x,y,33,21,3.6,5)<0?P('patch',st):P('fur',st)}};
   const seg=(P,r0,r1)=>(x,y)=>{let d=1e9;for(let n=0;n<P.length-1;n++)d=Math.min(d,sdCap(x,y,P[n][0],P[n][1],P[n+1][0],P[n+1][1],r0,r1));return d};
   // ขาหน้า (ใกล้อก = ใกล้หัว) งอพับเข้าหาตัว / ขาหลังชูขึ้นกางออก
-  const L=[seg([[16.4,25.6],[13.6,21.6-k*.5]],2.3,2.1),seg([[31.6,25.6],[34.4,21.6+k*.5]],2.3,2.1),seg([[18.6,12.6],[16.8,7.6+k*.5]],2.4,2.2),seg([[29.4,12.6],[31.2,7.6-k*.5]],2.4,2.2)];
+  const L=[seg([[16.4,25.6],[13.6,21.6-k*.5]],2.2,2.6),seg([[31.6,25.6],[34.4,21.6+k*.5]],2.2,2.6),seg([[18.6,12.6],[16.8,7.6+k*.5]],2.4,2.2),seg([[29.4,12.6],[31.2,7.6-k*.5]],2.4,2.2)];
   const legs={z:1,R:2.2,ground:false,cast:false,sdf:(x,y)=>Math.min(...L.map(g=>g(x,y))),mat:()=>P('limb'),contour:null};
   const pads={z:1.2,R:1.4,ground:false,cast:false,contour:false,sdf:(x,y)=>Math.min(sdEll(x,y,13.6,21.2-k*.5,1.3,1),sdEll(x,y,34.4,21.2+k*.5,1.3,1),sdEll(x,y,16.8,7.2+k*.5,1.4,1),sdEll(x,y,31.2,7.2-k*.5,1.4,1)),mat:()=>P('inner')};
   const head={z:2,R:8,sdf:(x,y)=>Math.max(smin(sdEll(x,y,24,hy,11.8,8.8),Math.min(ear(x,fy(y),[12.8,hy-2.8],[13.8,hy-11.6],[20.4,hy-7.2]),ear(x,fy(y),[35.2,hy-2.8],[34.2,hy-11.6],[27.6,hy-7.2])),1.8),y-43.8),
@@ -212,16 +212,18 @@ function sitCat(o={}){
  if(acc==='bow'){parts.push({z:3,R:2.6,ground:false,ramp:'bow',contour:RAMP.bow[4],sdf:(x,y)=>{const[u,v]=R(x,y);return Math.min(sdEll(u,v,hx-13.2,hy-5,3.7,2.7),sdEll(u,v,hx-6.6,hy-5,3.5,2.7),sdEll(u,v,hx-9.9,hy-5,1.8,1.8))}})}
  const legs=o.legs||'sit',lift=o.lift||0;
  // ขาหน้า: โคนเล็กกลืนกับอก ปลายเป็นอุ้งเท้ากลมนูนพ้นเส้นพื้นหนึ่งแถว เส้นขอบใช้สีที่เข้มกว่าระหว่างอุ้งเท้ากับขน
- const paw=(cx,lf)=>(x,y)=>smin(sdEll(x,y,cx,40.2+by-lf,3,3.7),sdEll(x,y,cx,37+by-lf,2.2,2.4),1.2);
+ const paw=(cx,lf)=>(x,y)=>smin(smin(sdEll(x,y,cx,39.8+by-lf,2.9,3.4),sdEll(x,y,cx,37+by-lf,2.2,2.4),1.2),sdEll(x,y,cx,41.6+by-lf,3.1,2.4),1.0);
  const darkRamp=r=>lumHex(RAMP[r][2])<.06,edge=slot=>darkRamp(P(slot))?RAMP[P(slot)][0]:null; // ขนเข้ม (ดำ): ขอบใช้ขั้นสว่างสุด
  const pawLine=()=>{const a=P('paw'),b=P('fur');if(darkRamp(a)&&darkRamp(b))return RAMP[a][0];return lumHex(RAMP[a][4])<lumHex(RAMP[b][4])?RAMP[a][4]:RAMP[b][4]};
  if(legs==='sit'){parts.push({z:1.5,R:2.9,ground:false,skipUp:true,sdf:paw(21,0),mat:()=>P('paw'),contour:(x,y)=>y>39.2+by?pawLine():false},{z:1.55,R:2.9,ground:false,skipUp:true,sdf:paw(27,lift),mat:()=>P('paw'),contour:(x,y)=>y>39.2+by-lift?pawLine():false})}
- else{parts.push({z:1.5,R:2,ground:false,sdf:(x,y)=>Math.min(sdEll(x,y,18,42.2+by,3,1.9),sdEll(x,y,30,42.2+by,3,1.9)),mat:()=>P('paw'),contour:null})}
- if(legs==='cover'){parts.push({z:2.5,R:2.3,ground:false,cast:false,sdf:(x,y)=>Math.min(sdCap(x,y,19.4,36+by,21,31.6+by,2.3,2.2),sdCap(x,y,28.6,36+by,27,31.6+by,2.3,2.2)),mat:()=>P('limb'),contour:()=>edge('limb')},
-  {z:2.6,R:2.2,ground:false,cast:false,contour:()=>edge('paw'),sdf:(x,y)=>Math.min(sdEll(x,y,21.2,30.2+by,2.7,2.4),sdEll(x,y,26.8,30.2+by,2.7,2.4)),mat:()=>P('paw')})}
- if(legs==='book'){parts.push({z:2.6,R:3,ground:false,contour:INK,sdf:(x,y)=>sdBox(x,y,24,37.2+by,9.4,4.2),mat:(x,y)=>y>39.6+by?'rice':'book'},{z:2.7,R:2,ground:false,contour:null,sdf:(x,y)=>Math.min(sdEll(x,y,15.6,37.2+by,2.6,2.4),sdEll(x,y,32.4,37.2+by,2.6,2.4)),mat:()=>P('paw')})}
+ else{parts.push({z:1.5,R:2,ground:false,sdf:(x,y)=>Math.min(sdEll(x,y,18,41.9+by,3.1,2.2),sdEll(x,y,30,41.9+by,3.1,2.2)),mat:()=>P('paw'),contour:null})}
+ if(legs==='cover'){const arm=sx=>{const bx=24+sx*4.8,px=24+sx*3.1,A=(x,y)=>sdCap(x,y,bx,36.4+by,px+sx*.2,31.8+by,2.8,2.6),Pw=(x,y)=>sdEll(x,y,px,30.2+by,3,2.8);
+   return{z:sx>0?2.55:2.5,R:2.7,ground:false,cast:false,shade:false,sdf:(x,y)=>smin(A(x,y),Pw(x,y),1.4),mat:(x,y)=>Pw(x,y)<.4?P('paw'):P('limb'),
+    contour:(x,y)=>y>34.4+by?false:(Pw(x,y)<.4?edge('paw'):edge('limb'))}};
+  parts.push(arm(-1),arm(1))}
+ if(legs==='book'){parts.push({z:2.6,R:3,ground:false,contour:INK,sdf:(x,y)=>sdBox(x,y,24,37.2+by,9.4,4.2),mat:(x,y)=>y>39.6+by?'rice':'book'},{z:2.7,R:2,ground:false,contour:null,sdf:(x,y)=>Math.min(sdEll(x,y,15.6,37.2+by,2.8,2.7),sdEll(x,y,32.4,37.2+by,2.8,2.7)),mat:()=>P('paw')})}
  if(legs==='hold'){const oy=by+(o.bite||0)*0;parts.push({z:2.6,R:3.5,ground:false,contour:INK,sdf:(x,y)=>Math.max(sdTri(x,y,[24,28.6+oy],[18.2,37.4+oy],[29.8,37.4+oy])-1.2,-sdEll(x,y,28.4,30,2.4,2.4)),mat:(x,y)=>y>34.4+oy?'nori':'rice'},
-  {z:2.7,R:2,ground:false,contour:null,sdf:(x,y)=>Math.min(sdEll(x,y,18.2,35.6+oy,2.6,2.4),sdEll(x,y,29.8,35.6+oy,2.6,2.4)),mat:()=>P('paw')})}
+  {z:2.7,R:2,ground:false,contour:null,sdf:(x,y)=>Math.min(sdEll(x,y,18.2,35.6+oy,2.8,2.7),sdEll(x,y,29.8,35.6+oy,2.8,2.7)),mat:()=>P('paw')})}
  if(o.tail)parts.push(tail(o.tail.map(p=>[p[0],p[1]+by]),o.tr0||2.1,o.tr1||1.15,o.tailFront?3:-.5,{tip:.8}));
  const a=[],f=[];(o.face||(()=>{}))(f,hx,hyF);
  f.forEach(([x,y,c])=>{const s=Math.sin(th),cc=Math.cos(th),X=x+.5-hx,Y=y+.5-hyF;a.push([hx+X*cc-Y*s-.5,hyF+X*s+Y*cc-.5,c])});
