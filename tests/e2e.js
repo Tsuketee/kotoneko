@@ -875,6 +875,8 @@ test('ซื้อ: Edge Function และ schema ปลอดภัย (ไม
   assert(/refund_requests_insert_own[\s\S]*auth\.uid\(\)\) = user_id and status = 'pending'[\s\S]*e\.source = 'stripe' and e\.created_at > now\(\) - interval '7 days'/.test(sql));
   assert(/refund_requests_update_admin" on public\.refund_requests for update to authenticated\s+using \(\(select public\.is_admin\(\)\)\)/.test(sql));
   assert(!/policy[^;]*on public\.refund_requests for (delete|all)/.test(sql));
+  // Edge Functions ใช้ service_role: ต้องให้สิทธิ์ตารางชัดเจน (โปรเจกต์ใหม่ไม่ให้อัตโนมัติ → 403)
+  assert(/grant select, insert, update, delete on public\.entitlements to service_role;/.test(sql) && /grant select, insert, update, delete on public\.purchases to service_role;/.test(sql) && /grant select, update on public\.refund_requests to service_role;/.test(sql));
   const wh = fs.readFileSync(path.join(ROOT, 'supabase/functions/stripe-webhook/index.ts'), 'utf8'), co = fs.readFileSync(path.join(ROOT, 'supabase/functions/checkout/index.ts'), 'utf8');
   assert(/verify\(body, req\.headers\.get\('stripe-signature'\)/.test(wh));
   for (const t of [wh, co, fs.readFileSync(path.join(ROOT, 'js/packs.js'), 'utf8'), fs.readFileSync(path.join(ROOT, 'js/data/cloud-config.js'), 'utf8')])

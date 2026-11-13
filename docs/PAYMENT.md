@@ -73,6 +73,7 @@ Supabase → Edge Functions → **Secrets** → Add new secret
 - **การ์ดยังขึ้น "เปิดขายเร็วๆ นี้":** ยังไม่ได้ deploy `checkout` / ชื่อฟังก์ชันไม่ตรง / ยังไม่ใส่ `STRIPE_PRICE_N4` หรือ `STRIPE_SECRET_KEY` (ดู Edge Functions → checkout → Logs) · แอปจำราคาตอนตรวจสิทธิ์ ปิดแล้วเปิดแอปใหม่
 - **กดแล้วขึ้น "เปิดหน้าชำระเงินไม่สำเร็จ":** ดู Logs ของ `checkout` มักเป็น `APP_URL` ว่าง หรือ Price ID เป็นของคนละโหมด (ทดสอบ/จริง) กับ secret key
 - **จ่ายแล้วไม่ปลดล็อก:** Stripe → Webhooks → ดูเหตุการณ์ ถ้าได้ **400** = `STRIPE_WEBHOOK_SECRET` ผิด (แต่ละ endpoint และแต่ละโหมดมี secret ของตัวเอง) · **401** = ยังไม่ได้ปิด Verify JWT ของ `stripe-webhook` · **500** = ยังไม่ได้รัน `schema.sql` ใหม่ (ไม่มีตาราง `purchases`) · แก้แล้วกด **Resend** ที่เหตุการณ์นั้นใน Stripe
+- **เห็นราคาแต่กดซื้อแล้ว "เปิดหน้าชำระเงินไม่สำเร็จ" และ Logs ของ `checkout` ขึ้น `entitlements: HTTP 403`:** ฐานข้อมูลยังไม่ให้สิทธิ์ `service_role` (โปรเจกต์ใหม่ไม่ให้อัตโนมัติ) รัน `schema.sql` ฉบับล่าสุดใหม่ ซึ่งมีบรรทัด `grant … to service_role`
 - **ปุ่ม "ขอคืนเงิน" ไม่ขึ้น:** ปุ่มแสดงเฉพาะสิทธิ์ที่ได้จาก Stripe ภายใน 7 วัน (สิทธิ์แบบ `manual` ไม่มีปุ่ม) · ส่วนผู้ดูแลขึ้น "ยังไม่มีตาราง refund_requests" = ยังไม่ได้รัน `schema.sql` ใหม่
 - **ผู้ใช้จ่ายแล้วแต่ลบบัญชีไปก่อน webhook มาถึง:** ตาราง `purchases` มีแถวสถานะ `paid_no_user` ให้คืนเงินใน Stripe
 - **ให้สิทธิ์เองโดยไม่ผ่าน Stripe** (เช่นแจกรีวิว): ใช้คำสั่ง `manual` ใน `docs/CLOUD.md` ได้เหมือนเดิม
