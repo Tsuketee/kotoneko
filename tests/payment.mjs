@@ -13,7 +13,7 @@ const ENV = { STRIPE_SECRET_KEY: 'sk_test_x', STRIPE_PRICE_N4: 'price_n4', STRIP
 
 // ฐานข้อมูล + Stripe จำลอง: บันทึกทุกคำขอไว้ตรวจ
 function fake() {
-  const s = { ent: [], purchases: {}, calls: [], sessions: [], users: { 'Bearer good': { id: U1, email: 'a@b.co' } } };
+  const s = { ent: [], purchases: {}, rr: [], calls: [], sessions: [], users: { 'Bearer good': { id: U1, email: 'a@b.co' } } };
   const res = (status, body) => new Response(body === undefined ? null : JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
   s.fetch = async (url, o = {}) => {
     const u = new URL(url), m = o.method || 'GET', h = o.headers || {};
@@ -43,6 +43,10 @@ function fake() {
       if (m === 'POST') { s.purchases[body.session_id] = { ...s.purchases[body.session_id], ...body }; return res(201) }
       if (m === 'GET') return res(200, Object.values(s.purchases).filter(p => p.payment_intent === q.payment_intent));
       if (m === 'PATCH') { Object.assign(s.purchases[q.session_id], body); return res(204) }
+    }
+    if (u.pathname === '/rest/v1/refund_requests' && m === 'PATCH') {
+      if (s.noRefundTable) return res(404, { code: '42P01', message: 'relation does not exist' });
+      s.rr.filter(r => r.user_id === q.user_id && r.level === q.level && r.status === q.status).forEach(r => Object.assign(r, body)); return res(204);
     }
     return res(404, { message: 'not mocked ' + m + ' ' + u.pathname });
   };
@@ -152,6 +156,18 @@ test('webhook: คืนเงินเต็มจำนวน → ถอนส
   await hook(h, ev('charge.refunded', { id: 'ch_1', payment_intent: 'pi_1', refunded: true }));
   assert.strictEqual(s.ent.length, 1);
   assert.strictEqual((await (await hook(h, ev('charge.refunded', { id: 'ch_2', payment_intent: 'pi_x', refunded: true }))).json()).r, 'unknown');
+});
+
+test('webhook: คืนเงินแล้ว → คำขอคืนเงินจากแอปเปลี่ยนเป็น refunded · ไม่มีตาราง (ยังไม่รัน schema ใหม่) ก็ยังถอนสิทธิ์ได้', async () => {
+  const s = fake(), h = WH.makeHandler(ENV, s.fetch);
+  await hook(h, ev('checkout.session.completed', session()));
+  s.rr.push({ user_id: U1, level: 'n4', status: 'pending', reason: 'content' }, { user_id: U1, level: 'n3', status: 'pending', reason: 'price' });
+  assert.strictEqual((await (await hook(h, ev('charge.refunded', { id: 'ch_1', payment_intent: 'pi_1', refunded: true }))).json()).r, 'revoked');
+  assert.deepStrictEqual(s.rr.map(r => r.status), ['refunded', 'pending'], 'เปลี่ยนเฉพาะระดับที่คืนเงิน');
+  const s2 = fake(), h2 = WH.makeHandler(ENV, s2.fetch); s2.noRefundTable = true;
+  await hook(h2, ev('checkout.session.completed', session()));
+  const r = await hook(h2, ev('charge.refunded', { id: 'ch_1', payment_intent: 'pi_1', refunded: true }));
+  assert.strictEqual(r.status, 200); assert.strictEqual((await r.json()).r, 'revoked'); assert.deepStrictEqual(s2.ent, []);
 });
 
 test('webhook: ฐานข้อมูลล่ม → 500 ให้ Stripe ส่งซ้ำ · ผู้ใช้ลบบัญชีไปแล้ว → 200 และบันทึกไว้ให้คืนเงิน', async () => {

@@ -130,3 +130,39 @@ revoke all on public.purchases from anon, authenticated;
 drop trigger if exists purchases_touch on public.purchases;
 create trigger purchases_touch before update on public.purchases
   for each row execute function public.progress_touch();
+
+-- refund_requests: คำขอคืนเงินพร้อมเหตุผลจากปุ่ม "ขอคืนเงิน" ในแอป (terms.html ข้อ 4)
+-- ผู้ใช้ส่งคำขอได้เฉพาะระดับที่ซื้อผ่าน Stripe ภายใน 7 วัน และอ่านได้เฉพาะของตัวเอง · ผู้ดูแลอ่านได้ทั้งหมด
+-- user_id / email / status ตั้งโดยฐานข้อมูล แอปกำหนดเองไม่ได้ · คืนเงินใน Stripe แล้ว webhook จะเปลี่ยนสถานะเป็น refunded ให้เอง
+create table if not exists public.refund_requests (
+  id         bigint generated always as identity primary key,
+  user_id    uuid default auth.uid() references auth.users (id) on delete set null,
+  email      text default (auth.jwt() ->> 'email'),
+  level      text not null check (level ~ '^n[1-4]$'),
+  reason     text not null check (reason in ('content', 'level', 'error', 'price', 'mistake', 'other')),
+  detail     text check (char_length(detail) <= 1000),
+  status     text not null default 'pending' check (status in ('pending', 'refunded', 'rejected')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create unique index if not exists refund_requests_one_pending on public.refund_requests (user_id, level) where status = 'pending';
+alter table public.refund_requests enable row level security;
+drop policy if exists "refund_requests_select_own" on public.refund_requests;
+drop policy if exists "refund_requests_insert_own" on public.refund_requests;
+drop policy if exists "refund_requests_update_admin" on public.refund_requests;
+create policy "refund_requests_select_own" on public.refund_requests for select to authenticated
+  using ((select auth.uid()) = user_id or (select public.is_admin()));
+create policy "refund_requests_insert_own" on public.refund_requests for insert to authenticated
+  with check ((select auth.uid()) = user_id and status = 'pending' and exists (
+    select 1 from public.entitlements e where e.user_id = (select auth.uid()) and e.level = refund_requests.level
+      and e.source = 'stripe' and e.created_at > now() - interval '7 days'));
+create policy "refund_requests_update_admin" on public.refund_requests for update to authenticated
+  using ((select public.is_admin())) with check ((select public.is_admin()));
+revoke all on public.refund_requests from anon, authenticated;
+grant select on public.refund_requests to authenticated;
+grant insert (level, reason, detail) on public.refund_requests to authenticated;
+grant update (status) on public.refund_requests to authenticated;
+
+drop trigger if exists refund_requests_touch on public.refund_requests;
+create trigger refund_requests_touch before update on public.refund_requests
+  for each row execute function public.progress_touch();

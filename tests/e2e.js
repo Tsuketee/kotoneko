@@ -360,7 +360,7 @@ test('ส่งออก/นำเข้า: ข้อมูลกลับม�
 // ---------- บัญชีและซิงก์คลาวด์ (จำลอง Supabase ไม่ต่อเน็ตจริง) ----------
 // เซิร์ฟเวอร์จำลองใช้ร่วมกันหลายเครื่อง (หลาย browser context) เพื่อทดสอบการซิงก์ข้ามเครื่อง
 function mockCloud() {
-  const db = { row: null, calls: [], n: 0, ent: [], packs: {}, admin: false, uploads: 0, price: null, checkouts: [] };
+  const db = { row: null, calls: [], n: 0, ent: [], src: {}, rr: [], packs: {}, admin: false, uploads: 0, price: null, checkouts: [] };
   const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS' };
   const json = (route, status, body) => route.fulfill({ status, headers: { ...cors, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const tok = () => ({ access_token: 'at' + (++db.n), refresh_token: 'rt' + db.n, expires_in: 3600, user: { id: 'u1', email: 'a@b.co' } });
@@ -389,7 +389,20 @@ function mockCloud() {
     const authed = q.headers().authorization === 'Bearer at' + db.n;
     if (u.pathname.startsWith('/rest/v1/') && u.pathname !== '/rest/v1/progress' && u.pathname !== '/rest/v1/rpc/delete_my_account' && !authed) return json(route, 401, { message: 'JWT expired' });
     if (u.pathname === '/rest/v1/rpc/is_admin') return json(route, 200, !!db.admin);
-    if (u.pathname === '/rest/v1/entitlements') return json(route, 200, db.ent.map(level => ({ level })));
+    if (u.pathname === '/rest/v1/entitlements') return json(route, 200, db.ent.map(level => ({ level, ...(db.src[level] || {}) })));
+    // คำขอคืนเงิน: จำลอง RLS ใน schema.sql (ส่งได้เฉพาะระดับที่ซื้อผ่าน Stripe ภายใน 7 วัน · คำขอที่รออยู่ซ้ำไม่ได้ · ผู้ใช้เห็นเฉพาะของตัวเอง)
+    if (u.pathname === '/rest/v1/refund_requests') {
+      if (db.noRefundTable) return json(route, 404, { code: '42P01', message: 'relation does not exist' });
+      if (m === 'GET') return json(route, 200, db.rr.filter(r => db.admin || r.user_id === 'u1'));
+      if (m === 'POST') {
+        const e = db.src[body.level];
+        if (!db.ent.includes(body.level) || !e || e.source !== 'stripe' || Date.now() - Date.parse(e.created_at) > 7 * 864e5) return json(route, 403, { code: '42501', message: 'new row violates row-level security policy' });
+        if (db.rr.some(r => r.user_id === 'u1' && r.level === body.level && r.status === 'pending')) return json(route, 409, { code: '23505', message: 'duplicate key' });
+        if (Object.keys(body).some(k => !['level', 'reason', 'detail'].includes(k))) return json(route, 403, { message: 'permission denied' });
+        db.rr.unshift({ id: db.rr.length + 1, user_id: 'u1', email: 'a@b.co', status: 'pending', created_at: new Date().toISOString(), ...body });
+        return route.fulfill({ status: 201, headers: cors });
+      }
+    }
     if (u.pathname === '/rest/v1/content_packs') {
       const ok = l => db.admin || db.ent.includes(l);
       if (m === 'GET') {
@@ -802,10 +815,66 @@ test('ซื้อ N4: ยกเลิกที่หน้า Stripe · มี�
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('ขอคืนเงิน: ภายใน 7 วันต้องเลือกเหตุผลก่อนส่ง · ส่งแล้วขึ้นรอดำเนินการ · เกิน 7 วันหรือได้สิทธิ์แบบ manual ไม่มีปุ่ม', async (b, base) => {
+  const db = mockCloud(); db.packs.n4 = FAKE_PACK; db.packs.n3 = FAKE_PACK;
+  db.ent = ['n4', 'n3']; db.src = { n4: { source: 'stripe', created_at: new Date(Date.now() - 2 * 864e5).toISOString() }, n3: { source: 'manual', created_at: new Date().toISOString() } };
+  const p = await cloudPage(b, base, db);
+  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  const acct = () => p.locator('#cloud').innerText();
+  let t = await acct();
+  assert(t.includes('ขอคืนเงิน N4 (เหลืออีก 5 วัน)') && !t.includes('ขอคืนเงิน N3'), t);
+  await p.locator('button:has-text("ขอคืนเงิน N4")').click();
+  const dlg = await p.locator('.cdl').innerText();
+  assert(dlg.includes('เหตุผลไม่มีผลต่อการคืนเงิน') && dlg.includes('เนื้อหาไม่ตรงกับที่คาดไว้') && dlg.includes('อื่นๆ'), dlg);
+  await p.locator('button:text-is("ส่งคำขอคืนเงิน")').click();
+  assert((await p.locator('.rfe').innerText()).includes('เลือกเหตุผลก่อน')); assert.strictEqual(db.rr.length, 0);
+  await p.locator('input[value=other]').check(); await p.locator('button:text-is("ส่งคำขอคืนเงิน")').click();
+  assert((await p.locator('.rfe').innerText()).includes('ช่วยเล่าสั้นๆ')); assert.strictEqual(db.rr.length, 0);
+  await p.locator('input[value=content]').check(); await p.fill('#rfd', 'อยากได้แบบฝึกฟังมากกว่านี้');
+  await p.locator('button:text-is("ส่งคำขอคืนเงิน")').click();
+  await p.waitForSelector('.toast:has-text("ส่งคำขอคืนเงิน N4 แล้ว")');
+  assert.strictEqual(db.rr.length, 1);
+  assert.deepStrictEqual([db.rr[0].level, db.rr[0].reason, db.rr[0].detail], ['n4', 'content', 'อยากได้แบบฝึกฟังมากกว่านี้']);
+  t = await acct(); assert(t.includes('ส่งคำขอคืนเงิน N4 แล้ว รอดำเนินการ') && !t.includes('ขอคืนเงิน N4 (เหลือ'), t);
+  assert.strictEqual(await p.evaluate(() => localStorage.getItem('kn_packs').includes('refund')), false, 'คำขอคืนเงินไม่ลง localStorage');
+  // ส่งซ้ำ (เช่น จากอีกเครื่อง) → 409
+  await p.evaluate(() => { RR = []; render(); refundAsk('n4') }); await p.locator('input[value=price]').check();
+  await p.locator('button:text-is("ส่งคำขอคืนเงิน")').click(); await p.waitForSelector('.toast:has-text("ไว้แล้ว รอดำเนินการ")');
+  assert.strictEqual(db.rr.length, 1);
+  // ซื้อมาเกิน 7 วัน → ไม่มีปุ่ม
+  db.rr = []; db.src.n4.created_at = new Date(Date.now() - 8 * 864e5).toISOString(); await p.evaluate(() => packCheck());
+  t = await acct(); assert(!t.includes('ขอคืนเงิน'), t);
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ขอคืนเงิน: ผู้ดูแลเห็นคำขอที่รอคืน (ข้อความผู้ใช้ถูก escape) และสรุปเหตุผล · ยังไม่มีตารางก็ไม่พัง', async (b, base) => {
+  const db = mockCloud(); db.admin = true; db.packs.n4 = FAKE_PACK;
+  const d = new Date().toISOString();
+  db.rr = [
+    { id: 3, user_id: 'u9', email: 'x@y.co', level: 'n4', reason: 'error', detail: '<img src=x onerror=alert(1)>คำผิด', status: 'pending', created_at: d },
+    { id: 2, user_id: 'u8', email: 'z@y.co', level: 'n3', reason: 'error', detail: null, status: 'refunded', created_at: d },
+    { id: 1, user_id: 'u7', email: 'w@y.co', level: 'n4', reason: 'price', detail: null, status: 'refunded', created_at: d }];
+  const p = await cloudPage(b, base, db);
+  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  const t = await p.locator('#cloud').innerText();
+  assert(t.includes('คำขอคืนเงินที่รอดำเนินการ (1)') && t.includes('x@y.co') && t.includes('เจอเนื้อหาผิด หรือแอปมีปัญหา') && !t.includes('z@y.co'), t);
+  assert(t.includes('<img src=x onerror=alert(1)>คำผิด'), 'แสดงเป็นข้อความ');
+  assert.strictEqual(await p.locator('#cloud img').count(), 0, 'ต้องไม่สร้าง element จากข้อความผู้ใช้');
+  assert(/สรุปเหตุผลทั้งหมด \(3 คำขอ\)[\s\S]*เจอเนื้อหาผิด หรือแอปมีปัญหา 2[\s\S]*ไม่คุ้มกับราคา 1/.test(t), t);
+  db.noRefundTable = true; await p.evaluate(() => packCheck());
+  assert((await p.locator('#cloud').innerText()).includes('ยังไม่มีตาราง refund_requests'));
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('ซื้อ: Edge Function และ schema ปลอดภัย (ไม่มีความลับในโค้ด purchases แอปเข้าไม่ได้ webhook ตรวจลายเซ็น)', async () => {
   const sql = fs.readFileSync(path.join(ROOT, 'supabase/schema.sql'), 'utf8');
   assert(/alter table public\.purchases enable row level security;/.test(sql) && /revoke all on public\.purchases from anon, authenticated;/.test(sql));
   assert(!/policy[^;]*on public\.purchases/.test(sql), 'ห้ามมี policy ให้แอปอ่าน/เขียน purchases');
+  // คำขอคืนเงิน: แอปใส่ได้เฉพาะ level/reason/detail (user_id email status มาจากฐานข้อมูล) ส่งได้เฉพาะของที่ซื้อผ่าน Stripe ภายใน 7 วัน แก้สถานะได้เฉพาะผู้ดูแล
+  assert(/grant insert \(level, reason, detail\) on public\.refund_requests to authenticated;/.test(sql));
+  assert(/refund_requests_insert_own[\s\S]*auth\.uid\(\)\) = user_id and status = 'pending'[\s\S]*e\.source = 'stripe' and e\.created_at > now\(\) - interval '7 days'/.test(sql));
+  assert(/refund_requests_update_admin" on public\.refund_requests for update to authenticated\s+using \(\(select public\.is_admin\(\)\)\)/.test(sql));
+  assert(!/policy[^;]*on public\.refund_requests for (delete|all)/.test(sql));
   const wh = fs.readFileSync(path.join(ROOT, 'supabase/functions/stripe-webhook/index.ts'), 'utf8'), co = fs.readFileSync(path.join(ROOT, 'supabase/functions/checkout/index.ts'), 'utf8');
   assert(/verify\(body, req\.headers\.get\('stripe-signature'\)/.test(wh));
   for (const t of [wh, co, fs.readFileSync(path.join(ROOT, 'js/packs.js'), 'utf8'), fs.readFileSync(path.join(ROOT, 'js/data/cloud-config.js'), 'utf8')])

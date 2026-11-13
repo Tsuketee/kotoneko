@@ -58,7 +58,12 @@ export function makeHandler(env: Env, fx: typeof fetch = fetch) {
     if (!c.refunded || typeof c.payment_intent !== 'string') return 'partial';   // คืนเงินบางส่วน: ไม่ถอนสิทธิ์
     const rows = await db('purchases?select=session_id,user_id,level&payment_intent=eq.' + encodeURIComponent(c.payment_intent), 'GET');
     for (const p of rows || []) {
-      if (p.user_id) await db(`entitlements?user_id=eq.${p.user_id}&level=eq.${p.level}&source=eq.stripe`, 'DELETE');
+      if (p.user_id) {
+        await db(`entitlements?user_id=eq.${p.user_id}&level=eq.${p.level}&source=eq.stripe`, 'DELETE');
+        // คำขอคืนเงินจากแอป (ถ้ามี) → refunded · ถ้ายังไม่ได้รัน schema ใหม่ (ไม่มีตาราง) ไม่ให้การถอนสิทธิ์ล้ม
+        try { await db(`refund_requests?user_id=eq.${p.user_id}&level=eq.${p.level}&status=eq.pending`, 'PATCH', { status: 'refunded' }) }
+        catch (e) { console.warn('อัปเดต refund_requests ไม่สำเร็จ', e) }
+      }
       await db('purchases?session_id=eq.' + encodeURIComponent(p.session_id), 'PATCH', { status: 'refunded' });
     }
     return rows && rows.length ? 'revoked' : 'unknown';
