@@ -605,6 +605,9 @@ const FAKE_PACK = {
   grammar: '@1::บททดสอบ::〜テスト\nT::ก\nT::ข\nT::ค\nE::あ::ก\nQ::あ___::い;う::เพราะ', dialogue: '@1|ทดสอบ (สุภาพ)\nA|こんにちは。\nB|こんにちは。',
   topics: { 1: 'หมวดทดสอบ' }, strokes: {}
 };
+// แพ็ก N3 ปลอม: คันจิตัวแรกเป็น 込 ซึ่งไม่มีอ่านแบบออน ('-') เหมือนของจริง
+const FAKE_PACK_N3 = { ...FAKE_PACK, level: 'n3', version: 5, name: 'N3',
+  kanji: '込,-,こ(む)・こ(める),แน่น,หมวดทดสอบ\n験,ケン,-,ตรวจ,หมวดทดสอบ', examples: '込:込む|こむ|แออัด|k' };
 async function home(p) { await p.evaluate(() => { tab = 'home'; render() }); return p.locator('#app').innerText() }
 
 test('ระดับ N4: ยังไม่เข้าสู่ระบบ การ์ดล็อก กดแล้วพาไปเข้าสู่ระบบ ไม่ดาวน์โหลดอะไร', async (b, base) => {
@@ -683,14 +686,37 @@ test('ระดับ N4: ถูกถอนสิทธิ์ หรืออ�
 test('ระดับ N4: มีสิทธิ์แต่ยังไม่มีแพ็กบนเซิร์ฟเวอร์ → บอกว่าเนื้อหายังไม่พร้อม ไม่ใช่ยังไม่ปลดล็อก', async (b, base) => {
   const db = mockCloud(); db.ent = ['n4']; const p = await cloudPage(b, base, db);
   await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
-  const h = await home(p);
-  assert(h.includes('เนื้อหายังไม่พร้อม') && !h.includes('เปิดขายเร็วๆ นี้'), h.slice(-300));
+  await home(p); const c4 = await p.locator('.pc:has-text("N4")').first().innerText();
+  assert(c4.includes('เนื้อหายังไม่พร้อม') && !c4.includes('เปิดขายเร็วๆ นี้'), c4);
   await p.evaluate(() => lvSwitch('n4'));
   await p.waitForSelector('.toast:has-text("เนื้อหายังไม่พร้อมบนเซิร์ฟเวอร์")', { timeout: 8000 });
   assert.strictEqual(await p.evaluate(() => LV), 'n5');
   // ผู้ดูแลอัปโหลดแล้ว → พร้อมเรียน
   db.packs.n4 = FAKE_PACK; await p.evaluate(() => packCheck());
   assert((await home(p)).includes('ปลดล็อกแล้ว'));
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ระดับ N3: มีสิทธิ์ → สลับระดับ ความคืบหน้าแยก key (kn3 kw3 kv3 kg3) และคันจิที่ไม่มีอ่านแบบออนไม่แสดง "-"', async (b, base) => {
+  const db = mockCloud(); db.ent = ['n3']; db.packs.n3 = FAKE_PACK_N3; db.packs.n4 = FAKE_PACK; const p = await cloudPage(b, base, db);
+  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await home(p);
+  assert((await p.locator('.pc:has-text("N3")').first().innerText()).includes('ปลดล็อกแล้ว'));
+  assert((await p.locator('.pc:has-text("N4")').first().innerText()).includes('เปิดขายเร็วๆ นี้'), 'ไม่มีสิทธิ์ N4 ต้องยังล็อก');
+  await Promise.all([p.waitForNavigation(), p.evaluate(() => lvSwitch('n3'))]);
+  assert.deepStrictEqual(await p.evaluate(() => [LV, DS.k.key, DS.w.key, DS.v.key, GK, K.length]), ['n3', 'kn3', 'kw3', 'kv3', 'kg3', 2]);
+  assert(await p.evaluate(() => ['kn3', 'kw3', 'kv3', 'kg3', 'kn4', 'kn5'].every(k => PK.includes(k))), 'key ความคืบหน้า N3 ต้องอยู่ใน PK เพื่อส่งออกและซิงก์');
+  // คำอ่าน: ข้ามช่องออนที่เป็น '-' ทั้งในตัวเลือกข้อสอบ/รายการผิดบ่อย (rd) บัตรคำ และหน้าฝึกเขียน
+  assert.deepStrictEqual(await p.evaluate(() => K.map(rd)), ['こ(む)・こ(める)', 'ケン']);
+  await p.evaluate(() => { openDs('k'); cur = K[0]; fl = true; mode = 'card'; render() });
+  const d = await p.locator('#app .d').first().innerText();
+  assert(d.startsWith('こ(む)') && !/^-$/m.test(d), d);
+  await p.evaluate(() => { mode = 'write'; wi = 0; render() });
+  const wtx = await p.locator('#app .wi .d').first().innerText();
+  assert(!wtx.startsWith('-') && wtx.includes('こ(む)'), wtx);
+  // เรียนในระดับ N3 แล้วความคืบหน้าไปอยู่ที่ kn3
+  await p.evaluate(() => { mode = 'card'; cur = null; fl = false; go() }); await p.locator('#app .card').first().click(); await p.locator('button:text-is("จำได้")').click();
+  assert(await p.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('kn3') || '{}')).length === 1 && !localStorage.getItem('kn4')));
   assert.deepStrictEqual(p.errors, []);
 });
 

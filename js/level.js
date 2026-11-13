@@ -3,7 +3,7 @@
 //    เป็นของแพ็กก่อนที่ core.js สร้าง DS แอปจึงทำงานทีละระดับด้วยโค้ดเดิม (เปลี่ยนระดับ = โหลดหน้าใหม่)
 // ความคืบหน้าแต่ละระดับแยก key กัน (LKEY) ทุก key อยู่ใน PK (stats.js) เพื่อส่งออกและซิงก์ ส่วน kn_level / kn_pack_* / kn_packs ไม่ใช่ความคืบหน้า
 const LEVELS = { n5: { n: 'N5', g: '五' }, n4: { n: 'N4', g: '四' }, n3: { n: 'N3', g: '三' } };
-const LKEY = { n5: { k: 'kn5', w: 'kw1', v: 'kv1', g: 'kg1' }, n4: { k: 'kn4', w: 'kw4', v: 'kv4', g: 'kg4' } };
+const LKEY = { n5: { k: 'kn5', w: 'kw1', v: 'kv1', g: 'kg1' }, n4: { k: 'kn4', w: 'kw4', v: 'kv4', g: 'kg4' }, n3: { k: 'kn3', w: 'kw3', v: 'kv3', g: 'kg3' } };
 const LVK = 'kn_level', PACKK = l => 'kn_pack_' + l;
 let LV = 'n5';
 

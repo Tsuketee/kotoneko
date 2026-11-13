@@ -5,7 +5,7 @@
 const PSK = 'kn_packs';
 let PS = {}; try { PS = JSON.parse(localStorage.getItem(PSK) || '{}') } catch (e) { PS = {} }
 const psave = () => { try { localStorage.setItem(PSK, JSON.stringify(PS)) } catch (e) {} };
-const PAID = ['n4'];  // ระดับที่มีแพ็กแล้ว (N3 ยังไม่มีเนื้อหา)
+const PAID = ['n4', 'n3'];  // ระดับเสียเงินที่มีแพ็กเนื้อหาแล้ว
 function packLocal(l) { try { const p = JSON.parse(localStorage.getItem(PACKK(l)) || 'null'); return p && p.level === l ? p : null } catch (e) { return null } }
 const packEnt = l => (PS.ent || []).includes(l);
 // พร้อมเรียน = มีแพ็กในเครื่อง หรือมีสิทธิ์ (ผู้ดูแลถือว่ามีสิทธิ์) และมีแพ็กบนเซิร์ฟเวอร์

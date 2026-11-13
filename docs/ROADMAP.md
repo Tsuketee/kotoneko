@@ -31,6 +31,6 @@
 
 ## เฟส 4 · เตรียมขาย
 - [x] ระบบบัญชีผู้ใช้ และเก็บความคืบหน้าบนคลาวด์ ใช้ข้ามเครื่องได้ (Supabase เข้าสู่ระบบด้วยรหัสทางอีเมล) โค้ดพร้อมแล้ว เหลือพอสร้างโปรเจกต์ Supabase ตาม `docs/CLOUD.md` แล้วใส่คีย์ใน `js/data/cloud-config.js`
-- [ ] freemium: N5 ฟรี, N4/N3 ปลดล็อกแบบเสียเงิน · ทำแล้ว: ระบบสิทธิ์และส่งแพ็กเนื้อหา (Supabase `entitlements`/`content_packs` + `js/level.js` `js/packs.js`) เนื้อหา N4 ครบใน repo private · ระบบชำระเงิน Stripe Checkout + webhook (โค้ดและชุดทดสอบพร้อม เหลือพอตั้งค่า Stripe/Supabase โหมดทดสอบตาม `docs/PAYMENT.md` และกำหนดราคา) · เหลือ: เปิดขายจริง, เนื้อหา N3
+- [ ] freemium: N5 ฟรี, N4/N3 ปลดล็อกแบบเสียเงิน · ทำแล้ว: ระบบสิทธิ์และส่งแพ็กเนื้อหา (Supabase `entitlements`/`content_packs` + `js/level.js` `js/packs.js`) เนื้อหา N4 ครบใน repo private · ระบบชำระเงิน Stripe Checkout + webhook (โค้ดและชุดทดสอบพร้อม เหลือพอตั้งค่า Stripe/Supabase โหมดทดสอบตาม `docs/PAYMENT.md` และกำหนดราคา) · เนื้อหา N3 ครบใน repo private และแอปรองรับ N3 แล้ว (key ความคืบหน้า `kn3` `kw3` `kv3` `kg3`, คันจิที่ไม่มีอ่านแบบออน) · เหลือ: เปิดขายจริง (ตั้งค่า Stripe ราคา N4/N3 อัปโหลดแพ็ก ให้ผู้รู้ตรวจข้อกำหนด)
 - [x] หน้าแนะนำแอป นโยบายความเป็นส่วนตัว และข้อกำหนดการใช้งาน (`about.html` `privacy.html` `terms.html` ร่างแรก ใส่อีเมลติดต่อแล้ว ควรให้ผู้รู้กฎหมายตรวจก่อนขายจริง · ปุ่มลบบัญชีในแอปทำแล้ว ต้องรัน `supabase/schema.sql` ใน Supabase 1 ครั้ง)
 - [ ] ⏰ เตือนพอ: ติดตั้ง Marketing plugin กลับมาช่วยเรื่องการขาย

@@ -64,8 +64,9 @@
 2. ตั้งตัวเองเป็นผู้ดูแล: `insert into public.admins (user_id) select id from auth.users where email = 'อีเมลของคุณ' on conflict do nothing;`
 3. ให้สิทธิ์ทดสอบ: `insert into public.entitlements (user_id, level, source) select id, 'n4', 'manual' from auth.users where email = 'อีเมล' on conflict do nothing;`
    ถอนสิทธิ์: `delete from public.entitlements where level = 'n4' and user_id = (select id from auth.users where email = 'อีเมล');`
+   ระดับ N3 ใช้คำสั่งเดียวกัน เปลี่ยน `'n4'` เป็น `'n3'`
 
 ### อัปโหลด / อัปเดตแพ็ก
-1. ใน repo เนื้อหา: รันตัวตรวจทุกตัวให้ผ่าน แล้ว `python3 -I tools/build_pack.py n4` ได้ไฟล์ `packs/n4.json`
+1. ใน repo เนื้อหา: รันตัวตรวจทุกตัวให้ผ่าน แล้ว `python3 -I tools/build_pack.py n4` (หรือ `n3`) ได้ไฟล์ `packs/n4.json` (`packs/n3.json`)
 2. ในแอป (เข้าสู่ระบบด้วยบัญชีผู้ดูแล): สถิติ → บัญชีและซิงก์ → ส่วน "ผู้ดูแล" → อัปโหลดแพ็กเนื้อหา → เลือกไฟล์
 3. ผู้มีสิทธิ์จะได้เวอร์ชันใหม่อัตโนมัติเมื่อเปิดแอปครั้งถัดไป
