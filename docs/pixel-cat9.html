@@ -23,7 +23,7 @@ h1{font-size:20px;margin:0 0 4px}.sub{color:var(--mut);font-size:13px;line-heigh
 button:focus-visible{outline:3px solid #2a6fdb;outline-offset:2px}
 </style></head><body>
 <h1>แมวพิกเซลนุ่มนิ่ม 48×48 · ร่างที่ 9 · 11 อารมณ์ · 9 ลายขน</h1>
-<p class="sub">วาดใหม่ทั้งตัว (ต้นฉบับ) ตามพฤติกรรมแมวจริง: หัวและตัวกลมมนหลอมเป็นเนื้อเดียว ลงเงานูนแบบนุ่ม ใช้เส้นด้านในเป็นสีเงาแทนเส้นดำ ขาสั้นแบบมันช์กิ้น หางเรียวสีส้มปลายครีมให้เห็นชัด แต่ละท่าขยับ 4 เฟรม · ร่าง 9: ลายขนตามแมวจริง 9 แบบ (ครีมแต้มส้ม ส้มลายเสือ เทาลายเสือ ขาวล้วน ดำล้วน ขาวดำ วิเชียรมาศ สามสี สีสวาด) สีตาตามลาย, ขาหน้ากลมมนขึ้น, ท่านอนหลับเก็บขอบอุ้งเท้า, รวมท่าตื่นเต้นเข้ากับท่าดีใจ</p>
+<p class="sub">วาดใหม่ทั้งตัว (ต้นฉบับ) ตามพฤติกรรมแมวจริง: หัวและตัวกลมมนหลอมเป็นเนื้อเดียว ลงเงานูนแบบนุ่ม ใช้เส้นด้านในเป็นสีเงาแทนเส้นดำ ขาสั้นแบบมันช์กิ้น หางเรียวสีส้มปลายครีมให้เห็นชัด แต่ละท่าขยับ 4 เฟรม · ร่าง 9: ลายขนตามแมวจริง 9 แบบ (ครีมแต้มส้ม ส้มลายเสือ เทาลายเสือ ขาวล้วน ดำล้วน ขาวดำ วิเชียรมาศ สามสี สีสวาด) สีตาตามลาย, ขาหน้ากลมมนขึ้น, ท่านอนหลับเก็บขอบอุ้งเท้า, รวมท่าตื่นเต้นเข้ากับท่าดีใจ · แก้ไข: ท่าสงสัยขาหน้าเท่ากัน ท่าเขินอายเปลี่ยนเป็นอุ้งเท้าปิดปาก</p>
 <div class="bar"><button id="th" aria-pressed="false">โหมดมืด</button><button id="sp">ความเร็ว: ปกติ</button><button id="pl" aria-pressed="true">เล่นแอนิเมชัน</button><button id="ex">ส่งออก sprite sheet (PNG)</button></div>
 <div class="bar"><div class="grp" id="coats"><span>สีขน</span></div><div class="grp" id="accs"><span>เครื่องประดับ</span></div></div>
 <div class="grid" id="g"></div>
@@ -213,11 +213,12 @@ function sitCat(o={}){
  const legs=o.legs||'sit',lift=o.lift||0;
  // ขาหน้า: โคนเล็กกลืนกับอก ปลายเป็นอุ้งเท้ากลมนูนพ้นเส้นพื้นหนึ่งแถว เส้นขอบใช้สีที่เข้มกว่าระหว่างอุ้งเท้ากับขน
  const paw=(cx,lf)=>(x,y)=>smin(sdEll(x,y,cx,40.2+by-lf,3,3.7),sdEll(x,y,cx,37+by-lf,2.2,2.4),1.2);
- const pawLine=()=>{const a=RAMP[P('paw')][4],b=RAMP[P('fur')][4];return lumHex(a)<lumHex(b)?a:b};
+ const darkRamp=r=>lumHex(RAMP[r][2])<.06,edge=slot=>darkRamp(P(slot))?RAMP[P(slot)][0]:null; // ขนเข้ม (ดำ): ขอบใช้ขั้นสว่างสุด
+ const pawLine=()=>{const a=P('paw'),b=P('fur');if(darkRamp(a)&&darkRamp(b))return RAMP[a][0];return lumHex(RAMP[a][4])<lumHex(RAMP[b][4])?RAMP[a][4]:RAMP[b][4]};
  if(legs==='sit'){parts.push({z:1.5,R:2.9,ground:false,skipUp:true,sdf:paw(21,0),mat:()=>P('paw'),contour:(x,y)=>y>39.2+by?pawLine():false},{z:1.55,R:2.9,ground:false,skipUp:true,sdf:paw(27,lift),mat:()=>P('paw'),contour:(x,y)=>y>39.2+by-lift?pawLine():false})}
  else{parts.push({z:1.5,R:2,ground:false,sdf:(x,y)=>Math.min(sdEll(x,y,18,42.2+by,3,1.9),sdEll(x,y,30,42.2+by,3,1.9)),mat:()=>P('paw'),contour:null})}
- if(legs==='cheek'){parts.push({z:2.5,R:2.3,ground:false,cast:false,sdf:(x,y)=>Math.min(sdCap(x,y,16,34.4+by,14.4,31.4+by,2.4,2.4),sdCap(x,y,32,34.4+by,33.6,31.4+by,2.4,2.4)),mat:()=>P('limb'),contour:null},
-  {z:2.6,R:2.2,ground:false,cast:false,contour:null,sdf:(x,y)=>Math.min(sdEll(x,y,13.8,29.8+by,3.1,2.8),sdEll(x,y,34.2,29.8+by,3.1,2.8)),mat:()=>P('paw')})}
+ if(legs==='cover'){parts.push({z:2.5,R:2.3,ground:false,cast:false,sdf:(x,y)=>Math.min(sdCap(x,y,19.4,36+by,21,31.6+by,2.3,2.2),sdCap(x,y,28.6,36+by,27,31.6+by,2.3,2.2)),mat:()=>P('limb'),contour:()=>edge('limb')},
+  {z:2.6,R:2.2,ground:false,cast:false,contour:()=>edge('paw'),sdf:(x,y)=>Math.min(sdEll(x,y,21.2,30.2+by,2.7,2.4),sdEll(x,y,26.8,30.2+by,2.7,2.4)),mat:()=>P('paw')})}
  if(legs==='book'){parts.push({z:2.6,R:3,ground:false,contour:INK,sdf:(x,y)=>sdBox(x,y,24,37.2+by,9.4,4.2),mat:(x,y)=>y>39.6+by?'rice':'book'},{z:2.7,R:2,ground:false,contour:null,sdf:(x,y)=>Math.min(sdEll(x,y,15.6,37.2+by,2.6,2.4),sdEll(x,y,32.4,37.2+by,2.6,2.4)),mat:()=>P('paw')})}
  if(legs==='hold'){const oy=by+(o.bite||0)*0;parts.push({z:2.6,R:3.5,ground:false,contour:INK,sdf:(x,y)=>Math.max(sdTri(x,y,[24,28.6+oy],[18.2,37.4+oy],[29.8,37.4+oy])-1.2,-sdEll(x,y,28.4,30,2.4,2.4)),mat:(x,y)=>y>34.4+oy?'nori':'rice'},
   {z:2.7,R:2,ground:false,contour:null,sdf:(x,y)=>Math.min(sdEll(x,y,18.2,35.6+oy,2.6,2.4),sdEll(x,y,29.8,35.6+oy,2.6,2.4)),mat:()=>P('paw')})}
@@ -260,15 +261,15 @@ Object.assign(POSES,{
    if(chew)put(a,22.6,hy+4.8,[[0,0],[1,0],[2,0]],EYE);else mouth(a,22,hy+4.8);
    if(chew){put(a,11.6,hy+3.4,[[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1]],BLUSH);put(a,32.4,hy+3.4,[[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1]],BLUSH)}else{blush(a,12.6,hy+3.8);blush(a,32.4,hy+3.8)}},
   fx:(a)=>{if(f===1||f===2)heart(a,38+(f===2?1:0),10-f,0)}})},
- // เขินอาย: มือแตะแก้ม หูเอนลงนิดๆ แก้มแดงมีขีด /// หางม้วนพันเท้า เหงื่อตก
- shy(f){const d=f%2;return sitCat({hy:.6,ear:.08,legs:'cheek',tailFront:true,
+ // เขินอาย: อุ้งเท้าสองข้างปิดปาก แก้มแดงมีขีด /// ตาเหลือบหลบ หางม้วนพันเท้า เหงื่อตก (ไม่วาดปาก เพราะถูกอุ้งเท้าบัง)
+ shy(f){const d=f%2;return sitCat({hy:.6,ear:.08,legs:'cover',tailFront:true,
   tail:[[34,41],[38.4,43.2],[33,45],[25,45.2],[19.6+d*.6,44.2]],tr1:1.2,
-  face:(a,hx,hy)=>{bean(a,19,hy+1.6,3);bean(a,30,hy+1.6,3);a.push([24,hy+4,NOSE]);put(a,22.6,hy+5.2,[[0,1],[1,0],[2,1],[3,0]],EYE);
-   put(a,13.6,hy+3.2,[[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1]],BLUSH);put(a,30.4,hy+3.2,[[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1]],BLUSH);
-   [[13.6,hy+4.2],[14.6,hy+3.2],[15.6,hy+4.2],[16.6,hy+3.2]].forEach(([x,y])=>a.push([x,y,SHY]));[[30.4,hy+4.2],[31.4,hy+3.2],[32.4,hy+4.2],[33.4,hy+3.2]].forEach(([x,y])=>a.push([x,y,SHY]))},
+  face:(a,hx,hy)=>{bean(a,19,hy+1.4,3);bean(a,30,hy+1.4,3);a.push([24,hy+3.8,NOSE]);
+   put(a,13,hy+3.2,[[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1]],BLUSH);put(a,31,hy+3.2,[[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1]],BLUSH);
+   [[13,hy+4.2],[14,hy+3.2],[15,hy+4.2],[16,hy+3.2]].forEach(([x,y])=>a.push([x,y,SHY]));[[31,hy+4.2],[32,hy+3.2],[33,hy+4.2],[34,hy+3.2]].forEach(([x,y])=>a.push([x,y,SHY]))},
   fx:(a)=>{put(a,10,13+d,[[1,0],[0,1],[1,1],[2,1],[1,2]],TEAR)}})},
  // สงสัย: เอียงหัว หูข้างหนึ่งเอน ยกเท้าหน้าแตะ หางเป็นรูป ?
- curious(f){const t=[.18,.24,.24,.18][f],bob=f===1||f===2?-1:0;return sitCat({tilt:t,earL:0,earR:.32,lift:f===1||f===2?1.8:0,
+ curious(f){const t=[.18,.24,.24,.18][f],bob=f===1||f===2?-1:0;return sitCat({tilt:t,earL:0,earR:.32,
   tail:[[33,40.6],[39,41],[41.8,35.4],[41.4,29.2],[38.4,26.8],[36.2,28.4]],tr1:1.2,
   face:(a,hx,hy)=>{bean(a,18,hy-.2,4,true);bean(a,29,hy-.2,4,true);a.push([24,hy+3.6,NOSE]);put(a,23.6,hy+4.8,[[0,0],[1,0]],EYE);blush(a,12.6,hy+3.6);blush(a,32.4,hy+3.6)},
   fx:(a)=>{put(a,38,4+bob,[[1,0],[2,0],[0,1],[3,1],[3,2],[2,3],[2,5]],GOLD)}})}
@@ -281,8 +282,8 @@ const INFO=[['sit','นั่งรอ','สะโพกกลม ขาหน�
  ['curl','นอนหลับ','นอนขดเป็นโดนัท คางวางบนอุ้งเท้า หางโค้งเลียบก้นมาด้านหน้า หน้า - . - ท้องพองยุบ (ดึก)',[650,650,650,650]],
  ['loaf','ง่วง เคลิ้ม','หมอบแบบขนมปัง ซุกเท้าใต้อก ตาปรือ สัปหงกแล้วสะดุ้ง (ใกล้ดึก ไม่ได้เรียนนาน)',[650,500,450,350]],
  ['eat','กินข้าวปั้น','สองมือถือข้าวปั้นที่ถูกกัดไปคำหนึ่ง เคี้ยวแก้มตุ่ย ตาปิดอร่อย (ตอนให้อาหาร)',[300,260,300,260]],
- ['shy','เขินอาย','อุ้งเท้าประคองแก้ม แก้มแดงมีขีด /// ตาเหลือบหลบ หางม้วนพันเท้า เหงื่อตก (ถูกชม แตะเล่น)',[400,400,400,400]],
- ['curious','สงสัย','เอียงหัว หูข้างหนึ่งเอน ยกเท้าหน้าแตะเบาๆ หางเป็นรูปเครื่องหมาย ? (เจอคำใหม่ เปิดบทไวยากรณ์)',[400,400,400,400]],
+ ['shy','เขินอาย','อุ้งเท้าสองข้างปิดปาก แก้มแดงมีขีด /// ตาเหลือบหลบ หางม้วนพันเท้า เหงื่อตก (ถูกชม แตะเล่น)',[400,400,400,400]],
+ ['curious','สงสัย','เอียงหัว หูข้างหนึ่งเอน นั่งขาหน้าเท่ากัน หางเป็นรูปเครื่องหมาย ? (เจอคำใหม่ เปิดบทไวยากรณ์)',[400,400,400,400]],
  ['belly','รัก ไว้ใจ','นอนหงายโชว์พุง ขาสั้นชูขึ้นนวดอากาศ หน้า > ∇ < (ความสนิทเพิ่ม รัก)',[330,330,330,330]]];
 const KEYS=INFO.map(i=>i[0]);
 function draw(ctx,g){ctx.clearRect(0,0,W,H);for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]){ctx.fillStyle=g[y][x];ctx.fillRect(x,y,1,1)}}
