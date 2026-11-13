@@ -163,6 +163,12 @@ grant select on public.refund_requests to authenticated;
 grant insert (level, reason, detail) on public.refund_requests to authenticated;
 grant update (status) on public.refund_requests to authenticated;
 
+-- ฝั่งเซิร์ฟเวอร์ (Edge Functions checkout / stripe-webhook ใช้ service_role) · โปรเจกต์ใหม่ของ Supabase ไม่ให้สิทธิ์ตารางกับ service_role อัตโนมัติ
+-- ถ้าไม่มีบรรทัดเหล่านี้ ฟังก์ชันจะได้ HTTP 403 (permission denied) ตอนตรวจสิทธิ์ / บันทึกการซื้อ
+grant select, insert, update, delete on public.entitlements to service_role;
+grant select, insert, update, delete on public.purchases to service_role;
+grant select, update on public.refund_requests to service_role;
+
 drop trigger if exists refund_requests_touch on public.refund_requests;
 create trigger refund_requests_touch before update on public.refund_requests
   for each row execute function public.progress_touch();
