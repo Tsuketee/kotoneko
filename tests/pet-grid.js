@@ -34,7 +34,7 @@ const OUT = path.resolve(process.argv[2] || '.');
     for (let i = 0; i < 36000; i++) { step(50); seen.add(cat.mode); if (cat.x < XMIN || cat.x > XMAX) out++; }
     return { seen: [...seen], out };
   });
-  const need = ['sit', 'turnOut', 'rise', 'walk', 'halt', 'turnIn', 'loaf', 'curl', 'wake'];
+  const need = ['sit', 'turnOut', 'rise', 'walk', 'halt', 'turnIn', 'run', 'skid', 'loaf', 'curl', 'wake'];
   const miss = need.filter(m => !sim.seen.includes(m));
   if (sim.out) errors.push(`ฉาก: แมวออกนอกขอบ ${sim.out} ครั้ง`);
   if (miss.length) errors.push('ฉาก: ไม่ผ่านสถานะ ' + miss.join(', '));
