@@ -549,19 +549,21 @@ function zoom(){const far=cat.x<(XMIN+XMAX)/2?XMAX-rr(0,8):XMIN+rr(0,8);goTo(far
 function arrive(){if(cat.then==='zoom2'){cat.then='sit';const tx=(XMIN+XMAX)/2+rr(-20,20);cat.target=Math.round(tx);cat.dir=cat.target>cat.x?1:-1;setMode('skid',220);return}
  if(cat.then==='sleep')setMode('loaf',rr(3000,4500));else setMode('sit',rr(3000,7000))}
 const GROOM_T=DUR.groom.reduce((a,b)=>a+b,0);function groom(){setMode('groom',GROOM_T*2)}
+// เล่นท่าใดก็ได้ใน INFO ตามเวลาที่กำหนด แล้วกลับมานั่ง (ไว้ผูกกับเหตุการณ์ในแอป เช่น ตอบถูก = act('happy',1600))
+function act(k,ms){cat.pose=k;setMode('pose',ms)}
 function decide(){const r=Math.random();if(r<.15)return goTo(CUSH,'sleep');if(r<.27)return zoom();if(r<.33)return groom(); /* เลียขนไม่บ่อย ราว 6% ของการตัดสินใจ */if(r<.85){let tx,n=0;do tx=rr(XMIN,XMAX);while(Math.abs(tx-cat.x)<24&&++n<20);return goTo(tx,'sit')}setMode('sit',rr(2500,5000))}
 function step(dt){const m=cat.mode;if(!playing&&m!=='shy'&&m!=='wake')return;cat.t+=dt;
  if(m==='walk'||m==='run'){const d=GAIT[m].v*dt/1000,left=cat.target-cat.x;if(Math.abs(left)<=d){cat.x=cat.target;if(m==='run'&&cat.then==='zoom2')arrive();else setMode('halt',m==='run'?240:300)}else{cat.x+=Math.sign(left)*d;cat.dist+=d}return}
  if(!cat.dur||cat.t<cat.dur)return;
- ({sit:decide,turnOut:()=>cat.run?setMode('run'):setMode('rise',260),skid:()=>setMode('run'),rise:()=>setMode('walk'),halt:()=>setMode('turnIn',260),turnIn:arrive,loaf:()=>setMode('curl',rr(12000,20000)),curl:()=>setMode('wake',1500),wake:()=>Math.random()<.4?groom():setMode('sit',rr(3000,6000)),groom:()=>setMode('sit',rr(2500,5000)),shy:()=>setMode('sit',rr(2000,4000))})[m]()}
+ ({sit:decide,turnOut:()=>cat.run?setMode('run'):setMode('rise',260),skid:()=>setMode('run'),rise:()=>setMode('walk'),halt:()=>setMode('turnIn',260),turnIn:arrive,loaf:()=>setMode('curl',rr(12000,20000)),curl:()=>setMode('wake',1500),wake:()=>Math.random()<.4?groom():setMode('sit',rr(3000,6000)),groom:()=>setMode('sit',rr(2500,5000)),pose:()=>setMode('sit',rr(2500,5000)),shy:()=>setMode('sit',rr(2000,4000))})[m]()}
 function catPose(){const m=cat.mode,D=cat.dir>0?'R':'L';if(m==='walk'||m==='run')return[m+D,Math.floor(cat.dist/GAIT[m].step)%GAIT[m].n];if(m==='skid')return['stand'+(cat.dir>0?'L':'R'),0]; // หยุดกึกยังหันทางเดิมก่อนกลับตัว
- const k=m==='rise'||m==='halt'?'stand'+D:m==='turnOut'||m==='turnIn'?'turn'+D:{sit:'sit',loaf:'loaf',wake:'loaf',curl:'curl',shy:'shy',groom:'groom'}[m];return[k,playing?frameAt(DUR[k],cat.t):0]}
+ const k=m==='rise'||m==='halt'?'stand'+D:m==='turnOut'||m==='turnIn'?'turn'+D:(m==='pose'?cat.pose:{sit:'sit',loaf:'loaf',wake:'loaf',curl:'curl',shy:'shy',groom:'groom'}[m]);return[k,playing?frameAt(DUR[k],cat.t):0]}
 const sprC={};function sprite(k,f,tm,coat,acc,idle){const key=[k,f,tm,coat,acc,idle].join('|');let v=sprC[key];if(!v){v=document.createElement('canvas');v.width=W;v.height=H;draw(v.getContext('2d'),frame(k,f,tm,coat,acc,idle));sprC[key]=v}return v}
 const sc=$('scene'),sx=sc.getContext('2d'),MODE_T={groom:'เลียขน',skid:'หยุดกึกแล้วกลับตัว',turnOut:'หันตัว',turnIn:'หันกลับมา',sit:'นั่งพัก',rise:'ลุกขึ้นยืน',halt:'หยุดยืน',loaf:'หมอบง่วงบนเบาะ',curl:'นอนหลับบนเบาะ',wake:'ตื่นแล้ว',shy:'เขินที่ถูกแตะ'};
 let sVis=true,sLast='',sMode='';
 if('IntersectionObserver'in window)new IntersectionObserver(es=>{sVis=es[0].isIntersecting;sLast=''}).observe(sc); // ไม่อยู่บนจอ = ไม่คำนวณ ไม่วาด
 function sceneTick(now,dt){if(!sVis)return;step(dt);const[k,f]=catPose();cat.k=k;const idle=idleAt(cat,now),tm=S.theme,X=Math.round(cat.x),key=[k,f,idle,X,tm,S.coat,S.acc].join('|');
- if(cat.mode!==sMode){sMode=cat.mode;$('sst').textContent='สถานะ: '+(cat.mode==='walk'||cat.mode==='run'?(cat.mode==='walk'?'เดินไปทาง':'วิ่งดีดไปทาง')+(cat.dir>0?'ขวา':'ซ้าย'):MODE_T[cat.mode])}
+ if(cat.mode+(cat.pose||'')!==sMode){sMode=cat.mode+(cat.pose||'');$('sst').textContent='สถานะ: '+(cat.mode==='walk'||cat.mode==='run'?(cat.mode==='walk'?'เดินไปทาง':'วิ่งดีดไปทาง')+(cat.dir>0?'ขวา':'ซ้าย'):cat.mode==='pose'?INFO.find(i=>i[0]===cat.pose)[1]:MODE_T[cat.mode])}
  if(key===sLast)return;sLast=key;sx.clearRect(0,0,SW,SH);sx.drawImage(sceneBg(tm),0,0);sx.drawImage(sprite(k,f,tm,S.coat,S.acc,idle),X,CY);sx.drawImage(sceneFg(tm),0,0)}
 function poke(){if(cat.mode==='curl'||cat.mode==='loaf')setMode('wake',1400);else if(cat.mode!=='wake')setMode('shy',1600)}
 sc.addEventListener('pointerdown',e=>{const r=sc.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*SW,y=(e.clientY-r.top)/r.height*SH,X=Math.round(cat.x);
