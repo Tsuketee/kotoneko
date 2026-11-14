@@ -163,20 +163,24 @@ const POSES={
   if(ACC==='scarf')parts.push({z:1.9,R:2.3,ground:false,sdf:(x,y)=>sdCap(x,y,23.2,hy-2.4,25.2,hy+6.6,2.4,2.4),ramp:'scarf',contour:RAMP.scarf[4]}); // ผ้าพันคอโผล่ที่คอหลังหัว
   if(ACC==='bow')parts.push(bowPart(20.5+et*.3,hy-4.6,.57,3,.9));
   return{parts,decals:a,shadow:[26,43.4,21,3],ground:42}},
- // หมอบแบบขนมปัง: ตาปรือ สัปหงกแล้วสะดุ้ง
- loaf(f){const nod=[0,.6,1.6,0][f],a=[],lt=IDLE==='twitchL'?1:0,rt=IDLE==='twitchR'?1:0,fl=IDLE==='flick'?1:0;const hy=24.5+nod;
-  const LO=[[12.6,hy-2.8],[13.6-lt*1.4,hy-12+lt*1.6],[20.4,hy-7.8]],RO=[[35.4,hy-2.8],[34.4+rt*1.4,hy-12+rt*1.6],[27.6,hy-7.8]],LI=[[14.4,hy-4],[15-lt*1.2,hy-9.6+lt*1.4],[18.8,hy-7.4]],RI=[[33.6,hy-4],[33+rt*1.2,hy-9.6+rt*1.4],[29.2,hy-7.4]];
-  const body={z:0,R:9,sdf:(x,y)=>Math.max(sdEll(x,y,24,34.5,15.2,9.6),y-42.4),mat:(x,y)=>{const st=y<33&&fr(x/3.2+.3)<.34;return sdEll(x,y,36,30,5.5,4.5)<0?P('patch',st):sdEll(x,y,24,40,7.5,5)<0?P('under'):P('fur',st)}};
-  const paws={z:1,R:2,ground:false,sdf:(x,y)=>Math.min(sdEll(x,y,19.4,41.4,2.8,2.1),sdEll(x,y,28.6,41.4,2.8,2.1)),mat:()=>P('paw'),contour:null};
-  const head={z:2,R:8,sdf:(x,y)=>smin(sdEll(x,y,24,hy,12.2,9.6),Math.min(ear(x,y,...LO),ear(x,y,...RO)),1.8),
-   mat:(x,y)=>headMat(x,y,24,hy,{lo:LO,ro:RO,li:LI,ri:RI},[29.5,hy-7,5.6,3.6])};
-  const tl=tail([[36.6,31.6],[39.6,35.4],[39.8,39.8],[37,43],[31.6,44.6],[25.6-fl*.8,44.4-fl*1.8]],2,1.2,3,{tip:.8,base:.14});
-  if(f===2){eyeClosed(a,15.5,hy+1.4);eyeClosed(a,28.5,hy+1.4)}else{eyeSleepy(a,15.5,hy+1.2);eyeSleepy(a,28.5,hy+1.2)}
-  mouth(a,21.5,hy+5);blush(a,12.5,hy+3.6);blush(a,32.5,hy+3.6);if(f===2||f===1)zz(a,37,10-f,false);
-  const parts=[body,paws,head,tl],sy=hy+9.8;
-  if(ACC==='scarf')parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,15.4,sy-.4,32.6,sy-.4,2.5,2.5),ramp:'scarf',contour:RAMP.scarf[4]},
-   {z:1.95,R:2,ground:false,skipUp:true,sdf:(x,y)=>sdCap(x,y,29.6,sy+.8,31.4,sy+5,1.9,1.5),ramp:'scarf',contour:RAMP.scarf[4]});
-  if(ACC==='bow')parts.push(bowPart(31.5,hy-5.3,.57));
+ // หมอบแบบขนมปัง (ปรับ 2026-11-14): หัวทรงเดียวกับท่านั่ง วางต่ำบนตัวทรงขนมปังที่กว้างกว่าหัว เห็นสะโพกกลมสองข้างและอกสีอ่อน
+ // อุ้งเท้าหน้าซุกโผล่แค่ปลาย หางโอบข้างตัวมาด้านหน้า ตาปรือ สัปหงกแล้วสะดุ้ง
+ loaf(f){const nod=[0,.6,1.6,0][f],a=[],lt=IDLE==='twitchL'?1:0,rt=IDLE==='twitchR'?1:0,fl=IDLE==='flick'?1:0,hx=24,hy=25.2+nod,hyF=25+Math.round(nod);
+  const EL=earPts(hx,hy,.05+lt*.8,false),ER=earPts(hx,hy,.05+rt*.8,true);
+  const bodyS=(x,y)=>Math.max(sdBox(x,y,24,36.2,16.4,6.6,5.8),y-42.4);
+  const body={z:0,R:9,sdf:bodyS,mat:(x,y)=>{const st=y<36&&Math.abs(x-24)>9&&fr(x/3.2+.3)<.34;return sdEll(x,y,36.4,31.6,5,3.6)<0?P('patch',st):P('fur',st)}};
+  const hips={z:.5,R:5,ground:false,contour:null,cIdx:3,sdf:(x,y)=>Math.max(Math.min(sdEll(x,y,12.4,37.6,5.4,4.6),sdEll(x,y,35.6,37.6,5.4,4.6)),bodyS(x,y)+.4),
+   mat:(x,y)=>{const c=x<24?12.4:35.6,d=Math.hypot((x-c)/1.15,y-37.6);return P('fur',d>1.5&&fr(d/2.4)<.38)}};
+  const chest={z:1,R:5,ground:false,contour:false,sdf:(x,y)=>Math.max(sdEll(x,y,24,38.8,7.4,4.6),bodyS(x,y)+.5),mat:()=>P('under')};
+  const paws={z:1.5,R:2,ground:false,contour:null,sdf:(x,y)=>Math.max(Math.min(sdEll(x,y,20.2,41.6,2.7,1.9),sdEll(x,y,27.8,41.6,2.7,1.9)),y-42.6),mat:()=>P('paw')};
+  const head={z:2,R:8.5,sdf:(x,y)=>smin(sdEll(x,y,hx,hy,12.4,10),Math.min(ear(x,y,...EL.o),ear(x,y,...ER.o)),1.8),mat:(x,y)=>headMat(x,y,hx,hy,{lo:EL.o,ro:ER.o,li:EL.i,ri:ER.i},[hx+5.6,hy-7.6,5.6,3.6])};
+  const tl=tail([[38.6,33.4],[41.6,36.6],[41.4,40.6],[38,43],[33.2-fl*.6,43.4-fl*1.8]],2,1.2,3,{tip:.78,base:.14});
+  if(f===2){eyeClosed(a,16.8,hyF+1.4);eyeClosed(a,27.6,hyF+1.4)}else{eyeSleepy(a,16.8,hyF+1.2);eyeSleepy(a,27.6,hyF+1.2)}
+  mouth(a,22,hyF+4.6);blush(a,13,hyF+3.4);blush(a,32,hyF+3.4);if(f===1||f===2)zz(a,39,6-f,false); // Zz ห่างจากปลายหู
+  const parts=[body,hips,chest,paws,head,tl],sy=hy+10.4;
+  if(ACC==='scarf')parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,hx-8.6,sy-.4,hx+8.6,sy-.4,2.5,2.5),ramp:'scarf',contour:RAMP.scarf[4]},
+   {z:1.95,R:2,ground:false,skipUp:true,sdf:(x,y)=>sdCap(x,y,hx+5.6,sy+.8,hx+7,sy+4.4,1.9,1.5),ramp:'scarf',contour:RAMP.scarf[4]});
+  if(ACC==='bow')parts.push(bowPart(hx+7.4,hy-5.6,Math.atan2(5,7.8)));
   return{parts,decals:a,shadow:[24,43.6,19,2.6],ground:43}},
  // นอนหงายโชว์พุง (มุมข้าง): หัวอยู่ซ้ายเอนไปด้านหลังเล็กน้อยแต่หน้ายังตั้ง พุงสีอ่อนหันขึ้น
  // อุ้งเท้าหน้างอขึ้นนวดอากาศสลับกัน ขาหลังซุกไว้ไม่ให้รก หางม้วนด้านขวา ท้องพองยุบ
@@ -417,16 +421,19 @@ function turnCat(o){
  mouth(a,hx-.2,hyF+4.6);blush(a,hx-10.2,hyF+3.4);put(a,hx+8.4,hyF+3.4,[[0,0],[1,0],[0,1],[1,1]],BLUSH);
  const pose={parts,decals:a,shadow:[23,44.4,15,2.4],ground:44};
  return dir>0?pose:flipPose(pose)}
-// เลียขน: ยกอุ้งเท้าขึ้นเลีย (แลบลิ้น ตาปิด) สองที แล้วเอาอุ้งเท้าเช็ดแก้มถึงโคนหู
-const TONGUE='#f39aa2';
-const GROOM=[{paw:[28.6,30.6],lick:1,hy:.8,tilt:.06,pads:1},{paw:[28.8,29.4],hy:.4,tilt:.06,pads:1},{paw:[28.6,30.6],lick:1,hy:.8,tilt:.06,pads:1},{paw:[28.8,29.4],hy:.4,tilt:.06,pads:1},
- {paw:[30.6,25.4],wash:1,hy:0,tilt:.14},{paw:[31.2,20.8],wash:1,hy:0,tilt:.2,earR:.45}];
+// เลียขน (ปรับ 2026-11-14 ให้เห็นลิ้นชัด): ยกอุ้งเท้าขึ้นชิดปาก อุ้งเท้าชมพูหันเข้าหาปาก แลบลิ้นชมพูเข้มยาวแตะอุ้งเท้า
+// เลีย 2 รอบ (ลิ้นออก → ลากลิ้นขึ้นตามอุ้งเท้า → หุบปาก มีประกายน้ำบนอุ้งเท้า) แล้วเอาอุ้งเท้าเช็ดแก้มถึงโคนหู
+const TONGUE='#ff8aa0',TONGUE_D='#d85c78',WET='#8cc4ec';
+const GL={paw:[27.2,31.4],hy:1,tilt:.1,pads:1},GU={paw:[27.4,29.8],hy:.6,tilt:.1,pads:1},GC={paw:[27.2,31.2],hy:.8,tilt:.08,pads:1,wet:1};
+const GROOM=[{...GL,lick:'out'},{...GU,lick:'up'},{...GC},{...GL,lick:'out'},{...GU,lick:'up'},{...GC},{paw:[30.6,25.4],wash:1,hy:0,tilt:.14},{paw:[31.2,20.8],wash:1,hy:0,tilt:.2,earR:.45}];
 POSES.groom=f=>{const G=GROOM[f];return sitCat({legs:'groom',paw:G.paw,pads:G.pads,hy:G.hy,tilt:G.tilt,earR:G.earR||0,
   tail:[[33,40.8],[39,42],[42.6,38.4],[42.4,33.6],[40.4+(f%2)*.5,31.6]],
   face:(a,hx,hy)=>{eyeClosed(a,16.6,hy+1.6);if(!G.wash)eyeClosed(a,28.4,hy+1.6);a.push([24,hy+3.6,NOSE]);
-   if(G.lick){put(a,22.6,hy+4.8,[[0,0],[1,0]],EYE);put(a,23.6,hy+5.8,[[0,0],[1,0],[1,-1]],TONGUE)}else put(a,22.6,hy+4.8,[[0,0],[1,1],[2,0]],EYE);
+   if(G.lick==='out'){put(a,22.6,hy+4.6,[[0,0],[1,0],[2,0]],EYE);put(a,23,hy+5.6,[[0,0],[1,0],[2,0],[1,1],[2,1],[3,1]],TONGUE);put(a,24,hy+5.6,[[0,0]],TONGUE_D);put(a,25,hy+7.6,[[0,0],[1,0]],TONGUE_D)} // ปากอ้า ลิ้นยาวลงไปแตะอุ้งเท้า
+   else if(G.lick==='up'){put(a,22.6,hy+4.6,[[0,0],[1,0],[2,0]],EYE);put(a,23.4,hy+5.6,[[0,0],[1,0],[2,0],[3,-1]],TONGUE);put(a,25.4,hy+5.6,[[0,0]],TONGUE_D)} // ลิ้นม้วนขึ้นตามอุ้งเท้า
+   else put(a,22.6,hy+4.8,[[0,0],[1,1],[2,0]],EYE);
    blush(a,12.8,hy+3.6);if(!G.wash)blush(a,32.2,hy+3.6)},
-  fx:(a)=>{if(G.wash)put(a,36,13+f,[[1,0],[0,1],[1,1],[2,1],[1,2]],FX)}})};
+  fx:(a)=>{if(G.wet)put(a,G.paw[0]+1.4,G.paw[1]-3.6,[[1,0],[0,1],[1,1],[2,1],[1,2]],WET);if(G.wash)put(a,36,7+f,[[1,0],[0,1],[1,1],[2,1],[1,2]],FX)}})};
 Object.assign(POSES,{turnR:f=>turnCat({dir:1,f}),turnL:f=>turnCat({dir:-1,f}),walkR:f=>sideCat({dir:1,f,mode:'walk'}),walkL:f=>sideCat({dir:-1,f,mode:'walk'}),runR:f=>sideCat({dir:1,f,mode:'run'}),runL:f=>sideCat({dir:-1,f,mode:'run'}),standR:f=>sideCat({dir:1,f}),standL:f=>sideCat({dir:-1,f})});
 const INFO=[['sit','นั่งรอ','สะโพกกลม ขาหน้า U U หางเรียวโค้งขึ้นปลายแกว่ง ตาเม็ดถั่ว กะพริบ หูกระดิก สะบัดหางแบบสุ่มจังหวะ (ค่าเริ่มต้น รอเรียนด้วยกัน)',Array(8).fill(340)],
  ['think','คิด รอคำตอบ','เอียงหัวนิดๆ ตามองขึ้น จุดความคิดโผล่ทีละจุด (ระหว่างทำควิซ รอผู้ใช้ตอบ)',[500,500,500,700]],
@@ -439,7 +446,7 @@ const INFO=[['sit','นั่งรอ','สะโพกกลม ขาหน�
  ['shy','เขินอาย','อุ้งเท้าสองข้างปิดปาก แก้มแดงมีขีด /// ตาเหลือบหลบ หางม้วนพันเท้า เหงื่อตก (ถูกชม แตะเล่น)',[400,400,400,400]],
  ['curious','สงสัย','เอียงหัว หูข้างหนึ่งเอน นั่งขาหน้าเท่ากัน หางเป็นรูปเครื่องหมาย ? (เจอคำใหม่ เปิดบทไวยากรณ์)',[400,400,400,400]],
  ['belly','รัก ไว้ใจ','นอนหงายมุมข้าง พุงหันขึ้น อุ้งเท้าหน้างอขึ้นนวดอากาศ หางม้วน หน้า > ∇ < (ความสนิทเพิ่ม รัก)',[330,330,330,330]],
- ['groom','เลียขน','ยกอุ้งเท้าขึ้นเลีย แลบลิ้น ตาปิด แล้วเอาอุ้งเท้าเช็ดแก้มถึงโคนหู (นานๆ ที และหลังตื่นนอน)',[300,220,300,220,340,380]],
+ ['groom','เลียขน','ยกอุ้งเท้าขึ้นเลีย แลบลิ้น ตาปิด แล้วเอาอุ้งเท้าเช็ดแก้มถึงโคนหู (นานๆ ที และหลังตื่นนอน)',[240,200,220,240,200,220,340,380]],
  ['walkR','เดิน (หันขวา)','เดิน 4 จังหวะแบบแมวจริง 8 เฟรม (หลังใกล้ → หน้าใกล้ → หลังไกล → หน้าไกล) ยกเท้าพับข้อเห็นอุ้งเท้าชมพู หัวนิ่ง หางตั้งแกว่งช้า เห็นข้างขวาของแมว',Array(8).fill(85)],
  ['walkL','เดิน (หันซ้าย)','รูปทรงเดียวกันกลับด้าน แต่สีเลือกตามข้างซ้ายของแมว แต้มหู แต้มตัว และโบว์จึงอยู่ข้างเดิม ไม่สลับ',Array(8).fill(85)],
  ['runR','วิ่งดีด (หันขวา)','ควบแบบแมว 6 เฟรม ตัวหดรวบขาแล้วยืดลอย ตาโต หูลู่ หางพองฟู มีเส้นความเร็วและฝุ่น (แมวดีดวิ่งรอบห้อง)',Array(6).fill(52)],
