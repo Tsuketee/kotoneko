@@ -158,7 +158,10 @@ const POSES={
   const tl=tail([[42.4,32.6],[45.4,36],[45.6,40.2],[42.6,43.8],[37.4,45.4],[31.4,45.2-tw*.6]],2,1.3,3,{tip:.8,base:.16});
   put(a,8,hy+1,[[0,0],[1,0],[2,0],[3,0]],EYE);put(a,17,hy+1,[[0,0],[1,0],[2,0],[3,0]],EYE);a.push([15,hy+2.8,NOSE]);a.push([15,hy+3.8,EYE]);blush(a,6,hy+2.6);blush(a,21,hy+2.4);
   const t=f%4;zz(a,25+t,15-t,false);if(t>=2)zz(a,31,8,true);
-  return{parts:[body,haunch,foot,paws,head,tl],decals:a,shadow:[26,43.4,21,3],ground:42}},
+  const parts=[body,haunch,foot,paws,head,tl];
+  if(ACC==='scarf')parts.push({z:1.9,R:2.3,ground:false,sdf:(x,y)=>sdCap(x,y,23.2,hy-2.4,25.2,hy+6.6,2.4,2.4),ramp:'scarf',contour:RAMP.scarf[4]}); // ผ้าพันคอโผล่ที่คอหลังหัว
+  if(ACC==='bow')parts.push(bowPart(20.5+et*.3,hy-4.6,.57,3,.9));
+  return{parts,decals:a,shadow:[26,43.4,21,3],ground:42}},
  // หมอบแบบขนมปัง: ตาปรือ สัปหงกแล้วสะดุ้ง
  loaf(f){const nod=[0,.6,1.6,0][f],a=[];const hy=24.5+nod;
   const body={z:0,R:9,sdf:(x,y)=>Math.max(sdEll(x,y,24,34.5,15.2,9.6),y-42.4),mat:(x,y)=>{const st=y<33&&fr(x/3.2+.3)<.34;return sdEll(x,y,36,30,5.5,4.5)<0?P('patch',st):sdEll(x,y,24,40,7.5,5)<0?P('under'):P('fur',st)}};
@@ -168,7 +171,11 @@ const POSES={
   const tl=tail([[36.6,31.6],[39.6,35.4],[39.8,39.8],[37,43],[31.6,44.6],[25.6,44.4]],2,1.2,3,{tip:.8,base:.14});
   if(f===2){eyeClosed(a,15.5,hy+1.4);eyeClosed(a,28.5,hy+1.4)}else{eyeSleepy(a,15.5,hy+1.2);eyeSleepy(a,28.5,hy+1.2)}
   mouth(a,21.5,hy+5);blush(a,12.5,hy+3.6);blush(a,32.5,hy+3.6);if(f===2||f===1)zz(a,37,10-f,false);
-  return{parts:[body,paws,head,tl],decals:a,shadow:[24,43.6,19,2.6],ground:43}},
+  const parts=[body,paws,head,tl],sy=hy+9.8;
+  if(ACC==='scarf')parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,15.4,sy-.4,32.6,sy-.4,2.5,2.5),ramp:'scarf',contour:RAMP.scarf[4]},
+   {z:1.95,R:2,ground:false,skipUp:true,sdf:(x,y)=>sdCap(x,y,29.6,sy+.8,31.4,sy+5,1.9,1.5),ramp:'scarf',contour:RAMP.scarf[4]});
+  if(ACC==='bow')parts.push(bowPart(31.5,hy-5.3,.57));
+  return{parts,decals:a,shadow:[24,43.6,19,2.6],ground:43}},
  // นอนหงายโชว์พุง (มุมข้าง): หัวอยู่ซ้ายเอนไปด้านหลังเล็กน้อยแต่หน้ายังตั้ง พุงสีอ่อนหันขึ้น
  // อุ้งเท้าหน้างอขึ้นนวดอากาศสลับกัน ขาหลังซุกไว้ไม่ให้รก หางม้วนด้านขวา ท้องพองยุบ
  belly(f){const k=[0,1,0,-1][f],br=[0,.4,.7,.4][f],a=[];
@@ -191,7 +198,10 @@ const POSES={
   chevL(a,...A(-8.6,-.6));chevR(a,...A(5.6,-.6));{const[nx,ny]=A(-.4,3.4);a.push([nx+.5,ny,NOSE])}openMouth(a,...A(-2.4,4.4));
   blush(a,...A(-12,3.6));blush(a,...A(8.6,3.4));
   const t=f%4;heart(a,36+(t%2),14-t);
-  return{parts:[tl,body,head,pL,pR,pads],decals:a,shadow:[28,43.8,20,2.4],ground:43}},
+  const parts=[tl,body,head,pL,pR,pads];
+  if(ACC==='scarf')parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,23.6,28,24.4,38.4,2.4,2.4),ramp:'scarf',contour:RAMP.scarf[4]});
+  if(ACC==='bow'){const bp=bowPart(hx+7.4,hy-5.6,Math.atan2(5,7.8));parts.push({...bp,sdf:(x,y)=>{const[u,v]=T(x,y);return sc*bp.sdf(u,v)}})} // หมุน/ย่อตามหัว
+  return{parts,decals:a,shadow:[28,43.8,20,2.4],ground:43}},
 
 };
 // ---------- ตัวประกอบท่านั่งแบบปรับได้ (ใช้ทำอารมณ์ต่างๆ) ----------
@@ -299,6 +309,13 @@ Object.assign(POSES,{
 //   หันซ้าย → ผู้ชมเห็นข้างซ้ายของแมว: หูใกล้ = earR (แต้มส้มของลายครีม โบว์) แต้มใกล้ = patch
 const flipPose=p=>({...p,parts:p.parts.map(q=>{const r={...q,sdf:(x,y)=>q.sdf(W-x,y)};if(q.mat)r.mat=(x,y)=>q.mat(W-x,y);if(typeof q.contour==='function')r.contour=(x,y)=>q.contour(W-x,y);return r}),
  decals:p.decals.map(([x,y,c])=>[W-1-Math.round(x),y,c]),shadow:p.shadow&&[W-p.shadow[0],...p.shadow.slice(1)]});
+// ขาสั้นปลายกลม (ท่ายืน/เดินมุมข้างและสามส่วนสี่): โคนจมในตัว ปลายเป็นอุ้งเท้าทรงรีแตะเส้นพื้นพอดี ขาฝั่งไกลอยู่หลังตัวและเข้มลงหนึ่งขั้น
+const pawLine=()=>{const a=P('paw'),b=P('fur');if(darkRamp(a)&&darkRamp(b))return RAMP[a][0];return lumHex(RAMP[a][4])<lumHex(RAMP[b][4])?RAMP[a][4]:RAMP[b][4]};
+function sideLeg(sx,p,lift,z,dim,by=0){const fx=sx+p*2.4,fy=41.8-lift,L=(x,y)=>sdCap(x,y,sx,35.5+by,fx,fy-1.2,2.5,2.3),Ft=(x,y)=>sdEll(x,y,fx+.5,fy,2.8,2.2);
+ return{z,R:2.6,dim,ground:false,skipUp:true,shade:false,cast:false,sdf:(x,y)=>smin(L(x,y),Ft(x,y),1),mat:(x,y)=>y>fy-1.4?P('paw'):P('limb'),contour:(x,y)=>y>38.6+by-lift?pawLine():false}}
+// โบว์ตามแนวฐานหู (ใช้กับท่าที่หัวไม่หมุน): cx,cy กึ่งกลางฐานหู, ang มุมของฐานหู
+const bowPart=(cx,cy,ang,z=3,k=1)=>{const ca=Math.cos(ang),sa=Math.sin(ang),wing=(u,v,o)=>{const X=u-cx-o*ca,Y=v-cy-o*sa;return sdEll(X*ca+Y*sa,-X*sa+Y*ca,0,0,2.5*k,1.8*k)};
+ return{z,R:2.2,ground:false,ramp:'bow',contour:RAMP.bow[4],sdf:(x,y)=>Math.min(wing(x,y,-2.4*k),wing(x,y,2.4*k),sdEll(x,y,cx,cy,1.3*k,1.3*k))}};
 function sideCat(o){
  const dir=o.dir,f=o.f,mv=!!o.move,N=dir>0?'L':'R',F=dir>0?'R':'L',nP=dir>0?'patchL':'patch';
  const by=mv?[0,-.6,0,-.6][f]:0,hx=34.4,hy=23.4+by,hyF=23+Math.round(by),tw=IDLE==='twitch'?1:0;
@@ -316,10 +333,7 @@ function sideCat(o){
    if(CO.stripe){const brow=y>hy-9.2&&y<hy-5&&[-3.4,-1].some(d=>Math.abs(x-hx-d)<.55),cheek=x<hx-3&&x>hx-9.5&&[1.4,3.4].some(d=>Math.abs(y-hy-d)<.5);if(brow||cheek)return CO.stripe}
    if(sdEll(x,y,hx+1,hy-5.6,5.2,3.4)<0)return P(nP);return CO.fur}};
  const farEar={z:1.8,R:2.5,ground:false,sdf:(x,y)=>ear(x,y,...FE),mat:()=>P('ear'+F)};
- const pawLine=()=>{const a=P('paw'),b=P('fur');if(darkRamp(a)&&darkRamp(b))return RAMP[a][0];return lumHex(RAMP[a][4])<lumHex(RAMP[b][4])?RAMP[a][4]:RAMP[b][4]};
- // ขาสั้นปลายกลม: โคนจมในตัว ปลายเป็นอุ้งเท้าทรงรีแตะเส้นพื้นพอดี ขาฝั่งไกลอยู่หลังตัวและเข้มลงหนึ่งขั้น
- const leg=(sx,p,lift,z,dim)=>{const fx=sx+p*2.4,fy=41.8-lift,L=(x,y)=>sdCap(x,y,sx,35.5+by,fx,fy-1.2,2.5,2.3),Ft=(x,y)=>sdEll(x,y,fx+.5,fy,2.8,2.2);
-  return{z,R:2.6,dim,ground:false,skipUp:true,shade:false,cast:false,sdf:(x,y)=>smin(L(x,y),Ft(x,y),1),mat:(x,y)=>y>fy-1.4?P('paw'):P('limb'),contour:(x,y)=>y>38.6+by-lift?pawLine():false}};
+ const leg=(sx,p,lift,z,dim)=>sideLeg(sx,p,lift,z,dim,by);
  // เดินแบบแมวจริง: ขาทแยงก้าวพร้อมกัน (หน้าใกล้คู่กับหลังไกล) ขาที่ยกคือขาที่กำลังก้าวไปข้างหน้า
  const ph=mv?[1,0,-1,0][f]:0,u1=mv&&f===1?1.2:0,u3=mv&&f===3?1.2:0;
  const sw=(mv?[0,.8,1.4,.8]:[0,.5,.9,.5])[f],fl=IDLE==='flick'?1:0;
@@ -336,7 +350,40 @@ function sideCat(o){
  a.push([hx+10.6,hyF+2,NOSE]);put(a,hx+8.6,hyF+4.6,[[0,0],[1,1],[2,0]],EYE);blush(a,hx+3,hyF+3.4);
  const pose={parts,decals:a,shadow:[24,44.4,16,2.4],ground:44};
  return dir>0?pose:flipPose(pose)}
-Object.assign(POSES,{walkR:f=>sideCat({dir:1,f,move:true}),walkL:f=>sideCat({dir:-1,f,move:true}),standR:f=>sideCat({dir:1,f}),standL:f=>sideCat({dir:-1,f})});
+
+// ท่าหันสามส่วนสี่: ยืนสี่ขา ตัวเฉียง หัวหันมาทางผู้ชมครึ่งหนึ่ง ใช้คั่นระหว่างท่าหันหน้าตรง (นั่ง หมอบ) กับท่าหันข้าง (ยืน เดิน)
+// ตำแหน่งหูตรงกับท่าหันหน้า: หันขวา หูซ้ายจอ = earL (ใกล้ ใหญ่) หูขวาจอ = earR (ไกล แคบ) · หันซ้ายกลับรูปทรง สีตามข้างจริงเหมือน sideCat
+function turnCat(o){
+ const dir=o.dir,f=o.f,N=dir>0?'L':'R',F=dir>0?'R':'L',nP=dir>0?'patchL':'patch',fP=dir>0?'patch':'patchL';
+ const hx=28.4,hy=22.8,hyF=23,tw=IDLE==='twitch'?1:0;
+ const NE=[[hx-10.4,hy-4.2],[hx-9.4+tw*.6,hy-13.8+tw*2],[hx-2.6,hy-8.8]],NI=[[hx-8.8,hy-5.2],[hx-8.4+tw*.5,hy-11.2+tw*1.6],[hx-4.4,hy-8.4]];
+ const FE=[[hx+4.6,hy-8.8],[hx+9.6,hy-12.8],[hx+10.2,hy-2.8]],FI=[[hx+6.2,hy-8.2],[hx+8.8,hy-10.6],[hx+9,hy-4.4]];
+ const bodyS=(x,y)=>Math.max(smin(sdEll(x,y,21,35,11,7.8),sdEll(x,y,27.4,33.2,7.4,7),3),y-41.8);
+ const flank=(x,y)=>sdEll(x,y,16.8,31.8,5.4,4)<0;
+ const body={z:0,R:9,sdf:bodyS,mat:(x,y)=>{if(sdEll(x,y,29.4,36,4.6,5.8)<0||sdEll(x,y,21,41.2,8.6,2.6)<0)return P('under');
+  const st=y<37.5&&x<25&&fr(x/3.2+.15)<.34;return flank(x,y)?P(nP,st):P('fur',st)}};
+ const haunch={z:1,R:5,ground:false,contour:null,cIdx:3,sdf:(x,y)=>Math.max(sdEll(x,y,14.4,36.4,5.8,5.2),bodyS(x,y)+.5),
+  mat:(x,y)=>{const d=Math.hypot((x-14.4)/1.15,y-36.4),st=d>1.5&&fr(d/2.4)<.38;return flank(x,y)?P(nP,st):P('fur',st)}};
+ const head={z:2,R:8.5,sdf:(x,y)=>smin(sdEll(x,y,hx,hy,11.8,9.8),Math.min(ear(x,y,...NE),ear(x,y,...FE)),1.8),
+  mat:(x,y)=>{if(sdTri(x,y,...NI)<0||sdTri(x,y,...FI)<0)return P('inner');const rim=CO.earRim?.9:-.2;
+   if(sdTri(x,y,...NE)<rim)return P('ear'+N);if(sdTri(x,y,...FE)<rim)return P('ear'+F);
+   if(CO.mask){const m=CO.maskShape==='point'?sdEll(x,y,hx+2.6,hy+2.4,7.2,5.6):Math.min(sdEll(x,y,hx+2.6,hy+4.6,4.6,3.2),sdBox(x,y,hx+1.8,hy-.6,1.1,3.6,.6));if(m<0)return CO.mask}
+   if(CO.stripe){const brow=y>hy-9.6&&y<hy-5.6&&[-.6,1.6,3.6].some(d=>Math.abs(x-hx-d)<.55),cheek=(x<hx-7.6||x>hx+9.4)&&[1.2,3.2].some(d=>Math.abs(y-hy-d)<.5);if(brow||cheek)return CO.stripe}
+   if(sdEll(x,y,hx+5.2,hy-7.2,4.8,3.4)<0)return P(fP);if(sdEll(x,y,hx-5.4,hy-7.4,5.6,3.6)<0)return P(nP);return CO.fur}};
+ const sw=[0,.5,.9,.5][f],fl=IDLE==='flick'?1:0;
+ const parts=[body,haunch,head,sideLeg(27.2,0,0,1.5,0),sideLeg(31.8,0,0,-1,1),sideLeg(14.6,0,0,1.45,0),sideLeg(18.8,0,0,-1,1),
+  tail([[10.8,33.6],[6.8,31.2],[5,26.2],[5.8+sw*.5,21.2],[8.2+sw+fl*2.4,18.4-fl*1.4]],2.1,1.15,-.5,{tip:.8})];
+ const acc=o.acc||ACC;
+ if(acc==='scarf'){const sy=hy+10;parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,hx-8.4,sy-.6,hx+7.4,sy+.2,2.5,2.5),ramp:'scarf',contour:RAMP.scarf[4]},
+  {z:1.95,R:2,ground:false,skipUp:true,sdf:(x,y)=>sdCap(x,y,hx-5.6,sy+.8,hx-7,sy+6,1.9,1.5),ramp:'scarf',contour:RAMP.scarf[4]})}
+ if(acc==='bow')parts.push(N==='R'?bowPart(hx-6.6,hy-6.6,-.52):bowPart(hx+7.4,hy-5.8,.86,3,.9)); // หูซ้ายของแมวเสมอ
+ const a=[];
+ if(IDLE==='blink'){put(a,hx-5.6,hyF+3.2,[[0,0],[1,0],[2,0],[3,0]],EYE);put(a,hx+4.6,hyF+3.2,[[0,0],[1,0],[2,0]],EYE)}
+ else{bean(a,hx-4.8,hyF+.4,4,true);bean(a,hx+5.4,hyF+.4,4,true)}
+ mouth(a,hx-.2,hyF+4.6);blush(a,hx-10.2,hyF+3.4);put(a,hx+8.4,hyF+3.4,[[0,0],[1,0],[0,1],[1,1]],BLUSH);
+ const pose={parts,decals:a,shadow:[23,44.4,15,2.4],ground:44};
+ return dir>0?pose:flipPose(pose)}
+Object.assign(POSES,{turnR:f=>turnCat({dir:1,f}),turnL:f=>turnCat({dir:-1,f}),walkR:f=>sideCat({dir:1,f,move:true}),walkL:f=>sideCat({dir:-1,f,move:true}),standR:f=>sideCat({dir:1,f}),standL:f=>sideCat({dir:-1,f})});
 const INFO=[['sit','นั่งรอ','สะโพกกลม ขาหน้า U U หางเรียวโค้งขึ้นปลายแกว่ง ตาเม็ดถั่ว กะพริบ หูกระดิก สะบัดหางแบบสุ่มจังหวะ (ค่าเริ่มต้น รอเรียนด้วยกัน)',[700,700,700,700]],
  ['think','คิด รอคำตอบ','เอียงหัวนิดๆ ตามองขึ้น จุดความคิดโผล่ทีละจุด (ระหว่างทำควิซ รอผู้ใช้ตอบ)',[500,500,500,700]],
  ['read','อ่านหนังสือ','ถือหนังสือสองมือ ตามองลงไล่จากซ้ายไปขวา กะพริบเป็นระยะ (เปิดบทเรียน ไวยากรณ์)',[420,420,420,300]],
@@ -350,6 +397,8 @@ const INFO=[['sit','นั่งรอ','สะโพกกลม ขาหน�
  ['belly','รัก ไว้ใจ','นอนหงายมุมข้าง พุงหันขึ้น อุ้งเท้าหน้างอขึ้นนวดอากาศ หางม้วน หน้า > ∇ < (ความสนิทเพิ่ม รัก)',[330,330,330,330]],
  ['walkR','เดิน (หันขวา)','มุมข้างจริง ขาทแยงก้าวพร้อมกัน ตัวโยกขึ้นลงเบาๆ หางตั้งแกว่ง เห็นข้างขวาของแมว (หูแต้มส้มของลายครีมอยู่ฝั่งไกล)',[150,150,150,150]],
  ['walkL','เดิน (หันซ้าย)','รูปทรงเดียวกันกลับด้าน แต่สีเลือกตามข้างซ้ายของแมว แต้มหู แต้มตัว และโบว์จึงอยู่ข้างเดิม ไม่สลับ',[150,150,150,150]],
+ ['turnR','หันสามส่วนสี่ (ขวา)','ท่าคั่นระหว่างนั่งหันหน้ากับยืนหันข้าง ตัวเฉียง หัวหันมาหาผู้ชมครึ่งหนึ่ง หูข้างไกลแคบลง ลายและโบว์อยู่ข้างเดิม',[600,600,600,600]],
+ ['turnL','หันสามส่วนสี่ (ซ้าย)','เหมือนหันขวา กลับรูปทรง สีตามข้างจริงของแมว',[600,600,600,600]],
  ['standR','ยืนหันข้าง (ขวา)','ท่าเปลี่ยนระหว่างนั่งกับเดิน ยืนสี่ขา หางแกว่งช้า กะพริบ หูกระดิก สะบัดหางแบบสุ่ม',[600,600,600,600]],
  ['standL','ยืนหันข้าง (ซ้าย)','เหมือนท่ายืนหันขวา แต่เห็นข้างซ้ายของแมว',[600,600,600,600]]];
 const KEYS=INFO.map(i=>i[0]);
@@ -361,7 +410,7 @@ const cache={};
 function frame(k,f,tm,coat=S.coat,acc=S.acc,idle=null){const key=[tm,coat,acc,k,f,idle].join('|');if(cache[key])return cache[key];
  applyTheme(tm);CO=COATS[coat];ACC=acc;IDLE=idle;try{return cache[key]=render(POSES[k](f))}finally{IDLE=null}}
 // ท่าที่ใช้ท่าย่อยแบบสุ่มได้ (สร้างจาก sitCat) และช่วงเวลาสุ่มของแต่ละท่าย่อย (ms)
-const SITF=new Set(['sit','think','read','happy','sad','eat','shy','curious','standR','standL']);
+const SITF=new Set(['sit','think','read','happy','sad','eat','shy','curious','standR','standL','turnR','turnL']);
 const IDLES={blink:{every:[2500,6500],len:140},twitch:{every:[7000,15000],len:220},flick:{every:[4500,10000],len:320}};
 const rnd=([a,b])=>a+Math.random()*(b-a);
 // เลือกท่าย่อยของผืนผ้าใบนี้ตามเวลาจริง: แต่ละผืนสุ่มของตัวเอง แมวจึงไม่กะพริบพร้อมกันทุกตัว
@@ -423,22 +472,23 @@ function sceneFg(tm){if(fgC[tm])return fgC[tm];const k=SCOL[tm],v=canv(),c=v.get
  // เส้นขอบรอบฉากหน้า ให้เข้าชุดกับแมว
  const d=c.getImageData(0,0,SW,SH),A=(x,y)=>x>=0&&y>=0&&x<SW&&y<SH&&d.data[(y*SW+x)*4+3]>0,o=[];
  for(let y=0;y<SH;y++)for(let x=0;x<SW;x++)if(!A(x,y)&&(A(x+1,y)||A(x-1,y)||A(x,y+1)||A(x,y-1)))o.push([x,y]);o.forEach(([x,y])=>rect(c,x,y,1,1,k.line));return fgC[tm]=v}
-// สถานะของแมว: sit นั่งพัก → rise ลุกยืนหันข้าง → walk เดิน → halt หยุดยืน → sit / (ไปเบาะ) loaf หมอบ → curl หลับ → wake → sit
+// สถานะของแมว: sit นั่งพัก → turnOut หันสามส่วนสี่ → rise ยืนหันข้าง → walk เดิน → halt หยุดยืน → turnIn หันสามส่วนสี่ → sit
+//              (ไปเบาะ) … turnIn → loaf หมอบ → curl หลับ → wake → sit
 // แตะแมว: ตื่นอยู่ = shy เขิน, หลับ/หมอบ = wake ตื่น · ปิดแอนิเมชัน = นั่งนิ่ง (ยังแตะได้)
 const cat={x:52,dir:1,mode:'sit',t:0,dur:2500,dist:0,target:52,then:null,k:'sit'};
 const rr=(a,b)=>a+Math.random()*(b-a),DUR=Object.fromEntries(INFO.map(i=>[i[0],i[3]]));
 function setMode(m,dur=0){cat.mode=m;cat.t=0;cat.dur=dur;cat.ev=null}
-function goTo(tx,then){cat.target=Math.round(clamp(tx,XMIN,XMAX));cat.then=then;if(cat.target===Math.round(cat.x)){cat.x=cat.target;arrive();return}cat.dir=cat.target>cat.x?1:-1;setMode('rise',380)}
+function goTo(tx,then){cat.target=Math.round(clamp(tx,XMIN,XMAX));cat.then=then;if(cat.target===Math.round(cat.x)){cat.x=cat.target;arrive();return}cat.dir=cat.target>cat.x?1:-1;setMode('turnOut',260)}
 function arrive(){if(cat.then==='sleep')setMode('loaf',rr(3000,4500));else setMode('sit',rr(3000,7000))}
 function decide(){const r=Math.random();if(r<.15)return goTo(CUSH,'sleep');if(r<.85){let tx,n=0;do tx=rr(XMIN,XMAX);while(Math.abs(tx-cat.x)<24&&++n<20);return goTo(tx,'sit')}setMode('sit',rr(2500,5000))}
 function step(dt){const m=cat.mode;if(!playing&&m!=='shy'&&m!=='wake')return;cat.t+=dt;
- if(m==='walk'){const d=SPEED*dt/1000,left=cat.target-cat.x;if(Math.abs(left)<=d){cat.x=cat.target;setMode('halt',380)}else{cat.x+=Math.sign(left)*d;cat.dist+=d}return}
+ if(m==='walk'){const d=SPEED*dt/1000,left=cat.target-cat.x;if(Math.abs(left)<=d){cat.x=cat.target;setMode('halt',300)}else{cat.x+=Math.sign(left)*d;cat.dist+=d}return}
  if(!cat.dur||cat.t<cat.dur)return;
- ({sit:decide,rise:()=>setMode('walk'),halt:arrive,loaf:()=>setMode('curl',rr(12000,20000)),curl:()=>setMode('wake',1500),wake:()=>setMode('sit',rr(3000,6000)),shy:()=>setMode('sit',rr(2000,4000))})[m]()}
+ ({sit:decide,turnOut:()=>setMode('rise',260),rise:()=>setMode('walk'),halt:()=>setMode('turnIn',260),turnIn:arrive,loaf:()=>setMode('curl',rr(12000,20000)),curl:()=>setMode('wake',1500),wake:()=>setMode('sit',rr(3000,6000)),shy:()=>setMode('sit',rr(2000,4000))})[m]()}
 function catPose(){const m=cat.mode,D=cat.dir>0?'R':'L';if(m==='walk')return['walk'+D,Math.floor(cat.dist/STRIDE)%4];
- const k=m==='rise'||m==='halt'?'stand'+D:{sit:'sit',loaf:'loaf',wake:'loaf',curl:'curl',shy:'shy'}[m];return[k,playing?frameAt(DUR[k],cat.t):0]}
+ const k=m==='rise'||m==='halt'?'stand'+D:m==='turnOut'||m==='turnIn'?'turn'+D:{sit:'sit',loaf:'loaf',wake:'loaf',curl:'curl',shy:'shy'}[m];return[k,playing?frameAt(DUR[k],cat.t):0]}
 const sprC={};function sprite(k,f,tm,coat,acc,idle){const key=[k,f,tm,coat,acc,idle].join('|');let v=sprC[key];if(!v){v=document.createElement('canvas');v.width=W;v.height=H;draw(v.getContext('2d'),frame(k,f,tm,coat,acc,idle));sprC[key]=v}return v}
-const sc=$('scene'),sx=sc.getContext('2d'),MODE_T={sit:'นั่งพัก',rise:'ลุกขึ้นยืน',halt:'หยุดยืน',loaf:'หมอบง่วงบนเบาะ',curl:'นอนหลับบนเบาะ',wake:'ตื่นแล้ว',shy:'เขินที่ถูกแตะ'};
+const sc=$('scene'),sx=sc.getContext('2d'),MODE_T={turnOut:'หันตัว',turnIn:'หันกลับมา',sit:'นั่งพัก',rise:'ลุกขึ้นยืน',halt:'หยุดยืน',loaf:'หมอบง่วงบนเบาะ',curl:'นอนหลับบนเบาะ',wake:'ตื่นแล้ว',shy:'เขินที่ถูกแตะ'};
 let sVis=true,sLast='',sMode='';
 if('IntersectionObserver'in window)new IntersectionObserver(es=>{sVis=es[0].isIntersecting;sLast=''}).observe(sc); // ไม่อยู่บนจอ = ไม่คำนวณ ไม่วาด
 function sceneTick(now,dt){if(!sVis)return;step(dt);const[k,f]=catPose();cat.k=k;const idle=idleAt(cat,now),tm=S.theme,X=Math.round(cat.x),key=[k,f,idle,X,tm,S.coat,S.acc].join('|');
