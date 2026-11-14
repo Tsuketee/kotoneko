@@ -25,8 +25,8 @@ button:focus-visible{outline:3px solid #2a6fdb;outline-offset:2px}
 .scene{max-width:1100px}.scene canvas{display:block;image-rendering:pixelated;border:1px solid var(--bd);border-radius:14px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;max-width:100%}
 </style></head><body>
 <h1>แมวพิกเซลนุ่มนิ่ม 48×48 · ร่างที่ 10 · 11 อารมณ์ + เดิน · 9 ลายขน · ฉาก</h1>
-<p class="sub">วาดใหม่ทั้งตัว (ต้นฉบับ) ตามพฤติกรรมแมวจริง: หัวและตัวกลมมนหลอมเป็นเนื้อเดียว ลงเงานูนแบบนุ่ม ใช้เส้นด้านในเป็นสีเงาแทนเส้นดำ ขาสั้นแบบมันช์กิ้น หางเรียวสีส้มปลายครีมให้เห็นชัด แต่ละท่าขยับ 4 เฟรม · ร่าง 9: ลายขนตามแมวจริง 9 แบบ (ครีมแต้มส้ม ส้มลายเสือ เทาลายเสือ ขาวล้วน ดำล้วน ขาวดำ วิเชียรมาศ สามสี สีสวาด) สีตาตามลาย, ขาหน้ากลมมนขึ้น, ท่านอนหลับเก็บขอบอุ้งเท้า, รวมท่าตื่นเต้นเข้ากับท่าดีใจ · แก้ไข: ท่านอนหงายมุมข้าง โบว์ที่โคนหู หูท่าเสียใจลู่เฉียง กะพริบ/หูกระดิก/สะบัดหางแบบสุ่ม</p>
-<div class="bar"><button id="th" aria-pressed="false">โหมดมืด</button><button id="sp">ความเร็ว: ปกติ</button><button id="pl" aria-pressed="true">เล่นแอนิเมชัน</button><button id="ex">ส่งออก sprite sheet (PNG)</button></div>
+<p class="sub">วาดใหม่ทั้งตัว (ต้นฉบับ) ตามพฤติกรรมแมวจริง: หัวและตัวกลมมนหลอมเป็นเนื้อเดียว ลงเงานูนแบบนุ่ม ใช้เส้นด้านในเป็นสีเงาแทนเส้นดำ ขาสั้นแบบมันช์กิ้น หางเรียวสีส้มปลายครีมให้เห็นชัด แต่ละท่าขยับ 4 เฟรม · ร่าง 10: ท่าเดิน/ยืนหันข้าง ท่าหันสามส่วนสี่ ฉากเดินไปมา (เลื่อนลงล่างสุด) เครื่องประดับครบทุกท่า · ร่าง 9: ลายขนตามแมวจริง 9 แบบ (ครีมแต้มส้ม ส้มลายเสือ เทาลายเสือ ขาวล้วน ดำล้วน ขาวดำ วิเชียรมาศ สามสี สีสวาด) สีตาตามลาย, ขาหน้ากลมมนขึ้น, ท่านอนหลับเก็บขอบอุ้งเท้า, รวมท่าตื่นเต้นเข้ากับท่าดีใจ · แก้ไข: ท่านอนหงายมุมข้าง โบว์ที่โคนหู หูท่าเสียใจลู่เฉียง กะพริบ/หูกระดิก/สะบัดหางแบบสุ่ม</p>
+<div class="bar"><button id="th" aria-pressed="false">โหมดมืด</button><button id="sp">ความเร็ว: ปกติ</button><button id="pl" aria-pressed="true">เล่นแอนิเมชัน</button><button id="ex">ส่งออก sprite sheet (PNG)</button><button id="ea">หูไกลตอนหันข้าง: ด้านหน้า</button></div>
 <div class="bar"><div class="grp" id="coats"><span>สีขน</span></div><div class="grp" id="accs"><span>เครื่องประดับ</span></div></div>
 <div class="grid" id="g"></div>
 <div class="row"><div><canvas id="s1" width="48" height="48" style="width:96px;height:96px"></canvas><div class="note">ขนาดจริงบนจอ 2×</div></div><div><canvas id="s2" width="48" height="48" style="width:144px;height:144px"></canvas><div class="note">3×</div></div></div>
@@ -316,23 +316,25 @@ function sideLeg(sx,p,lift,z,dim,by=0){const fx=sx+p*2.4,fy=41.8-lift,L=(x,y)=>s
 // โบว์ตามแนวฐานหู (ใช้กับท่าที่หัวไม่หมุน): cx,cy กึ่งกลางฐานหู, ang มุมของฐานหู
 const bowPart=(cx,cy,ang,z=3,k=1)=>{const ca=Math.cos(ang),sa=Math.sin(ang),wing=(u,v,o)=>{const X=u-cx-o*ca,Y=v-cy-o*sa;return sdEll(X*ca+Y*sa,-X*sa+Y*ca,0,0,2.5*k,1.8*k)};
  return{z,R:2.2,ground:false,ramp:'bow',contour:RAMP.bow[4],sdf:(x,y)=>Math.min(wing(x,y,-2.4*k),wing(x,y,2.4*k),sdEll(x,y,cx,cy,1.3*k,1.3*k))}};
+let SIDE_EAR='front'; // หูฝั่งไกลในท่าหันข้าง: front โผล่ด้านหน้า (ค่าเริ่มต้น) / back โผล่ด้านหลัง
 function sideCat(o){
  const dir=o.dir,f=o.f,mv=!!o.move,N=dir>0?'L':'R',F=dir>0?'R':'L',nP=dir>0?'patchL':'patch';
- const by=mv?[0,-.6,0,-.6][f]:0,hx=34.4,hy=23.4+by,hyF=23+Math.round(by),tw=IDLE==='twitch'?1:0;
- const NE=[[hx-1.6,hy-6.8],[hx+2.6-tw*1.6,hy-15.2+tw*1.4],[hx+6.4,hy-5.8]],NI=[[hx,hy-7.2],[hx+2.7-tw*1.4,hy-12.8+tw*1.2],[hx+4.8,hy-6.8]];
- const FE=[[hx-8,hy-3.8],[hx-6.8,hy-13.6],[hx-1.8,hy-8.6]];
+ // หัวกลมโตเท่าท่าหันหน้า (ไม่ใช่ทรงลิ่ม) หูอยู่บนกลางหัว หูฝั่งไกลโผล่ด้านหน้าเล็กน้อย ต่อเนื่องกับท่าสามส่วนสี่ที่หูไกลอยู่ทางขวาจอ
+ const by=mv?[0,-.6,0,-.6][f]:0,hx=33.4,hy=22.8+by,hyF=23+Math.round(by),tw=IDLE==='twitch'?1:0,back=SIDE_EAR==='back';
+ const NE=[[hx-7,hy-5.6],[hx-3.6-tw*1.4,hy-15+tw*1.6],[hx+1.4,hy-9]],NI=[[hx-3.8,hy-7.6],[hx-3.4-tw*1.2,hy-12.4+tw*1.4],[hx+.2,hy-8.8]];
+ const FE=back?[[hx-10.4,hy-3.6],[hx-9.4,hy-13],[hx-4.6,hy-8.6]]:[[hx-.4,hy-8.8],[hx+3.6,hy-14.2],[hx+6.6,hy-6.2]];
  const bodyS=(x,y)=>Math.max(smin(sdEll(x,y,22.6,33.8+by,12.4,7.2),sdEll(x,y,30.6,32.4+by,6.6,6.6),3),y-(41.6+by));
  const flank=(x,y)=>sdEll(x,y,19,30.4+by,6,4.2)<0;
  const body={z:0,R:9,sdf:bodyS,mat:(x,y)=>{if(sdEll(x,y,24,40.6+by,10.5,3.2)<0||sdEll(x,y,35.4,35.4+by,3.2,4.6)<0)return P('under');
   const st=y<37.5+by&&x<32&&fr(x/3.2+.15)<.34;return flank(x,y)?P(nP,st):P('fur',st)}};
  const haunch={z:1,R:5,ground:false,contour:null,cIdx:3,sdf:(x,y)=>Math.max(sdEll(x,y,15.6,35.4+by,6.2,5.4),bodyS(x,y)+.5),
   mat:(x,y)=>{const d=Math.hypot((x-15.6)/1.15,y-35.4-by),st=d>1.5&&fr(d/2.4)<.38;return flank(x,y)?P(nP,st):P('fur',st)}};
- const head={z:2,R:8,sdf:(x,y)=>smin(smin(sdEll(x,y,hx,hy,10.2,9),sdEll(x,y,hx+7.8,hy+3.4,3.6,2.9),2),ear(x,y,...NE),1.6),
+ const head={z:2,R:8.5,sdf:(x,y)=>smin(smin(sdEll(x,y,hx,hy,11.4,9.8),sdEll(x,y,hx+9.4,hy+3.6,2.9,2.5),2),ear(x,y,...NE),1.6),
   mat:(x,y)=>{if(sdTri(x,y,...NI)<0)return P('inner');if(sdTri(x,y,...NE)<(CO.earRim?.9:-.2))return P('ear'+N);
-   if(CO.mask){const m=CO.maskShape==='point'?sdEll(x,y,hx+5.4,hy+2.2,7.4,6):sdEll(x,y,hx+7.4,hy+4,4.4,3.2);if(m<0)return CO.mask}
-   if(CO.stripe){const brow=y>hy-9.2&&y<hy-5&&[-3.4,-1].some(d=>Math.abs(x-hx-d)<.55),cheek=x<hx-3&&x>hx-9.5&&[1.4,3.4].some(d=>Math.abs(y-hy-d)<.5);if(brow||cheek)return CO.stripe}
-   if(sdEll(x,y,hx+1,hy-5.6,5.2,3.4)<0)return P(nP);return CO.fur}};
- const farEar={z:1.8,R:2.5,ground:false,sdf:(x,y)=>ear(x,y,...FE),mat:()=>P('ear'+F)};
+   if(CO.mask){const m=CO.maskShape==='point'?sdEll(x,y,hx+6.4,hy+2.4,6.8,5.8):sdEll(x,y,hx+8.6,hy+3.8,4,3.2);if(m<0)return CO.mask}
+   if(CO.stripe){const brow=y>hy-9.4&&y<hy-5.4&&[-.2,2.2].some(d=>Math.abs(x-hx-d)<.55),cheek=x<hx-2&&x>hx-9.5&&[1.4,3.4].some(d=>Math.abs(y-hy-d)<.5);if(brow||cheek)return CO.stripe}
+   if(sdEll(x,y,hx-3.2,hy-6.2,5.4,3.4)<0)return P(nP);return CO.fur}};
+ const farEar={z:1.8,R:2.5,dim:back?0:1,ground:false,sdf:(x,y)=>ear(x,y,...FE),mat:(x,y)=>back||sdTri(x,y,[hx+.8,hy-8.8],[hx+3.6,hy-12.2],[hx+5.2,hy-7.2])>0?P('ear'+F):P('inner')};
  const leg=(sx,p,lift,z,dim)=>sideLeg(sx,p,lift,z,dim,by);
  // เดินแบบแมวจริง: ขาทแยงก้าวพร้อมกัน (หน้าใกล้คู่กับหลังไกล) ขาที่ยกคือขาที่กำลังก้าวไปข้างหน้า
  const ph=mv?[1,0,-1,0][f]:0,u1=mv&&f===1?1.2:0,u3=mv&&f===3?1.2:0;
@@ -343,11 +345,10 @@ function sideCat(o){
  if(acc==='scarf'){const fw=mv?[0,.6,1,.6][f]:0;
   parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,hx-6.4,hy+6.6,hx+.4,hy+8.8,2.4,2.4),ramp:'scarf',contour:RAMP.scarf[4]},
    {z:1.95,R:2,ground:false,skipUp:true,sdf:(x,y)=>sdCap(x,y,hx-5,hy+9,hx-8.4-fw,hy+13.4,1.9,1.5),ramp:'scarf',contour:RAMP.scarf[4]})}
- if(acc==='bow'){const near=N==='R',[cx,cy]=near?[hx-1.2,hy-7.4]:[hx-5.2,hy-9.6]; // โบว์อยู่หูซ้ายของแมวเสมอ: หันซ้ายอยู่หูใกล้ หันขวาโผล่ที่หูไกล
-  parts.push({z:near?3:1.85,R:2.2,ground:false,ramp:'bow',contour:RAMP.bow[4],sdf:(x,y)=>Math.min(sdEll(x,y,cx-2.2,cy+.3,2.2,1.7),sdEll(x,y,cx+2.2,cy-.3,2.2,1.7),sdEll(x,y,cx,cy,1.2,1.2))})}
+ if(acc==='bow')parts.push(N==='R'?bowPart(hx-4.8,hy-6.6,-.39):back?bowPart(hx-7.4,hy-6.4,-.5,1.85,.85):bowPart(hx+4.6,hy-8,.55,1.85,.85)); // โบว์อยู่หูซ้ายของแมวเสมอ: หันซ้ายอยู่หูใกล้ หันขวาอยู่หูไกล
  const a=[];
- if(IDLE==='blink')put(a,hx+3.4,hyF+1.6,[[0,0],[1,0],[2,0]],EYE);else bean(a,hx+4,hyF-1.6,4,true);
- a.push([hx+10.6,hyF+2,NOSE]);put(a,hx+8.6,hyF+4.6,[[0,0],[1,1],[2,0]],EYE);blush(a,hx+3,hyF+3.4);
+ if(IDLE==='blink')put(a,hx+4.4,hyF+2.6,[[0,0],[1,0],[2,0]],EYE);else bean(a,hx+5,hyF,4,true); // ตาเม็ดถั่วเดียวกับท่าหันหน้า ค่อนไปทางหน้า
+ a.push([hx+10.6,hyF+2,NOSE]);put(a,hx+9.6,hyF+3.2,[[1,0],[0,1]],EYE);blush(a,hx+2.2,hyF+3.6);   // จมูกที่ปลายหน้า ปากเล็กอยู่ในหน้า ไม่ยื่นออกนอกเส้น
  const pose={parts,decals:a,shadow:[24,44.4,16,2.4],ground:44};
  return dir>0?pose:flipPose(pose)}
 
@@ -436,6 +437,8 @@ function pick(box,items,cur,set){items.forEach(([id,name])=>{const b=document.cr
 pick($('coats'),Object.entries(COATS).map(([id,c])=>[id,c.name]),S.coat,v=>S.coat=v);
 pick($('accs'),[['none','ไม่ใส่'],['scarf','ผ้าพันคอ'],['bow','โบว์']],S.acc,v=>S.acc=v);
 $('th').onclick=e=>{S.theme=S.theme==='light'?'dark':'light';document.body.classList.toggle('dark',S.theme==='dark');e.currentTarget.setAttribute('aria-pressed',S.theme==='dark')};
+$('ea').onclick=()=>{SIDE_EAR=SIDE_EAR==='front'?'back':'front';$('ea').textContent='หูไกลตอนหันข้าง: '+(SIDE_EAR==='front'?'ด้านหน้า':'ด้านหลัง');
+ [cache,sprC].forEach(o=>{for(const k in o)delete o[k]});cs.forEach(o=>o.last='');sLast='';warm()}; // ล้างแคชแล้ววาดใหม่ทั้งหน้า
 $('sp').onclick=()=>{mul=mul===1?.5:mul===.5?2:1;$('sp').textContent='ความเร็ว: '+(mul===1?'ปกติ':mul===.5?'ช้า':'เร็ว')};
 $('pl').setAttribute('aria-pressed',playing);$('pl').onclick=e=>{playing=!playing;e.currentTarget.setAttribute('aria-pressed',playing)};
 // ส่งออก sprite sheet: 4 เฟรมต่อแถว ตามลำดับ INFO (สีขน/เครื่องประดับ/โหมดตามที่เลือก)
