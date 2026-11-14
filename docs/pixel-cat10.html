@@ -146,6 +146,15 @@ const blush=(a,x,y)=>put(a,x,y,[[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]],BLUSH);
 const zz=(a,x,y,big)=>put(a,x,y,big?[[0,0],[1,0],[2,0],[3,0],[2,1],[1,2],[0,3],[1,3],[2,3],[3,3]]:[[0,0],[1,0],[2,0],[1,1],[0,2],[1,2],[2,2]],FX);
 const heart=(a,x,y)=>put(a,x,y,[[1,0],[3,0],[0,1],[1,1],[2,1],[3,1],[4,1],[1,2],[2,2],[3,2],[2,3]],HEART);
 // ---------- ท่าทาง ----------
+// หัวท่านั่งที่เอียงและย่อ (ใช้กับท่านอน) พร้อมตัวช่วยวางหน้า A(dx,dy) และโบว์ที่หมุนตามหัว
+function tiltHead(hx,hy,th,sc){const EL=earPts(hx,hy,IDLE==='twitchL'?.8:0,false),ER=earPts(hx,hy,IDLE==='twitchR'?.8:0,true);
+ const T=(x,y)=>{const c=Math.cos(-th),s=Math.sin(-th),X=(x-hx)/sc,Y=(y-hy)/sc;return[hx+X*c-Y*s,hy+X*s+Y*c]};
+ return{T,head:{z:2,R:7.5,sdf:(x,y)=>{const[u,v]=T(x,y);return sc*smin(sdEll(u,v,hx,hy,12.4,10),Math.min(ear(u,v,...EL.o),ear(u,v,...ER.o)),1.8)},
+  mat:(x,y)=>{const[u,v]=T(x,y);return headMat(u,v,hx,hy,{lo:EL.o,ro:ER.o,li:EL.i,ri:ER.i},[hx+5.6,hy-7.6,5.6,3.6])}},
+  A:(dx,dy)=>[Math.round(hx+sc*(dx*Math.cos(th)-dy*Math.sin(th))),Math.round(hy+sc*(dx*Math.sin(th)+dy*Math.cos(th)))],
+  bow:()=>{const bp=bowPart(hx+7.4,hy-5.6,Math.atan2(5,7.8));return{...bp,sdf:(x,y)=>{const[u,v]=T(x,y);return sc*bp.sdf(u,v)}}}}}
+// หน้าอิ่มใจ ⌒ ω ⌒ แก้มแดง (ท่ารัก)
+const loveFace=(a,A)=>{eyeHappy(a,...A(-8.2,.4));eyeHappy(a,...A(4,.4));{const[nx,ny]=A(-.2,3.4);a.push([nx,ny,NOSE])}mouth(a,...A(-2.4,4.6));blush(a,...A(-11.6,3.2));blush(a,...A(8.6,3.2))};
 const POSES={
  // นอนขดเป็นโดนัท: คางวางบนอุ้งเท้า หางพันมาปิดเท้า ท้องพองยุบ หูกระดิก
  curl(f){const br=[0,.45,.8,.45][f],tw=IDLE==='flick'?1:0,et=IDLE==='twitchR'?1:0,lt=IDLE==='twitchL'?1:0,hy=31+br*.25;const a=[];
@@ -182,32 +191,42 @@ const POSES={
    {z:1.95,R:2,ground:false,skipUp:true,sdf:(x,y)=>sdCap(x,y,hx+5.6,sy+.8,hx+7,sy+4.4,1.9,1.5),ramp:'scarf',contour:RAMP.scarf[4]});
   if(ACC==='bow')parts.push(bowPart(hx+7.4,hy-5.6,Math.atan2(5,7.8)));
   return{parts,decals:a,shadow:[24,43.6,19,2.6],ground:43}},
- // นอนหงายโชว์พุง (มุมข้าง): หัวอยู่ซ้ายเอนไปด้านหลังเล็กน้อยแต่หน้ายังตั้ง พุงสีอ่อนหันขึ้น
- // อุ้งเท้าหน้างอขึ้นนวดอากาศสลับกัน ขาหลังซุกไว้ไม่ให้รก หางม้วนด้านขวา ท้องพองยุบ
- belly(f){const k=[0,1,0,-1][f],br=[0,.4,.7,.4][f],a=[];
-  const body={z:0,R:9,sdf:(x,y)=>Math.max(sdEll(x,y,30.4,35.2-br*.3,12.6,7+br*.3),y-42.4),
-   mat:(x,y)=>{if(sdEll(x,y,31.4,31.4-br*.3,9.2,4.3)<0)return P('under');const st=y>32.5&&fr(x/3.2)<.34;return sdEll(x,y,37,38.8,4.8,3)<0?P('patch',st):P('fur',st)}};
-  // หัว: ใช้หัวเดียวกับท่านั่ง ย่อ 0.86 เท่า เอียงทวนเข็มเล็กน้อย
-  const hx=13.4,hy=31.4,th=-.18,sc=.82,EL=earPts(hx,hy,IDLE==='twitchL'?.8:0,false),ER=earPts(hx,hy,IDLE==='twitchR'?.8:0,true),fl=IDLE==='flick'?1:0;
-  const T=(x,y)=>{const c=Math.cos(-th),s=Math.sin(-th),X=(x-hx)/sc,Y=(y-hy)/sc;return[hx+X*c-Y*s,hy+X*s+Y*c]};
-  const head={z:2,R:7.5,sdf:(x,y)=>{const[u,v]=T(x,y);return Math.max(sc*smin(sdEll(u,v,hx,hy,12.4,10),Math.min(ear(u,v,...EL.o),ear(u,v,...ER.o)),1.8),y-42.6)},
-   mat:(x,y)=>{const[u,v]=T(x,y);return headMat(u,v,hx,hy,{lo:EL.o,ro:ER.o,li:EL.i,ri:ER.i},[hx+5.6,hy-7.6,5.6,3.6])}};
-  // อุ้งเท้าหน้า: โคนกลืนกับอก (ไม่มีเส้นขอบ/เงา) ปลายกลม มีฝ่าเท้าชมพู
-  const paw=(bx,tx,ty)=>{const A=(x,y)=>sdCap(x,y,bx,30.4,tx,ty+1.6,2.3,2.4),Pw=(x,y)=>sdEll(x,y,tx,ty,2.6,2.5);
-   return{z:bx<28?2.4:2.45,R:2.6,ground:false,cast:false,shade:false,sdf:(x,y)=>smin(A(x,y),Pw(x,y),1.2),mat:(x,y)=>Pw(x,y)<.4?P('paw'):P('limb'),
-    contour:(x,y)=>y>28.6?false:(Pw(x,y)<.4?edge('paw'):edge('limb'))}};
-  const pL=paw(25.6,24.4,22.6+k*.7),pR=paw(30.8,30.4,22.2-k*.7);
-  const pads={z:2.5,R:1.2,ground:false,cast:false,contour:false,sdf:(x,y)=>Math.min(sdEll(x,y,24.4,21.6+k*.7,1.3,.9),sdEll(x,y,30.4,21.2-k*.7,1.3,.9)),mat:()=>P('inner')};
-  const tl=tail([[41.6,37.4],[44.8,35.4],[45.6,30.8],[43.8+k*.8+fl*1.6,27-fl*1.2]],2,1.2,-.5,{tip:.78});
-  // หน้า > ∇ < วางตามตำแหน่งหัวที่เอียง แต่ลายพิกเซลไม่หมุน เพื่อให้คมชัด
-  const A=(dx,dy)=>[Math.round(hx+sc*(dx*Math.cos(th)-dy*Math.sin(th))),Math.round(hy+sc*(dx*Math.sin(th)+dy*Math.cos(th)))];
-  chevL(a,...A(-8.6,-.6));chevR(a,...A(5.6,-.6));{const[nx,ny]=A(-.4,3.4);a.push([nx+.5,ny,NOSE])}openMouth(a,...A(-2.4,4.4));
-  blush(a,...A(-12,3.6));blush(a,...A(8.6,3.4));
-  const t=f%4;heart(a,36+(t%2),14-t);
-  const parts=[tl,body,head,pL,pR,pads];
-  if(ACC==='scarf')parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,23.6,28,24.4,38.4,2.4,2.4),ramp:'scarf',contour:RAMP.scarf[4]});
-  if(ACC==='bow'){const bp=bowPart(hx+7.4,hy-5.6,Math.atan2(5,7.8));parts.push({...bp,sdf:(x,y)=>{const[u,v]=T(x,y);return sc*bp.sdf(u,v)}})} // หมุน/ย่อตามหัว
-  return{parts,decals:a,shadow:[28,43.8,20,2.4],ground:43}},
+ // รัก ไว้ใจ แบบ A (ปรับ 2026-11-14): นอนหงายมุมข้าง หัวหันมาหาผู้ชม (ไม่ตัดขอบหัว) ขาหน้างอข้อมือพับลงหาอกแบบลูกแมว นวดอากาศสลับกัน
+ // ขาหลังข้างใกล้ยกงอแบบกบ เห็นอุ้งเท้าชมพูหันขึ้น พุงสีอ่อนหันขึ้นฟ้า หางวางบนพื้น หน้า ⌒ ω ⌒ อิ่มใจ
+ belly(f){const k=[0,1,0,-1][f],br=[0,.4,.7,.4][f],a=[],fl=IDLE==='flick'?1:0;
+  const body={z:0,R:9,sdf:(x,y)=>Math.max(sdEll(x,y,29,36.8-br*.2,12.4,6.6+br*.2),y-43.4),
+   mat:(x,y)=>{if(sdEll(x,y,29.6,33.8-br*.2,9.4,3.8)<0)return P('under');const st=y>36&&fr(x/3.2)<.34;return sdEll(x,y,35,40.2,5,2.6)<0?P('patch',st):P('fur',st)}};
+  const H=tiltHead(13.4,30.4,-.2,.84);
+  const arm=(sx,sy,wx,wy,z)=>{const A=(x,y)=>sdCap(x,y,sx,sy,wx,wy,2.3,2.1),Pw=(x,y)=>sdEll(x,y,wx+1.6,wy+.9,2.5,2.1);
+   return{z,R:2.4,ground:false,cast:false,shade:false,sdf:(x,y)=>smin(A(x,y),Pw(x,y),1),mat:(x,y)=>Pw(x,y)<.3?P('paw'):P('limb'),contour:(x,y)=>y>30?false:(Pw(x,y)<.3?edge('paw'):edge('limb'))}};
+  const aN=arm(23.4,31.6,23.6,26.2+k*.6,2.45),aF=arm(26.8,31.2,27.6,25.6-k*.6,2.4);
+  const hip={z:1,R:5,ground:false,contour:null,cIdx:3,sdf:(x,y)=>Math.max(sdEll(x,y,36.6,35.4,5.6,4.6),body.sdf(x,y)+.3),mat:()=>P('fur')};
+  const fN=[41,27.6-k*.3],legN={z:1.6,R:2.4,ground:false,cast:false,shade:false,sdf:(x,y)=>smin(sdCap(x,y,37.4,33.8,fN[0]-.4,fN[1]+1.2,2.4,2.2),sdEll(x,y,...fN,2.7,2.3),1),
+   mat:(x,y)=>sdEll(x,y,...fN,2.7,2.3)<.3?P('paw'):P('limb'),contour:(x,y)=>y>32?false:null};
+  const legF={z:-.4,R:2.2,dim:1,ground:false,sdf:(x,y)=>smin(sdCap(x,y,39.6,35,43.4,31,2.2,2),sdEll(x,y,44,30,2.4,2.1),1),mat:(x,y)=>sdEll(x,y,44,30,2.4,2.1)<.3?P('paw'):P('limb')};
+  const pads={z:1.7,R:1,ground:false,cast:false,contour:false,sdf:(x,y)=>sdEll(x,y,fN[0]-.3,fN[1]-.4,1.4,1),mat:()=>P('inner')};
+  const tl=tail([[40.6,40],[43.8,41.2],[45.8,38.6],[45.2+k*.5+fl*1.4,35-fl*1.2]],2,1.2,-.6,{tip:.78});
+  loveFace(a,H.A);const t=f%4;heart(a,30+(t%2),15-t);
+  const parts=[tl,legF,body,hip,legN,pads,H.head,aF,aN];
+  if(ACC==='scarf')parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,21.8,29.6,22.6,38.2,2.4,2.4),ramp:'scarf',contour:RAMP.scarf[4]});
+  if(ACC==='bow')parts.push(H.bow());
+  return{parts,decals:a,shadow:[28,44,19,2.2],ground:43}},
+ // รัก ไว้ใจ แบบ B: นอนตะแคงโชว์พุง แก้มวางบนพื้นหันมาหาผู้ชม ขาหน้ายื่นใต้คาง ข้างหนึ่งนวดเบาๆ ขาหลังเหยียด เห็นอุ้งเท้าชมพู หางตั้งแกว่งช้าๆ
+ flop(f){const k=[0,1,0,-1][f],br=[0,.4,.7,.4][f],a=[],fl=IDLE==='flick'?1:0,w=(A,l)=>A*Math.sin(2*Math.PI*(f/4-l));
+  const body={z:0,R:9,sdf:(x,y)=>Math.max(sdEll(x,y,28.4,37.2-br*.2,13.6,6.2+br*.2),y-43.4),
+   mat:(x,y)=>{if(sdEll(x,y,28.6,40.6,9.8,3.4)<0)return P('under');const st=y<36&&fr(x/3.2)<.34;return sdEll(x,y,33,33.4,5.4,3)<0?P('patch',st):P('fur',st)}};
+  const H=tiltHead(12.8,33.2,-.3,.86);
+  const fp=(cx,cy,z,dim)=>({z,R:2,dim,ground:false,cast:false,shade:false,contour:null,sdf:(x,y)=>Math.max(smin(sdCap(x,y,cx+4.8,cy-1.4,cx+.8,cy,2.2,2),sdEll(x,y,cx,cy,2.7,2),1),y-43.4),mat:(x,y)=>sdEll(x,y,cx,cy,2.7,2)<.3?P('paw'):P('limb')});
+  const hip={z:1,R:5,ground:false,contour:null,cIdx:3,sdf:(x,y)=>Math.max(sdEll(x,y,37.2,37.4,5.8,4.8),body.sdf(x,y)+.3),mat:(x,y)=>{const d=Math.hypot((x-37.2)/1.15,y-37.4);return P('fur',d>1.5&&fr(d/2.4)<.38)}};
+  const legN={z:1.5,R:2.2,ground:false,cast:false,shade:false,contour:null,sdf:(x,y)=>Math.max(smin(sdCap(x,y,38.4,39,42.6,41,2.3,2.1),sdEll(x,y,43.6,41.2,2.8,1.9),1),y-43.4),mat:(x,y)=>sdEll(x,y,43.6,41.2,2.8,1.9)<.3?P('paw'):P('limb')};
+  const pads={z:1.6,R:1,ground:false,cast:false,contour:false,sdf:(x,y)=>sdEll(x,y,45.2,41,.9,1.2),mat:()=>P('inner')};
+  const legF={z:-.4,R:2,dim:1,ground:false,sdf:(x,y)=>smin(sdCap(x,y,39,36,43.4,37.6,2.1,1.9),sdEll(x,y,44.2,37.8,2.5,1.8),1),mat:(x,y)=>sdEll(x,y,44.2,37.8,2.5,1.8)<.3?P('paw'):P('limb')};
+  const tl=tail([[40.4,35],[43.6,32.6],[45+w(.3,0),28.4],[43.6+w(1.2,.15)+fl*1.4,24.8+w(.4,.25)-fl*1.2]],2,1.2,-.5,{tip:.78});
+  loveFace(a,H.A);const t=f%4;heart(a,31+(t%2),18-t);
+  const parts=[tl,legF,body,hip,legN,pads,H.head,fp(24.2,41.4,2.2,1),fp(19.6,41.4-(k>0?k:0),2.3,0)];
+  if(ACC==='scarf')parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,20.6,31.6,21.6,40.4,2.4,2.4),ramp:'scarf',contour:RAMP.scarf[4]});
+  if(ACC==='bow')parts.push(H.bow());
+  return{parts,decals:a,shadow:[28,44,19,2.2],ground:43}},
 
 };
 // ---------- ตัวประกอบท่านั่งแบบปรับได้ (ใช้ทำอารมณ์ต่างๆ) ----------
