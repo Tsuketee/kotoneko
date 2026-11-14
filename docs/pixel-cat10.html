@@ -243,8 +243,11 @@ function sitCat(o={}){
  const pawLine=()=>{const a=P('paw'),b=P('fur');if(darkRamp(a)&&darkRamp(b))return RAMP[a][0];return lumHex(RAMP[a][4])<lumHex(RAMP[b][4])?RAMP[a][4]:RAMP[b][4]};
  if(legs==='leglick'){const[lx,ly]=o.foot; // เลียขา: ขาหลังซ้ายจอชูขึ้นอยู่หน้าหัวด้านซ้าย ฝ่าเท้าหันมาหาผู้ชมระดับหน้าผาก หัวก้มเอียงเลียโคนขา
   parts.push({z:1.5,R:2.9,ground:false,skipUp:true,sdf:paw(21,0),mat:()=>P('paw'),contour:(x,y)=>y>39.2+by?pawLine():false},{z:1.55,R:2.9,ground:false,skipUp:true,sdf:paw(27,0),mat:()=>P('paw'),contour:(x,y)=>y>39.2+by?pawLine():false});
-  const Lg=(x,y)=>sdCap(x,y,18,37.6+by,lx+.2,ly+2.6,3,2.4),Ft=(x,y)=>sdEll(x,y,lx,ly,2.7,3.1);
-  parts.push({z:2.6,R:2.8,ground:false,cast:false,shade:false,sdf:(x,y)=>smin(Lg(x,y),Ft(x,y),1.2),mat:(x,y)=>Ft(x,y)<.3?P('paw'):P(y>33+by?'fur':'limb'),contour:(x,y)=>y>36+by?false:(Ft(x,y)<.3?edge('paw'):edge('limb'))},
+  // ขาสามท่อนแบบขาแมวจริง: ต้นขาหนาที่สะโพก → แข้งเรียวลง → เท้าเล็ก (เจ้าของบอกว่าขาแท่งเท่ากันดูแปลก)
+  const kx=lx+3.6,ky=ly+9,Th=(x,y)=>sdCap(x,y,18.4,37.4+by,kx,ky,5,3.3),Sh=(x,y)=>sdCap(x,y,kx,ky,lx+.2,ly+2.2,2.6,1.7),Ft=(x,y)=>sdEll(x,y,lx,ly,2.5,2.8);
+  parts.push({z:2.6,R:3,ground:false,cast:false,shade:false,sdf:(x,y)=>smin(smin(Th(x,y),Sh(x,y),1.2),Ft(x,y),1),
+   mat:(x,y)=>{if(Ft(x,y)<.3)return P('paw');if(Th(x,y)<-.6&&y>ky+1.4){const d=Math.hypot(x-17,y-34-by);return P('fur',d>1.6&&fr(d/2.4)<.38)}return P('limb')},
+   contour:(x,y)=>y>36+by?false:(darkRamp(P('limb'))?RAMP[P('limb')][0]:SOFT)}, // เส้นขอบเข้มตรงที่ขาทับหัว ให้แยกจากหัวชัด
    {z:2.65,R:1,ground:false,cast:false,contour:false,sdf:(x,y)=>sdEll(x,y,lx,ly+.9,1.5,1.2),mat:()=>P('inner')})}
  else if(legs==='groom'){const[gx,gy]=o.paw;parts.push({z:1.5,R:2.9,ground:false,skipUp:true,sdf:paw(21,0),mat:()=>P('paw'),contour:(x,y)=>y>39.2+by?pawLine():false}); // ขาหน้าอีกข้างยังนั่ง
   const A=(x,y)=>sdCap(x,y,28.6,36.6+by,gx+.4,gy+1.8,2.8,2.5),Pw=(x,y)=>sdEll(x,y,gx,gy,3,2.8);
@@ -442,11 +445,11 @@ POSES.groom=f=>{const G=GROOM[f];return sitCat({legs:'groom',paw:G.paw,pads:G.pa
 // เลียขา (สลับกับเลียแขน · เจ้าของขอขาซ้ายจอและขาสั้นลง): นั่งก้น ยกขาหลังชูขึ้นข้างหัว เห็นอุ้งเท้าชมพูกับเม็ดถั่ว ก้มหน้าเอียงไปเลียโคนขา (ลิ้นสั้น 2 แถวเหมือนเลียแขน)
 // เลีย 2 ที นิ้วเท้ากางหุบตามจังหวะ แล้วเงยหน้าลืมตามองแป๊บหนึ่ง
 const LEGLICK=[{hy:3.8,tilt:.4,lick:1,toe:0},{hy:3.2,tilt:.34,toe:1},{hy:3.8,tilt:.4,lick:1,toe:0},{hy:3.2,tilt:.34,toe:1},{hy:3,tilt:.18,look:1},{hy:3,tilt:.18,look:1}];
-POSES.groomLeg=f=>{const G=LEGLICK[f],foot=[14.2,19.4-(G.toe||0)*.4];return sitCat({legs:'leglick',hxo:0,hy:G.hy,tilt:G.tilt,foot,
+POSES.groomLeg=f=>{const G=LEGLICK[f],foot=[9.6,20.8-(G.toe||0)*.4];return sitCat({legs:'leglick',hxo:0,hy:G.hy,tilt:G.tilt,foot,
   tail:[[33,40.6],[40,42],[43.6,37.4],[43.2-(f%2)*.4,31],[40.6-(f%2)*.8,28.6]],
   face:(a,hx,hy)=>{if(G.look){bean(a,hx-6.4,hy+.4,4,true);bean(a,hx+4.6,hy+.4,4,true)}else eyeClosed(a,hx+4.4,hy+1.6); // ตาซ้ายถูกขาบังตอนก้มเลีย
    a.push([hx,hy+3.6,NOSE]);
-   if(G.lick){put(a,hx-1.4,hy+4.6,[[0,0],[1,0],[2,0]],EYE);put(a,hx-3.4,hy+5.6,[[0,0],[1,0],[2,0],[3,0]],TONGUE);put(a,hx-3.4,hy+5.6,[[0,0]],TONGUE_D)}else put(a,hx-1.4,hy+4.8,[[0,0],[1,1],[2,0]],EYE);
+   if(G.lick){put(a,hx-1.4,hy+4.6,[[0,0],[1,0],[2,0]],EYE);put(a,hx-4.4,hy+5.6,[[0,0],[1,0],[2,0],[3,0]],TONGUE);put(a,hx-4.4,hy+5.6,[[0,0]],TONGUE_D)}else put(a,hx-1.4,hy+4.8,[[0,0],[1,1],[2,0]],EYE);
    blush(a,hx+8.2,hy+3.6)}, // แก้มซ้ายอยู่หลังขา
   fx:(a,by)=>{const c=RAMP[P('inner')][1],g=(G.toe||0)*.5;put(a,foot[0]-2-g,foot[1]-2.4,[[0,0]],c);put(a,foot[0],foot[1]-3,[[0,0]],c);put(a,foot[0]+2+g,foot[1]-2.4,[[0,0]],c)}})}; // เม็ดถั่วนิ้วเท้า
 Object.assign(POSES,{turnR:f=>turnCat({dir:1,f}),turnL:f=>turnCat({dir:-1,f}),walkR:f=>sideCat({dir:1,f,mode:'walk'}),walkL:f=>sideCat({dir:-1,f,mode:'walk'}),runR:f=>sideCat({dir:1,f,mode:'run'}),runL:f=>sideCat({dir:-1,f,mode:'run'}),standR:f=>sideCat({dir:1,f}),standL:f=>sideCat({dir:-1,f})});
