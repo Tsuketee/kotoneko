@@ -429,8 +429,8 @@ const GROOM=[{...GL,lick:'out'},{...GU,lick:'up'},{...GC},{...GL,lick:'out'},{..
 POSES.groom=f=>{const G=GROOM[f];return sitCat({legs:'groom',paw:G.paw,pads:G.pads,hy:G.hy,tilt:G.tilt,earR:G.earR||0,
   tail:[[33,40.8],[39,42],[42.6,38.4],[42.4,33.6],[40.4+(f%2)*.5,31.6]],
   face:(a,hx,hy)=>{eyeClosed(a,16.6,hy+1.6);if(!G.wash)eyeClosed(a,28.4,hy+1.6);a.push([24,hy+3.6,NOSE]);
-   if(G.lick==='out'){put(a,22.6,hy+4.6,[[0,0],[1,0],[2,0]],EYE);put(a,23,hy+5.6,[[0,0],[1,0],[2,0],[1,1],[2,1],[3,1]],TONGUE);put(a,24,hy+5.6,[[0,0]],TONGUE_D);put(a,25,hy+7.6,[[0,0],[1,0]],TONGUE_D)} // ปากอ้า ลิ้นยาวลงไปแตะอุ้งเท้า
-   else if(G.lick==='up'){put(a,22.6,hy+4.6,[[0,0],[1,0],[2,0]],EYE);put(a,23.4,hy+5.6,[[0,0],[1,0],[2,0],[3,-1]],TONGUE);put(a,25.4,hy+5.6,[[0,0]],TONGUE_D)} // ลิ้นม้วนขึ้นตามอุ้งเท้า
+   if(G.lick==='out'){put(a,22.6,hy+4.6,[[0,0],[1,0],[2,0]],EYE);put(a,23,hy+5.6,[[0,0],[1,0],[2,0],[1,1]],TONGUE);put(a,25,hy+6.6,[[0,0]],TONGUE_D)} // ปากอ้า แลบลิ้นสั้นๆ 2 แถว ปลายลิ้นแตะขอบอุ้งเท้า
+   else if(G.lick==='up'){put(a,22.6,hy+4.6,[[0,0],[1,0],[2,0]],EYE);put(a,23.4,hy+5.6,[[0,0],[1,0]],TONGUE);put(a,25.4,hy+4.6,[[0,0]],TONGUE_D)} // ลิ้นสั้น ปลายม้วนขึ้นตามอุ้งเท้า
    else put(a,22.6,hy+4.8,[[0,0],[1,1],[2,0]],EYE);
    blush(a,12.8,hy+3.6);if(!G.wash)blush(a,32.2,hy+3.6)},
   fx:(a)=>{if(G.wet)put(a,G.paw[0]+1.4,G.paw[1]-3.6,[[1,0],[0,1],[1,1],[2,1],[1,2]],WET);if(G.wash)put(a,36,7+f,[[1,0],[0,1],[1,1],[2,1],[1,2]],FX)}})};
