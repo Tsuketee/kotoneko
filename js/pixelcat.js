@@ -479,8 +479,7 @@ const SCOL={light:{wall:'#fff3e3',wall2:'#fbe7cf',trim:'#e5c9a8',floor:'#efd6b5'
 const rect=(c,x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h)};
 const blob=(c,cx,cy,rx,ry,col)=>{c.fillStyle=col;for(let y=Math.floor(cy-ry);y<=cy+ry;y++)for(let x=Math.floor(cx-rx);x<=cx+rx;x++)if(((x+.5-cx)/rx)**2+((y+.5-cy)/ry)**2<=1)c.fillRect(x,y,1,1)};
 const canv=()=>{const v=document.createElement('canvas');v.width=SW;v.height=SH;return v};
-const bgC={},fgC={};
-function sceneBg(tm){if(bgC[tm])return bgC[tm];const k=SCOL[tm],v=canv(),c=v.getContext('2d');
+function roomBg(c,k){
  rect(c,0,0,SW,SH,k.wall);rect(c,0,52,SW,17,k.wall2);rect(c,0,51,SW,1,k.trim);rect(c,0,69,SW,2,k.trim);          // ผนัง ไม้บัวกลาง บัวเชิงผนัง
  rect(c,0,71,SW,SH-71,k.floor);rect(c,0,80,SW,1,k.floor2);[0,40,80,120].forEach(x=>rect(c,x,71,1,SH-71,k.seam)); // พื้นเสื่อ
  rect(c,92,8,40,32,k.frame2);rect(c,93,9,38,30,k.frame);rect(c,95,11,34,26,k.sky);rect(c,95,11,34,7,k.sky2);      // หน้าต่าง
@@ -488,15 +487,100 @@ function sceneBg(tm){if(bgC[tm])return bgC[tm];const k=SCOL[tm],v=canv(),c=v.get
  else{blob(c,101,15.5,3.5,2,k.cloud);blob(c,104,14.5,3,2.5,k.cloud);blob(c,120,31,3,1.6,k.cloud);blob(c,122.5,30.4,2.4,2,k.cloud)}
  rect(c,111,11,2,26,k.frame);rect(c,95,23,34,2,k.frame);rect(c,90,40,44,2,k.frame2);
  blob(c,38,84.4,24,4.6,k.cush2);blob(c,38,83.4,23.4,4,k.cush);blob(c,33,81.8,12,1.3,k.cush3);[[14,83],[61,83]].forEach(([x,y])=>rect(c,x,y,1,2,k.cush2)); // เบาะนอน (ซาบุตง) กว้างพอให้ท่าขดนอนอยู่บนเบาะ
- blob(c,147,88.6,10,1.6,k.shade);return bgC[tm]=v}
-function sceneFg(tm){if(fgC[tm])return fgC[tm];const k=SCOL[tm],v=canv(),c=v.getContext('2d');
+ blob(c,147,88.6,10,1.6,k.shade)}
+function roomFg(c,k){
  [[147,57,6.5,8.5],[140.5,63,5,6],[153.5,63,5,6],[147,49,3.8,5]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf2));     // พุ่มใบ
  [[146,56,5,7],[140,62,3.8,4.6],[153,62,3.8,4.6],[146.5,48.5,2.8,3.8]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf));
  [[144,52],[145,53],[139,60],[151,60],[145,47]].forEach(([x,y])=>rect(c,x,y,1,1,k.leaf3));
  for(let y=72;y<=88;y++){const h=y<75?8:7-(y-75)*.2;rect(c,Math.round(147-h),y,Math.round(h*2),1,y<75?k.pot3:k.pot)}rect(c,141,76,1,10,k.pot3);rect(c,152,77,2,10,k.pot2); // กระถาง
+}
+// ---------- ฉากพิกเซลตามสถานที่ (เจ้าเหมียวเที่ยวญี่ปุ่น · js/data/places.js) ----------
+// ทุกฉากขนาด 160×90 เส้นพื้น y=85 เหมือนกัน ที่นอน (bed) อยู่ตำแหน่งเดียวกับเบาะในห้อง (x=12) ท่าขดนอนจึงพอดีทุกฉาก
+// ฉากหลัง (bg) อยู่หลังแมว ฉากหน้า (fg) บังแมวได้และมีเส้นขอบอัตโนมัติ · โหมดมืด = กลางคืน
+// วาดเองทั้งหมด (ต้นฉบับ) · มุมซ้ายบนเว้นโล่งไว้ให้กล่องคำพูด
+const poly=(c,P,col)=>{c.fillStyle=col;const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]);
+ for(let y=Math.floor(Math.min(...ys));y<=Math.max(...ys);y++)for(let x=Math.floor(Math.min(...xs));x<=Math.max(...xs);x++){const px=x+.5,py=y+.5;let ins=false;
+  for(let i=0,j=P.length-1;i<P.length;j=i++){const[xi,yi]=P[i],[xj,yj]=P[j];if((yi>py)!==(yj>py)&&px<(xj-xi)*(py-yi)/(yj-yi)+xi)ins=!ins}if(ins)c.fillRect(x,y,1,1)}};
+const bedAt=(c,a,b,h)=>{blob(c,38,84.4,24,4.6,a);blob(c,38,83.4,23.4,4,b);blob(c,33,81.8,12,1.3,h)}; // ที่นอนทรงเดียวกับเบาะในห้อง
+const sky=(c,k,y2)=>{rect(c,0,0,SW,y2,k.sky);rect(c,0,y2-16,SW,16,k.sky2);
+ if(k.moon){blob(c,132,13,3,3,k.moon);[[78,8],[104,20],[146,26],[90,30],[120,6]].forEach(([x,y])=>rect(c,x,y,1,1,k.moon))}
+ else{blob(c,130,12,4,4,k.sun);blob(c,78,14,3.5,2,k.cloud);blob(c,81,13,3,2.5,k.cloud);blob(c,106,24,3,1.6,k.cloud);blob(c,108.5,23.4,2.4,2,k.cloud)}};
+
+// สวนญี่ปุ่น (庭): ภูเขาไกล รั้วไม้ไผ่ สนาม ทางกรวดคราด โคมหิน ต้นไม้ นอนบนหินแบน · ฉากหน้า: พุ่มอาซาเลีย
+const GCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',mtn:'#b7d1c6',mtn2:'#a3c2b6',fence:'#d2b07a',fence2:'#ad8a55',grass:'#b4d68f',grass2:'#9cc579',
+  gravel:'#efe8da',gravel2:'#dcd1bc',stone:'#c9c3b8',stone2:'#aaa294',stone3:'#e2ddd4',lan:'#c2bbaf',lan2:'#9e9688',lwin:'#f6e7c0',glow:null,trunk:'#8a6a4a',
+  leaf:'#86b96f',leaf2:'#65985a',leaf3:'#a8d48f',flower:'#f2a0b4',line:'#5f6e4a',shade:'rgba(70,80,50,.16)',moon:null},
+ dark:{sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',mtn:'#2f3f4a',mtn2:'#28363f',fence:'#6e5a40',fence2:'#57462f',grass:'#3f5a3a',grass2:'#354d31',
+  gravel:'#4c4741',gravel2:'#403b36',stone:'#625d57',stone2:'#4c4843',stone3:'#736e67',lan:'#5d5952',lan2:'#4a4741',lwin:'#f6d27a',glow:'rgba(246,210,122,.16)',trunk:'#5a4636',
+  leaf:'#5f8c52',leaf2:'#4a7040',leaf3:'#79a868',flower:'#b8738a',line:'#a9b893',shade:'rgba(0,0,0,.3)'}};
+function gardenBg(c,k){sky(c,k,52);
+ poly(c,[[0,44],[18,34],[34,41],[58,27],[82,42],[102,35],[126,46],[160,36],[160,52],[0,52]],k.mtn);poly(c,[[0,50],[30,42],[60,49],[96,43],[132,50],[160,45],[160,52],[0,52]],k.mtn2);
+ rect(c,0,47,SW,15,k.fence);for(let x=1;x<SW;x+=4)rect(c,x,47,1,15,k.fence2);rect(c,0,46,SW,1,k.fence2);rect(c,0,50,SW,1,k.fence2);rect(c,0,57,SW,1,k.fence2); // รั้วไม้ไผ่
+ rect(c,0,62,SW,10,k.grass);[[6,64],[22,67],[48,63],[70,66],[88,64],[118,67],[136,63],[152,66]].forEach(([x,y])=>{rect(c,x,y,1,2,k.grass2);rect(c,x+2,y+1,1,1,k.grass2)});
+ rect(c,0,72,SW,18,k.gravel);for(let y=75;y<90;y+=4)for(let x=0;x<SW;x++)if((x+y)%14<10)rect(c,x,y+(x%28<14?0:1),1,1,k.gravel2); // ทางกรวดคราดเป็นลอน
+ rect(c,123,26,3,40,k.trunk);rect(c,119,40,5,2,k.trunk);[[116,24,9,5],[131,20,11,6],[124,31,8,4],[112,36,6,3]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf2));
+ [[116,23,7,3.5],[131,19,9,4.5],[124,30,6,3]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf));[[113,21],[128,16],[136,18],[121,28]].forEach(([x,y])=>rect(c,x,y,1,1,k.leaf3)); // ต้นสน
+ if(k.glow)blob(c,105,54,11,9,k.glow);
+ rect(c,98,69,14,3,k.lan2);rect(c,103,59,4,10,k.lan);rect(c,99,57,12,2,k.lan2);rect(c,100,50,10,7,k.lan);rect(c,103,52,4,4,k.lwin);
+ poly(c,[[96,51],[105,44],[114,51]],k.lan2);rect(c,104,42,2,2,k.lan2); // โคมหิน (โทโร)
+ bedAt(c,k.stone2,k.stone,k.stone3);blob(c,147,88.6,11,1.6,k.shade)}
+function gardenFg(c,k){[[147,79,12,9],[137,83,7,6],[157,82,7,7]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf2));[[146,78,10,7],[137,82,5,4.5],[156,81,5,5]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf));
+ [[141,75],[148,72],[154,76],[145,80],[151,79],[136,80],[158,79],[143,84]].forEach(([x,y])=>{rect(c,x,y,2,2,k.flower)});[[150,74],[139,78],[156,84]].forEach(([x,y])=>rect(c,x,y,1,1,k.leaf3))}
+
+// คาเฟ่ (喫茶店): ผนังไม้ กระดานเมนูชอล์ก โคมไฟห้อย ชั้นโหลกาแฟ พื้นตาหมากรุก นอนในตะกร้า · ฉากหน้า: โต๊ะกลมกับกาแฟและโดรายากิ
+const KCOL={light:{wall:'#f1dcc0',wall2:'#e5caa6',trim:'#b9875c',wains:'#cfa274',wains2:'#b98c60',floor:'#ead2b2',floor2:'#dcbf98',board:'#4d6656',frame:'#a97e58',chalk:'#f3efe4',
+  shelf:'#a97e58',jar:'#e9f1f2',beans:'#7a4f34',dora:'#d39a58',dora2:'#b97b3c',cup:'#ffffff',cup2:'#e2d8cc',lamp:'#e08a5e',lamp2:'#c46f45',glow:'rgba(255,214,150,.32)',
+  plant:'#86b96f',bed:'#c08b5c',bed2:'#9f6c3d',bed3:'#f6e6cf',table:'#a97e58',table2:'#8a6040',line:'#7a5a43',shade:'rgba(90,58,38,.14)'},
+ dark:{wall:'#3a2e26',wall2:'#33281f',trim:'#5a4331',wains:'#4a3a2c',wains2:'#3f3125',floor:'#3d3128',floor2:'#352a22',board:'#2c3a32',frame:'#7d604a',chalk:'#c9c4b6',
+  shelf:'#7d604a',jar:'#8a9799',beans:'#4d3222',dora:'#9a6c3c',dora2:'#7f5530',cup:'#d8d2ca',cup2:'#a9a197',lamp:'#f0a070',lamp2:'#c47a4e',glow:'rgba(255,190,120,.2)',
+  plant:'#5f8c52',bed:'#86603f',bed2:'#6b4b30',bed3:'#b9a68b',table:'#7d604a',table2:'#634a37',line:'#b8987a',shade:'rgba(0,0,0,.3)'}};
+function cafeBg(c,k){rect(c,0,0,SW,52,k.wall);for(let x=9;x<SW;x+=10)rect(c,x,0,1,51,k.wall2);
+ const bx=50;rect(c,bx,14,36,24,k.frame);rect(c,bx+1,15,34,22,k.board);rect(c,bx+4,18,18,1,k.chalk);
+ [[23,12],[27,9],[31,13]].forEach(([y,w])=>{rect(c,bx+4,y,w,1,k.chalk);rect(c,bx+26,y,5,1,k.chalk)});rect(c,bx+27,17,2,2,k.chalk); // เมนูชอล์ก (เส้นแทนตัวหนังสือ)
+ blob(c,94,20,16,12,k.glow);rect(c,94,0,1,7,k.trim);poly(c,[[88,13],[90,7],[99,7],[101,13]],k.lamp);rect(c,88,13,13,1,k.lamp2);rect(c,93,14,3,1,k.cup); // โคมไฟห้อย
+ rect(c,100,22,54,2,k.shelf);rect(c,100,41,54,2,k.shelf);
+ rect(c,102,13,8,9,k.jar);rect(c,102,17,8,5,k.beans);rect(c,101,12,10,2,k.shelf);rect(c,114,14,7,8,k.jar);rect(c,114,18,7,4,k.dora);rect(c,113,13,9,2,k.shelf);
+ [128,135,142].forEach(x=>{rect(c,x,17,5,5,k.cup);rect(c,x+5,18,1,2,k.cup2)});
+ rect(c,104,35,6,6,k.lamp2);blob(c,107,31,4,4,k.plant);[37,39].forEach(y=>rect(c,118,y,11,1,k.cup2));rect(c,119,36,9,1,k.cup);rect(c,136,31,11,10,k.beans);rect(c,138,34,7,3,k.bed3); // ชั้นของ
+ rect(c,0,52,SW,17,k.wains);for(let x=19;x<SW;x+=20)rect(c,x,53,1,16,k.wains2);rect(c,0,51,SW,1,k.trim);rect(c,0,69,SW,2,k.trim);
+ for(let y=71;y<SH;y+=5)for(let x=0;x<SW;x+=8)rect(c,x,y,8,5,((x/8+(y-71)/5)&1)?k.floor2:k.floor); // พื้นตาหมากรุก
+ bedAt(c,k.bed2,k.bed,k.bed3);for(let x=18;x<60;x+=5)rect(c,x,86,2,1,k.bed2);blob(c,146,88.6,10,1.4,k.shade)} // ตะกร้านอน
+function cafeFg(c,k){rect(c,128,63,32,3,k.table);rect(c,128,66,32,1,k.table2);rect(c,144,67,4,19,k.table);rect(c,138,86,16,2,k.table2);
+ rect(c,133,62,10,1,k.cup2);rect(c,135,57,6,5,k.cup);rect(c,141,58,1,3,k.cup2);rect(c,136,57,4,1,k.beans); // กาแฟ
+ rect(c,147,62,11,1,k.cup2);blob(c,152.5,60.4,4.6,1.8,k.dora2);blob(c,152.5,59.6,4.4,1.6,k.dora)} // โดรายากิ
+
+// สถานีรถไฟ (駅): หลังคาชานชาลา เมืองไกล ป้ายสถานี ตู้กดน้ำ ม้านั่ง แถบเบรลล์สีเหลือง นอนบนผ้าห่มพับ · ฉากหน้า: เสาชานชาลากับนาฬิกา
+const TCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',city:'#b8c6d4',city2:'#a6b5c4',cwin:null,roof:'#6f6a73',roof2:'#5a5660',beam:'#8b8590',sign:'#ffffff',signb:'#4f8fd6',ink:'#3b3540',
+  wall:'#ddd8cf',wall2:'#cbc5bb',vm:'#d9625c',vm2:'#b84c47',vmg:'#eef4f6',vglow:null,d1:'#5b9bd6',d2:'#f0bb55',d3:'#86c49b',bench:'#c49a73',bench2:'#a97e58',plat:'#d8d3cb',plat2:'#c4beb4',edge:'#f0c84a',edge2:'#d4a92c',
+  mat:'#7fb0d8',mat2:'#5f93c0',mat3:'#a9cbe8',pil:'#9aa0a8',pil2:'#80868f',pil3:'#b8bec5',clock:'#ffffff',line:'#5a5660',shade:'rgba(60,60,70,.16)',moon:null},
+ dark:{sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',city:'#2b3446',city2:'#252d3d',cwin:'#f4d27a',roof:'#2e2b31',roof2:'#25232a',beam:'#3e3a42',sign:'#cfcac2',signb:'#3b6aa0',ink:'#2a2530',
+  wall:'#3a3631',wall2:'#322e2a',vm:'#9c4744',vm2:'#7e3936',vmg:'#f2f0d8',vglow:'rgba(242,240,216,.14)',d1:'#4a7fae',d2:'#c49a45',d3:'#6d9c7c',bench:'#7d604a',bench2:'#634a37',plat:'#47433e',plat2:'#3c3834',edge:'#b8952f',edge2:'#987a22',
+  mat:'#4f6f8c',mat2:'#3f5a73',mat3:'#6585a2',pil:'#4e535a',pil2:'#41454b',pil3:'#5e636a',clock:'#e8e4dc',line:'#9aa0a8',shade:'rgba(0,0,0,.3)'}};
+function stationBg(c,k){sky(c,k,54);
+ [[0,36,14],[16,30,10],[28,40,16],[46,34,9],[57,42,13],[72,31,10],[84,38,17],[103,33,9],[114,41,14],[130,29,11],[143,37,17]].forEach(([x,y,w],i)=>{rect(c,x,y,w,54-y,i%2?k.city2:k.city);
+  if(k.cwin)for(let wy=y+3;wy<50;wy+=5)for(let wx=x+2;wx<x+w-2;wx+=4)if((wx*7+wy*3+i)%5<2)rect(c,wx,wy,1,2,k.cwin)}); // เมืองไกล กลางคืนเปิดไฟ
+ rect(c,0,0,SW,6,k.roof);rect(c,0,6,SW,1,k.roof2);rect(c,0,7,SW,2,k.beam); // หลังคาชานชาลา
+ rect(c,100,9,1,5,k.beam);rect(c,128,9,1,5,k.beam);rect(c,92,14,45,15,k.ink);rect(c,93,15,43,13,k.sign);rect(c,93,24,43,4,k.signb);
+ [[109,17,2,2],[112,15,2,2],[116,15,2,2],[119,17,2,2],[112,19,6,3],[111,20,8,1]].forEach(([x,y,w,h])=>rect(c,x,y,w,h,k.ink)); // ป้ายสถานีเป็นรูปอุ้งเท้า (ไม่ใช้ตัวอักษรปลอม)
+ rect(c,95,25,3,1,k.sign);rect(c,131,25,3,1,k.sign);
+ rect(c,0,54,SW,16,k.wall);rect(c,0,54,SW,1,k.wall2);for(let x=39;x<SW;x+=40)rect(c,x,55,1,15,k.wall2);
+ if(k.vglow)blob(c,13,54,15,15,k.vglow);
+ rect(c,4,40,18,30,k.vm);rect(c,4,40,18,2,k.vm2);rect(c,6,43,14,13,k.vmg);[[0,k.d1],[1,k.d2],[2,k.d3],[3,k.d1]].forEach(([i,col])=>{rect(c,7+i*3.5|0,45,2,4,col);rect(c,7+((i+2)%4)*3.5|0,51,2,4,i%2?k.d3:k.d2)});
+ rect(c,9,61,8,3,k.vm2);rect(c,18,58,2,2,k.vmg); // ตู้กดน้ำ
+ rect(c,96,56,32,2,k.bench);rect(c,96,62,32,2,k.bench);rect(c,98,58,1,4,k.bench2);rect(c,125,58,1,4,k.bench2);rect(c,98,64,2,6,k.bench2);rect(c,124,64,2,6,k.bench2); // ม้านั่ง
+ rect(c,0,70,SW,20,k.plat);rect(c,0,70,SW,1,k.plat2);rect(c,0,76,SW,3,k.edge);for(let x=1;x<SW;x+=3)rect(c,x,77,1,1,k.edge2);for(let x=31;x<SW;x+=32)rect(c,x,79,1,11,k.plat2); // ชานชาลา + แถบเบรลล์
+ bedAt(c,k.mat2,k.mat,k.mat3);[22,30,38,46,54].forEach(x=>rect(c,x,82,1,3,k.mat2));blob(c,150,88.6,7,1.4,k.shade)} // ผ้าห่มพับลายทาง
+function stationFg(c,k){rect(c,146,9,8,81,k.pil);rect(c,146,9,2,81,k.pil3);rect(c,152,9,2,81,k.pil2);rect(c,145,86,10,4,k.pil2);
+ blob(c,150,30,5,5,k.ink);blob(c,150,30,4,4,k.clock);rect(c,150,27,1,3,k.ink);rect(c,150,30,2,1,k.ink)} // เสากับนาฬิกา
+
+const SCENES={room:{pal:SCOL,bg:roomBg,fg:roomFg,bed:CUSH},garden:{pal:GCOL,bg:gardenBg,fg:gardenFg,bed:CUSH},cafe:{pal:KCOL,bg:cafeBg,fg:cafeFg,bed:CUSH},station:{pal:TCOL,bg:stationBg,fg:stationFg,bed:CUSH}};
+let PLACE='room';const SCN=()=>SCENES[PLACE]||SCENES.room;
+const bgC={},fgC={};
+function sceneBg(tm){const id=PLACE+'|'+tm;if(bgC[id])return bgC[id];const s=SCN(),v=canv(),c=v.getContext('2d');s.bg(c,s.pal[tm]);return bgC[id]=v}
+function sceneFg(tm){const id=PLACE+'|'+tm;if(fgC[id])return fgC[id];const s=SCN(),k=s.pal[tm],v=canv(),c=v.getContext('2d');s.fg(c,k);
  // เส้นขอบรอบฉากหน้า ให้เข้าชุดกับแมว
  const d=c.getImageData(0,0,SW,SH),A=(x,y)=>x>=0&&y>=0&&x<SW&&y<SH&&d.data[(y*SW+x)*4+3]>0,o=[];
- for(let y=0;y<SH;y++)for(let x=0;x<SW;x++)if(!A(x,y)&&(A(x+1,y)||A(x-1,y)||A(x,y+1)||A(x,y-1)))o.push([x,y]);o.forEach(([x,y])=>rect(c,x,y,1,1,k.line));return fgC[tm]=v}
+ for(let y=0;y<SH;y++)for(let x=0;x<SW;x++)if(!A(x,y)&&(A(x+1,y)||A(x-1,y)||A(x,y+1)||A(x,y-1)))o.push([x,y]);o.forEach(([x,y])=>rect(c,x,y,1,1,k.line));return fgC[id]=v}
 const cat={x:52,dir:1,mode:'sit',t:0,dur:2500,dist:0,target:52,then:null,k:'sit'};
 const rr=(a,b)=>a+Math.random()*(b-a),DUR=Object.fromEntries(INFO.map(i=>[i[0],i[3]]));
 function setMode(m,dur=0){cat.mode=m;cat.t=0;cat.dur=dur;cat.ev=null}
@@ -508,7 +592,7 @@ function arrive(){if(cat.then==='zoom2'){cat.then='sit';const tx=(XMIN+XMAX)/2+r
 const GT=k=>DUR[k].reduce((a,b)=>a+b,0),GROOM_T=GT('groom');function groom(k=Math.random()<.5?'groom':'groomLeg'){cat.gk=k;setMode('groom',GT(k)*2)} // สุ่มเลียแขนหรือเลียขา
 // เล่นท่าใดก็ได้ใน INFO ตามเวลาที่กำหนด แล้วกลับมานั่ง (ไว้ผูกกับเหตุการณ์ในแอป เช่น ตอบถูก = act('happy',1600))
 function act(k,ms){cat.pose=k;setMode('pose',ms)}
-function decide(){const r=Math.random();if(r<.15)return goTo(CUSH,'sleep');if(r<.27)return zoom();if(r<.33)return groom(); /* เลียขนไม่บ่อย ราว 6% ของการตัดสินใจ */if(r<.85){let tx,n=0;do tx=rr(XMIN,XMAX);while(Math.abs(tx-cat.x)<24&&++n<20);return goTo(tx,'sit')}setMode('sit',rr(2500,5000))}
+function decide(){const r=Math.random();if(r<.15)return goTo(SCN().bed,'sleep');if(r<.27)return zoom();if(r<.33)return groom(); /* เลียขนไม่บ่อย ราว 6% ของการตัดสินใจ */if(r<.85){let tx,n=0;do tx=rr(XMIN,XMAX);while(Math.abs(tx-cat.x)<24&&++n<20);return goTo(tx,'sit')}setMode('sit',rr(2500,5000))}
 function step(dt){const m=cat.mode;if(!playing&&m!=='shy'&&m!=='wake')return;cat.t+=dt;
  if(m==='walk'||m==='run'){const d=GAIT[m].v*dt/1000,left=cat.target-cat.x;if(Math.abs(left)<=d){cat.x=cat.target;if(m==='run'&&cat.then==='zoom2')arrive();else setMode('halt',m==='run'?240:300)}else{cat.x+=Math.sign(left)*d;cat.dist+=d}return}
  if(!cat.dur||cat.t<cat.dur)return;
@@ -530,14 +614,15 @@ function loop(now){if(!cv||!cv.isConnected){stop();return}const dt=Math.min(now-
  if(vis&&!document.hidden){if(cat.pend&&CALM[cat.mode]){const p=cat.pend;cat.pend=null;act(p.k,p.ms)}step(dt);paint()}
  raf=requestAnimationFrame(loop)}
 function stop(){cancelAnimationFrame(raf);raf=0;if(io){io.disconnect();io=null}cv=null}
-function fit(){if(!cv||!cv.parentElement)return;const w=cv.parentElement.clientWidth||SW*2,s=w>=SW*2?Math.min(5,Math.floor(w/SW)):w/SW;cv.style.width=SW*s+'px';cv.style.height=SH*s+'px'}
+function fit(){if(!cv||!cv.parentElement||cv.closest('.scn'))return; // อยู่ในฉากสถานที่: CSS ขยายเต็มการ์ดเอง
+ const w=cv.parentElement.clientWidth||SW*2,s=w>=SW*2?Math.min(5,Math.floor(w/SW)):w/SW;cv.style.width=SW*s+'px';cv.style.height=SH*s+'px'}
 // ใส่แมวลงผืนผ้าใบ (เรียกทุกครั้งที่วาดหน้าหลักใหม่ สถานะแมวต่อเนื่องจากครั้งก่อน)
-function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream';S.acc=o.acc||'none';sLast='';vis=true;
+function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream';S.acc=o.acc||'none';PLACE=SCENES[o.place]?o.place:'room';sLast='';vis=true;
  cv.width=SW;cv.height=SH;cv.tabIndex=0;cv.setAttribute('role','button');cv.setAttribute('aria-label',(o.label||'แมว')+' แตะเพื่อทักทาย');
  cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*SW,y=(e.clientY-r.top)/r.height*SH,X=Math.round(cat.x);if(x>=X+4&&x<=X+44&&y>=CY+4&&y<=CY+46)poke()}); // นิ้ว เมาส์ Apple Pencil ใช้ pointer event เดียวกัน
  cv.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();poke()}});
  if('IntersectionObserver'in window){io=new IntersectionObserver(es=>{vis=es[0].isIntersecting;sLast=''});io.observe(cv)} // ไม่อยู่บนจอ = ไม่คำนวณ ไม่วาด
- if(!booted){booted=true;if(o.sleepy){cat.x=CUSH;cat.dir=1;setMode('curl',rr(12000,20000))}} // เปิดแอปดึกๆ แมวหลับอยู่บนเบาะ
+ if(!booted){booted=true;if(o.sleepy){cat.x=SCN().bed;cat.dir=1;setMode('curl',rr(12000,20000))}} // เปิดแอปดึกๆ แมวหลับอยู่บนเบาะ
  fit();paint();
  if(pending&&Date.now()-pending.t<6e5){doAct(pending.k,pending.ms)}pending=null; // ท่าอารมณ์ที่เกิดตอนไม่ได้อยู่หน้าหลัก เล่นให้ดูตอนกลับมา (ไม่เกิน 10 นาที)
  last=performance.now();raf=requestAnimationFrame(loop)}
@@ -545,6 +630,6 @@ function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream'
 function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:Date.now()}}
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
-window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,coats:Object.keys(COATS),poses:KEYS,
- _t:{step,cat,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v}}};
+window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
+ _t:{step,cat,sceneBg,sceneFg,SW,SH,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v}}};
 })();
