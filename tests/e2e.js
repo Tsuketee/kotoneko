@@ -103,6 +103,52 @@ test('นำทางครบ 4 แท็บ ไม่มี error', async (b, 
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('สถานที่: เริ่มที่ห้อง ไปสวน/คาเฟ่ได้ทันที สถานีล็อกจนจำคำหมวดสถานที่ได้แม่น 10 คำ แล้วทบทวนคำหมวดของที่นั้นก่อน', async (b, base) => {
+  const p = await fresh(b, base);
+  let h = await home(p);
+  assert(h.includes('ห้องอ่านหนังสือ'), 'เริ่มที่ห้อง');
+  assert.strictEqual(await p.locator('.scgo:has-text("ไปเที่ยว") svg').count(), 1, 'ปุ่มตั๋ว "ไปเที่ยว" มีไอคอนตั๋ว');
+  assert.strictEqual(await p.locator('.scn.px[data-place="room"] > canvas#petcv').count(), 1, 'แมวใช้ฉากพิกเซล');
+  assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).place), undefined, 'แค่เปิดหน้าแรกต้องไม่เขียนค่าสถานที่ (ไม่ให้ซิงก์ส่งรุ่นใหม่เปล่าๆ)');
+  await p.locator('.scgo').click();
+  const dlg = await p.locator('.cdl').innerText();
+  assert(dlg.includes('สวนญี่ปุ่น') && dlg.includes('คาเฟ่') && dlg.includes('สถานีรถไฟ') && dlg.includes('0/10 คำ'), dlg);
+  assert(await p.locator('.plr[data-p="station"]').isDisabled(), 'สถานียังล็อก');
+  await p.locator('.plr[data-p="garden"]').click();
+  assert.strictEqual(await p.locator('.cov').count(), 0);
+  assert.strictEqual(await p.locator('.scn[data-place="garden"]').count(), 1);
+  assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).place.at), 'garden', 'จำที่ที่เลือก');
+  // จำคำหมวดสถานที่/ทิศทางได้แม่น 10 คำ → ปลดล็อกสถานีพร้อมข้อความเด้ง
+  await p.evaluate(() => { const L = [...W, ...V].filter(x => ['สถานที่', 'ทิศทางและขนาด'].includes(x.c)).slice(0, 10), sw = {}, sv = {};
+    L.forEach(x => { (W.includes(x) ? sw : sv)[x.k] = { b: 5, w: 0, d: Date.now() + 864e5 } }); localStorage.setItem('kw1', JSON.stringify(sw)); localStorage.setItem('kv1', JSON.stringify(sv)) });
+  await home(p);
+  await p.waitForSelector('.toast:has-text("ได้ตั๋วไปสถานีรถไฟแล้ว")');
+  assert.deepStrictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).place.got), ['station']);
+  await p.locator('.scgo').click(); await p.locator('.plr[data-p="station"]').click();
+  h = await home(p); assert(h.includes('สถานีรถไฟ') && h.includes('ทบทวนคำหมวดสถานที่'), h.slice(0, 400));
+  // อยู่สถานี: ข้อที่ถึงเวลาทบทวนพร้อมกัน หมวดสถานที่ต้องขึ้นก่อน แม้ครบกำหนดทีหลัง
+  const first = await p.evaluate(() => { const t = Date.now() - 1000, s = {}; const a = V.find(x => x.c === 'อาหารและของกิน'), b = V.find(x => x.c === 'สถานที่');
+    s[a.k] = { b: 1, w: 0, d: t - 50000 }; s[b.k] = { b: 1, w: 0, d: t }; localStorage.setItem('kv1', JSON.stringify(s)); tab = 'learn'; nv('v'); cat = 'ทั้งหมด'; S = load(); return pick1().c });
+  assert.strictEqual(first, 'สถานที่');
+  await p.evaluate(() => { const st = JSON.parse(localStorage.getItem('kn_meta')); st.place.at = 'room'; localStorage.setItem('kn_meta', JSON.stringify(st)); M = st });
+  assert.strictEqual(await p.evaluate(() => pick1().c), 'อาหารและของกิน', 'อยู่ห้อง: ทบทวนตามกำหนดเดิม');
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('สถานที่: ทุกฉากใช้สีจาก token (มีครบทั้งโหมดสว่างและมืด) และประโยคประจำที่ใช้เฉพาะคันจิ N5', async () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8'), js = fs.readFileSync(path.join(ROOT, 'js/data/places.js'), 'utf8');
+  const used = new Set([...js.matchAll(/\bf-([rgkt]-[a-z0-9]+)/g)].map(m => m[1]));
+  [...new Set([...js.matchAll(/\b(s-[rgkt]-[a-z0-9]+)/g)].map(m => m[1]))].forEach(c => assert(css.includes('.' + c + '{'), 'ไม่มีสไตล์เส้น ' + c));
+  const blk = re => (css.match(re) || [, ''])[1];
+  const lt = blk(/ฉากสถานที่[\s\S]*?\n:root\{([^}]*)\}/), dk = blk(/ฉากสถานที่[\s\S]*?:root\[data-theme="dark"\]\{([^}]*)\}/);
+  used.forEach(t => { assert(lt.includes('--' + t + ':'), 'ไม่มีสีโหมดสว่าง ' + t); assert(dk.includes('--' + t + ':'), 'ไม่มีสีโหมดมืด ' + t) });
+  assert(!/(fill|stroke)="#/.test(js), 'ห้ามใส่สีตรงๆ ในฉาก ต้องใช้ class/token');
+  const ctx = {}; new Function('ctx', js.replace(/^const (\w+)/gm, 'ctx.$1') )(ctx);
+  const k5 = fs.readFileSync(path.join(ROOT, 'js/data/kanji-n5.js'), 'utf8');
+  Object.values(ctx.PLACE_LINES).flat().forEach(l => [...l.replace(/\{([^|}]*)\|[^}]*\}/g, '$1')].filter(c => /\p{Script=Han}/u.test(c)).forEach(c => assert(new RegExp('^' + c + ',', 'm').test(k5), 'คันจิเกิน N5 ในประโยคประจำที่: ' + c)));
+  ctx.PLACES.forEach(p => { assert(p.free || (p.unlock && p.unlock.n > 0), p.id); assert(p.pet.length === 2) });
+});
+
 test('คันจิ: เปิดการ์ด พลิก ตอบ "จำได้" แล้วบันทึกความคืบหน้า', async (b, base) => {
   const p = await fresh(b, base);
   await p.evaluate(() => openDs('k'));
@@ -903,6 +949,50 @@ test('บทสนทนา: ฟุริงะนะบนกรอบข้อ
     assert(r.rt !== r.bg && r.op >= .8, colorScheme + JSON.stringify(r));
     await ctx.close();
   }
+});
+
+test('แมวพิกเซล: หน้าหลักวาดฉากห้อง, เหตุการณ์เรียกท่าอารมณ์, แตะแล้วเขิน, เปลี่ยนท่าไม่ค้าง, กระต่ายยังเป็นอิโมจิ', async (b, base) => {
+  const p = await fresh(b, base);
+  await p.waitForTimeout(300);
+  const info = await p.evaluate(() => { const c = document.getElementById('petcv'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return [c.width, c.height, n, getComputedStyle(c).imageRendering]; });
+  assert.deepStrictEqual(info.slice(0, 2), [160, 90]); assert(info[2] > 160 * 90 * .9, 'ฉากต้องถูกวาด'); assert.strictEqual(info[3], 'pixelated');
+  assert.strictEqual(await p.locator('.pet').count(), 0, 'แมวต้องไม่เป็นอิโมจิแล้ว');
+  const T = () => p.evaluate(() => { const c = PixelCat._t.cat; return [c.mode, c.pose || null]; });
+  // ให้อาหาร = ท่ากินข้าวปั้น (ถ้ากำลังเดินอยู่ รอจนนั่งพักก่อน)
+  await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'sit', t: 0, dur: 1e9 }); M.pet.energy = 100; pfeed(); });
+  assert.deepStrictEqual(await T(), ['pose', 'eat']);
+  await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'walk', target: c.x + 30, pend: null }); PixelCat.cue('happy', 1000); });
+  assert.strictEqual((await T())[0], 'walk', 'กำลังเดินต้องไม่ถูกตัดกลางคัน');
+  await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'sit', t: 0, dur: 1e9 }); });
+  await p.waitForTimeout(150); assert.deepStrictEqual(await T(), ['pose', 'happy']);
+  // เหตุการณ์ตอนอยู่แท็บอื่น: เล่นให้ดูตอนกลับหน้าหลัก
+  await p.evaluate(() => goTab('learn')); await p.evaluate(() => { PixelCat.cue('sad', 1500); Object.assign(PixelCat._t.cat, { mode: 'sit', t: 0, dur: 1e9 }); goTab('home'); });
+  assert.deepStrictEqual(await T(), ['pose', 'sad']);
+  // แตะตัวแมว = เขิน, แตะตอนหลับ = ตื่น
+  await p.evaluate(() => Object.assign(PixelCat._t.cat, { mode: 'sit', x: 52, t: 0, dur: 1e9, pose: null }));
+  const box = await p.locator('#petcv').boundingBox(), sc = box.width / 160;
+  await p.mouse.click(box.x + (52 + 24) * sc, box.y + (41 + 26) * sc);
+  assert.strictEqual((await T())[0], 'shy');
+  await p.evaluate(() => Object.assign(PixelCat._t.cat, { mode: 'curl', t: 0, dur: 1e9 }));
+  await p.mouse.click(box.x + (52 + 24) * sc, box.y + (41 + 26) * sc);
+  assert.strictEqual((await T())[0], 'wake');
+  // จำลอง 30 นาทีในแอป: ไม่ออกนอกขอบ ผ่านทุกสถานะ ทุกท่าวาดได้ทั้งสองโหมด
+  const sim = await p.evaluate(() => { const { step, cat, XMIN, XMAX, frame, KEYS } = PixelCat._t, seen = new Set(); let out = 0; Object.assign(cat, { mode: 'sit', t: 0, dur: 100 });
+    for (let i = 0; i < 36000; i++) { step(50); seen.add(cat.mode); if (cat.x < XMIN || cat.x > XMAX) out++; }
+    let bad = []; for (const tm of ['light', 'dark']) for (const k of KEYS) { const g = frame(k, 0, tm); if (!g.some(r => r.some(Boolean))) bad.push(tm + k) } return { seen: [...seen], out, bad }; });
+  assert.strictEqual(sim.out, 0); assert.deepStrictEqual(sim.bad, []);
+  for (const m of ['sit', 'walk', 'run', 'skid', 'groom', 'loaf', 'curl', 'wake']) assert(sim.seen.includes(m), 'ไม่ผ่านสถานะ ' + m);
+  // ฉากพิกเซลครบทุกสถานที่ใน PLACES วาดได้สองโหมด ต่างกันทุกที่ และเปลี่ยนตามที่ที่เลือก
+  const pl = await p.evaluate(() => { const { sceneBg, sceneFg } = PixelCat._t, sig = {}, miss = PLACES.map(x => x.id).filter(id => !PixelCat.places.includes(id));
+    for (const x of PLACES) { M.place = { at: x.id, got: PLACES.map(q => q.id) }; render(); for (const tm of ['light', 'dark']) { const b = sceneBg(tm).toDataURL(), f = sceneFg(tm).getContext('2d').getImageData(0, 0, 160, 90).data; let n = 0; for (let i = 3; i < f.length; i += 4) if (f[i]) n++; sig[x.id + tm] = [b.length, n] } }
+    return { miss, sig } });
+  assert.deepStrictEqual(pl.miss, [], 'สถานที่ที่ยังไม่มีฉากพิกเซล');
+  Object.entries(pl.sig).forEach(([k, [b, n]]) => assert(b > 1000 && n > 50, 'ฉากว่าง ' + k));
+  assert.strictEqual(new Set(Object.values(pl.sig).map(v => v[0])).size, Object.keys(pl.sig).length, 'ทุกฉาก/โหมดต้องต่างกัน');
+  // กระต่าย: ยังเป็นอิโมจิบนฉาก SVG ไม่มีผืนผ้าใบ
+  await p.evaluate(() => { M.pet.sp = 1; render(); });
+  assert.strictEqual(await p.locator('#petcv').count(), 0); assert.strictEqual(await p.locator('.pet').count(), 1); assert.strictEqual(await p.locator('.scn > svg').count(), 1);
+  assert.deepStrictEqual(p.errors, []);
 });
 
 // ---------- iPad / PWA ----------
