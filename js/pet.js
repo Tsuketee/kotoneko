@@ -50,4 +50,4 @@ function petHtml(cta=''){pens();const p=M.pet,st=pstage(p.bond),dn=Object.keys(p
 // แมวพิกเซล (js/pixelcat.js): สัตว์เลี้ยงตัวแรกที่มีภาพจริง กระต่าย/หมายังเป็นอิโมจิ
 // ท่าอารมณ์ตามเหตุการณ์ ถ้าไม่ได้อยู่หน้าหลัก แมวจะเล่นท่านั้นให้ดูตอนกลับมา
 function pcue(k,ms){if(window.PixelCat&&M.pet&&(M.pet.sp||0)===0)PixelCat.cue(k,ms)}
-function petMount(){const c=document.getElementById('petcv');if(!c||!window.PixelCat)return;const h=new Date().getHours();PixelCat.mount(c,{coat:M.pet.coat,acc:M.pet.acc,label:M.pet.name,place:plState().at,sleepy:h>=22||h<5})}
+function petMount(){const c=document.getElementById('petcv');if(!c||!window.PixelCat)return;const h=new Date().getHours();PixelCat.mount(c,{coat:M.pet.coat,acc:M.pet.acc,label:M.pet.name,place:plState().at,sleepy:h>=22||h<5,bubble:c.parentElement.querySelector('.scb')})}

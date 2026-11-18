@@ -989,7 +989,18 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   assert.deepStrictEqual(pl.miss, [], 'สถานที่ที่ยังไม่มีฉากพิกเซล');
   Object.entries(pl.sig).forEach(([k, [b, n]]) => assert(b > 1000 && n > 50, 'ฉากว่าง ' + k));
   assert.strictEqual(new Set(Object.values(pl.sig).map(v => v[0])).size, Object.keys(pl.sig).length, 'ทุกฉาก/โหมดต้องต่างกัน');
-  // กระต่าย: ยังเป็นอิโมจิบนฉาก SVG ไม่มีผืนผ้าใบ
+  // กล่องคำพูดลอยเหนือหัวและเลื่อนตามแมว · นาฬิกาในห้องมีหน้าปัด · ฟอนต์ของแอปโหลดได้
+  await p.evaluate(() => { M.place = { at: 'room', got: [] }; render(); Object.assign(PixelCat._t.cat, { mode: 'sit', x: 0, t: 0, dur: 1e9, pend: null }) });
+  await p.waitForTimeout(900);
+  const bxA = await p.evaluate(() => +/translate\((-?\d+)px/.exec(PixelCat._t.bubblePos())[1]);
+  await p.evaluate(() => { PixelCat._t.cat.x = 100 }); await p.waitForTimeout(900);
+  const bxB = await p.evaluate(() => +/translate\((-?\d+)px/.exec(PixelCat._t.bubblePos())[1]);
+  assert(bxB > bxA + 40, `กล่องคำพูดต้องเลื่อนตามแมว ${bxA} → ${bxB}`);
+  const bub = await p.evaluate(() => { const b = document.querySelector('.scn.px .scb').getBoundingClientRect(), c = document.getElementById('petcv').getBoundingClientRect(); return [b.left >= c.left - 1, b.right <= c.right + 1, b.top >= c.top - 1, getComputedStyle(document.querySelector('.scn.px .scb')).visibility] });
+  assert.deepStrictEqual(bub, [true, true, true, 'visible'], 'กล่องคำพูดต้องอยู่ในฉาก');
+  const face = await p.evaluate(() => [...document.getElementById('petcv').getContext('2d').getImageData(36, 17, 1, 1).data].slice(0, 3).join(','));
+  assert.strictEqual(face, '255,250,240', 'หน้าปัดนาฬิกาในห้อง');
+  assert(await p.evaluate(async () => { await document.fonts.ready; await Promise.all([document.fonts.load("700 20px Mali", "สวัสดี"), document.fonts.load("16px Anuphan", "สวัสดี")]); const ok = n => [...document.fonts].some(f => f.family.replace(/["']/g, '') === n && f.status === 'loaded'); return ok('Mali') && ok('Anuphan') }), 'ฟอนต์ Mali/Anuphan');
   await p.evaluate(() => { M.pet.sp = 1; render(); });
   assert.strictEqual(await p.locator('#petcv').count(), 0); assert.strictEqual(await p.locator('.pet').count(), 1); assert.strictEqual(await p.locator('.scn > svg').count(), 1);
   assert.deepStrictEqual(p.errors, []);

@@ -32,3 +32,7 @@
 
 ## ฉากสถานที่และประโยคประจำสถานที่ (`js/data/places.js`)
 วาดขึ้นเองทั้งหมดเป็น SVG (ห้องอ่านหนังสือ สวนญี่ปุ่น คาเฟ่ สถานีรถไฟ) และเขียนประโยคเอง ไม่ได้คัดลอกภาพหรือข้อความจากแอป เกม หรือสื่ออื่น ชื่อสถานีในฉาก (ねこまち さくら うみ) เป็นชื่อสมมติ · ฉากพิกเซล 160×90 ของแมวพิกเซล (ห้อง สวน คาเฟ่ สถานี ใน `SCENES` ของ `js/pixelcat.js`) ก็วาดเองด้วยโค้ดทั้งหมด
+
+## ฟอนต์ (`fonts/`)
+- **Mali** (หัวข้อ ปุ่ม ชื่อ) © 2018 The Mali Project Authors (https://github.com/cadsondemak/Mali) และ **Anuphan** (เนื้อหา) © 2019 The Anuphan Project Authors (https://github.com/cadsondemak/Anuphan) ทั้งสองใช้สัญญาอนุญาต SIL Open Font License 1.1 (ใช้เชิงพาณิชย์และแจกจ่ายพร้อมแอปได้) ข้อความสัญญาอยู่ใน `fonts/OFL-Mali.txt` และ `fonts/OFL-Anuphan.txt`
+- ไฟล์ woff2 แบ่งชุดอักษรไทย/ละติน มาจากแพ็กเกจ Fontsource (`@fontsource/mali`, `@fontsource/anuphan` 5.3.0) ไม่ได้แก้ไขตัวอักษร
