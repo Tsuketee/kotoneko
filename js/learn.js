@@ -19,8 +19,10 @@ const rd=x=>rds(x).join(' ・ ');
 const sh=a=>a.map(v=>[Math.random(),v]).sort((p,q)=>p[0]-q[0]).map(v=>v[1]);
 function pick1(){const p=pool(),n=Date.now();
  const due=p.filter(x=>S[x.k]&&S[x.k].d<=n).sort((a,b)=>S[a.k].d-S[b.k].d);
- if(due.length)return due[0];
- const nw=p.filter(x=>!S[x.k]);if(nw.length)return mode==='quiz'?nw[Math.floor(Math.random()*nw.length)]:nw[0];
+ // อยู่ที่สถานที่ไหน (js/place.js) เอาคำในหมวดของที่นั้นขึ้นก่อน ทั้งข้อที่ถึงเวลาทบทวนและข้อใหม่
+ const pc=typeof placeCats==='function'?placeCats():null,pf=a=>pc&&a.find(x=>pc.includes(x.c));
+ if(due.length)return pf(due)||due[0];
+ const nw=p.filter(x=>!S[x.k]);if(nw.length){const pn=pc&&nw.filter(x=>pc.includes(x.c)),L=pn&&pn.length?pn:nw;return mode==='quiz'?L[Math.floor(Math.random()*L.length)]:L[0]}
  return prac?sh(p)[0]:null}
 function go(){st=[];ci=0;cur=null;ch=null;ans=null;fl=false;render()}
 function allMis(){const o=[];for(const k in DS){let s={};try{s=JSON.parse(localStorage.getItem(DS[k].key)||'{}')}catch(e){}DS[k].d.forEach(x=>{const r=s[x.k];if(r&&r.w>=1)o.push({k,x,w:r.w})})}return o.sort((a,b)=>b.w-a.w)}

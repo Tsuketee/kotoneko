@@ -32,14 +32,16 @@ function pbadge(){const p=M.pet;if(!p||!p.name)return;const n=pmast(),lv=n>=250?
  if(p.bd==null){p.bd=lv;saveM();return}if(lv>p.bd){p.bd=lv;saveM();toast(IC.medal+' '+pline(p,['','b25','b100','b250'][lv],false))}}
 // ถึงเป้ารายวัน: ถ้า streak ครบ 3/7/30 วันใช้ประโยค streak ไม่งั้นใช้ประโยคถึงเป้า
 function pgoal(){const p=M.pet;if(!p||!p.name){toast(IC.star+' ถึงเป้าวันนี้แล้ว!');return}toast(IC.star+' '+pline(p,{3:'s3',7:'s7',30:'s30'}[streak()]||'goal',false))}
-function psay(p,dn){const k=dstr(new Date()),hr=new Date().getHours();ptr(p);
+let psayG=false; // ประโยคล่าสุดเป็นแบบทั่วไปตามช่วงเวลา (ไม่ใช่เหตุการณ์) → ใช้ประโยคประจำสถานที่แทนได้ (js/place.js)
+function psay(p,dn){const k=dstr(new Date()),hr=new Date().getHours();ptr(p);psayG=false;
  if(p.last!==k){if(p.lastTs&&(Date.now()-p.lastTs)/864e5>=3)p.back=k;p.last=k}
  p.lastTs=Date.now();saveM();
  if(dn>=3)return pline(p,'done');if(dn===0){if(p.rv===k)return pline(p,'first');if(p.back===k)return pline(p,'back')}
  if(dn>0)return pline(p,'partial');
- return pline(p,hr<5?'late':hr<11?'morning':hr<15?'noon':hr<21?'evening':'night')}
+ psayG=true;return pline(p,hr<5?'late':hr<11?'morning':hr<15?'noon':hr<21?'evening':'night')}
 function petHtml(){pens();const p=M.pet,st=pstage(p.bond),dn=Object.keys(p.d.done).length,sp=SPC[p.sp||0],md=dn>=3?'ดีใจมาก':dn?'อารมณ์ดี':'ง่วงๆ รอเรียนด้วยกันอยู่นะ',say=psay(p,dn),g=M.goal,tot=pmast(),bd=tot>=250?icx('medal',18,'m3'):tot>=100?icx('medal',18,'m2'):tot>=25?icx('medal',18,'m1'):'';
  const wk=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return `<div class="${i==6?'on':''}">${['อา','จ','อ','พ','พฤ','ศ','ส'][d.getDay()]}<br><b>${d.getDate()}</b><br>${(M.days[dstr(d)]||0)>=g?icx('flame',14,'hl-i'):'·'}</div>`}).join('');
- let h=`<div class="card pz" style="text-align:center"><div class="pzb" style="margin:0 auto 10px">${say}</div><div class="pet" style="font-size:${40+st*24}px">${sp[0]}</div><div><b>${p.name}</b> · ร่าง ${st}</div><div class="st">${icx(ptr(p).i,15)} ${ptr(p).n}</div><div class="st">${md}</div><div class="bar"><i style="width:${Math.min(100,p.bond/1.2)}%;background:var(--ac)"></i></div><div class="st">ความสนิท ${p.bond} / 120 · ${icx('bolt',14,'hl-i')} Energy ${p.energy}</div><button class="lk" onclick="pfeed()">${icx('rice',16)} ให้อาหาร (30 Energy → สนิท +10)</button></div><div class="pzw">${wk}</div><h2>ภารกิจวันนี้</h2>`;
+ plCheck();
+ let h=`<div class="card pz" style="text-align:center">${placeHero(plSay(say,psayG),sp[0],28+st*14)}<div><b>${p.name}</b> · ร่าง ${st}</div><div class="st">${icx(ptr(p).i,15)} ${ptr(p).n}</div><div class="st">${md}</div><div class="bar"><i style="width:${Math.min(100,p.bond/1.2)}%;background:var(--ac)"></i></div><div class="st">ความสนิท ${p.bond} / 120 · ${icx('bolt',14,'hl-i')} Energy ${p.energy}</div><button class="lk" onclick="pfeed()">${icx('rice',16)} ให้อาหาร (30 Energy → สนิท +10)</button></div><div class="pzw">${wk}</div><h2>ภารกิจวันนี้</h2>`;
  PM.forEach(m=>{const c=Math.min(p.d[m.id],m.t()),ok=p.d.done[m.id];h+=`<div class="pzm" onclick="pgo('${m.go}')"><div><b>${ok?icx('ok',16,'ok-i')+' ':''}${m.n}</b><div class="st">${c} / ${m.t()}${m.id==='rev'?' (นับเฉพาะข้อที่ตอบถูก)':''}</div></div><span class="pzp">+${m.e} Energy</span></div>`});
  return h+`<div class="st" style="margin:8px 0 14px">กำลังเรียนระดับ ${LEVELS[LV].n} · จำได้แม่นรวม ${tot} ข้อ ${bd} (${icx('medal',14,'m1')}25 ${icx('medal',14,'m2')}100 ${icx('medal',14,'m3')}250)</div>`}
