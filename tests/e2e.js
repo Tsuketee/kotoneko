@@ -106,7 +106,8 @@ test('นำทางครบ 4 แท็บ ไม่มี error', async (b, 
 test('สถานที่: เริ่มที่ห้อง ไปสวน/คาเฟ่ได้ทันที สถานีล็อกจนจำคำหมวดสถานที่ได้แม่น 10 คำ แล้วทบทวนคำหมวดของที่นั้นก่อน', async (b, base) => {
   const p = await fresh(b, base);
   let h = await home(p);
-  assert(h.includes('ห้องอ่านหนังสือ') && h.includes('ไปที่ไหนดี'), 'เริ่มที่ห้อง');
+  assert(h.includes('ห้องอ่านหนังสือ'), 'เริ่มที่ห้อง');
+  assert.strictEqual(await p.locator('.scgo[aria-label="ไปที่ไหนดี"] svg').count(), 1, 'ปุ่มเป็นไอคอนแผนที่ มีชื่อให้โปรแกรมอ่านหน้าจอ');
   assert.strictEqual(await p.locator('.scn[data-place="room"] > svg').count(), 1);
   assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).place), undefined, 'แค่เปิดหน้าแรกต้องไม่เขียนค่าสถานที่ (ไม่ให้ซิงก์ส่งรุ่นใหม่เปล่าๆ)');
   await p.locator('.scgo').click();

@@ -34,6 +34,7 @@ const P={home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-
  zzz:'<path d="M5 6h5l-5 6h5M13 13h4l-4 5h4M16 4h3l-3 3.500h3"/>',
  smile:'<circle cx="12" cy="12" r="9"/><path d="M8 14c1 2 2.300 3 4 3s3-1 4-3z"/><path d="M8.500 9.500h.01M15.500 9.500h.01"/>',
  search:'<circle cx="11" cy="11" r="6.500"/><path d="m16 16 4.500 4.500"/>',
+ map:'<path d="M9 4.500 3.500 6.500v13l5.500-2 6 2 5.500-2v-13l-5.500 2z"/><path d="M9 4.500v13M15 6.500v13"/>',
  bow:'<path d="M12 12 4 7v10zM12 12l8-5v10z"/><rect x="10.500" y="10.500" width="3" height="3" rx=".8"/>'};
 const ic=(p,s=18)=>`<svg class="ic2" viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const IC={};for(const k in P)IC[k]=ic(P[k]);

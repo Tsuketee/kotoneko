@@ -171,10 +171,10 @@ h2{font-size:16px;margin:20px 0 10px}
 .s-t-line{stroke:var(--t-line);stroke-width:3}.s-t-hand{fill:none;stroke:var(--t-hand);stroke-width:2.5;stroke-linecap:round}.s-t-platline{stroke:var(--t-platline);stroke-width:2}
 .sg{filter:blur(18px);opacity:var(--sc-gop)}.sj{font-family:"Hiragino Mincho ProN","Noto Serif JP",serif;font-weight:700}
 .scn{position:relative;aspect-ratio:820/420;max-width:100%;border-radius:14px;overflow:hidden;margin:-8px -4px 8px}
-.scn svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.scn>svg{position:absolute;inset:0;width:100%;height:100%;display:block}
 .scb{position:absolute;top:4%;left:3%;max-width:46%;margin:0;font-size:13px;background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.12)}.scb.r{left:auto;right:3%}
 .scp{position:absolute;transform:translate(-50%,-100%);line-height:1}.scp .pet{display:block}
-.scgo{position:absolute;right:3%;bottom:5%;display:flex;align-items:center;gap:4px;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:999px;font:inherit;font-size:13px;padding:5px 11px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.scgo{position:absolute;right:3%;bottom:5%;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid var(--bd);background:var(--card);color:var(--ac);border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.12)}.scgo:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .scl{margin:0 0 8px}.scj{font-family:"Hiragino Mincho ProN","Noto Serif JP",serif;color:var(--ac);font-size:15px}
 .plr{display:flex;width:100%;align-items:center;gap:12px;text-align:left;background:var(--bg);border:1px solid var(--bd);border-radius:14px;padding:10px 12px;margin:6px 0;color:var(--fg);font:inherit}.plr.on{border-color:var(--ac)}.plr:disabled{opacity:.8}
 .plj{font-family:"Hiragino Mincho ProN","Noto Serif JP",serif;font-size:20px;min-width:3.4em;text-align:center;color:var(--ac)}.plt{flex:1;display:flex;flex-direction:column;min-width:0}.plt .bar{margin:5px 0 0}.pls{font-size:13px;color:var(--ac);white-space:nowrap}
