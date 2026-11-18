@@ -1,6 +1,6 @@
 // Service worker: ทำให้แอปเปิดได้ตอนออฟไลน์
 // ⚠️ ทุกครั้งที่แก้ไฟล์แล้วจะปล่อยเวอร์ชันใหม่ ให้เพิ่มเลข VERSION ไม่งั้นเครื่องผู้ใช้จะยังเห็นไฟล์เก่า
-const VERSION = 'v53';
+const VERSION = 'v54';
 const CACHE = 'kotoneko-' + VERSION;
 const FILES = [
   './',
@@ -9,6 +9,14 @@ const FILES = [
   'privacy.html',
   'terms.html',
   'css/style.css',
+  'fonts/mali-thai-600-normal.woff2',
+  'fonts/mali-latin-600-normal.woff2',
+  'fonts/mali-thai-700-normal.woff2',
+  'fonts/mali-latin-700-normal.woff2',
+  'fonts/anuphan-thai-400-normal.woff2',
+  'fonts/anuphan-latin-400-normal.woff2',
+  'fonts/anuphan-thai-600-normal.woff2',
+  'fonts/anuphan-latin-600-normal.woff2',
   'js/data/kanji-n5.js',
   'js/data/content.js',
   'js/data/strokes.js',

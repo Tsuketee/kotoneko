@@ -28,12 +28,13 @@ function plSay(say, generic) {
 // px = แมวพิกเซล: ใช้ฉากพิกเซล 160×90 ของสถานที่นั้น (SCENES ใน js/pixelcat.js) แทนภาพ SVG กับอิโมจิ ผืนผ้าใบ #petcv ถูกใส่แมวใน petMount()
 // กระต่าย/หมายังใช้ฉาก SVG กับอิโมจิ
 function placeHero(say, pet, size, px) {
-  const p = placeOf(plState().at);
+  const p = placeOf(plState().at), tk = `<button class="scgo" onclick="placeAsk()" title="เลือกสถานที่">${icx('ticket', 18)}<span>ไปเที่ยว</span></button>`;
+  // ฉากพิกเซล: ตั๋วอยู่แถวชื่อสถานที่ใต้ฉาก เพราะกล่องคำพูดลอยตามแมวไปทั่วฉาก
   return `<div class="scn${px ? ' px' : ''}" data-place="${p.id}">${px ? '<canvas id="petcv"></canvas>' : `<svg viewBox="0 0 820 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${p.svg}</svg>`}
 <div class="pzb scb ${p.bub === 'r' && !px ? 'r' : ''}">${say}</div>
 ${px ? '' : `<div class="scp" style="left:${p.pet[0]}%;top:${p.pet[1]}%"><span class="pet" style="font-size:${size}px">${pet}</span></div>`}
-<button class="scgo" onclick="placeAsk()" title="เลือกสถานที่">${icx('ticket', 18)}<span>ไปเที่ยว</span></button></div>
-<div class="st scl"><span class="scj">${rb(p.jp)}</span> ${p.n}${p.cats.length ? ' · ทบทวนคำหมวด' + p.note + 'ก่อน' : ' · ' + p.note}</div>`;
+${px ? '' : tk}</div>
+<div class="st scl${px ? ' px' : ''}"><span><span class="scj">${rb(p.jp)}</span> ${p.n}${p.cats.length ? ' · ทบทวนคำหมวด' + p.note + 'ก่อน' : ' · ' + p.note}</span>${px ? tk : ''}</div>`;
 }
 function placeAsk() {
   if (document.querySelector('.cov')) return;
