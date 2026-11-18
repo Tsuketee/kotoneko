@@ -17,7 +17,7 @@ function plCount(cats) {
 function plCheck() {
   const st = plState(); let nw = null;
   PLACES.forEach(p => { if (!plHas(p) && p.unlock && plCount(p.unlock.cats) >= p.unlock.n) { st.got.push(p.id); nw = p } });
-  if (nw) { plSave(st); toast(icx('sparkle', 16) + ' ได้ตั๋วไป' + nw.n + 'แล้ว! แตะไอคอนแผนที่บนการ์ดเจ้าตัวน้อยเพื่อไปเที่ยว') }
+  if (nw) { plSave(st); toast(icx('sparkle', 16) + ' ได้ตั๋วไป' + nw.n + 'แล้ว! แตะตั๋ว "ไปเที่ยว" บนการ์ดเจ้าตัวน้อยได้เลย') }
 }
 // ประโยคในกล่องคำพูด: ถ้าไม่ใช่ห้อง ทุกชั่วโมงคู่จะใช้ประโยคประจำสถานที่แทนประโยคตามช่วงเวลา (ประโยคเหตุการณ์สำคัญยังขึ้นตามเดิม)
 function plSay(say, generic) {
@@ -30,7 +30,7 @@ function placeHero(say, pet, size) {
   return `<div class="scn" data-place="${p.id}"><svg viewBox="0 0 820 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${p.svg}</svg>
 <div class="pzb scb ${p.bub === 'r' ? 'r' : ''}">${say}</div>
 <div class="scp" style="left:${p.pet[0]}%;top:${p.pet[1]}%"><span class="pet" style="font-size:${size}px">${pet}</span></div>
-<button class="scgo" onclick="placeAsk()" aria-label="ไปที่ไหนดี" title="ไปที่ไหนดี">${icx('map', 22)}</button></div>
+<button class="scgo" onclick="placeAsk()" title="เลือกสถานที่">${icx('ticket', 18)}<span>ไปเที่ยว</span></button></div>
 <div class="st scl"><span class="scj">${rb(p.jp)}</span> ${p.n}${p.cats.length ? ' · ทบทวนคำหมวด' + p.note + 'ก่อน' : ' · ' + p.note}</div>`;
 }
 function placeAsk() {
@@ -41,7 +41,7 @@ function placeAsk() {
     const sub = has ? p.note : p.unlock.t + ' ' + c + '/' + p.unlock.n + ' คำ';
     return `<button class="plr${here ? ' on' : ''}" data-p="${p.id}"${has ? '' : ' disabled'}><span class="plj">${rb(p.jp)}</span><span class="plt"><b>${p.n}</b><span class="st">${sub}</span>${has ? '' : `<span class="bar"><i style="width:${c / p.unlock.n * 100}%"></i></span>`}</span><span class="pls">${here ? 'อยู่ที่นี่' : has ? 'ไปเลย' : icx('lock', 16)}</span></button>`;
   }).join('');
-  o.innerHTML = `<div class="cdl" role="dialog" aria-modal="true"><h2 style="margin-top:0">ไปที่ไหนดี</h2><div class="st" style="margin-bottom:10px">อยู่ที่ไหน ปุ่มทบทวนจะเอาคำในหมวดของที่นั้นขึ้นก่อน ที่ที่มีกุญแจ ปลดล็อกได้ด้วยการเรียน</div>${rows}<div class="btns" style="margin-top:12px"><button class="g" data-x="1">ปิด</button></div></div>`;
+  o.innerHTML = `<div class="cdl" role="dialog" aria-modal="true"><h2 style="margin-top:0">ไปเที่ยวที่ไหนดี</h2><div class="st" style="margin-bottom:10px">อยู่ที่ไหน ปุ่มทบทวนจะเอาคำในหมวดของที่นั้นขึ้นก่อน ที่ที่มีกุญแจ ปลดล็อกได้ด้วยการเรียน</div>${rows}<div class="btns" style="margin-top:12px"><button class="g" data-x="1">ปิด</button></div></div>`;
   o.onclick = e => { const b = e.target.closest('button'); if (e.target === o || (b && b.dataset.x)) return o.remove(); if (b && b.dataset.p && !b.disabled) { st.at = b.dataset.p; plSave(st); o.remove(); render(); toast(icx('paw', 16) + ' ไปที่' + placeOf(st.at).n + 'กัน') } };
   document.body.appendChild(o);
 }
