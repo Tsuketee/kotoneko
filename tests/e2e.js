@@ -11,6 +11,8 @@ const server = http.createServer((q, r) => {
   fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream' }); r.end(d); });
 });
 
+// ประโยคที่มีช่องตัวแปร {n} {kanji} → regex ไว้เทียบกับข้อความที่เติมค่าแล้ว
+const tplRe = l => new RegExp('^' + l.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace(/\{n\}/g, '\\d+').replace(/\{kanji\}/g, '\\S+') + '$');
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
 const SEED = { goal: 20, days: {}, pet: { name: 'ทดสอบ', sp: 0, energy: 0, bond: 0, d: null, trait: 0, min: 10, lv: 'N5', goal: 'x' } };
@@ -35,7 +37,7 @@ test('ข้อมูล: คำคันจิใช้เฉพาะคัน
     const bad = [];
     W.forEach(x => kj(x.k).forEach(c => ok.has(c) || bad.push(x.k + ':' + c)));
     D.forEach(d => d.turns.forEach(t => kj(t[1]).forEach(c => ok.has(c) || bad.push(t[1] + ':' + c))));
-    const EXP = { first: 1, morning: 2, noon: 2, evening: 2, night: 2, late: 1, partial: 2, done: 2, back: 2, feed: 3, hungry: 1, lv2: 1, lv3: 1, s3: 1, s7: 1, s30: 1, b25: 1, b100: 1, b250: 1, goal: 1 };
+    const EXP = { first: 1, morning: 2, noon: 2, evening: 2, night: 2, late: 1, partial: 3, done: 3, back: 2, feed: 6, hungry: 3, lv2: 1, lv3: 1, s3: 1, s7: 1, s30: 1, b25: 1, b100: 1, b250: 1, goal: 1, wrong: 8, pat: 12 };
     const FORBID = ['อิตาโดริ', 'ลูฟี่', 'โจรสลัด', 'วันพีซ', 'วันพืช', 'Luffy', 'One Piece', 'Itadori'];
     const tbad = [];
     if (TR.length !== 10) tbad.push('จำนวนนิสัย ' + TR.length);
@@ -45,7 +47,9 @@ test('ข้อมูล: คำคันจิใช้เฉพาะคัน
       if (JSON.stringify(got) !== JSON.stringify(EXP)) tbad.push('ช่อง/จำนวนประโยคนิสัย ' + i + ' ' + JSON.stringify(got));
       const all = [t.n, ...Object.values(t.s).flat()];
       all.forEach(l => { if (!l || !l.trim()) tbad.push('ประโยคว่าง ' + i); FORBID.forEach(w => { if (l.includes(w)) tbad.push('ห้ามใช้ชื่อเฉพาะ "' + w + '" ในนิสัย ' + i); }); });
-      if (new Set(Object.values(t.s).flat()).size !== 29) tbad.push('ประโยคซ้ำในนิสัย ' + i);
+      if (new Set(Object.values(t.s).flat()).size !== 56) tbad.push('ประโยคซ้ำในนิสัย ' + i);
+      // ช่องตัวแปรมีแค่ {n} {kanji} และทุกช่องต้องมีประโยคที่ไม่มีช่องตัวแปร (ไม่งั้นตอนยังไม่มีค่าจะไม่มีประโยคให้เลือก)
+      Object.entries(t.s).forEach(([k, v]) => { if (!v.some(l => !/\{/.test(l))) tbad.push('ทุกประโยคในช่อง ' + k + ' มีช่องตัวแปร นิสัย ' + i); v.forEach(l => { if (/\{(?!n\}|kanji\})|(?<!\{n|\{kanji)\}/.test(l)) tbad.push('ช่องตัวแปรผิด นิสัย ' + i + ': ' + l) }) });
       // กฎภาษา (รายงานบทพูดตามนิสัย v62): ไม่มี !! วงเล็บท่าทาง คำทักแปลตรง · "…" ไม่เกิน 1 (ยกเว้นขี้เซา) · ไม่เกิน 60 ตัว · นิสัยเงียบ/ขี้เซา/สุภาพ/นักวิชาการไม่มี ! · คันจิในประโยคต้องเป็น N5
       Object.values(t.s).flat().forEach(l => {
         if (/!!|\(|อรุณสวัสดิ์|ราตรีสวัสดิ์|ยินดีต้อนรับ|ขอบคุณสำหรับ/.test(l)) tbad.push('บทพูดแข็ง/แปลตรง นิสัย ' + i + ': ' + l);
@@ -959,6 +963,36 @@ test('บทสนทนา: ฟุริงะนะบนกรอบข้อ
   }
 });
 
+test('สัตว์เลี้ยงปลอบหลังตอบผิด (ควิซ + ไวยากรณ์) · ช่องตัวแปร {n} {kanji} · สุ่มไม่ซ้ำประโยคล่าสุด', async (b, base) => {
+  const p = await fresh(b, base);
+  // ช่องตัวแปร: ยังไม่มีค่า → ไม่เลือกประโยคที่มีช่องตัวแปร · มีค่าแล้ว → เติมค่าลงไป ไม่มี { เหลือ
+  const v = await p.evaluate(() => { pens(); M.pet.trait = 0; M.pet.d.rev = 0; delete M.pet.d.lk; const raw = TR[0].s.pat, a = [];
+    for (let i = 0; i < 60; i++) a.push(pline(M.pet, 'pat', false));
+    M.pet.d.rev = 7; M.pet.d.lk = '山'; const b2 = []; for (let i = 0; i < 80; i++) b2.push(pline(M.pet, 'pat', false));
+    return { noVar: a.every(l => raw.includes(l) && !/\{/.test(l)), filled: b2.every(l => !/\{/.test(l)), n: b2.some(l => /(^|\s)7 ข้อ/.test(l)), k: b2.some(l => l.startsWith('山 ')) } });
+  assert.deepStrictEqual(v, { noVar: true, filled: true, n: true, k: true }, 'ช่องตัวแปร');
+  // ไม่ซ้ำครึ่งคลังล่าสุด: ลูบหัว 12 ประโยค → 7 ครั้งติดกันไม่ซ้ำเลย
+  const rep = await p.evaluate(() => { let worst = 99; for (let t = 0; t < 20; t++) { const a = []; for (let i = 0; i < 7; i++) a.push(pline(M.pet, 'pat', false)); worst = Math.min(worst, new Set(a).size) } return worst });
+  assert(rep >= 6, 'ประโยคลูบหัวซ้ำเร็วเกินไป: ไม่ซ้ำแค่ ' + rep + '/7');
+  // ควิซคันจิ: ตอบผิดครั้งแรกขึ้นประโยคปลอบของนิสัย (ชื่อสัตว์เลี้ยง + ประโยค · {kanji} = ข้อที่เพิ่งตอบ) · ตอบถูกไม่ขึ้น
+  await p.evaluate(() => { M.pet.trait = 3; openDs('k'); mode = 'quiz'; go() });
+  const k0 = await p.evaluate(() => cur.k), wrongs = await p.evaluate(() => TR[3].s.wrong);
+  await p.evaluate(() => pick(ch.findIndex(c => !c.ok)));
+  let t = (await p.locator('.card .pcm').innerText()).trim();
+  assert(t.startsWith('ทดสอบ'), t); t = t.replace(/^ทดสอบ\s*/, '');
+  assert(wrongs.some(l => tplRe(l).test(t)) && !/\{/.test(t), 'ประโยคปลอบต้องมาจากช่อง wrong: ' + t);
+  if (!wrongs.includes(t)) assert(t.includes(k0), '{kanji} ต้องเป็นข้อที่เพิ่งตอบผิด ' + k0 + ': ' + t);
+  assert.strictEqual(await p.locator('.card .btns .nx').count(), 1, 'ยังมีปุ่มข้อต่อไป');
+  await p.evaluate(() => { go(); pick(ch.findIndex(c => c.ok)) }); assert.strictEqual(await p.locator('.pcm').count(), 0, 'ตอบถูกไม่ขึ้นประโยคปลอบ');
+  // ไวยากรณ์: ผิดติดกัน 2 ข้อขึ้นแน่นอน · ไม่มีข้อให้ใส่ {kanji} จึงต้องเป็นประโยคที่ไม่มีช่องตัวแปร
+  await p.evaluate(() => { pwr = 1; gOpen(0); gstart(); gpick(gq[0].opts.findIndex(o => !o.ok)) });
+  t = (await p.locator('.pcm').innerText()).trim().replace(/^ทดสอบ\s*/, '');
+  assert(wrongs.includes(t), 'ไวยากรณ์: ' + t);
+  // ไม่มีสัตว์เลี้ยง (ยังไม่ตั้งค่า) ไม่ขึ้น
+  assert.strictEqual(await p.evaluate(() => { const q = M.pet; M.pet = {}; const r = pcomfort('x', false); M.pet = q; return r }), '');
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('แมวพิกเซล: หน้าหลักวาดฉากห้อง, เหตุการณ์เรียกท่าอารมณ์, แตะแยกโซนและมาตรวัดความทน, เปลี่ยนท่าไม่ค้าง, กระต่ายยังเป็นอิโมจิ', async (b, base) => {
   const p = await fresh(b, base);
   await p.waitForTimeout(300);
@@ -1046,8 +1080,10 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
       Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, tol: 0, cool: 0, then: null, lv: 0 }); while (cat.then !== 'leave' && o.pets < 40) { PixelCat.poke('head'); o.pets++ } }
     setPart(null); setTrait(M.pet.trait); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, tol: 0, cool: 0, then: null, lv: 0 }); return out });
   const PJ = JSON.stringify(per);
-  assert(per[0].zoom > per[4].zoom * 2, 'พลังล้นต้องวิ่งพล่านบ่อยกว่าขี้เซา ' + PJ); assert(per[4].nap > per[0].nap * 2, 'ขี้เซาต้องงีบนานกว่า ' + PJ);
-  assert(per[3].come > per[2].come * 2, 'ปากแข็งต้องเดินมาหาเองบ่อยกว่าขี้อาย ' + PJ); assert(per[2].hide > per[0].hide * 2, 'ขี้อายต้องไปแอบหลังของบ่อยกว่า ' + PJ);
+  // เกณฑ์อัตราส่วนตั้งต่ำกว่าค่าต่ำสุดที่วัดได้ (จำลอง 30 รอบบน main 2026-11-19: งีบ มัธยฐาน 2.2 ต่ำสุด 1.72 · เดินมาหา ต่ำสุด 2.0 · แอบ ต่ำสุด 1.5)
+  // เดิมใช้ 2 เท่าทุกข้อ ซึ่งอยู่กลางการกระจายของการสุ่ม ชุดทดสอบจึงตกราว 1 ใน 4 รอบโดยที่โค้ดไม่ผิด · ทิศทางของนิสัยยังตรวจเหมือนเดิม
+  assert(per[0].zoom > per[4].zoom * 2, 'พลังล้นต้องวิ่งพล่านบ่อยกว่าขี้เซา ' + PJ); assert(per[4].nap > per[0].nap * 1.4, 'ขี้เซาต้องงีบนานกว่า ' + PJ);
+  assert(per[3].come > per[2].come * 1.5, 'ปากแข็งต้องเดินมาหาเองบ่อยกว่าขี้อาย ' + PJ); assert(per[2].hide > per[0].hide * 1.3, 'ขี้อายต้องไปแอบหลังของบ่อยกว่า ' + PJ);
   assert(per[3].pets < per[0].pets && per[0].pets < per[4].pets, 'ความทนลูบต้องต่างกันตามนิสัย ' + PJ);
   // ทักทายตามเวลาที่หายไป: ไม่ถึง 30 นาทีไม่ทำอะไร · 30 นาที–4 ชม. หลับอยู่ปล่อยหลับ · 4 ชม.ขึ้นไป ตื่นแล้วเดินหางตั้งมา ดีใจ + ฟอง ニャー
   const gr = await p.evaluate(() => { const { step, cat } = PixelCat._t, r = {};
@@ -1059,7 +1095,7 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   assert.strictEqual(gr.short, 'sit'); assert.strictEqual(gr.midAsleep, 'curl', 'หายไม่ถึง 4 ชม. แมวหลับอยู่ให้หลับต่อ');
   assert.strictEqual(gr.longAsleep, 'wake'); assert(gr.up, 'ต้องเดินหางตั้งมาทักทาย'); assert.deepStrictEqual(gr.end, ['pose', 'happy']);
   assert(gr.bubble.includes('ニャー'), 'ฟองทักทาย: ' + gr.bubble); assert(gr.x > 40 && gr.x < 75, 'ทักทายกลางห้อง x=' + gr.x);
-  await p.waitForTimeout(3300); assert(!(await p.locator('.scn.px .scb').innerText()).includes('ゴロゴロ'), 'ฟองทักทายต้องคืนประโยคเดิม');
+  await p.waitForTimeout(3300); assert(!(await p.evaluate(() => document.querySelector('.scn.px .scb').textContent)).includes('ゴロゴロ'), 'ฟองทักทายต้องคืนประโยคเดิม');
   // ฉากพิกเซลครบทุกสถานที่ใน PLACES วาดได้สองโหมด ต่างกันทุกที่ และเปลี่ยนตามที่ที่เลือก
   const pl = await p.evaluate(() => { const { sceneBg, sceneFg } = PixelCat._t, sig = {}, miss = PLACES.map(x => x.id).filter(id => !PixelCat.places.includes(id));
     for (const x of PLACES) { M.place = { at: x.id, got: PLACES.map(q => q.id) }; render(); for (const tm of ['light', 'dark']) { const b = sceneBg(tm).toDataURL(), f = sceneFg(tm).getContext('2d').getImageData(0, 0, 160, 90).data; let n = 0; for (let i = 3; i < f.length; i += 4) if (f[i]) n++; sig[x.id + tm] = [b.length, n] } }
@@ -1068,7 +1104,7 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   Object.entries(pl.sig).forEach(([k, [b, n]]) => assert(b > 1000 && n > 50, 'ฉากว่าง ' + k));
   assert.strictEqual(new Set(Object.values(pl.sig).map(v => v[0])).size, Object.keys(pl.sig).length, 'ทุกฉาก/โหมดต้องต่างกัน');
   // กล่องคำพูดลอยเหนือหัวและเลื่อนตามแมว · นาฬิกาในห้องมีหน้าปัด · ฟอนต์ของแอปโหลดได้
-  await p.evaluate(() => { M.place = { at: 'room', got: [] }; render(); Object.assign(PixelCat._t.cat, { mode: 'sit', x: 0, t: 0, dur: 1e9, pend: null }) });
+  await p.evaluate(() => { M.place = { at: 'room', got: [] }; PixelCat._t.seen.at = 0; render(); Object.assign(PixelCat._t.cat, { mode: 'sit', x: 0, t: 0, dur: 1e9, pend: null }) });
   await p.waitForTimeout(900);
   const bxA = await p.evaluate(() => +/translate\((-?\d+)px/.exec(PixelCat._t.bubblePos())[1]);
   await p.evaluate(() => { PixelCat._t.cat.x = 100 }); await p.waitForTimeout(900);
@@ -1076,6 +1112,24 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   assert(bxB > bxA + 40, `กล่องคำพูดต้องเลื่อนตามแมว ${bxA} → ${bxB}`);
   const bub = await p.evaluate(() => { const b = document.querySelector('.scn.px .scb').getBoundingClientRect(), c = document.getElementById('petcv').getBoundingClientRect(); return [b.left >= c.left - 1, b.right <= c.right + 1, b.top >= c.top - 1, getComputedStyle(document.querySelector('.scn.px .scb')).visibility] });
   assert.deepStrictEqual(bub, [true, true, true, 'visible'], 'กล่องคำพูดต้องอยู่ในฉาก');
+  // กล่องคำพูดขึ้นตอนพูดแล้วจางหายเอง (เจ้าของขอ 2026-11-19): ประโยคหลักขึ้นตอนวาดหน้า → หายตามเวลา → วาดหน้าซ้ำภายใน 2 นาทีไม่ขึ้นซ้ำ → แตะตัวพูดอีกครั้ง
+  const BUB = () => p.evaluate(() => { const e = document.querySelector('.scn.px .scb'), c = getComputedStyle(e); return { on: e.classList.contains('on'), vis: c.visibility, op: +c.opacity, txt: e.textContent } });
+  const calm = () => p.evaluate(() => Object.assign(PixelCat._t.cat, { mode: 'sit', x: 100, t: 0, dur: 1e9, pend: null, pose: null, tol: 0, cool: 0, lv: 0, then: null }));
+  await p.evaluate(() => { PixelCat._t.setReadMs(400); PixelCat._t.seen.at = 0; render() }); await calm();
+  await p.waitForTimeout(150); let bb = await BUB(); assert(bb.on && bb.vis === 'visible', 'ประโยคหลักต้องขึ้นตอนวาดหน้า ' + JSON.stringify(bb)); const main = bb.txt;
+  await p.waitForTimeout(1000); bb = await BUB(); assert(!bb.on && bb.vis === 'hidden' && bb.op === 0, 'กล่องคำพูดต้องจางหายเอง ' + JSON.stringify(bb));
+  await p.evaluate(() => render()); await calm(); await p.waitForTimeout(150); assert(!(await BUB()).on, 'วาดหน้าซ้ำภายใน 2 นาทีต้องไม่ขึ้นประโยคเดิมซ้ำ');
+  await p.evaluate(() => PixelCat.poke('body')); bb = await BUB(); assert(bb.on && bb.txt.includes('ニャ'), 'แตะตัว ' + bb.txt);
+  await p.waitForTimeout(1100); bb = await BUB(); assert(bb.on && bb.txt === main, 'แตะตัวแล้วพูดประโยคหลักอีกครั้ง ' + bb.txt);
+  await p.waitForTimeout(900); assert(!(await BUB()).on, 'พูดจบแล้วต้องหายอีก');
+  // ลูบหัว: ゴロゴロ… แล้วพูดประโยคลูบหัวตามนิสัย (Math.random = 0 ให้พูดแน่นอน · ร่าง 3 ไม่เขิน)
+  await calm(); await p.evaluate(() => { const r = Math.random; Math.random = () => 0; try { PixelCat.poke('head') } finally { Math.random = r } });
+  bb = await BUB(); assert(bb.on && bb.txt.includes('ゴロゴロ'), bb.txt);
+  await p.waitForTimeout(1450); bb = await BUB(); const pats = await p.evaluate(() => TR[M.pet.trait].s.pat);
+  assert(bb.on && pats.some(l => tplRe(l).test(bb.txt)), 'ลูบหัวแล้วพูดประโยค pat ของนิสัย: ' + bb.txt);
+  // แมวร้องเองไม่ทับตอนกำลังพูด
+  assert.strictEqual(await p.evaluate(() => PixelCat._t.talking()), true);
+  await p.evaluate(() => PixelCat._t.setReadMs(0)); await calm(); // ให้แมวนั่งนิ่งที่เดิม (ไม่เดินไปบังนาฬิกาที่ตรวจด้านล่าง)
   // กลางวัน/กลางคืนของฉากตามเวลาจริง ไม่ใช่ตามโหมดมืดของแอป (06:00–17:59 = กลางวัน)
   assert.deepStrictEqual(await p.evaluate(() => [4, 5, 6, 7, 12, 16, 17, 18, 19, 23].map(h => PixelCat.tod(new Date(2026, 10, 19, h)))), ['night', 'dawn', 'dawn', 'day', 'day', 'day', 'dusk', 'dusk', 'night', 'night']);
   // รุ่งเช้า/พลบค่ำ: ฟ้าในหน้าต่างไม่ใช่สีกลางวัน ภาพทั้งห้องอุ่นขึ้น และโคมไฟติด (กลางวันโคมดับ)
@@ -1095,8 +1149,9 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   await p.evaluate(() => { document.documentElement.setAttribute('data-theme', 'light'); PixelCat._t.setTod('night'); render() }); await p.waitForTimeout(200);
   assert.strictEqual(await px(5, 5), '44,37,32', 'แอปโหมดสว่าง + กลางคืน: ผนังห้องต้องมืด');
   await p.evaluate(() => { document.documentElement.removeAttribute('data-theme'); PixelCat._t.setTod('day'); render() }); await p.waitForTimeout(200);
-  const face = await p.evaluate(() => [...document.getElementById('petcv').getContext('2d').getImageData(36, 17, 1, 1).data].slice(0, 3).join(','));
-  assert.strictEqual(face, '255,250,240', 'หน้าปัดนาฬิกาในห้อง');
+  // หน้าปัดกลาง (39,17): เข็มเดินตามเวลาจริงจึงทับจุดใดก็ได้บนหน้าปัด (เช่น 08:00–09:30 เข็มชั่วโมงทับ (36,17)) ตรวจ 4 จุดรอบกลาง เข็มสองเข็มทับได้ไม่เกิน 2 จุด
+  const face = await p.evaluate(() => [[36, 17], [42, 17], [39, 14], [39, 20]].map(([x, y]) => [...document.getElementById('petcv').getContext('2d').getImageData(x, y, 1, 1).data].slice(0, 3).join(',')));
+  assert(face.filter(c => c === '255,250,240').length >= 2, 'หน้าปัดนาฬิกาในห้อง ' + face.join(' '));
   assert(await p.evaluate(async () => { await document.fonts.ready; await Promise.all([document.fonts.load("700 20px Mali", "สวัสดี"), document.fonts.load("16px Anuphan", "สวัสดี")]); const ok = n => [...document.fonts].some(f => f.family.replace(/["']/g, '') === n && f.status === 'loaded'); return ok('Mali') && ok('Anuphan') }), 'ฟอนต์ Mali/Anuphan');
   await p.evaluate(() => { M.pet.sp = 1; render(); });
   assert.strictEqual(await p.locator('#petcv').count(), 0); assert.strictEqual(await p.locator('.pet').count(), 1); assert.strictEqual(await p.locator('.scn > svg').count(), 1);

@@ -4,13 +4,13 @@ const GK=LKEY[LV].g; // N5 = 'kg1' · N4 = 'kg4' (ดู js/level.js)
 let GS={};try{GS=JSON.parse(localStorage.getItem(GK)||'{}')}catch(e){GS={}}
 function gsave(){try{localStorage.setItem(GK,JSON.stringify(GS))}catch(e){}}
 function gstat(){let lr=0,due=0,seen=0;const n=Date.now();G.forEach(g=>{const r=GS[g.id];if(r){seen++;if(r.b>=MASTERY)lr++;if(r.d<=n)due++}});return{seen,lr,due,t:G.length}}
-let gi=0,gq=null,gqi=0,gans=null,gscore=0;
+let gi=0,gq=null,gqi=0,gans=null,gscore=0,gcmf='';
 const gpass=n=>n-1; // ผ่านเมื่อผิดได้ไม่เกิน 1 ข้อ
 const gblank=s=>rb(s).replace('___','<span class="gb">＿＿＿</span>');
 function gOpen(i){gi=i;gq=null;view='gl';render();window.scrollTo(0,0)}
 function gBack(){gq=null;nv('g')}
 function gstart(){gq=G[gi].qs.map(q=>({q:q.q,why:q.why,opts:sh(q.opts.map((t,i)=>({t,ok:i===0})))}));gqi=0;gans=null;gscore=0;render();window.scrollTo(0,0)}
-function gpick(i){if(gans!==null)return;gans=i;const ok=gq[gqi].opts[i].ok;if(ok)gscore++;tick();if(ok)ptrack('rev');render()}
+function gpick(i){if(gans!==null)return;gans=i;const ok=gq[gqi].opts[i].ok;if(ok)gscore++;tick();if(ok)ptrack('rev');gcmf=pcomfort('',ok);render()}
 function gnext(){gqi++;gans=null;if(gqi>=gq.length)gfinish();render();window.scrollTo(0,0)}
 function gfinish(){const g=G[gi],pass=gscore>=gpass(gq.length),nw=!GS[g.id];
  const s=srsNext(GS[g.id],pass);if(!pass)s.d=Date.now(); // บทที่ไม่ผ่านถือว่าถึงกำหนดทบทวนทันที ลองใหม่แล้วผ่านต้องนับ
@@ -30,7 +30,7 @@ function renderGL(){const g=G[gi];let h=NAV();
  else if(gqi<gq.length){const q=gq[gqi];
   h+=`<div class="st" style="margin-top:6px">${g.t.replace(/\{([^|}]*)\|[^}]*\}/g,'$1')} · ข้อ ${gqi+1}/${gq.length}</div><div class="bar"><i style="width:${gqi/gq.length*100}%"></i></div>
   <div class="card" style="min-height:0"><div class="k gq">${gblank(q.q)}</div><div class="ch">${q.opts.map((o,i)=>`<button class="${gans===null?'':o.ok?'r':gans===i?'w':''}" onclick="gpick(${i})">${rb(o.t)}</button>`).join('')}</div>
-  ${gans!==null?`<div class="d gw">${q.opts[gans].ok?icx('ok',18,'ok-i')+' <b>ถูกต้อง!</b> ':icx('no',18,'no-i')+' <b>ยังไม่ถูก</b> '}${rb(q.why)}</div><div class="btns"><button class="nx" onclick="gnext()">${gqi+1<gq.length?'ข้อต่อไป':'ดูผล'}</button></div>`:''}</div>`}
+  ${gans!==null?`<div class="d gw">${q.opts[gans].ok?icx('ok',18,'ok-i')+' <b>ถูกต้อง!</b> ':icx('no',18,'no-i')+' <b>ยังไม่ถูก</b> '}${rb(q.why)}</div>${q.opts[gans].ok?'':pcmHtml(gcmf)}<div class="btns"><button class="nx" onclick="gnext()">${gqi+1<gq.length?'ข้อต่อไป':'ดูผล'}</button></div>`:''}</div>`}
  else{const pass=gscore>=gpass(gq.length),r=GS[g.id];
   h+=`<div class="card" style="min-height:0"><div class="k">${pass?icx('sparkle',44,'hl-i big'):icx('sprout',44,'ok-i big')}</div><div class="d"><b>${gscore}/${gq.length} ข้อ</b><br>${pass?'ผ่านแล้ว!':'เกือบแล้ว ทบทวนบทเรียนแล้วลองใหม่นะ'}</div>
   <div class="st" style="margin-top:8px">${pass&&r?(r.b>=MASTERY?'จำได้แม่นแล้ว':'ขั้นการทบทวน '+r.b+'/'+(IV.length-1))+' · ทบทวนอีกครั้งใน '+gnextTxt(r.d):'ต้องตอบถูกอย่างน้อย '+gpass(gq.length)+' ข้อ'}</div>

@@ -22,10 +22,22 @@ function pmast(){let n=0;for(const k in DS){try{n+=Object.values(JSON.parse(loca
 function ptr(p){if(p.trait==null||!TR[p.trait]){p.trait=Math.floor(Math.random()*TR.length);p.rv=dstr(new Date());saveM()}return TR[p.trait]}
 // เลือกประโยคของสัตว์เลี้ยงตามช่วง/เหตุการณ์ (key ดูใน js/data/pet-lines.js)
 // stable=true: เลือกให้คงที่ภายใน 1 ชั่วโมง (ใช้กับกล่องคำพูดที่วาดซ้ำบ่อย) / false: สุ่มทุกครั้ง (ใช้กับข้อความเด้งตอนเกิดเหตุการณ์)
-// สุ่มแบบไม่ซ้ำประโยคล่าสุดของช่องเดียวกัน (เช่น ให้อาหารสองครั้งติดไม่ได้ประโยคเดิม)
+// สุ่มแบบไม่ซ้ำ N ประโยคล่าสุดของช่องเดียวกัน (N = ครึ่งหนึ่งของคลัง ไม่เกิน 5 · รายงานบทพูด: ห้ามซ้ำ N ครั้งล่าสุด)
+// ช่องตัวแปร: {n} = จำนวนข้อที่ตอบถูกวันนี้ · {kanji} = คันจิที่ตอบถูกล่าสุดวันนี้ (หน้าทำข้อส่งตัวที่เพิ่งตอบผิดมาแทน)
+//  ประโยคที่มีช่องตัวแปรแต่ยังไม่มีค่า ({n} = 0 หรือยังไม่มีคันจิ) จะไม่ถูกเลือก
 const plLast={};
-function pline(p,key,stable=true){const v=ptr(p).s[key]||[];if(!v.length)return'';let i;
- if(stable){const d=new Date(),h=dstr(d)+d.getHours()+key+p.trait;let x=0;for(const c of h)x=(x*31+c.charCodeAt(0))>>>0;i=x%v.length}else{do i=Math.floor(Math.random()*v.length);while(v.length>1&&v[i]===plLast[key]);plLast[key]=v[i]}return v[i]}
+const pvars=p=>({n:(p.d&&p.d.rev)||0,kanji:(p.d&&p.d.lk)||''});
+const pfill=(l,v)=>l.replace(/\{n\}/g,v.n).replace(/\{kanji\}/g,v.kanji);
+function pline(p,key,stable=true,vo){const V={...pvars(p),...vo},v=(ptr(p).s[key]||[]).filter(l=>(!l.includes('{n}')||V.n>0)&&(!l.includes('{kanji}')||V.kanji));if(!v.length)return'';let i;
+ if(stable){const d=new Date(),h=dstr(d)+d.getHours()+key+p.trait;let x=0;for(const c of h)x=(x*31+c.charCodeAt(0))>>>0;i=x%v.length}
+ else{const H=plLast[key]||(plLast[key]=[]),N=Math.min(5,Math.floor(v.length/2)),ok=v.map((l,j)=>j).filter(j=>!H.slice(-N).includes(v[j]));i=ok.length?ok[Math.floor(Math.random()*ok.length)]:Math.floor(Math.random()*v.length);H.push(v[i]);if(H.length>8)H.shift()}
+ return pfill(v[i],V)}
+// โหมดปลอบหลังตอบผิด (รายงานบทพูด: หลังตอบผิด ทุกนิสัยสลับเป็นโหมดปลอบ รวมปากแข็งและขี้เล่น) ขึ้นใต้ข้อที่เพิ่งตอบผิด
+// ไม่ขึ้นทุกข้อ: ผิดครั้งแรกตั้งแต่เปิดแอป, ผิดติดกันตั้งแต่ 2 ข้อ หรือสุ่มครึ่งหนึ่ง · ตอบถูกแล้วนับใหม่ · k = ข้อที่เพิ่งตอบ (ใส่ใน {kanji})
+let pwr=0,pwn=0;
+function pcomfort(k,ok){const p=M.pet;if(!p||!p.name)return'';if(ok){pwr=0;return''}pwr++;pwn++;
+ if(!(pwn===1||pwr>=2||Math.random()<.5))return'';return pline(p,'wrong',false,{kanji:k||''})}
+const pcmHtml=t=>t?`<div class="pcm" role="status">${icx('paw',18)}<span><b>${M.pet.name}</b> ${t}</span></div>`:'';
 const pstage=b=>b<40?1:b<120?2:3;
 // เพิ่มความสนิท ถ้าข้ามไปร่าง 2/3 สัตว์เลี้ยงพูดข้อความเด้ง
 function pbond(n){const p=M.pet,a=pstage(p.bond);p.bond+=n;const z=pstage(p.bond);if(z>a){pcue('happy',2400);toast(IC.paw+' '+pline(p,z===2?'lv2':'lv3',false))}}
@@ -57,4 +69,4 @@ let pAway=null,pHid=0;
 document.addEventListener('visibilitychange',()=>{if(document.hidden){pHid=Date.now();return}if(!pHid)return;const g=Date.now()-pHid;pHid=0;if(window.PixelCat&&M.pet&&(M.pet.sp||0)===0)PixelCat.greet(g)});
 // คำแนะนำครั้งเดียว (เก็บใน M.pet.tip): ลูบหัวครบ 3 ครั้งแล้วบอกว่ากดค้างที่หัวได้ (แมวกะพริบตาช้าตอบ)
 function ptip(k){const p=M.pet;if(!p||(p.tip&&p.tip[k]))return;p.tip={...(p.tip||{}),[k]:1};saveM();if(k==='blink')toast(IC.paw+' ลองกดค้างที่หัว'+p.name+'ดูสิ แมวจะกะพริบตาช้าๆ ตอบ แปลว่าไว้ใจเธอนะ')}
-function petMount(){const c=document.getElementById('petcv');if(!c||!window.PixelCat)return;const h=new Date().getHours();PixelCat.mount(c,{coat:M.pet.coat,acc:M.pet.acc,label:M.pet.name,place:plState().at,sleepy:h>=22||h<5,stage:pstage(M.pet.bond||0),trait:ptr(M.pet)&&M.pet.trait,onTip:ptip,bubble:c.parentElement.querySelector('.scb')});if(pAway){PixelCat.greet(pAway);pAway=0}}
+function petMount(){const c=document.getElementById('petcv');if(!c||!window.PixelCat)return;const h=new Date().getHours();PixelCat.mount(c,{coat:M.pet.coat,acc:M.pet.acc,label:M.pet.name,place:plState().at,sleepy:h>=22||h<5,stage:pstage(M.pet.bond||0),trait:ptr(M.pet)&&M.pet.trait,onTip:ptip,line:k=>pline(M.pet,k,false),bubble:c.parentElement.querySelector('.scb')});if(pAway){PixelCat.greet(pAway);pAway=0}}

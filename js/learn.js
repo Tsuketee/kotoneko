@@ -33,9 +33,10 @@ function renderMis(){const L=allMis();let h=NAV()+`<h1>ที่ตอบผิ�
   h+=`<div class="card" style="text-align:left;min-height:0;padding:6px 14px;margin-top:12px">${L.slice(0,50).map(o=>`<div class="mi"><span class="mk">${o.x.k}</span><span class="mt"><b>${rd(o.x)}</b><br>${o.x.m}</span><span class="mw">ผิด ${o.w}</span></div>`).join('')}</div>`}
  document.getElementById('app').innerHTML=h}
 function goMis(k){tab='learn';nv(k);mode='card';cat='ผิดบ่อย';go()}
-function rec(ok){const nw=!S[cur.k];S[cur.k]=srsNext(S[cur.k],ok);save();tick();pbadge();if(ok)ptrack('rev');if(nw)ptrack('neu')}
+function rec(ok){const nw=!S[cur.k];S[cur.k]=srsNext(S[cur.k],ok);save();tick();pbadge();if(ok){ptrack('rev');if(ds==='k'&&M.pet&&M.pet.d){M.pet.d.lk=cur.k;saveM()}}if(nw)ptrack('neu')} // lk = คันจิที่ตอบถูกล่าสุดวันนี้ ({kanji} ในบทพูด)
 function grade(ok){rec(ok);go()}
-function pick(i){if(ans!==null)return;ans=i;rec(ch[i].ok);render();if(ch[i].ok){const c0=cur;setTimeout(()=>{if(cur===c0&&ans!==null)go()},700)}}
+let cmf=''; // ประโยคปลอบของข้อที่เพิ่งตอบผิด (เลือกครั้งเดียวตอนตอบ ไม่เปลี่ยนตอนวาดหน้าซ้ำ)
+function pick(i){if(ans!==null)return;ans=i;rec(ch[i].ok);cmf=pcomfort(cur.k,ch[i].ok);render();if(ch[i].ok){const c0=cur;setTimeout(()=>{if(cur===c0&&ans!==null)go()},700)}}
 function mkch(){const f=x=>(ds==='a'||qt==='read')?rd(x):x.m;const c=f(cur);
  const o=sh(K.filter(x=>x.k!==cur.k&&f(x)!==c)).filter((x,i,a)=>a.findIndex(y=>f(y)===f(x))===i).slice(0,3);
  ch=sh([{t:c,ok:true},...o.map(x=>({t:f(x),ok:false}))])}
@@ -49,10 +50,10 @@ const mnHtml=x=>ds==='a'&&MN[x.k]?`<div class="ex"><div class="exh">เคล็
 function catOpts(){const o=c=>`<option value="${c}"${c===cat?' selected':''}>${c}</option>`;if(ds!=='a')return[...CATS,'ผิดบ่อย'].map(o).join('');const G={b:'พื้นฐาน',d:'เสียงขุ่น・กึ่งขุ่น',y:'เสียงควบ'};let s=o('ทั้งหมด');for(const g in G){const cs=[...new Set(K.filter(x=>x.g===g).map(x=>x.c))];s+=`<optgroup label="${G[g]}">${cs.map(o).join('')}</optgroup>`}return s+o('ผิดบ่อย')}
 const scriptRow=()=>`<div class="seg" style="display:flex;margin-bottom:12px">${[['h','ฮิระงะนะ'],['k','คะตะคะนะ'],['all','ทั้งสองแบบ']].map(x=>`<button style="flex:1" class="${ks===x[0]?'on':''}" onclick="ks='${x[0]}';wi=0;go()">${x[1]}</button>`).join('')}</div>`;
 function chartHtml(){const sc=ks==='k'?'k':'h',G={b:'พื้นฐาน',d:'เสียงขุ่น・กึ่งขุ่น',y:'เสียงควบ'},R={};K.filter(x=>x.sc===sc).forEach(x=>{(R[x.c]=R[x.c]||[]).push(x)});
- const tint=x=>{const r=S[x.k];return!r?'':r.w>=2?'background:color-mix(in srgb,var(--err) 28%,transparent)':r.b>=MASTERY?'background:color-mix(in srgb,var(--ok) 28%,transparent)':r.b>=1?'background:color-mix(in srgb,var(--hl) 30%,transparent)':''};
+ const tint=x=>{const r=S[x.k];return!r?'':r.w>=2?'background:color-mix(in srgb,var(--err) 28%,transparent)':r.b>=MASTERY?'background:color-mix(in srgb,var(--ok) 28%,transparent)':r.b>=1?'background:color-mix(in srgb,var(--hlt) 30%,transparent)':''};
  let h=`<div class="seg" style="display:flex;margin-bottom:12px"><button style="flex:1" class="${sc==='h'?'on':''}" onclick="ks='h';render()">ฮิระงะนะ</button><button style="flex:1" class="${sc==='k'?'on':''}" onclick="ks='k';render()">คะตะคะนะ</button></div><div class="st" style="margin-bottom:8px">แตะตัวอักษรเพื่อฟังเสียง · สีบอกความแม่น</div>`;
  for(const g in G){h+=`<div class="kt">${G[g]}</div>`;Object.keys(R).filter(c=>R[c][0].g===g).forEach(c=>{const cols=g==='y'?3:5;h+=`<div class="kr" style="grid-template-columns:repeat(${cols},1fr)">${R[c].map((x,i)=>`<div class="kc" style="grid-column:${(c==='や/ヤ'||c==='わ/ワ')?[1,3,5][i]:i+1};${tint(x)}" data-t="${x.k}" onclick="speak(this.dataset.t)"><b>${x.k}</b><span>${x.o}</span></div>`).join('')}</div>`})}
- return h+`<div class="lg"><i style="background:color-mix(in srgb,var(--ok) 55%,transparent)"></i>แม่นแล้ว<i style="background:color-mix(in srgb,var(--hl) 55%,transparent)"></i>กำลังเรียน<i style="background:color-mix(in srgb,var(--err) 55%,transparent)"></i>ผิดบ่อย</div>`}
+ return h+`<div class="lg"><i style="background:color-mix(in srgb,var(--ok) 55%,transparent)"></i>แม่นแล้ว<i style="background:color-mix(in srgb,var(--hlt) 55%,transparent)"></i>กำลังเรียน<i style="background:color-mix(in srgb,var(--err) 55%,transparent)"></i>ผิดบ่อย</div>`}
 function pathHtml(sts){const m=Object.fromEntries(sts),L=['k','w','v'],A=m.a||{lr:0,t:0,due:0},t5=L.reduce((a,k)=>a+m[k].t,0),l5=L.reduce((a,k)=>a+m[k].lr,0),d5=L.reduce((a,k)=>a+m[k].due,0),pa=A.t?A.lr/A.t:0,p5=t5?l5/t5:0;
  return `<div class="path"><div class="pc big1" onclick="openDs('a')"><div class="pn">1</div><div class="pb"><div class="pg">あ ア</div><b>${DS.a.n}</b>${pa>=.8?'<span class="bd b2">ผ่านแล้ว</span>':'<span class="bd b1">เริ่มที่นี่</span>'}<div class="st">ก่อนเริ่ม · เรียนทีละแถว 5 ตัว มีตารางและเสียงอ่าน</div><div class="st">พื้นฐาน ${A.lr}/${A.t} จำได้แม่น${A.due?' · ทบทวน '+A.due:''}</div><div class="bar"><i style="width:${pa*100}%"></i></div></div></div>
  ${['n5','n4','n3'].map(l=>l!==LV?lvCard(l):`<div class="pc" onclick="openLv()"><div class="pn">2</div><div class="pb"><b>${LEVELS[LV].n}</b>${LV!=='n5'?'<span class="bd b1">กำลังเรียน</span>':''}${p5>=.8?'<span class="bd b2">ผ่านแล้ว</span>':pa>=.8?'<span class="bd b3">พร้อมแล้ว</span>':''}<div class="st">คำศัพท์ · คันจิ · บทสนทนา · ไวยากรณ์ · ซ้อมสอบ</div><div class="st">${l5}/${t5} จำได้แม่น${d5?' · ทบทวน '+d5:''}</div><div class="bar"><i style="width:${p5*100}%"></i></div></div><div class="pg2">${LEVELS[LV].g}</div></div>`).join('')}</div>`}
@@ -85,7 +86,7 @@ function renderLearn(){
   h+=`<div class="card"><div class="k" style="${cur.k.length>2?'font-size:'+Math.max(34,Math.floor(200/cur.k.length))+'px':''}">${cur.k}</div><div class="q">${(ds==='a'||qt==='read')?'คำอ่านคือข้อไหน':'ความหมายคือข้อไหน'}</div><div class="ch">`;
   ch.forEach((c,i)=>{const s=ans===null?'':c.ok?'r':(ans===i?'w':'');h+=`<button class="${s}" onclick="pick(${i})">${c.t}</button>`});
   h+=`</div>`;
-  if(ans!==null&&!ch[ans].ok)h+=`<div class="btns"><button class="nx" onclick="go()">ข้อต่อไป</button></div>`;
+  if(ans!==null&&!ch[ans].ok)h+=pcmHtml(cmf)+`<div class="btns"><button class="nx" onclick="go()">ข้อต่อไป</button></div>`;
   h+=`</div>`}
  h+=`<details class="ft"><summary>ระบบทบทวนทำงานอย่างไร</summary><p>ระบบทบทวนแบบเว้นระยะ: ตอบถูกต่อเนื่องจะห่างขึ้นเรื่อยๆ (10 นาที → 1 → 3 → 7 → 16 → 35 → 75 → 150 วัน) ตอบผิดจะกลับมาเร็วขึ้น · &quot;จำได้แม่น&quot; = ตอบถูกจนช่วงห่างถึง 7 วัน · ความคืบหน้าเก็บในเบราว์เซอร์เครื่องนี้<br>ข้อมูลเวอร์ชันทดลอง ควรตรวจกับตำราที่ใช้อยู่อีกครั้ง<br>คำศัพท์ บทสนทนา และไวยากรณ์เขียนขึ้นเองสำหรับแอปนี้</p></details><div class="ft" style="margin-top:6px">ลำดับขีดจาก <a href="https://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a> (CC BY-SA 3.0) · ดูเครดิตเต็มในหน้าสถิติ</div>`;
  document.getElementById('app').innerHTML=h;if(mode==='write')initCv()}
