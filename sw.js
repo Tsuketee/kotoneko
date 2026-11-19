@@ -1,6 +1,6 @@
 // Service worker: ทำให้แอปเปิดได้ตอนออฟไลน์
 // ⚠️ ทุกครั้งที่แก้ไฟล์แล้วจะปล่อยเวอร์ชันใหม่ ให้เพิ่มเลข VERSION ไม่งั้นเครื่องผู้ใช้จะยังเห็นไฟล์เก่า
-const VERSION = 'v77';
+const VERSION = 'v80';
 const CACHE = 'kotoneko-' + VERSION;
 const FILES = [
   './',
@@ -49,7 +49,8 @@ const FILES = [
   'icons/icon.svg',
   'icons/apple-touch-icon.png',
   'icons/icon-192.png',
-  'icons/icon-512.png'
+  'icons/icon-512.png',
+  'icons/icon-maskable-512.png'
 ];
 
 self.addEventListener('install', e => {
