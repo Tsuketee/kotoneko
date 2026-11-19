@@ -963,6 +963,28 @@ test('บทสนทนา: ฟุริงะนะบนกรอบข้อ
   }
 });
 
+test('ภารกิจรายวัน: ทำครบแล้วกด "รับ" ถึงได้ Energy · ป้ายบนแท็บหน้าแรก · หลอด Energy · วันเก่าที่ได้ Energy ไปแล้วไม่รับซ้ำ', async (b, base) => {
+  const p = await fresh(b, base);
+  // ทำภารกิจทบทวนครบ: ยังไม่ได้ Energy แต่ขึ้นปุ่มรับ และป้าย 1 บนแท็บหน้าแรก
+  await p.evaluate(() => { M.pet.energy = 0; M.pet.bond = 0; pens(); for (let i = 0; i < M.pet.min; i++) ptrack('rev'); goTab('learn'); });
+  assert.deepStrictEqual(await p.evaluate(() => [M.pet.energy, !!M.pet.d.done.rev, punclaimed()]), [0, true, 1], 'ทำครบแล้วยังไม่ให้ Energy จนกว่าจะกดรับ');
+  assert.strictEqual(await p.locator('#nav .nb').innerText(), '1');
+  await p.evaluate(() => goTab('home'));
+  assert.strictEqual(await p.locator('.pzm.cl .pcl').count(), 1, 'ต้องมีปุ่มรับหนึ่งปุ่ม');
+  await p.evaluate(() => document.querySelectorAll('.toast').forEach(e => e.remove()));
+  await p.locator('.pcl').click();
+  const r = await p.evaluate(() => [M.pet.energy, M.pet.bond, M.pet.d.cl.rev, punclaimed(), document.querySelectorAll('.pzm.got').length, document.querySelectorAll('#nav .nb').length]);
+  assert.deepStrictEqual(r, [20, 2, 1, 0, 1, 0], 'รับแล้ว: Energy +20 ความสนิท +2 การ์ดเป็นรับแล้ว ป้ายหาย');
+  assert(/\+20 Energy · ทดสอบ/.test(await p.locator('.toast').last().innerText()), 'ข้อความเด้งบอกความรู้สึกของสัตว์เลี้ยง');
+  await p.evaluate(() => pclaim('rev')); assert.strictEqual(await p.evaluate(() => M.pet.energy), 20, 'รับซ้ำไม่ได้');
+  await p.evaluate(() => pclaim('dlg')); assert.strictEqual(await p.evaluate(() => M.pet.energy), 20, 'ยังไม่ครบรับไม่ได้');
+  // หลอด Energy ถึงมื้อถัดไป
+  assert.deepStrictEqual(await p.evaluate(() => [document.querySelector('.ebar').getAttribute('aria-valuenow'), document.querySelector('.pel span').textContent]), ['20', 'อีก 10 ถึงมื้อถัดไป']);
+  // ข้อมูลวันเดิมจากเวอร์ชันก่อน (ไม่มี cl): ภารกิจที่ครบแล้วได้ Energy ไปแล้ว นับว่ารับแล้ว
+  assert.deepStrictEqual(await p.evaluate(() => { M.pet.d = { date: dstr(new Date()), rev: 10, neu: 5, dlg: 0, done: { rev: 1, neu: 1 }, r: [] }; pens(); return [M.pet.d.cl, punclaimed()] }), [{ rev: 1, neu: 1 }, 0]);
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('สัตว์เลี้ยงปลอบหลังตอบผิด (ควิซ + ไวยากรณ์) · ช่องตัวแปร {n} {kanji} · สุ่มไม่ซ้ำประโยคล่าสุด', async (b, base) => {
   const p = await fresh(b, base);
   // ช่องตัวแปร: ยังไม่มีค่า → ไม่เลือกประโยคที่มีช่องตัวแปร · มีค่าแล้ว → เติมค่าลงไป ไม่มี { เหลือ
@@ -1003,6 +1025,14 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   // ให้อาหาร = ท่ากินข้าวปั้น (ถ้ากำลังเดินอยู่ รอจนนั่งพักก่อน)
   await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'sit', t: 0, dur: 1e9 }); M.pet.energy = 100; pfeed(); });
   assert.deepStrictEqual(await T(), ['pose', 'eat']);
+  // Energy ไม่พอ → ขออาหาร (รายงานพฤติกรรมข้อ 12): เดินหางตั้งมากลางฉาก เงยหน้ามอง ニャー แล้วถูหัวคราง (ไม่ใช่ท่าเศร้า) · หลับอยู่ตื่นก่อน
+  const begSim = (o) => p.evaluate(o => { const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'sit', x: 5, t: 0, dur: 1e9, then: null, pend: null, pose: null, tol: 0, cool: 0, lv: 0, after: null }, o); M.pet.energy = 5; pfeed();
+    const r = { first: cat.mode, up: false }; for (let i = 0; i < 800 && !(cat.mode === 'pose' && cat.pose === 'curious'); i++) { step(50); if (cat.mode === 'walk' && cat.then === 'beg') r.up = true }
+    r.pose = [cat.mode, cat.pose]; r.x = Math.round(cat.x); r.say = document.querySelector('.scn.px .scb').textContent; for (let j = 0; j < 40 && cat.mode !== 'pet'; j++) step(50); r.after = cat.mode; return r }, o);
+  let bg = await begSim({});
+  assert(bg.up, 'ต้องเดินหางตั้งมาหา'); assert.deepStrictEqual(bg.pose, ['pose', 'curious'], 'มาถึงแล้วเงยหน้ามอง'); assert(bg.say.includes('ニャー'), 'ฟองขออาหาร: ' + bg.say);
+  assert(bg.x > 40 && bg.x < 75, 'ขอกลางฉาก x=' + bg.x); assert.strictEqual(bg.after, 'pet', 'มองเสร็จแล้วถูหัว');
+  bg = await begSim({ mode: 'curl' }); assert.strictEqual(bg.first, 'wake', 'หลับอยู่ต้องตื่นก่อน'); assert(bg.up && bg.after === 'pet', JSON.stringify(bg));
   await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'walk', target: c.x + 30, pend: null }); PixelCat.cue('happy', 1000); });
   assert.strictEqual((await T())[0], 'walk', 'กำลังเดินต้องไม่ถูกตัดกลางคัน');
   await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'sit', t: 0, dur: 1e9 }); });
