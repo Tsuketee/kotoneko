@@ -554,7 +554,7 @@ test('ซิงก์: เครื่องใหม่เข้าสู่ร
   await p.locator('button:text-is("มีบัญชีอยู่แล้ว? เข้าสู่ระบบ")').click();
   await Promise.all([p.waitForNavigation(), login(p)]);
   await p.waitForSelector('.toast');
-  assert((await p.locator('#app').innerText()).includes('เส้นทางเรียน'), 'ต้องเข้าหน้าแรกได้เลย ไม่ต้องตั้งค่าใหม่');
+  assert((await p.locator('#app').innerText()).includes('ภารกิจวันนี้'), 'ต้องเข้าหน้าแรกได้เลย ไม่ต้องตั้งค่าใหม่');
   assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn5'))['日'].b), 6);
   // ข้อมูลทดสอบเป็นสัตว์เลี้ยงที่ยังไม่เคยเปิดหน้าแรก แอปจึงเติมค่าเริ่มต้น (วันล่าสุด เหรียญ) แล้วส่งขึ้นได้ 1 ครั้ง หลังจากนั้นต้องนิ่ง
   await p.waitForFunction(() => !cloudBusy);
@@ -680,10 +680,11 @@ const FAKE_PACK = {
 const FAKE_PACK_N3 = { ...FAKE_PACK, level: 'n3', version: 5, name: 'N3',
   kanji: '込,-,こ(む)・こ(める),แน่น,หมวดทดสอบ\n験,ケン,-,ตรวจ,หมวดทดสอบ', examples: '込:込む|こむ|แออัด|k' };
 async function home(p) { await p.evaluate(() => { tab = 'home'; render() }); return p.locator('#app').innerText() }
+async function learnHub(p) { await p.evaluate(() => goTab('learn')); return p.locator('#app').innerText() } // การ์ดระดับอยู่ในหน้ารวมของแท็บเรียน (v73)
 
 test('ระดับ N4: ยังไม่เข้าสู่ระบบ การ์ดล็อก กดแล้วพาไปเข้าสู่ระบบ ไม่ดาวน์โหลดอะไร', async (b, base) => {
   const db = mockCloud(), p = await cloudPage(b, base, db);
-  const h0 = await home(p);
+  const h0 = await learnHub(p);
   assert(h0.includes('เข้าสู่ระบบเพื่อตรวจสิทธิ์') && h0.includes('กำลังเรียนระดับ N5'));
   await p.locator('.pc.lk0:has-text("N4")').click();
   assert.strictEqual(await p.evaluate(() => tab), 'stats');
@@ -695,7 +696,7 @@ test('ระดับ N4: ยังไม่เข้าสู่ระบบ �
 test('ระดับ N4: เข้าสู่ระบบแต่ไม่มีสิทธิ์ → ยังล็อก ดาวน์โหลดไม่ได้', async (b, base) => {
   const db = mockCloud(); db.packs.n4 = FAKE_PACK; const p = await cloudPage(b, base, db);
   await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
-  assert((await home(p)).includes('เปิดขายเร็วๆ นี้'));
+  assert((await learnHub(p)).includes('เปิดขายเร็วๆ นี้'));
   await p.evaluate(() => lvSwitch('n4'));
   await p.waitForSelector('.toast:has-text("ยังไม่ได้ปลดล็อก")', { timeout: 8000 });
   assert.strictEqual(await p.evaluate(() => [LV, localStorage.getItem('kn_pack_n4')].join()), 'n5,');
@@ -706,11 +707,11 @@ test('ระดับ N4: มีสิทธิ์ → ดาวน์โหล�
   const db = mockCloud(); db.ent = ['n4']; db.packs.n4 = FAKE_PACK; const p = await cloudPage(b, base, db);
   await p.evaluate(() => { localStorage.setItem('kn5', JSON.stringify({ '日': { b: 2, w: 0, d: 1 } })); goTab('stats') });
   await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
-  assert((await home(p)).includes('ปลดล็อกแล้ว'));
+  assert((await learnHub(p)).includes('ปลดล็อกแล้ว'));
   await Promise.all([p.waitForNavigation(), p.locator('.pc:has-text("ปลดล็อกแล้ว")').click()]);
   const s = await p.evaluate(() => ({ LV, k: DS.k.d.length, key: DS.k.key, wk: DS.w.key, w: W.length, v: V.length, g: G.length, gk: GK, d: D.length, dt: DT[1], ex: !!EX['試'], cats: CATS }));
   assert.deepStrictEqual(s, { LV: 'n4', k: 2, key: 'kn4', wk: 'kw4', w: 2, v: 1, g: 1, gk: 'kg4', d: 1, dt: 'หมวดทดสอบ', ex: true, cats: ['ทั้งหมด', 'หมวดทดสอบ'] });
-  const h = await home(p);
+  const h = await learnHub(p);
   assert(h.includes('กำลังเรียน') && h.includes('แตะเพื่อกลับไปเรียน N5') && h.includes('กำลังเรียนระดับ N4'));
   // เรียนคันจิในระดับ N4 แล้วความคืบหน้าไปอยู่ที่ kn4 ไม่แตะ kn5
   await p.evaluate(() => openDs('k')); await p.locator('#app .card').first().click(); await p.locator('button:text-is("จำได้")').click();
@@ -757,21 +758,21 @@ test('ระดับ N4: ถูกถอนสิทธิ์ หรืออ�
 test('ระดับ N4: มีสิทธิ์แต่ยังไม่มีแพ็กบนเซิร์ฟเวอร์ → บอกว่าเนื้อหายังไม่พร้อม ไม่ใช่ยังไม่ปลดล็อก', async (b, base) => {
   const db = mockCloud(); db.ent = ['n4']; const p = await cloudPage(b, base, db);
   await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
-  await home(p); const c4 = await p.locator('.pc:has-text("N4")').first().innerText();
+  await learnHub(p); const c4 = await p.locator('.pc:has-text("N4")').first().innerText();
   assert(c4.includes('เนื้อหายังไม่พร้อม') && !c4.includes('เปิดขายเร็วๆ นี้'), c4);
   await p.evaluate(() => lvSwitch('n4'));
   await p.waitForSelector('.toast:has-text("เนื้อหายังไม่พร้อมบนเซิร์ฟเวอร์")', { timeout: 8000 });
   assert.strictEqual(await p.evaluate(() => LV), 'n5');
   // ผู้ดูแลอัปโหลดแล้ว → พร้อมเรียน
   db.packs.n4 = FAKE_PACK; await p.evaluate(() => packCheck());
-  assert((await home(p)).includes('ปลดล็อกแล้ว'));
+  assert((await learnHub(p)).includes('ปลดล็อกแล้ว'));
   assert.deepStrictEqual(p.errors, []);
 });
 
 test('ระดับ N3: มีสิทธิ์ → สลับระดับ ความคืบหน้าแยก key (kn3 kw3 kv3 kg3) และคันจิที่ไม่มีอ่านแบบออนไม่แสดง "-"', async (b, base) => {
   const db = mockCloud(); db.ent = ['n3']; db.packs.n3 = FAKE_PACK_N3; db.packs.n4 = FAKE_PACK; const p = await cloudPage(b, base, db);
   await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
-  await home(p);
+  await learnHub(p);
   assert((await p.locator('.pc:has-text("N3")').first().innerText()).includes('ปลดล็อกแล้ว'));
   assert((await p.locator('.pc:has-text("N4")').first().innerText()).includes('เปิดขายเร็วๆ นี้'), 'ไม่มีสิทธิ์ N4 ต้องยังล็อก');
   await Promise.all([p.waitForNavigation(), p.evaluate(() => lvSwitch('n3'))]);
@@ -826,7 +827,7 @@ test('ซื้อ N4: เห็นราคา → หน้าต่างย�
   const p = await cloudPage(b, base, db);
   await p.context().route('https://checkout.stripe.com/**', r => r.fulfill({ contentType: 'text/html', body: '<title>stripe</title>หน้าชำระเงินจำลอง' }));
   await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
-  const h = await home(p);
+  const h = await learnHub(p);
   assert(h.includes('แตะเพื่อปลดล็อก') && h.includes('390') && !h.includes('เปิดขายเร็วๆ นี้'), h.slice(-300));
   await p.locator('.pc.lk0:has-text("N4")').click();
   const dlg = await p.locator('.cdl').innerText();
@@ -842,7 +843,7 @@ test('ซื้อ N4: เห็นราคา → หน้าต่างย�
   assert.strictEqual(new URL(p.url()).search, '', 'ลบ ?paid ออกจากแถบที่อยู่');
   await p.waitForSelector('.toast:has-text("ปลดล็อก N4 แล้ว")', { timeout: 12000 });
   assert.strictEqual(await p.evaluate(() => PS.buy), undefined);
-  assert((await home(p)).includes('ปลดล็อกแล้ว'));
+  assert((await learnHub(p)).includes('ปลดล็อกแล้ว'));
   await Promise.all([p.waitForNavigation(), p.locator('.pc:has-text("ปลดล็อกแล้ว")').click()]);
   assert.strictEqual(await p.evaluate(() => LV), 'n4');
   assert.deepStrictEqual(p.errors, []);
@@ -860,13 +861,13 @@ test('ซื้อ N4: ยกเลิกที่หน้า Stripe · มี�
   await p.evaluate(() => lvLocked('n4')); await p.locator('button:text-is("ไปหน้าชำระเงิน")').click();
   await p.waitForSelector('.toast:has-text("ปลดล็อก N4 อยู่แล้ว")');
   assert.deepStrictEqual(db.checkouts, []);
-  assert((await home(p)).includes('ปลดล็อกแล้ว'));
+  assert((await learnHub(p)).includes('ปลดล็อกแล้ว'));
   await p.evaluate(() => { goTab('stats'); cloudDelAsk() });
   assert((await p.locator('.cdl').innerText()).includes('ระดับที่ปลดล็อกไว้ (N4)'));
   await p.locator('button:text-is("ยกเลิก")').click();
   // ยังไม่เปิดขาย (ไม่มีราคา) → ข้อความเดิม
   db.ent = []; db.price = null; await p.evaluate(() => packCheck());
-  assert((await home(p)).includes('เปิดขายเร็วๆ นี้'));
+  assert((await learnHub(p)).includes('เปิดขายเร็วๆ นี้'));
   await p.evaluate(() => lvLocked('n4'));
   await p.waitForSelector('.toast:has-text("ระบบซื้อกำลังจะเปิด")');
   assert.strictEqual(await p.locator('.cov').count(), 0);
@@ -1011,6 +1012,39 @@ test('หน้าโปรไฟล์สัตว์เลี้ยง: เป
   await p.evaluate(() => { delete M.pet.rv; M.pet.sp = 1; goProf() });
   assert.strictEqual((await p.locator('.kp b').allInnerTexts())[0], '10');
   assert.deepStrictEqual(await p.evaluate(() => [document.querySelectorAll('.pfth').length, document.querySelectorAll('.pfe').length]), [0, 1]);
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('แท็บเรียน: หน้ารวมมีเส้นทางเรียน (ย้ายจากหน้าแรก) · ปุ่มเรียนต่อ · ปุ่มกลับในหมวดย่อยกลับหน้ารวม · แตะแท็บเรียนซ้ำกลับหน้ารวม', async (b, base) => {
+  const p = await fresh(b, base, { viewport: { width: 390, height: 844 } });
+  assert(!(await p.locator('#app').innerText()).includes('เส้นทางเรียน'), 'หน้าแรกไม่มีเส้นทางเรียนแล้ว');
+  assert.strictEqual(await p.locator('#app .path').count(), 0);
+  await p.locator('#nav button:has-text("เรียน")').first().click();
+  assert.deepStrictEqual(await p.evaluate(() => [tab, view]), ['learn', 'path']);
+  assert.strictEqual(await p.locator('#nav .on').innerText(), 'เรียน');
+  const t = await p.locator('#app').innerText();
+  assert(t.includes('เส้นทางเรียน') && t.includes('กำลังเรียนระดับ N5'), t.slice(0, 200));
+  assert.strictEqual(await p.locator('#app .path .pc').count(), 4, 'คานะ N5 N4 N3');
+  // ปุ่มเรียนต่อ → หมวดล่าสุด (ค่าเริ่มต้นคันจิ) · ปุ่มกลับ → หน้ารวม (ไม่ใช่หน้าแรก)
+  await p.locator('#app .big').click();
+  assert.deepStrictEqual(await p.evaluate(() => [tab, view, ds]), ['learn', 's', 'k']);
+  await p.locator('.top .bk').click();
+  assert.deepStrictEqual(await p.evaluate(() => [tab, view]), ['learn', 'path']);
+  // การ์ดคานะ → ตารางคานะ · แตะแท็บเรียนซ้ำ → หน้ารวม
+  await p.locator('.pc.big1').click();
+  assert.deepStrictEqual(await p.evaluate(() => [view, ds]), ['s', 'a']);
+  await p.locator('#nav button:has-text("เรียน")').first().click();
+  assert.strictEqual(await p.evaluate(() => view), 'path');
+  // การ์ด N5 → หน้าหมวดของระดับ → ปุ่มกลับ → หน้ารวม
+  await p.locator('.path .pc:has-text("N5")').first().click();
+  assert.strictEqual(await p.evaluate(() => view), 'n5');
+  await p.locator('.top .bk').click();
+  assert.strictEqual(await p.evaluate(() => view), 'path');
+  // ปุ่มทบทวนบนหน้าแรกยังพาเข้าหมวดล่าสุดได้ตรงๆ
+  await p.locator('#nav button:has-text("หน้าแรก")').click();
+  await p.locator('#app .big').click();
+  assert.deepStrictEqual(await p.evaluate(() => [tab, view, ds]), ['learn', 's', 'a']);
+  assert(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)));
   assert.deepStrictEqual(p.errors, []);
 });
 
