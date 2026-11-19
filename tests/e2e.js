@@ -1038,6 +1038,17 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   const freq = await p.evaluate(() => { const { step, cat, setPart } = PixelCat._t, out = {}; for (const part of ['tw', 'noon', 'night', 'day']) { setPart(part); let run = 0, bed = 0, last = ''; Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52 }); for (let i = 0; i < 72000; i++) { step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') run++; if (cat.mode === 'curl') bed++; last = cat.mode } } out[part] = { run, bed } } setPart(null); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9 }); return out });
   assert(freq.tw.run > freq.noon.run, 'เช้า/เย็นต้องวิ่งดีดบ่อยกว่าเที่ยง ' + JSON.stringify(freq));
   assert(freq.night.bed > freq.day.bed, 'กลางคืนต้องเข้านอนบ่อยกว่ากลางวัน ' + JSON.stringify(freq));
+  // นิสัยกำหนดพฤติกรรม (v63 · Feline Five): จำลองนิสัยละ 1 ชม. ตอนกลางวัน
+  // พลังล้นวิ่งพล่านบ่อยกว่าขี้เซา · ขี้เซางีบนานกว่าพลังล้น · ปากแข็งเดินมานั่งใกล้ๆ เองบ่อยกว่าขี้อาย · ขี้อายไปแอบหลังของฝั่งขวาบ่อยกว่า · ทนลูบ: ปากแข็ง < พลังล้น < ขี้เซา
+  const per = await p.evaluate(() => { const { step, cat, setTrait, setPart, XMAX } = PixelCat._t, out = {}; setPart('day');
+    for (const i of [0, 2, 3, 4]) { setTrait(i); const o = out[i] = { zoom: 0, nap: 0, come: 0, hide: 0, pets: 0 }; let last = ''; Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52, then: null, tol: 0, cool: 0, pend: null });
+      for (let k = 0; k < 72000; k++) { step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') o.zoom++; if (cat.mode === 'turnOut' && cat.then === 'come') o.come++; last = cat.mode } if (cat.mode === 'nap') o.nap += 50; if (cat.mode === 'sit' && cat.x >= XMAX - 6) o.hide += 50 }
+      Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, tol: 0, cool: 0, then: null, lv: 0 }); while (cat.then !== 'leave' && o.pets < 40) { PixelCat.poke('head'); o.pets++ } }
+    setPart(null); setTrait(M.pet.trait); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, tol: 0, cool: 0, then: null, lv: 0 }); return out });
+  const PJ = JSON.stringify(per);
+  assert(per[0].zoom > per[4].zoom * 2, 'พลังล้นต้องวิ่งพล่านบ่อยกว่าขี้เซา ' + PJ); assert(per[4].nap > per[0].nap * 2, 'ขี้เซาต้องงีบนานกว่า ' + PJ);
+  assert(per[3].come > per[2].come * 2, 'ปากแข็งต้องเดินมาหาเองบ่อยกว่าขี้อาย ' + PJ); assert(per[2].hide > per[0].hide * 2, 'ขี้อายต้องไปแอบหลังของบ่อยกว่า ' + PJ);
+  assert(per[3].pets < per[0].pets && per[0].pets < per[4].pets, 'ความทนลูบต้องต่างกันตามนิสัย ' + PJ);
   // ทักทายตามเวลาที่หายไป: ไม่ถึง 30 นาทีไม่ทำอะไร · 30 นาที–4 ชม. หลับอยู่ปล่อยหลับ · 4 ชม.ขึ้นไป ตื่นแล้วเดินหางตั้งมา ดีใจ + ฟอง ニャー
   const gr = await p.evaluate(() => { const { step, cat } = PixelCat._t, r = {};
     Object.assign(cat, { mode: 'sit', x: 10, t: 0, dur: 1e9, then: null }); PixelCat.greet(10 * 60e3); r.short = cat.mode;
