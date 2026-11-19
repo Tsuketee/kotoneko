@@ -983,6 +983,10 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   assert.strictEqual(sim.out, 0); assert.deepStrictEqual(sim.bad, []);
   for (const m of ['sit', 'walk', 'run', 'skid', 'groom', 'loaf', 'curl', 'wake', 'nap', 'pose']) assert(sim.seen.includes(m), 'ไม่ผ่านสถานะ ' + m);
   assert(!sim.seen.includes('LEG-FIRST'), 'เลียขาต้องต่อจากเลียแขนเสมอ (ไล่จากหัวลงหาง)');
+  // ที่นอนมีเฉพาะห้อง: ไปเที่ยวที่อื่นแมวไม่เดินไปขดหลับ แต่งีบหมอบตรงที่อยู่ (กลางคืนก็เช่นกัน)
+  const away = await p.evaluate(() => { const { step, cat, setPart } = PixelCat._t, seen = new Set(); M.place = { at: 'garden', got: [] }; render(); setPart('night'); Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 80 });
+    for (let i = 0; i < 24000; i++) { step(50); seen.add(cat.mode) } setPart(null); M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9 }); return [...seen] });
+  assert(away.includes('nap') && !away.includes('curl') && !away.includes('loaf'), 'นอกห้องต้องงีบอยู่กับที่ ไม่ขดนอน: ' + away.join(' '));
   // น้ำหนักตามช่วงเวลา: เช้า/เย็นวิ่งดีดบ่อยกว่าเที่ยง กลางคืนเข้านอนบ่อยกว่ากลางวัน
   const freq = await p.evaluate(() => { const { step, cat, setPart } = PixelCat._t, out = {}; for (const part of ['tw', 'noon', 'night', 'day']) { setPart(part); let run = 0, bed = 0, last = ''; Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52 }); for (let i = 0; i < 72000; i++) { step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') run++; if (cat.mode === 'curl') bed++; last = cat.mode } } out[part] = { run, bed } } setPart(null); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9 }); return out });
   assert(freq.tw.run > freq.noon.run, 'เช้า/เย็นต้องวิ่งดีดบ่อยกว่าเที่ยง ' + JSON.stringify(freq));
