@@ -951,7 +951,7 @@ test('บทสนทนา: ฟุริงะนะบนกรอบข้อ
   }
 });
 
-test('แมวพิกเซล: หน้าหลักวาดฉากห้อง, เหตุการณ์เรียกท่าอารมณ์, แตะแล้วเขิน, เปลี่ยนท่าไม่ค้าง, กระต่ายยังเป็นอิโมจิ', async (b, base) => {
+test('แมวพิกเซล: หน้าหลักวาดฉากห้อง, เหตุการณ์เรียกท่าอารมณ์, แตะแยกโซนและมาตรวัดความทน, เปลี่ยนท่าไม่ค้าง, กระต่ายยังเป็นอิโมจิ', async (b, base) => {
   const p = await fresh(b, base);
   await p.waitForTimeout(300);
   const info = await p.evaluate(() => { const c = document.getElementById('petcv'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return [c.width, c.height, n, getComputedStyle(c).imageRendering]; });
@@ -968,14 +968,46 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   // เหตุการณ์ตอนอยู่แท็บอื่น: เล่นให้ดูตอนกลับหน้าหลัก
   await p.evaluate(() => goTab('learn')); await p.evaluate(() => { PixelCat.cue('sad', 1500); Object.assign(PixelCat._t.cat, { mode: 'sit', t: 0, dur: 1e9 }); goTab('home'); });
   assert.deepStrictEqual(await T(), ['pose', 'sad']);
-  // แตะตัวแมว = เขิน, แตะตอนหลับ = ตื่น
-  await p.evaluate(() => Object.assign(PixelCat._t.cat, { mode: 'sit', x: 52, t: 0, dur: 1e9, pose: null }));
-  const box = await p.locator('#petcv').boundingBox(), sc = box.width / 160;
-  await p.mouse.click(box.x + (52 + 24) * sc, box.y + (41 + 26) * sc);
-  assert.strictEqual((await T())[0], 'shy');
-  await p.evaluate(() => Object.assign(PixelCat._t.cat, { mode: 'curl', t: 0, dur: 1e9 }));
-  await p.mouse.click(box.x + (52 + 24) * sc, box.y + (41 + 26) * sc);
+  // แตะแมวแยกโซน (รายงานพฤติกรรมข้อ 4): หัว = ถูกลูบ + หัวใจ + ゴロゴロ · ตัว = หันมอง ニャ？ · หาง = รำคาญ · ตอนหลับ = ตื่น
+  // ร่าง 3 (สนิทมาก) ไม่สุ่มเขิน ผลจึงแน่นอน · ตั้งเป็นกลางวันให้สีหัวใจไม่ถูกย้อม
+  await p.evaluate(() => { M.pet.bond = 200; PixelCat._t.setTod('day'); render() });
+  const reset = (o = {}) => p.evaluate(o => Object.assign(PixelCat._t.cat, { mode: 'sit', x: 52, t: 0, dur: 1e9, pose: null, tol: 0, cool: 0, lv: 0, then: null, pend: null }, o), o);
+  await reset(); await p.waitForTimeout(80);
+  const box = await p.locator('#petcv').boundingBox(), sc = box.width / 160, tap = (x, y) => p.mouse.click(box.x + (52 + x) * sc, box.y + (41 + y) * sc);
+  const st = () => p.evaluate(() => { const c = PixelCat._t.cat; return { m: c.mode, then: c.then, lv: c.lv, tol: c.tol, cool: c.cool, fx: PixelCat._t.fxs().map(e => e.type), say: document.querySelector('.scn.px .scb').textContent } });
+  assert.deepStrictEqual(await p.evaluate(() => { const { zoneAt, cat } = PixelCat._t, z = []; z.push(zoneAt(52 + 24, 41 + 20), zoneAt(52 + 24, 41 + 38), zoneAt(52 + 42, 41 + 32));
+    cat.mode = 'walk'; z.push(zoneAt(52 + 24, 41 + 20)); cat.mode = 'curl'; z.push(zoneAt(52 + 24, 41 + 20)); cat.mode = 'sit'; return z }), ['head', 'body', 'tail', 'move', 'sleep']);
+  await tap(24, 20); let s = await st();
+  assert.strictEqual(s.m, 'pet', 'แตะหัว = ถูกลูบ'); assert(s.fx.includes('heart') && s.fx.includes('tap'), 'ต้องมีหัวใจและประกายตรงที่แตะ ' + s.fx); assert(s.say.includes('ゴロゴロ'), s.say);
+  const HEARTPX = () => p.evaluate(() => { const d = document.getElementById('petcv').getContext('2d').getImageData(0, 0, 160, 90).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] === 0xef && d[i + 1] === 0x7d && d[i + 2] === 0x92) n++; return n });
+  await p.waitForTimeout(250); assert(await HEARTPX() > 0, 'หัวใจพิกเซลต้องถูกวาดลงฉาก');
+  await p.waitForTimeout(1500); assert.strictEqual(await HEARTPX(), 0, 'เอฟเฟกต์ต้องหายเองและฉากถูกวาดใหม่'); assert.strictEqual((await st()).fx.length, 0);
+  await reset(); await tap(24, 38); s = await st(); assert.strictEqual(s.m, 'notice', 'แตะตัว = หันมอง'); assert(s.say.includes('ニャ'), s.say);
+  await reset(); await tap(42, 32); s = await st(); assert.deepStrictEqual([s.m, s.lv], ['annoy', 1], 'แตะหาง = รำคาญขั้น 1 ทันที');
+  // แตะหัวรัวๆ: ลูบ → ขั้น 1 ปลายหางสะบัด → ขั้น 2 หางฟาด + 💢 ムッ → ขั้น 3 ぷいっ เดินหนี
+  await reset(); const seq = [];
+  for (let i = 0; i < 12 && !seq.includes('leave'); i++) { await tap(24, 20); s = await st(); seq.push(s.then === 'leave' ? 'leave' : s.m === 'annoy' ? 'annoy' + s.lv : s.m); if (s.m === 'annoy' && s.lv === 2) assert(s.fx.includes('vein'), 'ขั้น 2 ต้องมี 💢') }
+  const at = k => seq.indexOf(k);
+  assert(seq[0] === 'pet' && at('annoy1') > 0 && at('annoy2') > at('annoy1') && at('leave') > at('annoy2'), 'ลำดับขั้น: ' + seq.join(' '));
+  assert(at('leave') >= 5 && at('leave') <= 9, 'แตะรัวราว 6–10 ครั้งถึงเดินหนี: ' + seq.join(' '));
+  assert(s.say.includes('ぷいっ'), s.say);
+  // เดินหนีไปอีกฝั่ง → เลียขน → พัก 15–20 วิ ระหว่างพักแตะแล้วแค่ … ไม่เพิ่มมาตรวัด · พักครบ มาตรวัดกลับเป็น 0
+  const lv3 = await p.evaluate(() => { const { step, cat } = PixelCat._t, x0 = cat.x; let i = 0; for (; i < 600 && !(cat.mode === 'groom' && cat.cool > 0); i++) step(50); return { x0, x: cat.x, m: cat.mode, cool: cat.cool, tol: cat.tol } });
+  assert.strictEqual(lv3.m, 'groom', 'เดินหนีแล้วต้องเลียขน'); assert(lv3.x - lv3.x0 > 40, 'ต้องเดินไปอีกฝั่ง ' + JSON.stringify(lv3)); assert(lv3.cool >= 14000 && lv3.cool <= 20000);
+  const box2 = await p.locator('#petcv').boundingBox(); await p.mouse.click(box2.x + (Math.round(lv3.x) + 24) * sc, box2.y + (41 + 20) * sc);
+  s = await st(); assert.strictEqual(s.m, 'groom', 'ระหว่างพักแตะแล้วไม่เปลี่ยนท่า'); assert(s.fx.includes('dots')); assert(s.tol <= lv3.tol, 'ระหว่างพักไม่เพิ่มมาตรวัด');
+  s = await p.evaluate(() => { const { step, cat } = PixelCat._t; for (let i = 0; i < 420; i++) step(50); return { cool: cat.cool, tol: cat.tol } });
+  assert.deepStrictEqual(s, { cool: 0, tol: 0 });
+  // มาตรวัดลดเองตามเวลา (0.2 ต่อวิ): ลูบช้าๆ ไม่ทำให้แมวรำคาญ
+  s = await p.evaluate(() => { const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, tol: 5 }); for (let i = 0; i < 200; i++) step(50); return cat.tol });
+  assert(Math.abs(s - 3) < .05, 'มาตรวัดหลัง 10 วิ ' + s);
+  // ปิดแอนิเมชันในระบบ: ไม่มีเอฟเฟกต์ แต่ท่าถูกลูบยังจบกลับไปนั่งได้
+  s = await p.evaluate(() => { const { step, cat, setPlaying, fxs } = PixelCat._t; setPlaying(false); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, tol: 0, cool: 0 }); const n0 = fxs().length; PixelCat.poke('head'); const r = [cat.mode, fxs().length - n0]; for (let i = 0; i < 60; i++) step(50); r.push(cat.mode); setPlaying(true); return r });
+  assert.deepStrictEqual(s, ['pet', 0, 'sit']);
+  await reset({ mode: 'curl' });
+  await tap(24, 26);
   assert.strictEqual((await T())[0], 'wake');
+  await p.evaluate(() => { PixelCat._t.setTod(null); render() });
   // จำลอง 30 นาทีในแอป: ไม่ออกนอกขอบ ผ่านทุกสถานะ ทุกท่าวาดได้ทั้งสองโหมด
   const sim = await p.evaluate(() => { const { step, cat, XMIN, XMAX, frame, KEYS, setPart } = PixelCat._t, seen = new Set(); let out = 0, legFirst = 0; setPart('tw'); Object.assign(cat, { mode: 'sit', t: 0, dur: 100 });
     let prev = ''; for (let i = 0; i < 36000; i++) { step(50); seen.add(cat.mode); if (cat.x < XMIN || cat.x > XMAX) out++; const g = cat.mode === 'groom' ? cat.gk : ''; if (g === 'groomLeg' && prev !== 'groomLeg' && prev !== 'groom') legFirst++; prev = g || (cat.mode === 'groom' ? prev : ''); } setPart(null); if (legFirst) seen.add('LEG-FIRST');

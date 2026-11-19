@@ -53,4 +53,4 @@ function pcue(k,ms){if(window.PixelCat&&M.pet&&(M.pet.sp||0)===0)PixelCat.cue(k,
 // เวลาที่ผู้ใช้หายไป ไว้ให้แมวทักทาย (คำนวณครั้งเดียวตอนเปิดแอป ก่อน psay() อัปเดต lastTs) · กลับมาจากพื้นหลัง (iPad พับแอปไว้) นับจากตอนซ่อน
 let pAway=null,pHid=0;
 document.addEventListener('visibilitychange',()=>{if(document.hidden){pHid=Date.now();return}if(!pHid)return;const g=Date.now()-pHid;pHid=0;if(window.PixelCat&&M.pet&&(M.pet.sp||0)===0)PixelCat.greet(g)});
-function petMount(){const c=document.getElementById('petcv');if(!c||!window.PixelCat)return;const h=new Date().getHours();PixelCat.mount(c,{coat:M.pet.coat,acc:M.pet.acc,label:M.pet.name,place:plState().at,sleepy:h>=22||h<5,bubble:c.parentElement.querySelector('.scb')});if(pAway){PixelCat.greet(pAway);pAway=0}}
+function petMount(){const c=document.getElementById('petcv');if(!c||!window.PixelCat)return;const h=new Date().getHours();PixelCat.mount(c,{coat:M.pet.coat,acc:M.pet.acc,label:M.pet.name,place:plState().at,sleepy:h>=22||h<5,stage:pstage(M.pet.bond||0),bubble:c.parentElement.querySelector('.scb')});if(pAway){PixelCat.greet(pAway);pAway=0}}
