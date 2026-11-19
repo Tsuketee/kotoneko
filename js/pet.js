@@ -13,8 +13,14 @@ function obHtml(){let h='<h1>ยินดีต้อนรับ</h1><div class
 if(ob===0)h+=cloudObLink()+'<div class="st" style="margin-top:14px"><a href="about.html" target="_blank" rel="noopener" style="color:var(--ac)">ดูแนะนำแอป</a></div>';
  return h}
 const PM=[{id:'rev',n:'ทบทวนให้ถูก',e:20,go:'k',t:()=>M.pet.min},{id:'neu',n:'เจอคำ/คันจิใหม่',e:20,go:'w',t:()=>Math.max(3,Math.round(M.pet.min/2))},{id:'dlg',n:'อ่านบทสนทนาจบ 1 บท',e:30,go:'d',t:()=>1}];
-function pens(){const p=M.pet,k=dstr(new Date());if(!p.d||p.d.date!==k)p.d={date:k,rev:0,neu:0,dlg:0,done:{},r:[]}}
-function ptrack(k){if(!M.pet||!M.pet.name)return;pens();const p=M.pet;p.d[k]++;PM.forEach(m=>{if(!p.d.done[m.id]&&p.d[m.id]>=m.t()){p.d.done[m.id]=1;p.energy+=m.e;pbond(2);pcue('happy',1800);toast(IC.ok+' '+m.n+' สำเร็จ +'+m.e+' Energy')}});saveM()}
+// d.done = ภารกิจที่ทำครบแล้ว · d.cl = ภารกิจที่กด "รับ" Energy แล้ว (v71: ทำครบแล้วต้องกดรับเองที่หน้าแรก แมวดีใจตอนกด) · วันเก่าที่ไม่มี cl ได้ Energy ไปตอนทำครบแล้ว จึงนับว่ารับแล้ว
+function pens(){const p=M.pet,k=dstr(new Date());if(!p.d||p.d.date!==k)p.d={date:k,rev:0,neu:0,dlg:0,done:{},cl:{},r:[]};else if(!p.d.cl)p.d.cl={...p.d.done}}
+function ptrack(k){if(!M.pet||!M.pet.name)return;pens();const p=M.pet;p.d[k]++;PM.forEach(m=>{if(!p.d.done[m.id]&&p.d[m.id]>=m.t()){p.d.done[m.id]=1;toast(IC.ok+' '+m.n+' สำเร็จ · กด "รับ" ที่หน้าแรกได้ +'+m.e+' Energy')}});saveM();if(typeof navUpdate==='function')navUpdate()}
+// กดรับ Energy ของภารกิจที่ทำครบ: ความสนิท +2 แมวดีใจ และข้อความเด้งบอกความรู้สึกของสัตว์เลี้ยง
+const PFEEL=['ภูมิใจในตัวเธอนะ','มีแรงขึ้นเยอะเลย','ดีใจจนนั่งไม่ติด','รู้สึกอุ่นใจ','อารมณ์ดีขึ้นมาก'];
+function pclaim(id){const p=M.pet,m=PM.find(x=>x.id===id);if(!p||!m)return;pens();if(!p.d.done[id]||p.d.cl[id])return;p.d.cl[id]=1;p.energy+=m.e;pbond(2);pcue('happy',1800);
+ toast(icx('bolt',16)+' +'+m.e+' Energy · '+p.name+PFEEL[Math.floor(Math.random()*PFEEL.length)]);saveM();render()}
+const punclaimed=()=>{const p=M.pet;if(!p||!p.name||!p.d||p.d.date!==dstr(new Date()))return 0;const cl=p.d.cl||p.d.done;return PM.filter(m=>p.d.done[m.id]&&!cl[m.id]).length};
 function pdd(i){if(!M.pet||!M.pet.name)return;pens();if(!M.pet.d.r.includes(i)){M.pet.d.r.push(i);ptrack('dlg')}render()}
 function pfeed(){const p=M.pet;if(p.energy<30){pcue('beg');toast(IC.rice+' '+pline(p,'hungry',false))}else{p.energy-=30;pbond(10);pcue('eat',2600);toast(IC.rice+' '+pline(p,'feed',false))}saveM();render()}
 function pgo(x){tab='learn';nv(x)}
@@ -58,8 +64,12 @@ function petHtml(cta=''){pens();if(pAway==null)pAway=M.pet.lastTs?Date.now()-M.p
  plCheck();
  let h=`<div class="card pz" style="text-align:center">${placeHero(plSay(say,psayG),sp[0],28+st*14,(p.sp||0)===0&&!!window.PixelCat)}<div class="pin"><div class="pnm"><b>${p.name}</b><span class="pch">ร่าง ${st}</span><span class="pch">${icx(ptr(p).i,14)} ${ptr(p).n}</span></div><div class="st">${md}</div>
 <div class="pbd"><span>ความสนิท</span><span>${p.bond} / 120</span></div><div class="bar pbar"><i style="width:${Math.min(100,p.bond/1.2)}%;background:var(--ac)"></i></div>
-<div class="pft"><span class="pen">${icx('bolt',16,'hl-i')} Energy <b>${p.energy}</b></span><button class="pfd${p.energy<30?' lo':''}" onclick="pfeed()">${icx('rice',18)} ให้อาหาร <span>30 Energy · สนิท +10</span></button></div></div></div>${cta}<div class="pzw">${wk}</div><h2>ภารกิจวันนี้</h2>`;
- PM.forEach(m=>{const c=Math.min(p.d[m.id],m.t()),ok=p.d.done[m.id];h+=`<div class="pzm" onclick="pgo('${m.go}')"><div><b>${ok?icx('ok',16,'ok-i')+' ':''}${m.n}</b><div class="st">${c} / ${m.t()}${m.id==='rev'?' (นับเฉพาะข้อที่ตอบถูก)':''}</div></div><span class="pzp">+${m.e} Energy</span></div>`});
+<div class="pft"><div class="pen"><div class="pel">${icx('bolt',16,'hl-i')} Energy <b>${p.energy}</b><span>${p.energy>=30?'ให้อาหารได้ '+Math.floor(p.energy/30)+' มื้อ':'อีก '+(30-p.energy)+' ถึงมื้อถัดไป'}</span></div><div class="bar ebar" role="progressbar" aria-label="Energy ถึงมื้อถัดไป" aria-valuemin="0" aria-valuemax="30" aria-valuenow="${Math.min(30,p.energy)}"><i style="width:${Math.min(100,p.energy/30*100)}%"></i></div></div><button class="pfd${p.energy<30?' lo':''}" onclick="pfeed()">${icx('rice',18)} ให้อาหาร <span>30 Energy · สนิท +10</span></button></div></div></div>${cta}<div class="pzw">${wk}</div><h2>ภารกิจวันนี้</h2>`;
+ // การ์ดภารกิจ: ไอคอน หลอดความคืบหน้า และปุ่ม "รับ" เมื่อทำครบ (v71 · แนวจากตัวอย่าง UI ที่เจ้าของส่งมา) · ยังไม่ครบ แตะการ์ด = ไปทำ
+ const PMI={rev:'check',neu:'sprout',dlg:'book'},cl=p.d.cl||{};
+ PM.forEach(m=>{const t=m.t(),c=Math.min(p.d[m.id],t),ok=p.d.done[m.id],got=ok&&cl[m.id];
+  const end=got?`<span class="pzp pzg">${icx('ok',14)} รับแล้ว</span>`:ok?`<button class="pcl" onclick="pclaim('${m.id}')">รับ +${m.e}</button>`:`<span class="pzp">+${m.e} Energy</span>`;
+  h+=`<div class="pzm${ok&&!got?' cl':''}${got?' got':''}"${ok?'':` role="button" tabindex="0" onclick="pgo('${m.go}')" onkeydown="if(event.key==='Enter')pgo('${m.go}')"`}><span class="pmi">${icx(PMI[m.id],22)}</span><div class="pmb"><b>${m.n}</b><div class="bar"><i style="width:${t?c/t*100:0}%"></i></div><div class="st">${c} / ${t}${m.id==='rev'?' (นับเฉพาะข้อที่ตอบถูก)':''}</div></div>${end}</div>`});
  return h+`<div class="st" style="margin:8px 0 14px">กำลังเรียนระดับ ${LEVELS[LV].n} · จำได้แม่นรวม ${tot} ข้อ ${bd} (${icx('medal',14,'m1')}25 ${icx('medal',14,'m2')}100 ${icx('medal',14,'m3')}250)</div>`}
 // แมวพิกเซล (js/pixelcat.js): สัตว์เลี้ยงตัวแรกที่มีภาพจริง กระต่าย/หมายังเป็นอิโมจิ
 // ท่าอารมณ์ตามเหตุการณ์ ถ้าไม่ได้อยู่หน้าหลัก แมวจะเล่นท่านั้นให้ดูตอนกลับมา

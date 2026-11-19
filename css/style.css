@@ -127,7 +127,14 @@ h2{font-size:16px;margin:20px 0 10px}
 .pz{min-height:0;margin:14px 0}.pet{display:inline-block;animation:bn 1.8s ease-in-out infinite}@keyframes bn{50%{transform:translateY(-8px)}}
 .pzb{background:var(--bg);border:1px solid var(--bd);border-radius:16px;padding:10px 14px;margin:8px 0;max-width:85%;font-size:15px;line-height:1.5;text-align:left}.pzb.me{margin-left:auto;background:var(--ac);color:var(--onac);border-color:var(--ac)}
 .pzw{display:flex;gap:6px;margin:12px 0}.pzw div{flex:1;text-align:center;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:6px 0;font-size:12px;color:var(--mut)}.pzw div.on{border-color:var(--ac)}.pzw b{font-size:16px;color:var(--fg)}
-.pzm{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px;background:var(--card);border:1px solid var(--bd);border-radius:14px;margin-bottom:8px}.pzp{background:var(--bg);border-radius:20px;padding:4px 10px;font-size:12px;white-space:nowrap}
+.pzm{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--bd);border-radius:16px;margin-bottom:10px;cursor:pointer}
+/* การ์ดภารกิจ (v71): ไอคอน + หลอดความคืบหน้า + ปุ่ม "รับ" ทรงหนาแบบกดได้ · ทำครบรอรับ = กรอบเขียว · รับแล้ว = จางลง */
+.pmi{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:color-mix(in srgb,var(--ac) 12%,var(--card));color:var(--ac)}
+.pmb{flex:1;min-width:0}.pmb .bar{margin:6px 0 4px;height:8px;border-radius:4px}.pmb .bar i{background:var(--ac);border-radius:4px}
+.pzm.cl{cursor:default;border:2px solid var(--ok);background:color-mix(in srgb,var(--ok) 7%,var(--card))}.pzm.cl .pmi{background:color-mix(in srgb,var(--ok) 15%,var(--card));color:var(--ok)}.pzm.cl .pmb .bar i{background:var(--ok)}
+.pzm.got{cursor:default;opacity:.72}.pzm.got .pmb .bar i{background:var(--ok)}.pzg{display:inline-flex;align-items:center;gap:4px;color:var(--ok)}
+.pcl{flex:none;min-height:44px;padding:8px 18px;border:0;border-radius:12px;background:var(--ok);color:var(--onac);font-family:var(--fd);font-weight:700;font-size:15px;box-shadow:0 3px 0 color-mix(in srgb,var(--ok) 65%,#000);cursor:pointer}.pcl:active{transform:translateY(2px);box-shadow:0 1px 0 color-mix(in srgb,var(--ok) 65%,#000)}
+#nav button>span{position:relative}.nb{position:absolute;top:-4px;right:-10px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--err);color:var(--onac);font:700 11px/18px var(--ff);font-style:normal;text-align:center}.pzp{background:var(--bg);border-radius:20px;padding:4px 10px;font-size:12px;white-space:nowrap}
 
 .dimg{border-radius:18px;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 14%,transparent),color-mix(in srgb,var(--ok) 14%,transparent)),var(--card);border:1px solid var(--bd);margin:12px 0}.dimg img{width:100%;display:block}
 .dph{display:flex;flex-direction:column;align-items:center;justify-content:center;height:150px;color:var(--mut);font-size:13px;gap:4px}
@@ -206,7 +213,8 @@ h2{font-size:16px;margin:20px 0 10px}
 .pbd{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);margin-top:8px}.pbd span:last-child{color:var(--fg);font-variant-numeric:tabular-nums}
 .pbar{margin:0 0 10px}
 .pft{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.pen{display:inline-flex;align-items:center;gap:5px;font-size:14px;color:var(--mut)}.pen b{color:var(--fg);font-variant-numeric:tabular-nums}
+.pen{flex:1 1 180px;min-width:0;font-size:14px;color:var(--mut)}.pel{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.pel b{color:var(--fg);font-variant-numeric:tabular-nums}.pel span{margin-left:auto;font-size:12.5px} /* หลอด Energy ถึงมื้อถัดไป (v71) */
+.ebar{height:10px;border-radius:5px;margin:6px 0 0}.ebar i{background:var(--hlt);border-radius:5px}
 .pfd{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--ac);background:transparent;color:var(--ac);font:inherit;font-size:15px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .pfd span{font-weight:400;font-size:12.5px}.pfd:active{transform:scale(.97)}.pfd.lo{border-color:var(--bd);color:var(--mut)}
 /* ปุ่มรอง (สำรองข้อมูล): ไม่แย่งความเด่นกับปุ่มหลัก */

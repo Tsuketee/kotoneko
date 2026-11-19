@@ -963,6 +963,28 @@ test('บทสนทนา: ฟุริงะนะบนกรอบข้อ
   }
 });
 
+test('ภารกิจรายวัน: ทำครบแล้วกด "รับ" ถึงได้ Energy · ป้ายบนแท็บหน้าแรก · หลอด Energy · วันเก่าที่ได้ Energy ไปแล้วไม่รับซ้ำ', async (b, base) => {
+  const p = await fresh(b, base);
+  // ทำภารกิจทบทวนครบ: ยังไม่ได้ Energy แต่ขึ้นปุ่มรับ และป้าย 1 บนแท็บหน้าแรก
+  await p.evaluate(() => { M.pet.energy = 0; M.pet.bond = 0; pens(); for (let i = 0; i < M.pet.min; i++) ptrack('rev'); goTab('learn'); });
+  assert.deepStrictEqual(await p.evaluate(() => [M.pet.energy, !!M.pet.d.done.rev, punclaimed()]), [0, true, 1], 'ทำครบแล้วยังไม่ให้ Energy จนกว่าจะกดรับ');
+  assert.strictEqual(await p.locator('#nav .nb').innerText(), '1');
+  await p.evaluate(() => goTab('home'));
+  assert.strictEqual(await p.locator('.pzm.cl .pcl').count(), 1, 'ต้องมีปุ่มรับหนึ่งปุ่ม');
+  await p.evaluate(() => document.querySelectorAll('.toast').forEach(e => e.remove()));
+  await p.locator('.pcl').click();
+  const r = await p.evaluate(() => [M.pet.energy, M.pet.bond, M.pet.d.cl.rev, punclaimed(), document.querySelectorAll('.pzm.got').length, document.querySelectorAll('#nav .nb').length]);
+  assert.deepStrictEqual(r, [20, 2, 1, 0, 1, 0], 'รับแล้ว: Energy +20 ความสนิท +2 การ์ดเป็นรับแล้ว ป้ายหาย');
+  assert(/\+20 Energy · ทดสอบ/.test(await p.locator('.toast').last().innerText()), 'ข้อความเด้งบอกความรู้สึกของสัตว์เลี้ยง');
+  await p.evaluate(() => pclaim('rev')); assert.strictEqual(await p.evaluate(() => M.pet.energy), 20, 'รับซ้ำไม่ได้');
+  await p.evaluate(() => pclaim('dlg')); assert.strictEqual(await p.evaluate(() => M.pet.energy), 20, 'ยังไม่ครบรับไม่ได้');
+  // หลอด Energy ถึงมื้อถัดไป
+  assert.deepStrictEqual(await p.evaluate(() => [document.querySelector('.ebar').getAttribute('aria-valuenow'), document.querySelector('.pel span').textContent]), ['20', 'อีก 10 ถึงมื้อถัดไป']);
+  // ข้อมูลวันเดิมจากเวอร์ชันก่อน (ไม่มี cl): ภารกิจที่ครบแล้วได้ Energy ไปแล้ว นับว่ารับแล้ว
+  assert.deepStrictEqual(await p.evaluate(() => { M.pet.d = { date: dstr(new Date()), rev: 10, neu: 5, dlg: 0, done: { rev: 1, neu: 1 }, r: [] }; pens(); return [M.pet.d.cl, punclaimed()] }), [{ rev: 1, neu: 1 }, 0]);
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('สัตว์เลี้ยงปลอบหลังตอบผิด (ควิซ + ไวยากรณ์) · ช่องตัวแปร {n} {kanji} · สุ่มไม่ซ้ำประโยคล่าสุด', async (b, base) => {
   const p = await fresh(b, base);
   // ช่องตัวแปร: ยังไม่มีค่า → ไม่เลือกประโยคที่มีช่องตัวแปร · มีค่าแล้ว → เติมค่าลงไป ไม่มี { เหลือ
