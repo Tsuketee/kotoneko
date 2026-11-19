@@ -1004,6 +1004,13 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   // ปิดแอนิเมชันในระบบ: ไม่มีเอฟเฟกต์ แต่ท่าถูกลูบยังจบกลับไปนั่งได้
   s = await p.evaluate(() => { const { step, cat, setPlaying, fxs } = PixelCat._t; setPlaying(false); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, tol: 0, cool: 0 }); const n0 = fxs().length; PixelCat.poke('head'); const r = [cat.mode, fxs().length - n0]; for (let i = 0; i < 60; i++) step(50); r.push(cat.mode); setPlaying(true); return r });
   assert.deepStrictEqual(s, ['pet', 0, 'sit']);
+  // กดค้างที่หัว ~0.65 วิ = กะพริบตาช้าตอบ (Humphrey 2020) ใจเย็นลง · ระหว่างกดมีวงแหวน · ยกนิ้วหลังจากนั้นไม่กลายเป็นลูบหัว · ลูบครบ 3 ครั้งมีคำแนะนำครั้งเดียว
+  await reset({ tol: 3 }); await p.mouse.move(box.x + 76 * sc, box.y + 61 * sc); await p.mouse.down(); await p.waitForTimeout(250);
+  s = await st(); assert(s.fx.includes('hold'), 'กดค้างต้องมีวงแหวน'); assert.strictEqual(s.m, 'sit', 'ยังไม่ครบเวลากดค้าง ต้องยังไม่ลูบ');
+  await p.waitForTimeout(650); s = await st(); await p.mouse.up();
+  assert.strictEqual(s.m, 'sblink', 'กดค้าง = กะพริบตาช้า'); assert(s.tol < 2, 'กะพริบตาช้าแล้วมาตรวัดต้องลด ' + s.tol); assert(!s.fx.includes('hold'));
+  assert.strictEqual((await st()).m, 'sblink', 'ยกนิ้วหลังกดค้างต้องไม่กลายเป็นลูบหัว');
+  assert(await p.evaluate(() => M.pet.tip && M.pet.tip.blink === 1), 'ลูบหัวครบ 3 ครั้งต้องมีคำแนะนำกดค้าง');
   await reset({ mode: 'curl' });
   await tap(24, 26);
   assert.strictEqual((await T())[0], 'wake');
@@ -1013,7 +1020,7 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
     let prev = ''; for (let i = 0; i < 36000; i++) { step(50); seen.add(cat.mode); if (cat.x < XMIN || cat.x > XMAX) out++; const g = cat.mode === 'groom' ? cat.gk : ''; if (g === 'groomLeg' && prev !== 'groomLeg' && prev !== 'groom') legFirst++; prev = g || (cat.mode === 'groom' ? prev : ''); } setPart(null); if (legFirst) seen.add('LEG-FIRST');
     let bad = []; for (const tm of ['light', 'dark']) for (const k of KEYS) { const g = frame(k, 0, tm); if (!g.some(r => r.some(Boolean))) bad.push(tm + k) } return { seen: [...seen], out, bad }; });
   assert.strictEqual(sim.out, 0); assert.deepStrictEqual(sim.bad, []);
-  for (const m of ['sit', 'walk', 'run', 'skid', 'groom', 'loaf', 'curl', 'wake', 'nap', 'pose']) assert(sim.seen.includes(m), 'ไม่ผ่านสถานะ ' + m);
+  for (const m of ['sit', 'walk', 'run', 'skid', 'groom', 'loaf', 'curl', 'wake', 'nap', 'pose', 'sblink']) assert(sim.seen.includes(m), 'ไม่ผ่านสถานะ ' + m); // sblink = กะพริบตาช้าเอง (ร่าง 3)
   assert(!sim.seen.includes('LEG-FIRST'), 'เลียขาต้องต่อจากเลียแขนเสมอ (ไล่จากหัวลงหาง)');
   // ที่นอนมีเฉพาะห้อง: ไปเที่ยวที่อื่นแมวไม่เดินไปขดหลับ แต่งีบหมอบตรงที่อยู่ (กลางคืนก็เช่นกัน)
   const away = await p.evaluate(() => { const { step, cat, setPart } = PixelCat._t, seen = new Set(); M.place = { at: 'garden', got: [] }; render(); setPart('night'); Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 80 });
