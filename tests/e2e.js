@@ -1015,7 +1015,17 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   const bub = await p.evaluate(() => { const b = document.querySelector('.scn.px .scb').getBoundingClientRect(), c = document.getElementById('petcv').getBoundingClientRect(); return [b.left >= c.left - 1, b.right <= c.right + 1, b.top >= c.top - 1, getComputedStyle(document.querySelector('.scn.px .scb')).visibility] });
   assert.deepStrictEqual(bub, [true, true, true, 'visible'], 'กล่องคำพูดต้องอยู่ในฉาก');
   // กลางวัน/กลางคืนของฉากตามเวลาจริง ไม่ใช่ตามโหมดมืดของแอป (06:00–17:59 = กลางวัน)
-  assert.deepStrictEqual(await p.evaluate(() => [7, 12, 17, 18, 23, 5].map(h => PixelCat.tod(new Date(2026, 10, 19, h)))), ['day', 'day', 'day', 'night', 'night', 'night']);
+  assert.deepStrictEqual(await p.evaluate(() => [4, 5, 6, 7, 12, 16, 17, 18, 19, 23].map(h => PixelCat.tod(new Date(2026, 10, 19, h)))), ['night', 'dawn', 'dawn', 'day', 'day', 'day', 'dusk', 'dusk', 'night', 'night']);
+  // รุ่งเช้า/พลบค่ำ: ฟ้าในหน้าต่างไม่ใช่สีกลางวัน ภาพทั้งห้องอุ่นขึ้น และโคมไฟติด (กลางวันโคมดับ)
+  const tw = {};
+  for (const t of ['day', 'dusk', 'dawn', 'night']) { await p.evaluate(t => { PixelCat._t.setTod(t); render() }, t); await p.waitForTimeout(150);
+    tw[t] = await p.evaluate(() => { const g = (x, y) => [...document.getElementById('petcv').getContext('2d').getImageData(x, y, 1, 1).data].slice(0, 3); return { sky: g(100, 30), lamp: g(72, 58), wall: g(5, 5) } }); }
+  assert.notDeepStrictEqual(tw.dusk.sky, tw.day.sky); assert.notDeepStrictEqual(tw.dawn.sky, tw.day.sky); assert.notDeepStrictEqual(tw.dusk.sky, tw.dawn.sky);
+  assert(tw.dusk.sky[0] > tw.dusk.sky[2], 'พลบค่ำฟ้าต้องอมส้ม ' + tw.dusk.sky);
+  assert(tw.dusk.wall[2] < tw.day.wall[2], 'พลบค่ำผนังต้องอุ่นขึ้น (ฟ้าลดลง)');
+  const lum = c => c[0] + c[1] + c[2];
+  assert(lum(tw.night.lamp) > lum(tw.night.wall) + 200, 'กลางคืนโคมไฟต้องสว่างกว่าผนังชัดเจน ' + tw.night.lamp + ' / ' + tw.night.wall);
+  assert(tw.dusk.lamp[2] < tw.day.lamp[2], 'พลบค่ำโคมติด (กระดาษเป็นสีไฟเหลือง)');
   const px = (x, y) => p.evaluate(([x, y]) => [...document.getElementById('petcv').getContext('2d').getImageData(x, y, 1, 1).data].slice(0, 3).join(','), [x, y]);
   await p.evaluate(() => { document.documentElement.setAttribute('data-theme', 'dark'); PixelCat._t.setTod('day'); render() }); await p.waitForTimeout(200);
   assert.strictEqual(await px(5, 5), '255,243,227', 'แอปโหมดมืด + กลางวัน: ผนังห้องต้องสว่าง');

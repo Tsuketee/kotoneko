@@ -28,7 +28,7 @@ function plSay(say, generic) {
 // px = แมวพิกเซล: ใช้ฉากพิกเซล 160×90 ของสถานที่นั้น (SCENES ใน js/pixelcat.js) แทนภาพ SVG กับอิโมจิ ผืนผ้าใบ #petcv ถูกใส่แมวใน petMount()
 // กระต่าย/หมายังใช้ฉาก SVG กับอิโมจิ
 // กลางวัน/กลางคืนของฉากตามเวลาจริง (ใช้เกณฑ์เดียวกับแมวพิกเซล) สีของฉากอยู่ใน css หัวข้อ "ฉากสถานที่" (.scn[data-tod])
-const plTod = () => window.PixelCat ? PixelCat.tod() : (h => h >= 6 && h < 18 ? 'day' : 'night')(new Date().getHours());
+const plTod = () => window.PixelCat ? PixelCat.tod() : (h => h >= 5 && h < 7 ? 'dawn' : h >= 7 && h < 17 ? 'day' : h >= 17 && h < 19 ? 'dusk' : 'night')(new Date().getHours());
 function placeHero(say, pet, size, px) {
   const p = placeOf(plState().at), tk = `<button class="scgo" onclick="placeAsk()" title="เลือกสถานที่">${icx('ticket', 18)}<span>ไปเที่ยว</span></button>`;
   // ฉากพิกเซล: ตั๋วอยู่แถวชื่อสถานที่ใต้ฉาก เพราะกล่องคำพูดลอยตามแมวไปทั่วฉาก

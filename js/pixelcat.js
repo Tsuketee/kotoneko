@@ -476,9 +476,9 @@ function idleAt(o,now){const ok=IDLE_FOR[o.k];if(!ok||!playing)return null;const
  return null}
 const frameAt=(dur,t)=>{const T=dur.reduce((a,b)=>a+b,0);t%=T;for(let i=0;i<dur.length;i++){if(t<dur[i])return i;t-=dur[i]}return 0};
 const SW=160,SH=90,FLOOR=85,CY=FLOOR-44,XMIN=-2,XMAX=SW-46,CUSH=12,GAIT={walk:{v:12,step:WALK_STEP,n:WALK_N},run:{v:84,step:RUN_STEP,n:RUN.length}}; // step: ระยะต่อเฟรม (เดิน = ระยะที่เท้าบนพื้นถอย เท้าจึงไม่ไถล)
-const SCOL={light:{trunk:'#9a7250',clk:'#fffaf0',hand:'#4f372b',bob:'#e8b04a',glass:'#f3e3cc',wall:'#fff3e3',wall2:'#fbe7cf',trim:'#e5c9a8',floor:'#efd6b5',floor2:'#e4c6a0',seam:'#d8b68e',sky:'#cfe9f7',sky2:'#e8f6fc',frame:'#c49a73',frame2:'#a97e58',cloud:'#ffffff',
+const SCOL={light:{paper:'#fbf1df',lit:null,trunk:'#9a7250',clk:'#fffaf0',hand:'#4f372b',bob:'#e8b04a',glass:'#f3e3cc',wall:'#fff3e3',wall2:'#fbe7cf',trim:'#e5c9a8',floor:'#efd6b5',floor2:'#e4c6a0',seam:'#d8b68e',sky:'#cfe9f7',sky2:'#e8f6fc',frame:'#c49a73',frame2:'#a97e58',cloud:'#ffffff',
   cush:'#f3a8a0',cush2:'#de8a83',cush3:'#fbc9c2',pot:'#dd9264',pot2:'#bf744b',pot3:'#efb08a',leaf:'#86b96f',leaf2:'#65985a',leaf3:'#a8d48f',line:'#7a5a43',shade:'rgba(90,58,38,.14)',moon:null},
- dark:{trunk:'#6b5040',clk:'#d9ccb4',hand:'#2e221c',bob:'#b88a3a',glass:'#3a2f27',wall:'#2c2520',wall2:'#27211c',trim:'#3d332b',floor:'#3a3029',floor2:'#342a23',seam:'#2a221c',sky:'#1e2b47',sky2:'#273860',frame:'#7d604a',frame2:'#634a37',cloud:null,
+ dark:{paper:'#6a5a4a',lit:'#ffd98a',trunk:'#6b5040',clk:'#d9ccb4',hand:'#2e221c',bob:'#b88a3a',glass:'#3a2f27',wall:'#2c2520',wall2:'#27211c',trim:'#3d332b',floor:'#3a3029',floor2:'#342a23',seam:'#2a221c',sky:'#1e2b47',sky2:'#273860',frame:'#7d604a',frame2:'#634a37',cloud:null,
   cush:'#a6625c',cush2:'#864d48',cush3:'#bd7a73',pot:'#9a6544',pot2:'#7b4f34',pot3:'#b07a57',leaf:'#5f8c52',leaf2:'#4a7040',leaf3:'#79a868',line:'#b8987a',shade:'rgba(0,0,0,.3)',moon:'#f4e4a6'}};
 const rect=(c,x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h)};
 const blob=(c,cx,cy,rx,ry,col)=>{c.fillStyle=col;for(let y=Math.floor(cy-ry);y<=cy+ry;y++)for(let x=Math.floor(cx-rx);x<=cx+rx;x++)if(((x+.5-cx)/rx)**2+((y+.5-cy)/ry)**2<=1)c.fillRect(x,y,1,1)};
@@ -488,10 +488,19 @@ function roomBg(c,k){
  rect(c,0,71,SW,SH-71,k.floor);rect(c,0,80,SW,1,k.floor2);[0,40,80,120].forEach(x=>rect(c,x,71,1,SH-71,k.seam)); // พื้นเสื่อ
  rect(c,92,8,40,32,k.frame2);rect(c,93,9,38,30,k.frame);rect(c,95,11,34,26,k.sky);rect(c,95,11,34,7,k.sky2);      // หน้าต่าง
  if(k.moon){blob(c,122,17,3,3,k.moon);[[99,14],[104,31],[117,29],[100,22],[126,32]].forEach(([x,y])=>rect(c,x,y,1,1,k.moon))}
+ else if(k.sunY){blob(c,122,k.sunY,4.5,4.5,k.sun);blob(c,102,16,3.5,1.6,k.cloud);blob(c,105,15.4,2.6,1.6,k.cloud)} // รุ่งเช้า/พลบค่ำ: พระอาทิตย์ต่ำใกล้ขอบหน้าต่าง
  else{blob(c,101,15.5,3.5,2,k.cloud);blob(c,104,14.5,3,2.5,k.cloud);blob(c,120,31,3,1.6,k.cloud);blob(c,122.5,30.4,2.4,2,k.cloud)}
  rect(c,111,11,2,26,k.frame);rect(c,95,23,34,2,k.frame);rect(c,90,40,44,2,k.frame2);
+ roomLamp(c,k);
  blob(c,38,84.4,24,4.6,k.cush2);blob(c,38,83.4,23.4,4,k.cush);blob(c,33,81.8,12,1.3,k.cush3);[[14,83],[61,83]].forEach(([x,y])=>rect(c,x,y,1,2,k.cush2)); // เบาะนอน (ซาบุตง) กว้างพอให้ท่าขดนอนอยู่บนเบาะ
  blob(c,147,88.6,10,1.6,k.shade)}
+// โคมกระดาษตั้งพื้น (อันด้ง) ข้างเบาะ (เจ้าของขอ 2026-11-19 · ของตกแต่งชิ้นแรก) ไฟติดตอนรุ่งเช้า พลบค่ำ และกลางคืน (k.lit)
+// แสงบนผนัง/พื้นวาดในฉากหลัง ส่วนแสงที่ตกบนตัวแมววาดทับทีหลังใน roomLight()
+function roomLamp(c,k){const L=k.lit;if(L){blob(c,72,62,30,22,'rgba(255,200,120,.10)');blob(c,72,62,19,14,'rgba(255,205,130,.12)');blob(c,72,79,26,4,'rgba(255,200,120,.16)')}
+ rect(c,66,50,13,2,k.frame2);rect(c,67,52,11,19,k.frame2);rect(c,68,53,9,17,L||k.paper);if(L)rect(c,69,55,7,13,'#fff2c8'); // โครงไม้ + กระดาษ (ติดไฟ = กลางสว่างกว่า)
+ rect(c,72,53,1,17,k.frame);rect(c,68,61,9,1,k.frame);rect(c,67,71,1,6,k.frame2);rect(c,77,71,1,6,k.frame2);rect(c,66,76,13,1,k.frame2)} // ตาราง + ขา
+// แสงโคมตกบนทุกอย่างรวมตัวแมว (บวกแสงแบบ lighter) ใช้เมื่อโคมติด
+function roomLight(c,k){if(!k.lit)return;c.save();c.globalCompositeOperation='lighter';blob(c,72,64,24,20,'rgba(255,170,90,.07)');blob(c,72,64,14,12,'rgba(255,170,90,.06)');c.restore()}
 function roomFg(c,k){
  rect(c,146,58,3,14,k.trunk);rect(c,145,70,5,2,k.trunk);rect(c,149,63,3,1,k.trunk);rect(c,151,61,1,2,k.trunk);rect(c,143,62,3,1,k.trunk); // ลำต้นกับกิ่งแตกสองข้าง (เจ้าของขอ 2026-11-18)
  [[147,51,6.5,8.5],[140.5,57,5,6],[153.5,57,5,6],[147,43,3.8,5]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf2));     // พุ่มใบ (ยกขึ้นให้เห็นลำต้น)
@@ -509,7 +518,7 @@ const poly=(c,P,col)=>{c.fillStyle=col;const xs=P.map(p=>p[0]),ys=P.map(p=>p[1])
 const bedAt=(c,a,b,h)=>{blob(c,38,84.4,24,4.6,a);blob(c,38,83.4,23.4,4,b);blob(c,33,81.8,12,1.3,h)}; // ที่นอนทรงเดียวกับเบาะในห้อง
 const sky=(c,k,y2)=>{rect(c,0,0,SW,y2,k.sky);rect(c,0,y2-16,SW,16,k.sky2);
  if(k.moon){blob(c,132,13,3,3,k.moon);[[78,8],[104,20],[146,26],[90,30],[120,6]].forEach(([x,y])=>rect(c,x,y,1,1,k.moon))}
- else{blob(c,130,12,4,4,k.sun);blob(c,78,14,3.5,2,k.cloud);blob(c,81,13,3,2.5,k.cloud);blob(c,106,24,3,1.6,k.cloud);blob(c,108.5,23.4,2.4,2,k.cloud)}};
+ else{blob(c,130,k.sunY||12,k.sunY?5:4,k.sunY?5:4,k.sun);blob(c,78,14,3.5,2,k.cloud);blob(c,81,13,3,2.5,k.cloud);blob(c,106,24,3,1.6,k.cloud);blob(c,108.5,23.4,2.4,2,k.cloud)}};
 
 // สวนญี่ปุ่น (庭): ภูเขาไกล รั้วไม้ไผ่ สนาม ทางกรวดคราด โคมหิน ต้นไม้ นอนบนหินแบน · ฉากหน้า: พุ่มอาซาเลีย
 const GCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',mtn:'#b7d1c6',mtn2:'#a3c2b6',fence:'#d2b07a',fence2:'#ad8a55',grass:'#b4d68f',grass2:'#9cc579',
@@ -585,11 +594,17 @@ function roomClock(c,k,d,sw){rect(c,37,4,5,2,k.frame2);rect(c,30,6,19,2,k.frame2
  blob(c,39.5,17.5,6.6,6.6,k.frame2);blob(c,39.5,17.5,5.7,5.7,k.clk);[[39,12],[44,17],[39,22],[34,17]].forEach(([x,y])=>rect(c,x,y,1,1,k.frame2));
  const m=d.getMinutes(),h=d.getHours()%12+m/60;hand(c,h/12*2*Math.PI,3,k.hand,1);hand(c,m/60*2*Math.PI,4.8,k.hand);rect(c,39,17,1,1,k.hand);
  rect(c,35,27,9,13,k.glass);const a=sw*.32,ex=39.5+Math.sin(a)*8,ey=27+Math.cos(a)*8;c.fillStyle=k.frame2;for(let t=0;t<=8;t+=.5)c.fillRect(Math.floor(39.5+Math.sin(a)*t),Math.floor(27+Math.cos(a)*t),1,1);blob(c,ex,ey,1.7,1.7,k.bob)}
-const SCENES={room:{pal:SCOL,bg:roomBg,fg:roomFg,bed:CUSH,live:roomClock},garden:{pal:GCOL,bg:gardenBg,fg:gardenFg,bed:CUSH},cafe:{pal:KCOL,bg:cafeBg,fg:cafeFg,bed:CUSH},station:{pal:TCOL,bg:stationBg,fg:stationFg,bed:CUSH}};
+const SCENES={room:{pal:SCOL,bg:roomBg,fg:roomFg,bed:CUSH,live:roomClock,over:roomLight},garden:{pal:GCOL,bg:gardenBg,fg:gardenFg,bed:CUSH},cafe:{pal:KCOL,bg:cafeBg,fg:cafeFg,bed:CUSH},station:{pal:TCOL,bg:stationBg,fg:stationFg,bed:CUSH}};
 let PLACE='room';const SCN=()=>SCENES[PLACE]||SCENES.room;
+// รุ่งเช้า (05–07) / พลบค่ำ (17–19): ใช้ชุดสีกลางวัน เปลี่ยนฟ้าเป็นชมพูอมพีช/ส้ม พระอาทิตย์ลอยต่ำ แล้วย้อมทั้งภาพด้วยสีอุ่น (WARM, multiply) ให้แมวอมแสงเดียวกัน
+// ฟ้าห้อง: sky = ฟ้าในหน้าต่าง sky2 = แถบบนสุด · ฉากกลางแจ้ง (sky()): sky = ฟ้าด้านบน sky2 = แถบใกล้ขอบฟ้า
+const TWI={dawn:{room:{sky:'#ffd2b8',sky2:'#c9b3e0',sun:'#ffc07a',cloud:'#ffe6dc',sunY:33},out:{sky:'#c9b6e6',sky2:'#ffcfb4',sun:'#ffbf80',cloud:'#ffe3d6',sunY:44},lit:'#ffe2a0'},
+ dusk:{room:{sky:'#ffae6e',sky2:'#c9798f',sun:'#ff7a45',cloud:'#ffc49e',sunY:33},out:{sky:'#d58aa0',sky2:'#ffb070',sun:'#ff7845',cloud:'#ffc0a0',sunY:42},lit:'#ffd98a'}};
+const WARM={dawn:'#f6e2ee',dusk:'#ffd6b8'};
+function palOf(s,sk){if(s.pal[sk])return s.pal[sk];const t=TWI[sk];if(!t)return s.pal.light;return s.pal[sk]={...s.pal.light,...(s===SCENES.room?t.room:t.out),moon:null,lit:t.lit}}
 const bgC={},fgC={};
-function sceneBg(tm){const id=PLACE+'|'+tm;if(bgC[id])return bgC[id];const s=SCN(),v=canv(),c=v.getContext('2d');s.bg(c,s.pal[tm]);return bgC[id]=v}
-function sceneFg(tm){const id=PLACE+'|'+tm;if(fgC[id])return fgC[id];const s=SCN(),k=s.pal[tm],v=canv(),c=v.getContext('2d');s.fg(c,k);
+function sceneBg(tm){const id=PLACE+'|'+tm;if(bgC[id])return bgC[id];const s=SCN(),v=canv(),c=v.getContext('2d');s.bg(c,palOf(s,tm));return bgC[id]=v}
+function sceneFg(tm){const id=PLACE+'|'+tm;if(fgC[id])return fgC[id];const s=SCN(),k=palOf(s,tm),v=canv(),c=v.getContext('2d');s.fg(c,k);
  // เส้นขอบรอบฉากหน้า ให้เข้าชุดกับแมว
  const d=c.getImageData(0,0,SW,SH),A=(x,y)=>x>=0&&y>=0&&x<SW&&y<SH&&d.data[(y*SW+x)*4+3]>0,o=[];
  for(let y=0;y<SH;y++)for(let x=0;x<SW;x++)if(!A(x,y)&&(A(x+1,y)||A(x-1,y)||A(x,y+1)||A(x,y-1)))o.push([x,y]);o.forEach(([x,y])=>rect(c,x,y,1,1,k.line));return fgC[id]=v}
@@ -644,12 +659,16 @@ function doAct(k,ms){if(!POSES[k])return;if(CALM[cat.mode]){cat.pend=null;act(k,
 let cv=null,io=null,raf=0,last=0,vis=true,sLast='',pending=null,booted=false;
 // กลางวัน/กลางคืนของฉากตามเวลาจริงของเครื่อง (06:00–17:59 = กลางวัน) ไม่ผูกกับโหมดมืดของแอป (เจ้าของขอ 2026-11-19: เช้าแล้วห้องยังมืด)
 // ภาพแมวใช้ชุดสีตามฉาก (กลางคืน = เส้นขอบสว่าง) หน้าแอปยังมืด/สว่างตามเครื่องเหมือนเดิม
-let TOD=null;const tod=(d=new Date())=>TOD||(d.getHours()>=6&&d.getHours()<18?'day':'night');
-const thm=()=>tod()==='night'?'dark':'light';
-function paint(){const tm=thm(),[k,f]=catPose();cat.k=k;const now=performance.now(),idle=idleAt(cat,now),X=Math.round(cat.x),live=SCN().live,d=new Date(),
-  sw=live&&playing?Math.round(Math.sin(now/1000*Math.PI)*3)/3:0,key=[k,f,idle,X,tm,S.coat,S.acc,PLACE,live?d.getHours()*60+d.getMinutes()+'|'+sw:''].join('|');
- cur={k,f,idle,X,tm};if(key===sLast)return;sLast=key;const sx=cv.getContext('2d');sx.clearRect(0,0,SW,SH);sx.drawImage(sceneBg(tm),0,0);if(live)live(sx,SCN().pal[tm],d,sw);
- sx.drawImage(sprite(k,f,tm,S.coat,S.acc,idle),X,CY);sx.drawImage(sceneFg(tm),0,0)}
+// 4 ช่วง (เจ้าของขอ 2026-11-19): รุ่งเช้า 05:00–06:59 · กลางวัน 07:00–16:59 · พลบค่ำ 17:00–18:59 · กลางคืน 19:00–04:59
+let TOD=null;const tod=(d=new Date())=>{if(TOD)return TOD;const h=d.getHours();return h>=5&&h<7?'dawn':h>=7&&h<17?'day':h>=17&&h<19?'dusk':'night'};
+const thm=()=>tod()==='night'?'dark':'light'; // ชุดสีของภาพแมว (กลางคืน = เส้นขอบสว่าง)
+const skey=t=>t==='day'?'light':t==='night'?'dark':t; // ชุดสีฉาก
+function paint(){const td=tod(),tm=thm(),sk=skey(td),[k,f]=catPose();cat.k=k;const now=performance.now(),idle=idleAt(cat,now),X=Math.round(cat.x),s=SCN(),live=s.live,d=new Date(),
+  sw=live&&playing?Math.round(Math.sin(now/1000*Math.PI)*3)/3:0,key=[k,f,idle,X,sk,S.coat,S.acc,PLACE,live?d.getHours()*60+d.getMinutes()+'|'+sw:''].join('|');
+ cur={k,f,idle,X,tm};if(key===sLast)return;sLast=key;const sx=cv.getContext('2d'),pal=palOf(s,sk);sx.clearRect(0,0,SW,SH);sx.drawImage(sceneBg(sk),0,0);if(live)live(sx,pal,d,sw);
+ sx.drawImage(sprite(k,f,tm,S.coat,S.acc,idle),X,CY);sx.drawImage(sceneFg(sk),0,0);
+ if(WARM[td]){sx.save();sx.globalCompositeOperation='multiply';sx.fillStyle=WARM[td];sx.fillRect(0,0,SW,SH);sx.restore()} // แสงอุ่นทั้งภาพ
+ if(s.over)s.over(sx,pal)}
 // กล่องคำพูดลอยเหนือหัวสัตว์เลี้ยงและเลื่อนตามเวลาเดิน (เจ้าของขอ 2026-11-18): หาขอบบนของภาพเฟรมปัจจุบัน แล้วค่อยๆ ไล่ตาม ไม่ให้กระตุก
 // ไม่ให้ล้นขอบฉาก ถ้าชิดขอบ หางกล่องยังชี้ที่หัว · ไม่มีที่ว่างเหนือหัว (หัวสูง/กล่องสูง) จะชิดขอบบนแทน
 const BB={};function bbox(k,f,tm,idle){const key=[k,f,tm,S.coat,S.acc,idle].join('|');if(BB[key])return BB[key];const g=frame(k,f,tm,S.coat,S.acc,idle);let t=H,l=W,r=-1;
@@ -685,5 +704,5 @@ function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:D
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
 window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
- _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v}}};
+ _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},palOf:(id,sk)=>palOf(SCENES[id],sk)}};
 })();
