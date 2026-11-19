@@ -22,8 +22,10 @@ function pmast(){let n=0;for(const k in DS){try{n+=Object.values(JSON.parse(loca
 function ptr(p){if(p.trait==null||!TR[p.trait]){p.trait=Math.floor(Math.random()*TR.length);p.rv=dstr(new Date());saveM()}return TR[p.trait]}
 // เลือกประโยคของสัตว์เลี้ยงตามช่วง/เหตุการณ์ (key ดูใน js/data/pet-lines.js)
 // stable=true: เลือกให้คงที่ภายใน 1 ชั่วโมง (ใช้กับกล่องคำพูดที่วาดซ้ำบ่อย) / false: สุ่มทุกครั้ง (ใช้กับข้อความเด้งตอนเกิดเหตุการณ์)
+// สุ่มแบบไม่ซ้ำประโยคล่าสุดของช่องเดียวกัน (เช่น ให้อาหารสองครั้งติดไม่ได้ประโยคเดิม)
+const plLast={};
 function pline(p,key,stable=true){const v=ptr(p).s[key]||[];if(!v.length)return'';let i;
- if(stable){const d=new Date(),h=dstr(d)+d.getHours()+key+p.trait;let x=0;for(const c of h)x=(x*31+c.charCodeAt(0))>>>0;i=x%v.length}else i=Math.floor(Math.random()*v.length);return v[i]}
+ if(stable){const d=new Date(),h=dstr(d)+d.getHours()+key+p.trait;let x=0;for(const c of h)x=(x*31+c.charCodeAt(0))>>>0;i=x%v.length}else{do i=Math.floor(Math.random()*v.length);while(v.length>1&&v[i]===plLast[key]);plLast[key]=v[i]}return v[i]}
 const pstage=b=>b<40?1:b<120?2:3;
 // เพิ่มความสนิท ถ้าข้ามไปร่าง 2/3 สัตว์เลี้ยงพูดข้อความเด้ง
 function pbond(n){const p=M.pet,a=pstage(p.bond);p.bond+=n;const z=pstage(p.bond);if(z>a){pcue('happy',2400);toast(IC.paw+' '+pline(p,z===2?'lv2':'lv3',false))}}

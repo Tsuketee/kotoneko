@@ -46,6 +46,14 @@ test('ข้อมูล: คำคันจิใช้เฉพาะคัน
       const all = [t.n, ...Object.values(t.s).flat()];
       all.forEach(l => { if (!l || !l.trim()) tbad.push('ประโยคว่าง ' + i); FORBID.forEach(w => { if (l.includes(w)) tbad.push('ห้ามใช้ชื่อเฉพาะ "' + w + '" ในนิสัย ' + i); }); });
       if (new Set(Object.values(t.s).flat()).size !== 29) tbad.push('ประโยคซ้ำในนิสัย ' + i);
+      // กฎภาษา (รายงานบทพูดตามนิสัย v62): ไม่มี !! วงเล็บท่าทาง คำทักแปลตรง · "…" ไม่เกิน 1 (ยกเว้นขี้เซา) · ไม่เกิน 60 ตัว · นิสัยเงียบ/ขี้เซา/สุภาพ/นักวิชาการไม่มี ! · คันจิในประโยคต้องเป็น N5
+      Object.values(t.s).flat().forEach(l => {
+        if (/!!|\(|อรุณสวัสดิ์|ราตรีสวัสดิ์|ยินดีต้อนรับ|ขอบคุณสำหรับ/.test(l)) tbad.push('บทพูดแข็ง/แปลตรง นิสัย ' + i + ': ' + l);
+        if ((l.match(/…/g) || []).length > 1 && i !== 4) tbad.push('"…" เกิน 1 ครั้ง นิสัย ' + i + ': ' + l);
+        if ([...l].length > 60) tbad.push('ยาวเกิน 60 ตัว นิสัย ' + i + ': ' + l);
+        if ([1, 4, 7, 8].includes(i) && /!/.test(l)) tbad.push('นิสัยนี้ไม่ใช้ ! นิสัย ' + i + ': ' + l);
+        kj(l).forEach(c => ok.has(c) || tbad.push('คันจิเกิน N5 ในบทพูด นิสัย ' + i + ': ' + c));
+      });
     });
     const EMO = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}\uFE0F]/u;
     TR.forEach((t, i) => { if (!P[t.i]) tbad.push('นิสัย ' + i + ' ไม่มีไอคอน ' + t.i); [t.n, ...Object.values(t.s).flat()].forEach(l => { if (EMO.test(l)) tbad.push('ห้ามมีอิโมจิในบทพูด (ใช้ไอคอนเส้นแทน) นิสัย ' + i + ': ' + l); }); });
