@@ -33,7 +33,31 @@
    ```
    แล้วเพิ่มเลข `VERSION` ใน `sw.js` → commit → push เข้า `main`
 
+## เข้าสู่ระบบด้วย Google (ทำครั้งเดียว ประมาณ 15 นาที · แอป v77 ขึ้นไป)
+
+ปุ่ม "ลงชื่อเข้าใช้ด้วย Google" จะขึ้นในแอปเอง**หลังจากเปิด Google ใน Supabase แล้วเท่านั้น** (แอปอ่านจาก `/auth/v1/settings`) ก่อนหน้านั้นผู้ใช้เห็นฟอร์มอีเมลแบบเดิม จึงเปิดทีหลังได้ไม่ต้องแก้โค้ด
+
+1. **Google Cloud Console** (https://console.cloud.google.com) → สร้างโปรเจกต์ (หรือใช้โปรเจกต์เดิม)
+   1. APIs & Services → **OAuth consent screen** (Google Auth Platform → Branding): ตั้งชื่อแอป `Kotoneko` อีเมลติดต่อ โลโก้ (ถ้ามี) ใส่ลิงก์ `https://tsuketee.github.io/kotoneko/privacy.html` และ `.../terms.html` · Audience: **External** · Scopes ใช้แค่ `openid` `email` `profile` (ไม่ต้องส่งตรวจ)
+   2. **Credentials → Create credentials → OAuth client ID** → ประเภท **Web application**
+      - Authorized JavaScript origins: `https://tsuketee.github.io`
+      - Authorized redirect URIs: `https://<project>.supabase.co/auth/v1/callback` (ดูค่าจริงได้ในหน้า Google provider ของ Supabase ช่อง Callback URL)
+   3. คัดลอก **Client ID** และ **Client secret**
+   4. ตอนทดสอบ แอปอยู่ในโหมด Testing ใช้ได้เฉพาะบัญชีที่เพิ่มใน Test users · พร้อมให้คนอื่นใช้แล้วกด **Publish app**
+2. **Supabase** → Authentication → **Sign In / Providers → Google** → เปิด Enable แล้ววาง Client ID และ Client secret → Save
+   > ⚠️ Client secret เป็นความลับ กรอกในหน้า Supabase เท่านั้น ห้ามใส่ในโค้ดหรือ commit
+3. **Supabase** → Authentication → **URL Configuration**
+   - Site URL: `https://tsuketee.github.io/kotoneko/`
+   - Redirect URLs: เพิ่ม `https://tsuketee.github.io/kotoneko/` (และ `http://localhost:8000/` ถ้าทดสอบในเครื่อง)
+4. เปิดแอป → แท็บโปรไฟล์ → เมนู → บัญชีและซิงก์ จะเห็นปุ่ม Google ทดสอบบน iPad ทั้งใน Safari และแอปที่เพิ่มลงหน้าจอโฮม
+
+ทำงานอย่างไร: แอปสร้าง `code_verifier` เก็บใน `kn_pkce` แล้วพาไปหน้า Google ในหน้าต่างเดิม (OAuth แบบ PKCE) Google ส่งกลับมาที่แอปพร้อม `?code=` แอปแลกเป็น session ที่ `/auth/v1/token?grant_type=pkce` แล้วซิงก์ตามปกติ · ถ้าอีเมลใน Google ตรงกับบัญชีอีเมลเดิม Supabase จะผูกเป็นบัญชีเดียวกันให้ ความคืบหน้าไม่หาย · ชื่อในบัญชี Google ใช้เป็นชื่อเจ้าของเริ่มต้นถ้ายังไม่ได้ตั้ง
+- **Apple** ทำแบบเดียวกันได้ (โค้ดรองรับแล้ว ปุ่มขึ้นเองเมื่อเปิด Apple ใน Supabase) แต่ต้องมี Apple Developer Program · **LINE** Supabase ไม่มีในตัว ต้องเขียน Edge Function เอง · เจ้าของตัดสิน 2026-11-19 ให้รอมีรายได้ก่อน
+
 ## แก้ปัญหา
+- **กด Google แล้วขึ้น "redirect_uri_mismatch":** Authorized redirect URI ใน Google Cloud ไม่ตรงกับ Callback URL ของ Supabase
+- **กลับมาแอปแล้วขึ้น "เข้าสู่ระบบไม่สำเร็จ ลองกดเข้าสู่ระบบจากในแอปอีกครั้ง":** หน้าที่กลับมาไม่ใช่หน้าต่างเดียวกับที่กดปุ่ม (เช่น แอปบนหน้าจอโฮมเปิดกลับมาใน Safari) ให้ลองใหม่ หรือใช้อีเมลแทน
+- **กลับมาแล้วไปหน้า Site URL ผิดที่:** ยังไม่ได้เพิ่ม Redirect URLs ตามข้อ 3
 - **อีเมลมีแต่ลิงก์ ไม่มีรหัส:** ยังไม่ได้ตั้ง SMTP หรือยังไม่ได้แก้แม่แบบตามข้อ 3
 - **ช่อง Host ขึ้นแดง:** ใส่ชื่อบัญชีแทนที่อยู่เซิร์ฟเวอร์ Host ต้องเป็น `smtp-relay.brevo.com`
 - **อีเมลไม่มา:** ดูกล่องสแปม แล้วเช็กที่ Brevo → Transactional → Logs ถ้าไม่มีรายการ แปลว่าค่า SMTP ใน Supabase ผิด (มักเป็น Username หรือ Password)
@@ -42,7 +66,7 @@
 ## ก่อนเปิดขายจริง
 - ใช้โดเมนของตัวเองเป็นผู้ส่ง (ยืนยันโดเมนกับ Brevo หรือเปลี่ยนไปใช้ Resend, Amazon SES) เพื่อไม่ให้อีเมลรหัสเข้าสแปม
 - โปรเจกต์ฟรีจะถูกพักถ้าไม่มีการใช้งาน 7 วัน (ข้อมูลไม่หาย กดเปิดใหม่ได้) ถ้ามีผู้ใช้จ่ายเงินแล้วควรอัปเกรดเป็นแพ็กเกจ Pro
-- อัปเดตนโยบายความเป็นส่วนตัว: เก็บอีเมลและความคืบหน้าการเรียนไว้ที่ Supabase (ข้อในเฟส 4)
+- อัปเดตนโยบายความเป็นส่วนตัว: เก็บอีเมลและความคืบหน้าการเรียนไว้ที่ Supabase (ข้อในเฟส 4) · v77 เพิ่ม Google และชื่อเจ้าของแล้ว
 
 ## ทำงานอย่างไร
 - ผู้ใช้ 1 คน = 1 แถวในตาราง `progress` เก็บทุก key ความคืบหน้า (`ka1` `kn5` `kw1` `kv1` `kg1` `kn_meta`) เป็นก้อนเดียว

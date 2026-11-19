@@ -217,6 +217,66 @@ h2{font-size:16px;margin:20px 0 10px}
 .ebar{height:10px;border-radius:5px;margin:6px 0 0}.ebar i{background:var(--hlt);border-radius:5px}
 .pfd{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--ac);background:transparent;color:var(--ac);font:inherit;font-size:15px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .pfd span{font-weight:400;font-size:12.5px}.pfd:active{transform:scale(.97)}.pfd.lo{border-color:var(--bd);color:var(--mut)}
+/* หน้าโปรไฟล์สัตว์เลี้ยง (js/profile.js · v72): ปุ่มเปิดบนการ์ด ภาพแมวพิกเซลขยายเป็นจำนวนเต็มเท่า การ์ดย่อย และคลังสะสมแบบตาราง */
+.ppf{min-height:36px;padding:4px 12px;color:var(--ac);border-color:color-mix(in srgb,var(--ac) 45%,var(--bd));font:inherit;font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent}.ppf:active{transform:scale(.97)}
+.card.pfh{min-height:0;padding:18px 16px 16px;display:grid;justify-items:center;gap:6px}
+.pfc{width:144px;height:144px;image-rendering:pixelated;image-rendering:crisp-edges}.pfe{font-size:88px;line-height:1.2}
+.card.pfx{min-height:0;padding:14px 16px;text-align:left}.pfx .pbd{margin-top:0}
+.pft2{display:flex;align-items:center;gap:12px}.pft2 b{font-size:16px}.pft2 .st{margin-top:3px;line-height:1.55}
+.pfs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin-bottom:10px}.pfs b{display:block;font-size:22px;font-family:var(--fd);font-variant-numeric:tabular-nums}.pfs span{font-size:12px;color:var(--mut)}.pfs .ic2{display:block;margin:0 auto -2px}
+.pfk{font-size:13.5px;color:var(--mut);margin:12px 0 6px}
+.pfg{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.pfi{display:grid;justify-items:center;align-content:start;gap:2px;padding:10px 6px;background:var(--card);border:1px solid var(--bd);border-radius:14px;text-align:center}.pfi b{font-size:12.5px;font-weight:600;line-height:1.3}.pfi>span:last-child{font-size:11.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+.pfi.on{border:2px solid var(--ac)}.pfi.on>span:last-child{color:var(--ac)}.pfi.pfo>.ic2,.pfi.pfo .pfth{opacity:.45;filter:grayscale(.6)}
+.pft3{position:relative;display:block}.pfth{display:block;width:64px;height:64px;image-rendering:pixelated;image-rendering:crisp-edges}.pfl{position:absolute;right:-2px;bottom:2px;color:var(--mut);background:var(--card);border-radius:50%;padding:2px;box-sizing:content-box}
+/* บัตรโปรไฟล์สัตว์เลี้ยง (ร่าง v75): คลิปหนีบ ตราประทับจางๆ มุมขวา ภาพในกรอบ แถวข้อมูล แท็บล่าง */
+.idc{position:relative;margin:22px 0 6px;background:var(--card);border:1px solid var(--bd);border-radius:22px;padding:22px 16px 0;box-shadow:0 2px 0 color-mix(in srgb,var(--bd) 70%,transparent)}
+.idclip{position:absolute;top:-13px;left:50%;transform:translateX(-50%);width:64px;height:24px;border-radius:9px;background:color-mix(in srgb,var(--ac) 50%,#5b3a22);box-shadow:inset 0 2px 0 rgba(255,255,255,.18),inset 0 -3px 0 rgba(0,0,0,.14)}
+.idst{position:absolute;top:4px;right:92px;width:120px;height:80px;fill:none;stroke:var(--bd);stroke-width:2;opacity:.8;pointer-events:none}
+.idrc{flex:1;min-width:0;align-self:stretch;display:flex;flex-direction:column;justify-content:space-between;gap:8px}.idact{position:relative;display:flex;justify-content:flex-end;gap:8px;margin:-8px -4px 0 0}
+.ida{width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:14px;background:color-mix(in srgb,var(--hlt) 22%,var(--card));color:var(--fg);cursor:pointer;-webkit-tap-highlight-color:transparent}.ida:active{transform:scale(.95)}
+.idtop{position:relative;display:flex;align-items:flex-end;gap:14px;min-height:112px}@media(max-width:359px){.idph{width:96px;height:96px}.idph .pfc{width:96px;height:96px}.idtop{min-height:96px}.idnm b{font-size:21px}}
+.idph{flex:none;width:112px;height:112px;border-radius:20px;background:color-mix(in srgb,var(--hlt) 16%,var(--bg));display:grid;place-items:center;overflow:hidden}.idph .pfc{width:96px;height:96px}.idph .pfe{font-size:64px}
+.idnm{display:flex;flex-direction:column;gap:2px;min-width:0;padding-bottom:6px}.idnm b{font-family:var(--fd);font-size:24px;line-height:1.3;overflow-wrap:anywhere}.idnm span{color:var(--mut);font-size:14px}
+.idbd{border-top:1px solid var(--bd);margin-top:16px;padding:12px 2px 14px}
+.idr{display:grid;grid-template-columns:7.2em 1fr;gap:10px;align-items:baseline;padding:7px 0}.idr>span{font-size:12.5px;letter-spacing:.06em;color:var(--mut)}.idr b{font-size:15.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px}.idr small{display:block;color:var(--mut);font-size:12.5px;margin-top:2px}
+.idhb{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;color:var(--err);background:color-mix(in srgb,var(--err) 14%,var(--card))}
+.ids{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;padding-top:12px;border-top:1px dashed var(--bd);font-size:13px;color:var(--mut)}.ids span{display:inline-flex;align-items:center;gap:5px}.ids b{color:var(--fg);font-size:15px;font-variant-numeric:tabular-nums}
+.idtr{display:flex;align-items:center;gap:12px;padding:6px 0 4px}.idtr b{font-family:var(--fd);font-size:17px}.idtr .st{margin-top:3px;line-height:1.55}
+.idq{margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--bg)}.idq span{font-size:12.5px;letter-spacing:.06em;color:var(--mut)}.idq p{margin:6px 0 0;line-height:1.6}
+.idtb{display:flex;gap:6px;margin:0 -16px;padding:8px;border-top:1px solid var(--bd);border-radius:0 0 21px 21px;background:color-mix(in srgb,var(--hlt) 8%,var(--card))}
+.idtb button{flex:1;min-height:44px;border:0;border-radius:14px;background:transparent;color:var(--mut);font:inherit;font-size:14px;letter-spacing:.06em;cursor:pointer}.idtb button.on{background:color-mix(in srgb,var(--hlt) 26%,var(--card));color:var(--fg);font-weight:600}
+@media(min-width:700px){.idph{width:152px;height:152px}.idph .pfc{width:144px;height:144px}.idtop{min-height:152px}.idnm b{font-size:28px}}
+/* หน้าเข้าสู่ระบบ (v77 · แนวจากตัวอย่างที่เจ้าของส่งมา): ปุ่มผู้ให้บริการทรงแคปซูลตามแนวทางของ Google/Apple + ลิงก์อีเมลล่างสุด */
+.sgn{display:grid;gap:10px;text-align:center}.sgt{font-family:var(--fd);font-size:20px}.sgn>.st{margin-bottom:4px}
+.sgb{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:52px;padding:10px 18px;border-radius:999px;font:inherit;font-size:16px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}.sgb:active{transform:scale(.98)}.sgb:disabled{opacity:.7}
+.sgg{background:#fff;color:#1f1f1f;border:1px solid #747775}.sga{background:#000;color:#fff;border:1px solid #000}
+.sgm{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;margin:2px auto 0;border:0;background:none;color:var(--ac);font:inherit;font-size:15px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .sgg{background:#131314;color:#e3e3e3;border-color:#8e918f}:root:not([data-theme="light"]) .sga{background:#fff;color:#000;border-color:#fff}}
+:root[data-theme="dark"] .sgg{background:#131314;color:#e3e3e3;border-color:#8e918f}:root[data-theme="dark"] .sga{background:#fff;color:#000;border-color:#fff}
+.pfl2{display:grid;gap:6px;margin-top:10px;font-size:13.5px;color:var(--mut);text-align:left}
+/* แท็บโปรไฟล์ (v76): หัวหน้ามีปุ่มเมนู · หน้าเมนู = การ์ดหัว ปุ่มลัด 3 ช่อง กลุ่มรายการ เวอร์ชัน ออกจากระบบ */
+.mehd{display:flex;align-items:center;justify-content:space-between;gap:10px}.mehd h1{margin:0}
+.mnb{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:6px 16px;border-radius:999px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font:inherit;font-size:15px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}.mnb:active{transform:scale(.97)}
+.mnh{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:14px}
+.idph.sm{width:72px;height:72px;border-radius:18px}.idph.sm .pfc{width:48px;height:48px}.idph.sm .pfe{font-size:40px}
+.mnl{align-self:flex-start;border:0;background:none;padding:2px 0;color:var(--ac);font:inherit;font-size:14px;cursor:pointer}
+.mne{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:6px 14px;border-radius:999px;border:0;background:color-mix(in srgb,var(--hlt) 22%,var(--card));color:var(--fg);font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;flex:none}
+.mnqs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.mnq{display:grid;justify-items:center;gap:6px;padding:14px 4px;border-radius:16px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font:inherit;font-size:14px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}.mnq span{color:var(--ac);display:flex}.mnq:active{transform:scale(.97)}
+.mng{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:0 14px}
+.mnr{display:flex;width:100%;align-items:center;gap:12px;min-height:54px;padding:8px 0;border:0;border-bottom:1px solid var(--bd);background:none;color:var(--fg);font:inherit;font-size:15.5px;text-align:left;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}.mng .mnr:last-child{border-bottom:0}
+.mni{display:flex;color:var(--ac)}.mnt{flex:1;min-width:0}.mnx{color:var(--mut);font-size:13.5px;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnc{color:var(--mut);font-size:22px;line-height:1}
+.mnv{text-align:center;color:var(--mut);font-size:13px;margin:18px 0 8px;min-height:1em}
+.mno{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;margin:6px 0 18px;border-radius:999px;border:1.5px solid var(--ac);background:transparent;color:var(--ac);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
+/* แถบล่าง 5 หมวด (v74): ป้ายสั้นพอดีจอมือถือ · หัวความคืบหน้าสลับภาพรวม/ผิดบ่อย · แถวลิงก์ในหน้าโปรไฟล์/ร้านค้า · หน้าร้านค้าเร็วๆ นี้ */
+#nav button{min-width:0;font-size:11.5px;letter-spacing:-.01em;white-space:nowrap}
+.seg.pgs{display:flex;margin:10px 0 4px}.seg.pgs button{flex:1;min-height:44px}
+.mer{display:flex;width:100%;align-items:center;gap:12px;text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:12px 14px;margin:14px 0 4px;color:var(--fg);font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}.mer:active{transform:scale(.99)}
+.mrt{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.mrt b{font-family:var(--fd);font-weight:600;font-size:15px}.mer>span:last-child{font-size:22px;color:var(--mut)}
+.card.shc{min-height:0;margin-top:14px;padding:18px 16px;display:grid;justify-items:center;gap:6px}.shc>b{font-family:var(--fd);font-size:17px}.shc .bd{margin:0}
+.shb{display:flex;align-items:center;gap:12px;background:var(--card);border:1px dashed var(--bd);border-radius:16px;padding:12px 14px;margin-top:10px}.shb b{display:block;font-family:var(--fd);font-weight:600;line-height:1.5}.shb .st{margin-top:1px}
+.shl{display:grid;gap:10px;font-size:14.5px}.shl .ic2{color:var(--ac);vertical-align:-4px;margin-right:6px}
 /* ปุ่มรอง (สำรองข้อมูล): ไม่แย่งความเด่นกับปุ่มหลัก */
 .btns button.sec{background:transparent;color:var(--ac);border:1.5px solid var(--ac)}
 /* หมายเหตุใต้การ์ดเรียน: พับไว้ เปิดดูได้ */

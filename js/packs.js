@@ -13,7 +13,7 @@ const packReady = l => !!packLocal(l) || ((packEnt(l) || PS.admin) && !!(PS.ver 
 const packWait = l => !packReady(l) && packEnt(l);   // ปลดล็อกแล้ว แต่ผู้ดูแลยังไม่ได้อัปโหลดเนื้อหา
 function lvGo(l, msg) { try { localStorage.setItem(LVK, l); if (msg) sessionStorage.setItem('kn_lvmsg', msg) } catch (e) {} location.reload() }
 
-// ---------- การ์ดระดับในหน้าแรก (เรียกจาก pathHtml) ----------
+// ---------- การ์ดระดับในหน้าเรียน (เรียกจาก pathHtml ในหน้ารวมของแท็บเรียน) ----------
 function lvCard(l) {
   const L = LEVELS[l];
   if (l === 'n5') return `<div class="pc" onclick="lvSwitch('n5')"><div class="pb"><b>N5</b><div class="st">แตะเพื่อกลับไปเรียน N5 · ความคืบหน้าแต่ละระดับเก็บแยกกัน</div></div><div class="pg2">${L.g}</div></div>`;
@@ -24,7 +24,7 @@ function lvCard(l) {
 function lvLocked(l) {
   const n = LEVELS[l].n;
   if (!PAID.includes(l) || !cloudOn()) return toast(n + ' กำลังเตรียมเนื้อหาอยู่ค่ะ');
-  if (!cloudIn()) { tab = 'stats'; render(); setTimeout(() => { const c = document.getElementById('cloud'); if (c) c.scrollIntoView({ block: 'center' }) }, 50); return toast('เข้าสู่ระบบก่อนนะคะ แล้วระบบจะตรวจสิทธิ์ ' + n + ' ให้') }
+  if (!cloudIn()) { tab = 'me'; meView = 'acct'; render(); setTimeout(() => { const c = document.getElementById('cloud'); if (c) c.scrollIntoView({ block: 'center' }) }, 50); return toast('เข้าสู่ระบบก่อนนะคะ แล้วระบบจะตรวจสิทธิ์ ' + n + ' ให้') }
   if (packWait(l)) return toast('บัญชีนี้ปลดล็อก ' + n + ' แล้ว แต่เนื้อหายังไม่พร้อมบนเซิร์ฟเวอร์ ลองใหม่ภายหลังนะคะ');
   if (buyPrice(l)) return buyAsk(l);
   toast('บัญชีนี้ยังไม่ได้ปลดล็อก ' + n + ' ค่ะ ระบบซื้อกำลังจะเปิดเร็วๆ นี้');
@@ -77,7 +77,7 @@ async function packCheck() {
         try { await packFetch(l); if (LV === l) toast('อัปเดตเนื้อหา ' + LEVELS[l].n + ' แล้ว จะใช้เมื่อเปิดแอปครั้งถัดไปค่ะ') } catch (e) {}
       }
     }
-    if (before !== JSON.stringify([PS.ent, PS.admin, PS.price, PS.src, RR]) && (tab === 'home' || tab === 'stats') && !document.querySelector('.cov')) render();
+    if (before !== JSON.stringify([PS.ent, PS.admin, PS.price, PS.src, RR]) && ((tab === 'learn' && view === 'path') || tab === 'me') && !document.querySelector('.cov')) render();
   } catch (e) {}
 }
 // ออกจากระบบ / ลบบัญชี / การเข้าสู่ระบบหมดอายุ: แพ็กผูกกับบัญชี จึงลบออกจากเครื่องและกลับไป N5
