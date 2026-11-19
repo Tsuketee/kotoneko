@@ -3,7 +3,8 @@
 // ลายขนและเครื่องประดับ: เจ้าของให้ "โชว์ล็อกไว้ก่อน" (2026-11-19) ยังไม่มีกติกาปลดล็อก มีแค่ลายที่ใส่อยู่ (ค่าเริ่มต้นครีมแต้มส้ม) · ห้ามผูกเงินจริง
 const PACC=[['scarf','ผ้าพันคอ'],['bow','โบว์']];
 const PSTG=[[1,0],[2,40],[3,120]]; // ร่าง, ความสนิทขั้นต่ำ (ตรงกับ pstage() ใน js/pet.js)
-function goProf(){tab='prof';render();window.scrollTo(0,0)}
+let pfFrom='home'; // แท็บที่เปิดโปรไฟล์สัตว์เลี้ยงมา (หน้าแรก โปรไฟล์ หรือร้านค้า) ปุ่มกลับและแถบล่างอิงแท็บนี้
+function goProf(){if(tab!=='prof')pfFrom=['me','shop'].includes(tab)?tab:'home';tab='prof';render();window.scrollTo(0,0)}
 // วันที่ 'YYYY-MM-DD' (เวลาท้องถิ่น) → จำนวนวันที่อยู่ด้วยกัน นับวันแรกเป็นวันที่ 1
 function pdays(rv){const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(rv||'');if(!m)return 1;const a=new Date(+m[1],m[2]-1,+m[3]),b=new Date(),t=new Date(b.getFullYear(),b.getMonth(),b.getDate());return Math.max(1,Math.round((t-a)/864e5)+1)}
 // สตรีคยาวที่สุดและจำนวนวันที่ถึงเป้า (เทียบกับเป้าปัจจุบัน เหมือน streak())
@@ -14,7 +15,7 @@ const pdark=()=>{const t=document.documentElement.dataset.theme;return t?t==='da
 function profHtml(){pens();const p=M.pet,sp=SPC[p.sp||0],cat=(p.sp||0)===0&&!!window.PixelCat,tr=ptr(p),st=pstage(p.bond),tot=pmast(),since=p.rv||Object.keys(M.days).sort()[0]||'',age=pdays(since),{best,hit}=pbest(),n=streak();
  const nx=PSTG.find(s=>s[1]>p.bond),lo=PSTG[st-1][1],bp=nx?Math.min(100,(p.bond-lo)/(nx[1]-lo)*100):100;
  const sm=[3,7,30].find(x=>x>n);
- let h=`<div class="top"><button class="bk" onclick="goTab('home')" aria-label="กลับหน้าแรก">‹</button><b>โปรไฟล์ของ${p.name}</b></div>
+ let h=`<div class="top"><button class="bk" onclick="goTab(pfFrom)" aria-label="กลับ">‹</button><b>โปรไฟล์ของ${p.name}</b></div>
 <div class="card pfh">${cat?'<canvas class="pfc" id="pfcv" width="48" height="48" role="img" aria-label="'+p.name+'"></canvas>':`<div class="pfe" aria-hidden="true">${sp[0]}</div>`}
 <div class="pnm"><b>${p.name}</b><span class="pch">${sp[1]}</span><span class="pch">ร่าง ${st}</span></div>
 <div class="st">อยู่ด้วยกันมา ${age} วัน · เริ่ม ${since?since.split('-').reverse().join('/'):'วันนี้'}</div></div>

@@ -105,13 +105,13 @@ test('เปิดแอปครั้งแรก: เข้าหน้าต
   const p = await fresh(b, base, { seed: false });
   assert(await p.locator('text=ยินดีต้อนรับ').count());
   await p.evaluate(() => { obn('🐱 แมว'); document.getElementById('nm').value = 'มะลิ'; obt(); obn('N5'); obn('เพื่อไปสอบวัดระดับ JLPT'); obn('10'); });
-  assert(await p.locator('nav#nav button').count() === 4);
+  assert(await p.locator('nav#nav button').count() === 5);
   assert.deepStrictEqual(p.errors, []);
 });
 
-test('นำทางครบ 4 แท็บ ไม่มี error', async (b, base) => {
+test('นำทางครบ 5 หมวด (และหน้าผิดบ่อยในความคืบหน้า) ไม่มี error', async (b, base) => {
   const p = await fresh(b, base);
-  for (const t of ['learn', 'mis', 'stats', 'home']) { await p.evaluate(t => goTab(t), t); assert((await p.locator('#app').innerText()).length > 10, t); }
+  for (const t of ['learn', 'mis', 'stats', 'shop', 'me', 'home']) { await p.evaluate(t => goTab(t), t); assert((await p.locator('#app').innerText()).length > 10, t); }
   assert.deepStrictEqual(p.errors, []);
 });
 
@@ -195,13 +195,13 @@ test('บทสนทนา: ไล่ทุกบทได้ สลับฟ�
   assert.deepStrictEqual(p.errors, []);
 });
 
-test('เครดิต KanjiVG: มีในหน้าสถิติพร้อมลิงก์และสัญญาอนุญาต และอยู่ในหัวไฟล์ strokes.js', async (b, base) => {
+test('เครดิต KanjiVG: มีในหน้าโปรไฟล์พร้อมลิงก์และสัญญาอนุญาต และอยู่ในหัวไฟล์ strokes.js', async (b, base) => {
   const hd = fs.readFileSync(path.join(ROOT, 'js/data/strokes.js'), 'utf8').slice(0, 1500);
   assert(hd.includes('kanjivg.tagaini.net') && hd.includes('CC BY-SA 3.0') && hd.includes('Ulrich Apel'));
   const notice = fs.readFileSync(path.join(ROOT, 'NOTICE.md'), 'utf8');
   assert(notice.includes('KanjiVG') && notice.includes('KANJIDIC2'));
   const p = await fresh(b, base);
-  await p.evaluate(() => goTab('stats'));
+  await p.evaluate(() => goTab('me'));
   const links = await p.locator('#credits a').evaluateAll(a => a.map(x => x.href));
   assert(links.includes('https://kanjivg.tagaini.net/') && links.some(l => l.includes('creativecommons.org/licenses/by-sa/3.0')), links.join());
   assert(links.some(l => l.includes('edrdg.org/wiki') && l.includes('KANJIDIC')) && links.some(l => l.includes('edrdg.org/edrdg/licence')), 'ขาดเครดิต KANJIDIC2');
@@ -293,6 +293,7 @@ test('ไวยากรณ์: เปิดรายการ อ่านบ�
   assert(await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth) <= 0);
   await p.evaluate(() => goTab('stats'));
   assert(await p.locator('.mi:has-text("ไวยากรณ์")').count() === 1);
+  await p.evaluate(() => goTab('me'));
   const [dl] = await Promise.all([p.waitForEvent('download'), p.locator('button:text-is("ส่งออก")').click()]);
   const f = path.join(require('os').tmpdir(), 'kanji-e2e-g-' + Date.now() + '.json'); await dl.saveAs(f);
   const o = JSON.parse(fs.readFileSync(f, 'utf8')); fs.unlinkSync(f);
@@ -381,7 +382,7 @@ test('ธีม A และไอคอนเส้น: ตัวแปรสี
   const emo = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}\uFE0F]/u, bad = [];
   const scan = async (label) => { const t = (await p.evaluate(() => document.getElementById('app').innerText + document.getElementById('nav').innerText)).replace(/[\u{1F431}\u{1F430}\u{1F436}]/gu, ''); const m = t.match(new RegExp(emo.source, 'gu')) || []; if (m.length) bad.push(label + ': ' + m.join('')); };
   await p.evaluate(() => { M.pet.energy = 100; }); await scan('home');
-  for (const t of ['learn', 'mis', 'stats']) { await p.evaluate(t => goTab(t), t); await scan(t); }
+  for (const t of ['learn', 'mis', 'stats', 'shop', 'me']) { await p.evaluate(t => goTab(t), t); await scan(t); }
   await p.evaluate(() => { tab = 'learn'; nv('n5'); }); await scan('path');
   await p.evaluate(() => openDs('g')); await scan('grammar'); await p.evaluate(() => { gOpen(0); gstart(); gpick(0); }); await scan('quiz'); await p.evaluate(() => { gqi = gq.length; gfinish(); render(); }); await scan('result');
   await p.evaluate(() => { openDs('d'); dgo(0); }); await scan('dialogue');
@@ -399,7 +400,7 @@ test('สถิติ: เปลี่ยนเป้าหมายต่อว
 test('ส่งออก/นำเข้า: ข้อมูลกลับมาครบ และไฟล์ผิดรูปแบบถูกปฏิเสธ', async (b, base) => {
   const p = await fresh(b, base);
   await p.evaluate(() => localStorage.setItem('kw1', JSON.stringify({ 'テスト': { b: 3, w: 0, d: 1 } })));
-  await p.evaluate(() => goTab('stats'));
+  await p.evaluate(() => goTab('me'));
   const [dl] = await Promise.all([p.waitForEvent('download'), p.locator('button:text-is("ส่งออก")').click()]);
   const f = path.join(require('os').tmpdir(), 'kanji-e2e-' + Date.now() + '.json');
   await dl.saveAs(f);
@@ -409,7 +410,7 @@ test('ส่งออก/นำเข้า: ข้อมูลกลับม�
   await Promise.all([p.waitForNavigation(), p.setInputFiles('#imp', f)]);
   assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kw1'))['テスト'].b), 3);
   const bad = path.join(require('os').tmpdir(), 'kanji-e2e-bad.json'); fs.writeFileSync(bad, '{"hello":1}');
-  await p.evaluate(() => goTab('stats')); await p.setInputFiles('#imp', bad);
+  await p.evaluate(() => goTab('me')); await p.setInputFiles('#imp', bad);
   await p.waitForSelector('.toast');
   assert((await p.locator('.toast').innerText()).includes('ไม่ใช่ไฟล์'));
   fs.unlinkSync(f); fs.unlinkSync(bad);
@@ -509,7 +510,7 @@ test('ซิงก์: ไม่ได้ตั้งค่าคลาวด์
   p.on('pageerror', e => p.errors.push(e.message));
   await p.addInitScript(s => localStorage.setItem('kn_meta', JSON.stringify(s)), SEED);
   await p.goto(base);
-  await p.evaluate(() => goTab('stats'));
+  await p.evaluate(() => goTab('me'));
   assert.strictEqual(await p.locator('#cloud').count(), 0);
   assert(!(await p.locator('#app').innerText()).includes('บัญชีและซิงก์'));
   assert(fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8').includes('origin !== location.origin'));
@@ -518,7 +519,7 @@ test('ซิงก์: ไม่ได้ตั้งค่าคลาวด์
 
 test('ซิงก์: เข้าสู่ระบบด้วยรหัสอีเมล ส่งขึ้นคลาวด์ แก้แล้วส่งรุ่นใหม่ และต่ออายุ token', async (b, base) => {
   const db = mockCloud(), p = await cloudPage(b, base, db);
-  await p.evaluate(() => { localStorage.setItem('kw1', JSON.stringify({ 'テスト': { b: 4, w: 0, d: 1 } })); goTab('stats'); });
+  await p.evaluate(() => { localStorage.setItem('kw1', JSON.stringify({ 'テスト': { b: 4, w: 0, d: 1 } })); goTab('me'); });
   await login(p, '000000');
   await p.waitForSelector('.cer');
   assert((await p.locator('.cer').innerText()).includes('รหัสไม่ถูกต้อง'));
@@ -568,7 +569,7 @@ test('ซิงก์: เครื่องใหม่เข้าสู่ร
 
 test('ซิงก์: สองเครื่องแก้พร้อมกัน ถามให้เลือก ทั้ง "ใช้ของเครื่องนี้" และ "ใช้ของคลาวด์"', async (b, base) => {
   const db = mockCloud(), p = await cloudPage(b, base, db);
-  await p.evaluate(() => goTab('stats')); await login(p);
+  await p.evaluate(() => goTab('me')); await login(p);
   await p.waitForSelector('button:text-is("ออกจากระบบ")'); await p.waitForFunction(() => !cloudBusy);
   // เครื่องอื่นส่งรุ่นใหม่ขึ้นไป ขณะที่เครื่องนี้ก็เรียนเพิ่ม
   db.row = { ...db.row, rev: 2, data: { ...db.row.data, kv1: { 'cloud': { b: 9, w: 0, d: 1 } } } };
@@ -593,10 +594,10 @@ test('ซิงก์: สองเครื่องแก้พร้อมก
   assert.deepStrictEqual(p.errors, []);
 });
 
-test('นโยบายความเป็นส่วนตัว: เปิดได้ มีลิงก์จากหน้าสถิติและฟอร์มเข้าสู่ระบบ แคชออฟไลน์ และไม่มีแถบเลื่อนแนวนอน', async (b, base) => {
+test('นโยบายความเป็นส่วนตัว: เปิดได้ มีลิงก์จากหน้าโปรไฟล์และฟอร์มเข้าสู่ระบบ แคชออฟไลน์ และไม่มีแถบเลื่อนแนวนอน', async (b, base) => {
   assert(fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8').includes("'privacy.html'"), 'sw.js ต้องแคช privacy.html');
   const db = mockCloud(), p = await cloudPage(b, base, db);
-  await p.evaluate(() => goTab('stats'));
+  await p.evaluate(() => goTab('me'));
   assert.strictEqual(await p.locator('#cloud a[href="privacy.html"]').count(), 1);
   assert.strictEqual(await p.locator('#cloud a[href="terms.html"]').count(), 1);
   assert.strictEqual(await p.locator('#app a[href="privacy.html"]').count(), 2);
@@ -616,7 +617,7 @@ test('นโยบายความเป็นส่วนตัว: เปิ
 
 test('ลบบัญชี: ยกเลิกไม่ลบ, เซิร์ฟเวอร์ยังไม่มีฟังก์ชันแจ้งชัด, ลบสำเร็จแล้วออกจากระบบแต่ข้อมูลในเครื่องอยู่', async (b, base) => {
   const db = mockCloud(), p = await cloudPage(b, base, db);
-  await p.evaluate(() => { localStorage.setItem('kw1', JSON.stringify({ 'テスト': { b: 4, w: 0, d: 1 } })); goTab('stats'); });
+  await p.evaluate(() => { localStorage.setItem('kw1', JSON.stringify({ 'テスト': { b: 4, w: 0, d: 1 } })); goTab('me'); });
   await login(p); await p.waitForSelector('button:text-is("ลบบัญชี")'); await p.waitForFunction(() => !cloudBusy);
   assert(db.row);
   await p.locator('button:text-is("ลบบัญชี")').click();
@@ -664,7 +665,7 @@ test('หน้าแนะนำแอป: เปิดได้ รูปโ�
   // ตัวเลขที่อ้างบนหน้าต้องตรงกับข้อมูลจริงในแอป
   await p.goto(base);
   assert.deepStrictEqual(await p.evaluate(() => [K.length, W.length + V.length, D.length, G.length]), [105, 422, 20, 11]);
-  await p.evaluate(() => goTab('stats'));
+  await p.evaluate(() => goTab('me'));
   assert.strictEqual(await p.locator('#app a[href="about.html"]').count(), 1);
 });
 
@@ -687,7 +688,7 @@ test('ระดับ N4: ยังไม่เข้าสู่ระบบ �
   const h0 = await learnHub(p);
   assert(h0.includes('เข้าสู่ระบบเพื่อตรวจสิทธิ์') && h0.includes('กำลังเรียนระดับ N5'));
   await p.locator('.pc.lk0:has-text("N4")').click();
-  assert.strictEqual(await p.evaluate(() => tab), 'stats');
+  assert.strictEqual(await p.evaluate(() => tab), 'me');
   assert(!db.calls.some(c => c.includes('content_packs')));
   assert.strictEqual(await p.evaluate(() => LV), 'n5');
   assert.deepStrictEqual(p.errors, []);
@@ -695,7 +696,7 @@ test('ระดับ N4: ยังไม่เข้าสู่ระบบ �
 
 test('ระดับ N4: เข้าสู่ระบบแต่ไม่มีสิทธิ์ → ยังล็อก ดาวน์โหลดไม่ได้', async (b, base) => {
   const db = mockCloud(); db.packs.n4 = FAKE_PACK; const p = await cloudPage(b, base, db);
-  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await p.evaluate(() => goTab('me')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
   assert((await learnHub(p)).includes('เปิดขายเร็วๆ นี้'));
   await p.evaluate(() => lvSwitch('n4'));
   await p.waitForSelector('.toast:has-text("ยังไม่ได้ปลดล็อก")', { timeout: 8000 });
@@ -705,7 +706,7 @@ test('ระดับ N4: เข้าสู่ระบบแต่ไม่ม
 
 test('ระดับ N4: มีสิทธิ์ → ดาวน์โหลด สลับระดับ ความคืบหน้าแยก key และกลับ N5 ได้', async (b, base) => {
   const db = mockCloud(); db.ent = ['n4']; db.packs.n4 = FAKE_PACK; const p = await cloudPage(b, base, db);
-  await p.evaluate(() => { localStorage.setItem('kn5', JSON.stringify({ '日': { b: 2, w: 0, d: 1 } })); goTab('stats') });
+  await p.evaluate(() => { localStorage.setItem('kn5', JSON.stringify({ '日': { b: 2, w: 0, d: 1 } })); goTab('me') });
   await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
   assert((await learnHub(p)).includes('ปลดล็อกแล้ว'));
   await Promise.all([p.waitForNavigation(), p.locator('.pc:has-text("ปลดล็อกแล้ว")').click()]);
@@ -738,7 +739,7 @@ test('ระดับ N4: มีสิทธิ์ → ดาวน์โหล�
 
 test('ระดับ N4: ถูกถอนสิทธิ์ หรือออกจากระบบ → ลบแพ็กและกลับ N5', async (b, base) => {
   const db = mockCloud(); db.ent = ['n4']; db.packs.n4 = FAKE_PACK; const p = await cloudPage(b, base, db);
-  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await p.evaluate(() => goTab('me')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
   await Promise.all([p.waitForNavigation(), p.evaluate(() => lvSwitch('n4'))]);
   assert.strictEqual(await p.evaluate(() => LV), 'n4');
   db.ent = [];
@@ -749,7 +750,7 @@ test('ระดับ N4: ถูกถอนสิทธิ์ หรืออ�
   await Promise.all([p.waitForNavigation(), p.evaluate(() => lvSwitch('n4'))]);
   assert.strictEqual(await p.evaluate(() => LV), 'n4');
   p.on('dialog', d => d.accept());
-  await p.evaluate(() => goTab('stats'));
+  await p.evaluate(() => goTab('me'));
   await Promise.all([p.waitForNavigation(), p.locator('button:text-is("ออกจากระบบ")').click()]);
   assert.deepStrictEqual(await p.evaluate(() => [LV, localStorage.getItem('kn_pack_n4'), localStorage.getItem('kn_packs')]), ['n5', null, null]);
   assert.deepStrictEqual(p.errors, []);
@@ -757,7 +758,7 @@ test('ระดับ N4: ถูกถอนสิทธิ์ หรืออ�
 
 test('ระดับ N4: มีสิทธิ์แต่ยังไม่มีแพ็กบนเซิร์ฟเวอร์ → บอกว่าเนื้อหายังไม่พร้อม ไม่ใช่ยังไม่ปลดล็อก', async (b, base) => {
   const db = mockCloud(); db.ent = ['n4']; const p = await cloudPage(b, base, db);
-  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await p.evaluate(() => goTab('me')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
   await learnHub(p); const c4 = await p.locator('.pc:has-text("N4")').first().innerText();
   assert(c4.includes('เนื้อหายังไม่พร้อม') && !c4.includes('เปิดขายเร็วๆ นี้'), c4);
   await p.evaluate(() => lvSwitch('n4'));
@@ -771,7 +772,7 @@ test('ระดับ N4: มีสิทธิ์แต่ยังไม่ม
 
 test('ระดับ N3: มีสิทธิ์ → สลับระดับ ความคืบหน้าแยก key (kn3 kw3 kv3 kg3) และคันจิที่ไม่มีอ่านแบบออนไม่แสดง "-"', async (b, base) => {
   const db = mockCloud(); db.ent = ['n3']; db.packs.n3 = FAKE_PACK_N3; db.packs.n4 = FAKE_PACK; const p = await cloudPage(b, base, db);
-  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await p.evaluate(() => goTab('me')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
   await learnHub(p);
   assert((await p.locator('.pc:has-text("N3")').first().innerText()).includes('ปลดล็อกแล้ว'));
   assert((await p.locator('.pc:has-text("N4")').first().innerText()).includes('เปิดขายเร็วๆ นี้'), 'ไม่มีสิทธิ์ N4 ต้องยังล็อก');
@@ -803,7 +804,7 @@ test('ระดับ N4: แพ็กในเครื่องเสีย �
 
 test('ผู้ดูแล: เห็นส่วนอัปโหลด อัปโหลดแพ็กได้ ไฟล์ผิดถูกปฏิเสธ และผู้ใช้ทั่วไปไม่เห็น', async (b, base) => {
   const db = mockCloud(); db.admin = true; const p = await cloudPage(b, base, db);
-  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await p.evaluate(() => goTab('me')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
   await p.evaluate(() => render());
   assert((await p.locator('#cloud').innerText()).includes('ผู้ดูแล'));
   p.on('dialog', d => d.accept());
@@ -826,7 +827,7 @@ test('ซื้อ N4: เห็นราคา → หน้าต่างย�
   const db = mockCloud(); db.packs.n4 = FAKE_PACK; db.price = { amount: 39000, currency: 'thb' };
   const p = await cloudPage(b, base, db);
   await p.context().route('https://checkout.stripe.com/**', r => r.fulfill({ contentType: 'text/html', body: '<title>stripe</title>หน้าชำระเงินจำลอง' }));
-  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await p.evaluate(() => goTab('me')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
   const h = await learnHub(p);
   assert(h.includes('แตะเพื่อปลดล็อก') && h.includes('390') && !h.includes('เปิดขายเร็วๆ นี้'), h.slice(-300));
   await p.locator('.pc.lk0:has-text("N4")').click();
@@ -852,7 +853,7 @@ test('ซื้อ N4: เห็นราคา → หน้าต่างย�
 test('ซื้อ N4: ยกเลิกที่หน้า Stripe · มีสิทธิ์แล้วไม่ให้จ่ายซ้ำ · ยังไม่เปิดขายไม่แสดงราคา · ลบบัญชีเตือนว่าสิทธิ์จะหาย', async (b, base) => {
   const db = mockCloud(); db.packs.n4 = FAKE_PACK; db.price = { amount: 39000, currency: 'thb' };
   const p = await cloudPage(b, base, db);
-  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await p.evaluate(() => goTab('me')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
   await p.goto(base + '?buy=cancel');
   await p.waitForSelector('.toast:has-text("ยกเลิกการชำระเงินแล้ว")');
   assert.strictEqual(new URL(p.url()).search, '');
@@ -862,7 +863,7 @@ test('ซื้อ N4: ยกเลิกที่หน้า Stripe · มี�
   await p.waitForSelector('.toast:has-text("ปลดล็อก N4 อยู่แล้ว")');
   assert.deepStrictEqual(db.checkouts, []);
   assert((await learnHub(p)).includes('ปลดล็อกแล้ว'));
-  await p.evaluate(() => { goTab('stats'); cloudDelAsk() });
+  await p.evaluate(() => { goTab('me'); cloudDelAsk() });
   assert((await p.locator('.cdl').innerText()).includes('ระดับที่ปลดล็อกไว้ (N4)'));
   await p.locator('button:text-is("ยกเลิก")').click();
   // ยังไม่เปิดขาย (ไม่มีราคา) → ข้อความเดิม
@@ -878,7 +879,7 @@ test('ขอคืนเงิน: ภายใน 7 วันต้องเล
   const db = mockCloud(); db.packs.n4 = FAKE_PACK; db.packs.n3 = FAKE_PACK;
   db.ent = ['n4', 'n3']; db.src = { n4: { source: 'stripe', created_at: new Date(Date.now() - 2 * 864e5).toISOString() }, n3: { source: 'manual', created_at: new Date().toISOString() } };
   const p = await cloudPage(b, base, db);
-  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await p.evaluate(() => goTab('me')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
   const acct = () => p.locator('#cloud').innerText();
   let t = await acct();
   assert(t.includes('ขอคืนเงิน N4 (เหลืออีก 5 วัน)') && !t.includes('ขอคืนเงิน N3'), t);
@@ -914,7 +915,7 @@ test('ขอคืนเงิน: ผู้ดูแลเห็นคำขอ
     { id: 2, user_id: 'u8', email: 'z@y.co', level: 'n3', reason: 'error', detail: null, status: 'refunded', created_at: d },
     { id: 1, user_id: 'u7', email: 'w@y.co', level: 'n4', reason: 'price', detail: null, status: 'refunded', created_at: d }];
   const p = await cloudPage(b, base, db);
-  await p.evaluate(() => goTab('stats')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await p.evaluate(() => goTab('me')); await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
   const t = await p.locator('#cloud').innerText();
   assert(t.includes('คำขอคืนเงินที่รอดำเนินการ (1)') && t.includes('x@y.co') && t.includes('เจอเนื้อหาผิด หรือแอปมีปัญหา') && !t.includes('z@y.co'), t);
   assert(t.includes('<img src=x onerror=alert(1)>คำผิด'), 'แสดงเป็นข้อความ');
@@ -1045,6 +1046,37 @@ test('แท็บเรียน: หน้ารวมมีเส้นทา
   await p.locator('#app .big').click();
   assert.deepStrictEqual(await p.evaluate(() => [tab, view, ds]), ['learn', 's', 'a']);
   assert(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)));
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('แถบล่าง 5 หมวด: หน้าแรก เรียน ความคืบหน้า (ภาพรวม/ผิดบ่อย) ร้านค้า (เร็วๆ นี้) โปรไฟล์ (บัญชี สำรองข้อมูล เครดิต)', async (b, base) => {
+  const p = await fresh(b, base, { viewport: { width: 375, height: 812 } });
+  assert.deepStrictEqual(await p.locator('#nav button').allInnerTexts(), ['หน้าแรก', 'เรียน', 'ความคืบหน้า', 'ร้านค้า', 'โปรไฟล์']);
+  // ป้ายทุกปุ่มอยู่บรรทัดเดียว ไม่ล้นปุ่มบนจอมือถือแคบ
+  assert(await p.evaluate(() => [...document.querySelectorAll('#nav button')].every(x => x.scrollWidth <= x.clientWidth + 1)), 'ป้ายแถบล่างล้น');
+  // ความคืบหน้า: ภาพรวม ↔ ผิดบ่อย แถบล่างเน้นความคืบหน้าทั้งสองหน้า · ไม่มีส่วนบัญชี/สำรองข้อมูลแล้ว
+  await p.locator('#nav button:has-text("ความคืบหน้า")').click();
+  let t = await p.locator('#app').innerText();
+  assert(t.includes('14 วันล่าสุด') && t.includes('เป้าหมายต่อวัน') && !t.includes('สำรองข้อมูล') && !t.includes('เกี่ยวกับและเครดิต'), t.slice(0, 300));
+  await p.locator('.pgs button:text-is("ผิดบ่อย")').click();
+  assert.deepStrictEqual(await p.evaluate(() => [tab, document.querySelector('#nav .on').textContent, document.querySelector('.pgs .on').textContent]), ['mis', 'ความคืบหน้า', 'ผิดบ่อย']);
+  assert((await p.locator('#app').innerText()).includes('ผิดตั้งแต่ 2 ครั้ง'));
+  await p.locator('.pgs button:text-is("ภาพรวม")').click();
+  assert.strictEqual(await p.evaluate(() => tab), 'stats');
+  // ร้านค้า: ยังไม่เปิด ไม่มีราคาเงินจริง · ลิงก์ไปคลังสะสม
+  await p.locator('#nav button:has-text("ร้านค้า")').click();
+  t = await p.locator('#app').innerText();
+  assert(t.includes('เร็วๆ นี้') && t.includes('ตู้สุ่ม') && t.includes('แลกของ') && t.includes('ไม่ใช้เงินจริง') && !/฿|บาท|THB/.test(t), t);
+  // โปรไฟล์: สัตว์เลี้ยงของฉัน สำรองข้อมูล เครดิต ลิงก์นโยบาย · เปิดโปรไฟล์สัตว์เลี้ยงแล้วกลับมาที่โปรไฟล์
+  await p.locator('#nav button:has-text("โปรไฟล์")').click();
+  t = await p.locator('#app').innerText();
+  assert(t.includes('สัตว์เลี้ยงของฉัน · ทดสอบ') && t.includes('สำรองข้อมูล') && t.includes('เกี่ยวกับและเครดิต'), t.slice(0, 300));
+  assert(await p.locator('#app a[href="privacy.html"]').count() >= 1);
+  await p.locator('.mer').click();
+  assert.deepStrictEqual(await p.evaluate(() => [tab, document.querySelector('#nav .on').textContent]), ['prof', 'โปรไฟล์']);
+  await p.locator('.top .bk').click();
+  assert.strictEqual(await p.evaluate(() => tab), 'me');
+  for (const n of ['หน้าแรก', 'เรียน', 'ความคืบหน้า', 'ร้านค้า', 'โปรไฟล์']) { await p.locator(`#nav button:has-text("${n}")`).click(); assert(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + ' ล้นจอแนวนอน'); }
   assert.deepStrictEqual(p.errors, []);
 });
 

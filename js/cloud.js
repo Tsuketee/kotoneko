@@ -34,7 +34,7 @@ async function cloudToken() {
   if (CS.at && CS.exp - 60000 > Date.now()) return;
   try { cloudSetSession(await sb('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: CS.rt }, auth: false })) }
   catch (e) {
-    if (e.status >= 400 && e.status < 500) { cloudForget(); toast('การเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่นะคะ'); if (tab === 'stats') render() }
+    if (e.status >= 400 && e.status < 500) { cloudForget(); toast('การเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่นะคะ'); if (tab === 'me') render() }
     throw e;
   }
 }
@@ -61,7 +61,7 @@ function sumOf(d) {
 function cloudSync(full = true, opt = {}) {
   if (!cloudOn() || !cloudIn() || !navigator.onLine) return Promise.resolve('skip');
   if (cloudBusy) return cloudBusy;
-  cloudBusy = cloudRun(full, opt).catch(e => { if (opt.loud) toast('ซิงก์ไม่สำเร็จ: ' + e.message); return 'error' }).finally(() => { cloudBusy = null; if (tab === 'stats' && !document.querySelector('.cov') && !opt.quiet) render() });
+  cloudBusy = cloudRun(full, opt).catch(e => { if (opt.loud) toast('ซิงก์ไม่สำเร็จ: ' + e.message); return 'error' }).finally(() => { cloudBusy = null; if (tab === 'me' && !document.querySelector('.cov') && !opt.quiet) render() });
   return cloudBusy;
 }
 async function cloudRun(full, opt) {

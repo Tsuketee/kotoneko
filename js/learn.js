@@ -26,7 +26,7 @@ function pick1(){const p=pool(),n=Date.now();
  return prac?sh(p)[0]:null}
 function go(){st=[];ci=0;cur=null;ch=null;ans=null;fl=false;render()}
 function allMis(){const o=[];for(const k in DS){let s={};try{s=JSON.parse(localStorage.getItem(DS[k].key)||'{}')}catch(e){}DS[k].d.forEach(x=>{const r=s[x.k];if(r&&r.w>=1)o.push({k,x,w:r.w})})}return o.sort((a,b)=>b.w-a.w)}
-function renderMis(){const L=allMis();let h=NAV()+`<h1>ที่ตอบผิดบ่อย</h1><div class="st">รวมทุกแท็บ · ผิดตั้งแต่ 2 ครั้งถือว่าผิดบ่อย · ตอบถูกต่อเนื่องแล้วจะหลุดจากรายการเอง</div>`;
+function renderMis(){const L=allMis();let h=progHead()+`<div class="st" style="margin-top:12px">รวมทุกแท็บ · ผิดตั้งแต่ 2 ครั้งถือว่าผิดบ่อย · ตอบถูกต่อเนื่องแล้วจะหลุดจากรายการเอง</div>`;
  if(!L.length)h+=`<div class="card" style="margin-top:12px"><div class="k">${ic(P.star,72)}</div><div class="d">ยังไม่มีข้อที่ตอบผิด<br>ไปฝึกก่อนแล้วกลับมาดูนะคะ</div></div>`;
  else{const bs=Object.keys(DN).filter(k=>L.some(o=>o.k===k&&o.w>=2));
   if(bs.length)h+=`<div class="btns" style="margin:12px 0;flex-wrap:wrap">${bs.map(k=>`<button onclick="goMis('${k}')">ฝึก${DN[k]} (${L.filter(o=>o.k===k&&o.w>=2).length})</button>`).join('')}</div>`;
