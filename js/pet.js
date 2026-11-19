@@ -39,7 +39,7 @@ function psay(p,dn){const k=dstr(new Date()),hr=new Date().getHours();ptr(p);psa
  if(dn>=3)return pline(p,'done');if(dn===0){if(p.rv===k)return pline(p,'first');if(p.back===k)return pline(p,'back')}
  if(dn>0)return pline(p,'partial');
  psayG=true;return pline(p,hr<5?'late':hr<11?'morning':hr<15?'noon':hr<21?'evening':'night')}
-function petHtml(cta=''){pens();const p=M.pet,st=pstage(p.bond),dn=Object.keys(p.d.done).length,sp=SPC[p.sp||0],md=dn>=3?'ดีใจมาก':dn?'อารมณ์ดี':'ง่วงๆ รอเรียนด้วยกันอยู่นะ',say=psay(p,dn),g=M.goal,tot=pmast(),bd=tot>=250?icx('medal',18,'m3'):tot>=100?icx('medal',18,'m2'):tot>=25?icx('medal',18,'m1'):'';
+function petHtml(cta=''){pens();if(pAway==null)pAway=M.pet.lastTs?Date.now()-M.pet.lastTs:0;const p=M.pet,st=pstage(p.bond),dn=Object.keys(p.d.done).length,sp=SPC[p.sp||0],md=dn>=3?'ดีใจมาก':dn?'อารมณ์ดี':'ง่วงๆ รอเรียนด้วยกันอยู่นะ',say=psay(p,dn),g=M.goal,tot=pmast(),bd=tot>=250?icx('medal',18,'m3'):tot>=100?icx('medal',18,'m2'):tot>=25?icx('medal',18,'m1'):'';
  const wk=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return `<div class="${i==6?'on':''}">${['อา','จ','อ','พ','พฤ','ศ','ส'][d.getDay()]}<br><b>${d.getDate()}</b><br>${(M.days[dstr(d)]||0)>=g?icx('flame',14,'hl-i'):'·'}</div>`}).join('');
  plCheck();
  let h=`<div class="card pz" style="text-align:center">${placeHero(plSay(say,psayG),sp[0],28+st*14,(p.sp||0)===0&&!!window.PixelCat)}<div class="pin"><div class="pnm"><b>${p.name}</b><span class="pch">ร่าง ${st}</span><span class="pch">${icx(ptr(p).i,14)} ${ptr(p).n}</span></div><div class="st">${md}</div>
@@ -50,4 +50,7 @@ function petHtml(cta=''){pens();const p=M.pet,st=pstage(p.bond),dn=Object.keys(p
 // แมวพิกเซล (js/pixelcat.js): สัตว์เลี้ยงตัวแรกที่มีภาพจริง กระต่าย/หมายังเป็นอิโมจิ
 // ท่าอารมณ์ตามเหตุการณ์ ถ้าไม่ได้อยู่หน้าหลัก แมวจะเล่นท่านั้นให้ดูตอนกลับมา
 function pcue(k,ms){if(window.PixelCat&&M.pet&&(M.pet.sp||0)===0)PixelCat.cue(k,ms)}
-function petMount(){const c=document.getElementById('petcv');if(!c||!window.PixelCat)return;const h=new Date().getHours();PixelCat.mount(c,{coat:M.pet.coat,acc:M.pet.acc,label:M.pet.name,place:plState().at,sleepy:h>=22||h<5,bubble:c.parentElement.querySelector('.scb')})}
+// เวลาที่ผู้ใช้หายไป ไว้ให้แมวทักทาย (คำนวณครั้งเดียวตอนเปิดแอป ก่อน psay() อัปเดต lastTs) · กลับมาจากพื้นหลัง (iPad พับแอปไว้) นับจากตอนซ่อน
+let pAway=null,pHid=0;
+document.addEventListener('visibilitychange',()=>{if(document.hidden){pHid=Date.now();return}if(!pHid)return;const g=Date.now()-pHid;pHid=0;if(window.PixelCat&&M.pet&&(M.pet.sp||0)===0)PixelCat.greet(g)});
+function petMount(){const c=document.getElementById('petcv');if(!c||!window.PixelCat)return;const h=new Date().getHours();PixelCat.mount(c,{coat:M.pet.coat,acc:M.pet.acc,label:M.pet.name,place:plState().at,sleepy:h>=22||h<5,bubble:c.parentElement.querySelector('.scb')});if(pAway){PixelCat.greet(pAway);pAway=0}}

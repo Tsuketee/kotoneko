@@ -977,11 +977,27 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   await p.mouse.click(box.x + (52 + 24) * sc, box.y + (41 + 26) * sc);
   assert.strictEqual((await T())[0], 'wake');
   // จำลอง 30 นาทีในแอป: ไม่ออกนอกขอบ ผ่านทุกสถานะ ทุกท่าวาดได้ทั้งสองโหมด
-  const sim = await p.evaluate(() => { const { step, cat, XMIN, XMAX, frame, KEYS } = PixelCat._t, seen = new Set(); let out = 0; Object.assign(cat, { mode: 'sit', t: 0, dur: 100 });
-    for (let i = 0; i < 36000; i++) { step(50); seen.add(cat.mode); if (cat.x < XMIN || cat.x > XMAX) out++; }
+  const sim = await p.evaluate(() => { const { step, cat, XMIN, XMAX, frame, KEYS, setPart } = PixelCat._t, seen = new Set(); let out = 0, legFirst = 0; setPart('tw'); Object.assign(cat, { mode: 'sit', t: 0, dur: 100 });
+    let prev = ''; for (let i = 0; i < 36000; i++) { step(50); seen.add(cat.mode); if (cat.x < XMIN || cat.x > XMAX) out++; const g = cat.mode === 'groom' ? cat.gk : ''; if (g === 'groomLeg' && prev !== 'groomLeg' && prev !== 'groom') legFirst++; prev = g || (cat.mode === 'groom' ? prev : ''); } setPart(null); if (legFirst) seen.add('LEG-FIRST');
     let bad = []; for (const tm of ['light', 'dark']) for (const k of KEYS) { const g = frame(k, 0, tm); if (!g.some(r => r.some(Boolean))) bad.push(tm + k) } return { seen: [...seen], out, bad }; });
   assert.strictEqual(sim.out, 0); assert.deepStrictEqual(sim.bad, []);
-  for (const m of ['sit', 'walk', 'run', 'skid', 'groom', 'loaf', 'curl', 'wake']) assert(sim.seen.includes(m), 'ไม่ผ่านสถานะ ' + m);
+  for (const m of ['sit', 'walk', 'run', 'skid', 'groom', 'loaf', 'curl', 'wake', 'nap', 'pose']) assert(sim.seen.includes(m), 'ไม่ผ่านสถานะ ' + m);
+  assert(!sim.seen.includes('LEG-FIRST'), 'เลียขาต้องต่อจากเลียแขนเสมอ (ไล่จากหัวลงหาง)');
+  // น้ำหนักตามช่วงเวลา: เช้า/เย็นวิ่งดีดบ่อยกว่าเที่ยง กลางคืนเข้านอนบ่อยกว่ากลางวัน
+  const freq = await p.evaluate(() => { const { step, cat, setPart } = PixelCat._t, out = {}; for (const part of ['tw', 'noon', 'night', 'day']) { setPart(part); let run = 0, bed = 0, last = ''; Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52 }); for (let i = 0; i < 72000; i++) { step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') run++; if (cat.mode === 'curl') bed++; last = cat.mode } } out[part] = { run, bed } } setPart(null); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9 }); return out });
+  assert(freq.tw.run > freq.noon.run, 'เช้า/เย็นต้องวิ่งดีดบ่อยกว่าเที่ยง ' + JSON.stringify(freq));
+  assert(freq.night.bed > freq.day.bed, 'กลางคืนต้องเข้านอนบ่อยกว่ากลางวัน ' + JSON.stringify(freq));
+  // ทักทายตามเวลาที่หายไป: ไม่ถึง 30 นาทีไม่ทำอะไร · 30 นาที–4 ชม. หลับอยู่ปล่อยหลับ · 4 ชม.ขึ้นไป ตื่นแล้วเดินหางตั้งมา ดีใจ + ฟอง ニャー
+  const gr = await p.evaluate(() => { const { step, cat } = PixelCat._t, r = {};
+    Object.assign(cat, { mode: 'sit', x: 10, t: 0, dur: 1e9, then: null }); PixelCat.greet(10 * 60e3); r.short = cat.mode;
+    Object.assign(cat, { mode: 'curl', t: 0, dur: 1e9 }); PixelCat.greet(2 * 3600e3); r.midAsleep = cat.mode;
+    Object.assign(cat, { mode: 'curl', x: 10, t: 0, dur: 1e9 }); PixelCat.greet(6 * 3600e3); r.longAsleep = cat.mode; let up = false, i = 0;
+    for (; i < 2000 && !(cat.mode === 'pose' && cat.pose === 'happy'); i++) { step(50); if (cat.mode === 'walk' && cat.then === 'greet') up = true }
+    r.up = up; r.end = [cat.mode, cat.pose]; r.bubble = document.querySelector('.scn.px .scb').textContent; r.x = Math.round(cat.x); return r });
+  assert.strictEqual(gr.short, 'sit'); assert.strictEqual(gr.midAsleep, 'curl', 'หายไม่ถึง 4 ชม. แมวหลับอยู่ให้หลับต่อ');
+  assert.strictEqual(gr.longAsleep, 'wake'); assert(gr.up, 'ต้องเดินหางตั้งมาทักทาย'); assert.deepStrictEqual(gr.end, ['pose', 'happy']);
+  assert(gr.bubble.includes('ニャー'), 'ฟองทักทาย: ' + gr.bubble); assert(gr.x > 40 && gr.x < 75, 'ทักทายกลางห้อง x=' + gr.x);
+  await p.waitForTimeout(3300); assert(!(await p.locator('.scn.px .scb').innerText()).includes('ゴロゴロ'), 'ฟองทักทายต้องคืนประโยคเดิม');
   // ฉากพิกเซลครบทุกสถานที่ใน PLACES วาดได้สองโหมด ต่างกันทุกที่ และเปลี่ยนตามที่ที่เลือก
   const pl = await p.evaluate(() => { const { sceneBg, sceneFg } = PixelCat._t, sig = {}, miss = PLACES.map(x => x.id).filter(id => !PixelCat.places.includes(id));
     for (const x of PLACES) { M.place = { at: x.id, got: PLACES.map(q => q.id) }; render(); for (const tm of ['light', 'dark']) { const b = sceneBg(tm).toDataURL(), f = sceneFg(tm).getContext('2d').getImageData(0, 0, 160, 90).data; let n = 0; for (let i = 3; i < f.length; i += 4) if (f[i]) n++; sig[x.id + tm] = [b.length, n] } }
