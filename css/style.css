@@ -1,4 +1,4 @@
-:root{--bg:#fff8ef;--fg:#3b2e27;--mut:#806f61;--card:#fff;--ac:#b45428;--onac:#ffffff;--ok:#497c5d;--err:#bc4d45;--hl:#a57218;--hlt:#e8a93a;--bd:#f0e0cc;--grid:#d8b494;--m1:#b97a45;--m2:#8e969c;--m3:#d19a1f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root{--bg:#fff8ef;--fg:#3b2e27;--mut:#806f61;--card:#fff;--ac:#b45428;--onac:#ffffff;--ok:#497c5d;--err:#bc4d45;--hl:#a57218;--hlt:#e8a93a;--bd:#f0e0cc;--grid:#d8b494;--m1:#8a5226;--m2:#6b7379;--m3:#b8810a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1f1a16;--fg:#f4ece3;--mut:#b6a696;--card:#2b241f;--ac:#ef9a6e;--onac:#231a14;--ok:#86c49b;--err:#ee8f84;--hl:#f0bb55;--hlt:#f0bb55;--bd:#40372f;--grid:#6b5646;--m1:#d79a68;--m2:#b5bcc2;--m3:#efc45a;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#1f1a16;--fg:#f4ece3;--mut:#b6a696;--card:#2b241f;--ac:#ef9a6e;--onac:#231a14;--ok:#86c49b;--err:#ee8f84;--hl:#f0bb55;--hlt:#f0bb55;--bd:#40372f;--grid:#6b5646;--m1:#d79a68;--m2:#b5bcc2;--m3:#efc45a;color-scheme:dark}
 *{box-sizing:border-box}
@@ -148,6 +148,16 @@ h2{font-size:16px;margin:20px 0 10px}
 /* ไอคอนเส้น: สีตามสถานะ */
 /* ประโยคปลอบหลังตอบผิด (pcmHtml ใน js/pet.js) */
 .pcm{display:flex;gap:8px;align-items:flex-start;text-align:left;margin:14px 0 0;padding:10px 12px;border-radius:14px;background:var(--bg);border:1px solid var(--bd);font-size:15px;line-height:1.5}.pcm .ic2{color:var(--ac);flex:none;margin-top:2px}.pcm b{color:var(--ac);font-weight:600}
+/* หน้าเรียน 4 โหมด (modeBar ใน js/learn.js · v70): แถบโหมดเต็มแถว ปุ่มสูง 44px · ตัวกรองแถวรอง · คำแนะนำหนึ่งบรรทัด · ควิซ 2 คอลัมน์บนจอกว้าง */
+.mtab{display:flex;gap:4px;padding:4px;margin:2px 0 10px;background:var(--card);border:1px solid var(--bd);border-radius:14px}
+.mtab button{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:6px 4px;border:0;border-radius:10px;background:none;color:var(--mut);font-family:var(--fd);font-size:15px;font-weight:600}
+.mtab button.on{background:var(--ac);color:var(--onac)}.mtab .ic2{flex:none}
+.flt{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}.flt:empty{display:none}
+.flt select{flex:1 1 200px;min-height:44px}.flt .seg{flex:1 1 280px}.flt .seg button{flex:1;min-height:42px;padding:8px 6px}
+.flt .seg button.on{background:color-mix(in srgb,var(--ac) 12%,var(--card));color:var(--fg);font-weight:600;box-shadow:inset 0 0 0 2px var(--ac)} /* ตัวกรองรองลงมาจากแถบโหมด: พื้นอ่อน + กรอบ ไม่ทึบเท่า */
+.mhint{color:var(--mut);font-size:13px;line-height:1.5;margin:2px 2px 12px}
+@media(min-width:560px){.ch2{grid-template-columns:1fr 1fr}}
+@media(max-width:380px){.mtab button{flex-direction:column;gap:1px;font-size:13px}}
 .ok-i{color:var(--ok)}.no-i{color:var(--err)}.hl-i{color:var(--hl)}.m1{color:var(--m1)}.m2{color:var(--m2)}.m3{color:var(--m3)}
 .ic2.big{display:block;margin:0 auto 6px}.ico-t{display:inline-flex;align-items:center;gap:5px}
 

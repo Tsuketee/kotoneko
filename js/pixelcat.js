@@ -644,6 +644,7 @@ function goTo(tx,then,run=false){cat.target=Math.round(clamp(tx,XMIN,XMAX));cat.
 // วิ่งดีด: วิ่งไปเกือบสุดอีกฝั่งของห้อง แล้ววิ่งกลับมาครึ่งทาง
 function zoom(){const far=cat.x<(XMIN+XMAX)/2?XMAX-rr(0,8):XMIN+rr(0,8);goTo(far,'zoom2',true)}
 function arrive(){if(cat.then==='zoom2'){cat.then='sit';const tx=(XMIN+XMAX)/2+rr(-20,20);cat.target=Math.round(tx);cat.dir=cat.target>cat.x?1:-1;setMode('skid',220);return}
+ if(cat.then==='beg'){cat.then='sit';cat.beg=1;cat.pose='curious';setMode('pose',1300);return say([['ニャー',1200],['ゴロゴロ…',1800]])} // ขออาหาร: เงยหน้ามองแล้วร้อง จากนั้นถูหัวคราง (pose จบ → pet)
  if(cat.then==='greet'){cat.then='sit';const g=cat.greet||1;act('happy',g>1?2800:1600);say(g>1?[['ニャー！ ニャー！',1300],['ゴロゴロ…',1700]]:[['ニャッ♪',1500]]);return}
  if(cat.then==='come'){cat.then='sit';return setMode('sit',rr(5000,9000))} // มานั่งใกล้ๆ แล้วอยู่นานหน่อย
  if(cat.then==='leave'){cat.then='sit';cat.cool=rr(15000,20000)*pk('cool');return groom()} // เดินหนีแล้วเลียขน พักราว 15–20 วิ
@@ -656,9 +657,15 @@ function greet(ms){if(!(ms>=18e5))return;const g=ms>=144e5?2:1,asleep=cat.mode==
  if(!playing)return say(g>1?[['ニャー！',1500]]:[['ニャッ♪',1500]]);
  if(asleep){if(g<2)return;cat.after='greet';return setMode('wake',1400)}greetGo()}
 function greetGo(){goTo((XMIN+XMAX)/2+rr(-14,14),'greet')}
+// ขออาหาร (รายงานพฤติกรรมข้อ 12 · v70): กดให้อาหารตอน Energy ไม่พอ แทนท่าเศร้า แมวเดินหางตั้งมานั่งกลางฉากใกล้ผู้ใช้ เงยหน้ามอง「ニャー」 แล้วถูหัวคราง「ゴロゴロ…」
+// เหมียวของแมวโตส่วนใหญ่ส่งถึงคน (Nicastro 2004) · เสียงครางตอนขออาหารมีเสียงร้องแฝง (McComb 2009 หลักฐานแข็ง) · ไม่ใช้ท่าเศร้า เพราะความหิวของสัตว์เลี้ยงไม่ใช่ความผิดของผู้ใช้
+// หลับอยู่ = ตื่นก่อน · ปิดแอนิเมชัน = ไม่เดิน แค่เงยหน้ามองกับฟองคำพูด
+function beg(woke){if(!woke&&SLEEPM[cat.mode]){cat.after='beg';return cat.mode==='wake'?0:setMode('wake',1400)}cat.lv=0; // woke = เรียกจากตอนตื่นเสร็จ (wake อยู่ใน SLEEPM จึงต้องข้ามการเช็ก ไม่งั้นวนตื่นไม่จบ)
+ if(!playing){act('curious',2600);return say([['ニャー',1200],['ゴロゴロ…',1400]])}
+ goTo((XMIN+XMAX)/2+rr(-10,10),'beg')}
 const GT=k=>DUR[k].reduce((a,b)=>a+b,0),GROOM_T=GT('groom');function groom(k='groom'){cat.gk=k;setMode('groom',GT(k)*2)} // เริ่มที่อุ้งเท้าหน้า/หน้าเสมอ แล้วต่อขาหลัง 60% (เลียไล่จากหัวลงหาง Eckstein & Hart 2000)
 // เล่นท่าใดก็ได้ใน INFO ตามเวลาที่กำหนด แล้วกลับมานั่ง (ไว้ผูกกับเหตุการณ์ในแอป เช่น ตอบถูก = act('happy',1600))
-function act(k,ms){cat.pose=k;setMode('pose',ms)}
+function act(k,ms){cat.pose=k;cat.beg=0;setMode('pose',ms)}
 // น้ำหนักการตัดสินใจตามช่วงเวลาจริงของเครื่อง (รายงาน reports/พฤติกรรมแมวบ้าน… 2026-11-19): แมวจริงคึกช่วงเช้า/เย็น ง่วงช่วงเที่ยงและกลางคืน
 // วิ่งดีดเป็นเหตุการณ์นานๆ ครั้ง · งีบอยู่กับที่ (nap = ท่าหมอบ 8–14 วิ) เพิ่มเวลาพักโดยไม่ต้องเดินไปเบาะบ่อย · นั่งมอง (watch = ท่าสงสัย)
 // ทิศทางมีหลักฐานระดับปานกลาง ส่วนตัวเลขเป็นค่าของเกม (บีบเวลา: งีบจริง ~79 นาที → curl 24–36 วิ)
@@ -699,11 +706,11 @@ function step(dt){const m=cat.mode;if(cat.tol>0)cat.tol=Math.max(0,cat.tol-TOL_D
  if(m==='walk'||m==='run'){const d=GAIT[m].v*dt/1000,left=cat.target-cat.x;if(Math.abs(left)<=d){cat.x=cat.target;if(m==='run'&&cat.then==='zoom2')arrive();else setMode('halt',m==='run'?240:300)}else{cat.x+=Math.sign(left)*d;cat.dist+=d}return}
  if(!cat.dur||cat.t<cat.dur)return;
  ({sit:decide,turnOut:()=>cat.run?setMode('run'):setMode('rise',260),skid:()=>setMode('run'),rise:()=>setMode('walk'),halt:()=>setMode('turnIn',260),turnIn:arrive,loaf:()=>setMode('curl',rr(24000,36000)),curl:()=>setMode('wake',1500),nap:()=>setMode('sit',rr(2500,5000)),
-  wake:()=>{if(cat.after==='greet'){cat.after=null;return greetGo()}Math.random()<.35?groom():setMode('sit',rr(3000,6000))},
+  wake:()=>{if(cat.after==='greet'){cat.after=null;return greetGo()}if(cat.after==='beg'){cat.after=null;return beg(true)}Math.random()<.35?groom():setMode('sit',rr(3000,6000))},
   groom:()=>cat.gk==='groom'&&Math.random()<.6?groom('groomLeg'):setMode('sit',rr(2500,5000)),
-  pose:()=>cat.pose==='eat'&&Math.random()<.6?groom():setMode('sit',rr(2500,5000)), // หลังกินมักเลียขน
+  pose:()=>{if(cat.beg){cat.beg=0;return setMode('pet',2000)}cat.pose==='eat'&&Math.random()<.6?groom():setMode('sit',rr(2500,5000))}, // หลังกินมักเลียขน · ขออาหาร: มองเสร็จแล้วถูหัว
   shy:()=>setMode('sit',rr(2000,4000)),pet:()=>setMode('sit',rr(2500,5000)),notice:()=>setMode('sit',rr(2000,4000)),annoy:()=>{cat.lv=0;setMode('sit',rr(2500,4500))},sblink:()=>setMode('sit',rr(2500,5000))})[m]()}
-function catPose(){const m=cat.mode,D=cat.dir>0?'R':'L';if(m==='walk'||m==='run')return[(m==='walk'&&(cat.then==='greet'||cat.then==='come')?'walkUp':m)+D,Math.floor(cat.dist/GAIT[m].step)%GAIT[m].n];if(m==='skid')return['stand'+(cat.dir>0?'L':'R'),0]; // หยุดกึกยังหันทางเดิมก่อนกลับตัว
+function catPose(){const m=cat.mode,D=cat.dir>0?'R':'L';if(m==='walk'||m==='run')return[(m==='walk'&&(cat.then==='greet'||cat.then==='come'||cat.then==='beg')?'walkUp':m)+D,Math.floor(cat.dist/GAIT[m].step)%GAIT[m].n];if(m==='skid')return['stand'+(cat.dir>0?'L':'R'),0]; // หยุดกึกยังหันทางเดิมก่อนกลับตัว
  const k=m==='rise'||m==='halt'?'stand'+D:m==='turnOut'||m==='turnIn'?'turn'+D:(m==='pose'?cat.pose:{sit:'sit',loaf:'loaf',nap:'loaf',wake:'loaf',curl:'curl',shy:'shy',groom:cat.gk||'groom',pet:'pet',notice:'curious',annoy:cat.lv>1?'lash':'annoyed',sblink:'slowBlink'}[m]);return[k,playing?frameAt(DUR[k],cat.t):0]}
 const sprC={};function sprite(k,f,tm,coat,acc,idle){const key=[k,f,tm,coat,acc,idle].join('|');let v=sprC[key];if(!v){v=document.createElement('canvas');v.width=W;v.height=H;draw(v.getContext('2d'),frame(k,f,tm,coat,acc,idle));sprC[key]=v}return v}
 // ---------- ผูกกับแอป ----------
@@ -724,7 +731,8 @@ const tolLv=()=>{const t=pk('tol'),k=(TOLK[S.stage]||1)*(Array.isArray(t)?t[S.st
 function headAt(){const c=cur||{k:'sit',f:0,tm:'light',idle:null},b=bbox(c.k,c.f,c.tm,c.idle);return{x:Math.round(cat.x)+b.cx,y:CY+b.t}}
 const forceIdle=(n,side)=>{cat.ev=cat.ev||{};cat.ev[n]=performance.now();if(side)cat.side=side}; // หูกระดิก/หางสะบัดทันที (ผ่าน idleAt)
 // แตะแมว: z = โซน (head body tail belly sleep move) · x,y = จุดที่แตะในฉาก (ไม่ส่ง = กลางหัว เช่น กด Enter)
-function poke(z,x,y){const m=cat.mode,h=headAt();z=z||(SLEEPM[m]?'sleep':CALM[m]?'head':'move');if(x==null){x=h.x;y=h.y+8}const side=x<h.x?'L':'R';
+function poke(z,x,y){const m=cat.mode,h=headAt();cat.beg=0; // แตะระหว่างขออาหาร: ตอบการแตะแทน ไม่ถูหัวต่อ
+ z=z||(SLEEPM[m]?'sleep':CALM[m]?'head':'move');if(x==null){x=h.x;y=h.y+8}const side=x<h.x?'L':'R';
  if(cat.cool>0||cat.then==='leave'){fx('tap',x,y,{c:FX});if(!FXS.some(e=>e.type==='dots'))fx('dots',h.x>SW-34?h.x-22:h.x+13,h.y+6);return forceIdle('twitch',side)} // เพิ่งหนีไป: ยังไม่อยากเล่น แค่หูกระดิก …
  cat.tol+=TAPW[z]||1;const lv=tolLv();
  if(z==='sleep'){fx('tap',x,y);if(m!=='wake')setMode('wake',1400);return} // หลับ/งีบ: ตื่น
@@ -768,7 +776,8 @@ function fxDraw(c,tm){const P=(pts,ox,oy,col)=>{c.fillStyle=col;pts.forEach(([u,
   else if(e.type==='vein'){if(t>FXL.vein-250&&Math.floor(t/70)%2)continue;if(Math.floor(t/140)%2)P(FXP.veinS,e.x-2,e.y-2,RED);else P(FXP.vein,e.x-3,e.y-3,RED)} // เต้นตุบๆ
   else if(e.type==='hold'){const n=Math.min(8,1+Math.floor(t/HOLD*8));P([[0,-3],[2,-2],[3,0],[2,2],[0,3],[-2,2],[-3,0],[-2,-2]].slice(0,n),e.x,e.y,HEART)} // วงแหวนค่อยๆ เต็มตอนกดค้าง
   else if(e.type==='dots'){const n=Math.min(3,1+Math.floor(t/220));for(let i=0;i<n;i++)P([[0,0],[1,0],[0,1],[1,1]],e.x+i*3,e.y,tm==='dark'?'#e3c9ab':'#86604c')}}} // … จุด 2×2 สีตามกลางวัน/กลางคืน
-function doAct(k,ms){if(!POSES[k])return;if(CALM[cat.mode]){cat.pend=null;act(k,ms)}else cat.pend={k,ms}}
+function doAct(k,ms){if(k==='beg'){if(CALM[cat.mode]){cat.pend=null;beg()}else cat.pend={k,ms};return} // ขออาหาร: ลำดับพฤติกรรม ไม่ใช่ท่าเดียว
+ if(!POSES[k])return;if(CALM[cat.mode]){cat.pend=null;act(k,ms)}else cat.pend={k,ms}}
 let cv=null,io=null,raf=0,last=0,vis=true,sLast='',pending=null,booted=false;
 // กลางวัน/กลางคืนของฉากตามเวลาจริงของเครื่อง (06:00–17:59 = กลางวัน) ไม่ผูกกับโหมดมืดของแอป (เจ้าของขอ 2026-11-19: เช้าแล้วห้องยังมืด)
 // ภาพแมวใช้ชุดสีตามฉาก (กลางคืน = เส้นขอบสว่าง) หน้าแอปยังมืด/สว่างตามเครื่องเหมือนเดิม
@@ -804,7 +813,7 @@ function bubble(dt){if(!bub||!cur)return;const b=bbox(cur.k,cur.f,cur.tm,cur.idl
  const px=bx/SW*W2,L=clamp(px,bw/2+6,W2-bw/2-6),T=Math.max(by/SH*H2-8,bh+6),tl=clamp(px-L+bw/2,16,bw-16),key=Math.round(L)+'|'+Math.round(T)+'|'+Math.round(tl);
  if(key===bLast)return;bLast=key;bub.style.transform=`translate(${Math.round(L-bw/2)}px,${Math.round(T-bh)}px)`;bub.style.setProperty('--tl',Math.round(tl)+'px');bub.classList.add('pl')} // pl = วางตำแหน่งแล้ว (ก่อนหน้านั้นซ่อนไว้ ไม่ให้กระพริบที่มุมซ้ายบน)
 function loop(now){if(!cv||!cv.isConnected){stop();return}const dt=Math.min(now-last,100);last=now;
- if(vis&&!document.hidden){if(cat.pend&&CALM[cat.mode]){const p=cat.pend;cat.pend=null;act(p.k,p.ms)}step(dt);fxStep(dt);paint();bubble(dt)}
+ if(vis&&!document.hidden){if(cat.pend&&CALM[cat.mode]){const p=cat.pend;cat.pend=null;doAct(p.k,p.ms)}step(dt);fxStep(dt);paint();bubble(dt)}
  raf=requestAnimationFrame(loop)}
 let hold=null;const dropHold=()=>{FXS=FXS.filter(f=>f.type!=='hold');sLast=''};
 function endHold(tap){if(!hold)return;clearTimeout(hold.tm);const h=hold;hold=null;dropHold();if(tap&&!h.done)poke('head',h.x,h.y)}

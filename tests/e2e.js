@@ -1003,6 +1003,14 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   // ให้อาหาร = ท่ากินข้าวปั้น (ถ้ากำลังเดินอยู่ รอจนนั่งพักก่อน)
   await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'sit', t: 0, dur: 1e9 }); M.pet.energy = 100; pfeed(); });
   assert.deepStrictEqual(await T(), ['pose', 'eat']);
+  // Energy ไม่พอ → ขออาหาร (รายงานพฤติกรรมข้อ 12): เดินหางตั้งมากลางฉาก เงยหน้ามอง ニャー แล้วถูหัวคราง (ไม่ใช่ท่าเศร้า) · หลับอยู่ตื่นก่อน
+  const begSim = (o) => p.evaluate(o => { const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'sit', x: 5, t: 0, dur: 1e9, then: null, pend: null, pose: null, tol: 0, cool: 0, lv: 0, after: null }, o); M.pet.energy = 5; pfeed();
+    const r = { first: cat.mode, up: false }; for (let i = 0; i < 800 && !(cat.mode === 'pose' && cat.pose === 'curious'); i++) { step(50); if (cat.mode === 'walk' && cat.then === 'beg') r.up = true }
+    r.pose = [cat.mode, cat.pose]; r.x = Math.round(cat.x); r.say = document.querySelector('.scn.px .scb').textContent; for (let j = 0; j < 40 && cat.mode !== 'pet'; j++) step(50); r.after = cat.mode; return r }, o);
+  let bg = await begSim({});
+  assert(bg.up, 'ต้องเดินหางตั้งมาหา'); assert.deepStrictEqual(bg.pose, ['pose', 'curious'], 'มาถึงแล้วเงยหน้ามอง'); assert(bg.say.includes('ニャー'), 'ฟองขออาหาร: ' + bg.say);
+  assert(bg.x > 40 && bg.x < 75, 'ขอกลางฉาก x=' + bg.x); assert.strictEqual(bg.after, 'pet', 'มองเสร็จแล้วถูหัว');
+  bg = await begSim({ mode: 'curl' }); assert.strictEqual(bg.first, 'wake', 'หลับอยู่ต้องตื่นก่อน'); assert(bg.up && bg.after === 'pet', JSON.stringify(bg));
   await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'walk', target: c.x + 30, pend: null }); PixelCat.cue('happy', 1000); });
   assert.strictEqual((await T())[0], 'walk', 'กำลังเดินต้องไม่ถูกตัดกลางคัน');
   await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'sit', t: 0, dur: 1e9 }); });

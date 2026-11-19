@@ -48,10 +48,20 @@ function speak(t){if(!t)return;if(!('speechSynthesis' in window))return toast('�
 const spHtml=x=>`<button class="sp" data-t="${speakFor(x).replace(/"/g,'')}" onclick="event.stopPropagation();speak(this.dataset.t)">${IC.vol} ฟังเสียง</button>`;
 const mnHtml=x=>ds==='a'&&MN[x.k]?`<div class="ex"><div class="exh">เคล็ดจำ</div><div class="mn">${MN[x.k]}</div></div>`:'';
 function catOpts(){const o=c=>`<option value="${c}"${c===cat?' selected':''}>${c}</option>`;if(ds!=='a')return[...CATS,'ผิดบ่อย'].map(o).join('');const G={b:'พื้นฐาน',d:'เสียงขุ่น・กึ่งขุ่น',y:'เสียงควบ'};let s=o('ทั้งหมด');for(const g in G){const cs=[...new Set(K.filter(x=>x.g===g).map(x=>x.c))];s+=`<optgroup label="${G[g]}">${cs.map(o).join('')}</optgroup>`}return s+o('ผิดบ่อย')}
-const scriptRow=()=>`<div class="seg" style="display:flex;margin-bottom:12px">${[['h','ฮิระงะนะ'],['k','คะตะคะนะ'],['all','ทั้งสองแบบ']].map(x=>`<button style="flex:1" class="${ks===x[0]?'on':''}" onclick="ks='${x[0]}';wi=0;go()">${x[1]}</button>`).join('')}</div>`;
+// หน้าเรียน 4 โหมด (จัดใหม่ v70 · เจ้าของขอ 2026-11-19): แถบโหมดเป็นตัวนำทางหลัก เต็มแถว ปุ่มสูง 44px มีไอคอน
+// ตัวกรองเป็นแถวรองใต้แถบ แสดงเฉพาะที่ใช้ได้ในโหมดนั้น (ตารางไม่มีหมวดและไม่มี "ทั้งสองแบบ") · คำแนะนำหนึ่งบรรทัดต่อโหมด
+const MODES=[['chart','ตาราง','grid','แตะตัวอักษรเพื่อฟังเสียง · สีบอกความแม่น'],['card','การ์ด','cards','นึกคำตอบในใจก่อน แล้วแตะการ์ดเพื่อเฉลย'],
+ ['quiz','ควิซ','check','เลือกคำตอบ · ถูกแล้วไปข้อต่อไปเอง ผิดจะวนกลับมาอีก'],['write','เขียน','pen','เขียนตามเส้นจางด้วยนิ้วหรือ Apple Pencil · ปุ่มรูปตาซ่อนเส้นนำ']];
+const seg=(lbl,opts,on,act)=>`<div class="seg" role="group" aria-label="${lbl}">${opts.map(([v,n])=>`<button class="${on===v?'on':''}" aria-pressed="${on===v}" onclick="${act(v)}">${n}</button>`).join('')}</div>`;
+function modeBar(){const L=MODES.filter(m=>m[0]!=='chart'||ds==='a'),m=MODES.find(x=>x[0]===mode)||MODES[1];
+ let h=`<div class="mtab" role="tablist" aria-label="โหมดการเรียน">${L.map(([k,n,i])=>`<button role="tab" aria-selected="${mode===k}" class="${mode===k?'on':''}" onclick="mode='${k}';go()">${icx(i,20)}<span>${n}</span></button>`).join('')}</div><div class="flt">`;
+ if(mode!=='chart')h+=`<select aria-label="หมวด" onchange="cat=this.value;prac=0;wi=0;go()">${catOpts()}</select>`;
+ if(ds==='a')h+=mode==='chart'?seg('ชุดตัวอักษร',[['h','ฮิระงะนะ'],['k','คะตะคะนะ']],ks==='k'?'k':'h',v=>`ks='${v}';go()`):seg('ชุดตัวอักษร',[['h','ฮิระงะนะ'],['k','คะตะคะนะ'],['all','ทั้งสองแบบ']],ks,v=>`ks='${v}';wi=0;go()`);
+ if(mode==='quiz'&&ds!=='a')h+=seg('แบบคำถาม',[['read','ตอบคำอ่าน'],['mean','ตอบความหมาย']],qt,v=>`qt='${v}';go()`);
+ return h+`</div><div class="mhint">${m[3]}</div>`}
 function chartHtml(){const sc=ks==='k'?'k':'h',G={b:'พื้นฐาน',d:'เสียงขุ่น・กึ่งขุ่น',y:'เสียงควบ'},R={};K.filter(x=>x.sc===sc).forEach(x=>{(R[x.c]=R[x.c]||[]).push(x)});
  const tint=x=>{const r=S[x.k];return!r?'':r.w>=2?'background:color-mix(in srgb,var(--err) 28%,transparent)':r.b>=MASTERY?'background:color-mix(in srgb,var(--ok) 28%,transparent)':r.b>=1?'background:color-mix(in srgb,var(--hlt) 30%,transparent)':''};
- let h=`<div class="seg" style="display:flex;margin-bottom:12px"><button style="flex:1" class="${sc==='h'?'on':''}" onclick="ks='h';render()">ฮิระงะนะ</button><button style="flex:1" class="${sc==='k'?'on':''}" onclick="ks='k';render()">คะตะคะนะ</button></div><div class="st" style="margin-bottom:8px">แตะตัวอักษรเพื่อฟังเสียง · สีบอกความแม่น</div>`;
+ let h='';
  for(const g in G){h+=`<div class="kt">${G[g]}</div>`;Object.keys(R).filter(c=>R[c][0].g===g).forEach(c=>{const cols=g==='y'?3:5;h+=`<div class="kr" style="grid-template-columns:repeat(${cols},1fr)">${R[c].map((x,i)=>`<div class="kc" style="grid-column:${(c==='や/ヤ'||c==='わ/ワ')?[1,3,5][i]:i+1};${tint(x)}" data-t="${x.k}" onclick="speak(this.dataset.t)"><b>${x.k}</b><span>${x.o}</span></div>`).join('')}</div>`})}
  return h+`<div class="lg"><i style="background:color-mix(in srgb,var(--ok) 55%,transparent)"></i>แม่นแล้ว<i style="background:color-mix(in srgb,var(--hlt) 55%,transparent)"></i>กำลังเรียน<i style="background:color-mix(in srgb,var(--err) 55%,transparent)"></i>ผิดบ่อย</div>`}
 function pathHtml(sts){const m=Object.fromEntries(sts),L=['k','w','v'],A=m.a||{lr:0,t:0,due:0},t5=L.reduce((a,k)=>a+m[k].t,0),l5=L.reduce((a,k)=>a+m[k].lr,0),d5=L.reduce((a,k)=>a+m[k].due,0),pa=A.t?A.lr/A.t:0,p5=t5?l5/t5:0;
@@ -71,8 +81,7 @@ function renderLearn(){
  if(!cur)cur=pick1();
  if(cur&&mode==='quiz'&&!ch)mkch();
  let h=NAV()+`<div class="st">เจอแล้ว ${seen}/${p.length} · จำได้แม่น ${lr}</div><div class="bar"><i style="width:${p.length?lr/p.length*100:0}%"></i></div>`;
- h+=`<div class="row"><select onchange="cat=this.value;prac=0;wi=0;go()">${catOpts()}</select><div class="seg">${ds==='a'?`<button class="${mode==='chart'?'on':''}" onclick="mode='chart';go()">ตาราง</button>`:''}<button class="${mode==='card'?'on':''}" onclick="mode='card';go()">การ์ด</button><button class="${mode==='quiz'?'on':''}" onclick="mode='quiz';go()">ควิซ</button><button class="${mode==='write'?'on':''}" onclick="mode='write';go()">เขียน</button></div></div>${ds==='a'?scriptRow():''}`;
- if(mode==='quiz'&&ds!=='a')h+=`<div class="row"><div class="seg" style="flex:1"><button style="flex:1" class="${qt==='read'?'on':''}" onclick="qt='read';go()">ตอบคำอ่าน</button><button style="flex:1" class="${qt==='mean'?'on':''}" onclick="qt='mean';go()">ตอบความหมาย</button></div></div>`;
+ h+=modeBar();
  if(mode==='chart'&&ds==='a'){h+=chartHtml()}
  else if(mode==='write'&&p.length){const x=p[wi%p.length],cs=[...x.k].filter(c=>SV[c]),c0=cs.length?cs[ci%cs.length]:x.k[0];
   h+=`<div class="wi"><div class="d" style="margin:0"><b>${rds(x)[0]}</b>${rds(x)[1]?' ・ '+rds(x)[1]:''}<br>${x.m}</div>${spHtml(x)}</div><div class="tb"><div class="seg"><button class="${tool==='pen'?'on':''}" onclick="tool='pen';render()">${IPEN}</button><button class="${tool==='er'?'on':''}" onclick="tool='er';render()">${IER}</button></div>${tool==='er'?`<input type="range" min="6" max="40" value="${esz}" oninput="esz=+this.value">`:`<span style="flex:1"></span>`}<button class="ic" onclick="guide=guide?0:1;render()">${guide?IC.eye:IC.eyeoff}</button></div><div class="card nw" style="padding:10px;min-height:0"><div class="sheet">${CELLS.map((sp,i)=>`<div class="cell">${cellSvg(c0,sp)}<canvas data-c="${i}" width="200" height="200"></canvas></div>`).join('')}</div>${cs.length>1?`<div class="btns" style="margin-top:10px">${cs.map((c,i)=>`<button style="background:${c===c0?'var(--ac)':'var(--mut)'};font-size:22px;padding:8px" onclick="ci=${i};st=[];render()">${c}</button>`).join('')}</div>`:''}</div><button class="big" onclick="tick();wi++;ci=0;st=[];render()">ตัวต่อไป →</button>`}
@@ -83,7 +92,7 @@ function renderLearn(){
   else h+=`<div class="d"><b>${rds(cur)[0]}</b><br>${rds(cur)[1]?rds(cur)[1]+'<br>':''}${cur.m}${cur.s==='c'?' *':''}<div class="st">หมวด: ${cur.c}</div></div>${spHtml(cur)}${mnHtml(cur)}${exHtml(cur)}<div class="btns"><button onclick="event.stopPropagation();grade(false)">ยังไม่แน่ใจ</button><button class="g" onclick="event.stopPropagation();grade(true)">จำได้</button></div>`;
   h+=`</div>`}
  else{
-  h+=`<div class="card"><div class="k" style="${cur.k.length>2?'font-size:'+Math.max(34,Math.floor(200/cur.k.length))+'px':''}">${cur.k}</div><div class="q">${(ds==='a'||qt==='read')?'คำอ่านคือข้อไหน':'ความหมายคือข้อไหน'}</div><div class="ch">`;
+  h+=`<div class="card"><div class="k" style="${cur.k.length>2?'font-size:'+Math.max(34,Math.floor(200/cur.k.length))+'px':''}">${cur.k}</div><div class="q">${(ds==='a'||qt==='read')?'คำอ่านคือข้อไหน':'ความหมายคือข้อไหน'}</div><div class="ch${ch.every(c=>[...c.t].length<=12)?' ch2':''}">`;
   ch.forEach((c,i)=>{const s=ans===null?'':c.ok?'r':(ans===i?'w':'');h+=`<button class="${s}" onclick="pick(${i})">${c.t}</button>`});
   h+=`</div>`;
   if(ans!==null&&!ch[ans].ok)h+=pcmHtml(cmf)+`<div class="btns"><button class="nx" onclick="go()">ข้อต่อไป</button></div>`;

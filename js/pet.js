@@ -16,7 +16,7 @@ const PM=[{id:'rev',n:'ทบทวนให้ถูก',e:20,go:'k',t:()=>M.pe
 function pens(){const p=M.pet,k=dstr(new Date());if(!p.d||p.d.date!==k)p.d={date:k,rev:0,neu:0,dlg:0,done:{},r:[]}}
 function ptrack(k){if(!M.pet||!M.pet.name)return;pens();const p=M.pet;p.d[k]++;PM.forEach(m=>{if(!p.d.done[m.id]&&p.d[m.id]>=m.t()){p.d.done[m.id]=1;p.energy+=m.e;pbond(2);pcue('happy',1800);toast(IC.ok+' '+m.n+' สำเร็จ +'+m.e+' Energy')}});saveM()}
 function pdd(i){if(!M.pet||!M.pet.name)return;pens();if(!M.pet.d.r.includes(i)){M.pet.d.r.push(i);ptrack('dlg')}render()}
-function pfeed(){const p=M.pet;if(p.energy<30){pcue('sad',1800);toast(IC.rice+' '+pline(p,'hungry',false))}else{p.energy-=30;pbond(10);pcue('eat',2600);toast(IC.rice+' '+pline(p,'feed',false))}saveM();render()}
+function pfeed(){const p=M.pet;if(p.energy<30){pcue('beg');toast(IC.rice+' '+pline(p,'hungry',false))}else{p.energy-=30;pbond(10);pcue('eat',2600);toast(IC.rice+' '+pline(p,'feed',false))}saveM();render()}
 function pgo(x){tab='learn';nv(x)}
 function pmast(){let n=0;for(const k in DS){try{n+=Object.values(JSON.parse(localStorage.getItem(DS[k].key)||'{}')).filter(v=>v.b>=MASTERY).length}catch(e){}}return n}
 function ptr(p){if(p.trait==null||!TR[p.trait]){p.trait=Math.floor(Math.random()*TR.length);p.rv=dstr(new Date());saveM()}return TR[p.trait]}
