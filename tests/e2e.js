@@ -985,6 +985,35 @@ test('ภารกิจรายวัน: ทำครบแล้วกด "�
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('หน้าโปรไฟล์สัตว์เลี้ยง: เปิดจากการ์ด · อายุ ความสนิท นิสัย สตรีค · คลังสะสม (ลายขน/เครื่องประดับล็อกไว้ก่อน) · กลับหน้าแรก', async (b, base) => {
+  const p = await fresh(b, base, { viewport: { width: 390, height: 844 } });
+  // อยู่ด้วยกัน 10 วัน · ถึงเป้า 3 วันติด (วันนี้ เมื่อวาน เมื่อวานซืน) และเคยติดกัน 4 วันเมื่อสัปดาห์ก่อน · ความสนิท 57 = ร่าง 2 อีก 63 ถึงร่าง 3
+  await p.evaluate(() => { const ds = i => { const d = new Date(); d.setDate(d.getDate() - i); return dstr(d) };
+    M.pet.rv = ds(9); M.pet.bond = 57; M.pet.trait = 3; M.days = {}; [0, 1, 2, 6, 7, 8, 9].forEach(i => M.days[ds(i)] = M.goal); saveM(); render() });
+  await p.locator('.ppf').click();
+  assert.strictEqual(await p.evaluate(() => tab), 'prof');
+  assert.strictEqual(await p.locator('#nav .on').innerText(), 'หน้าแรก', 'แถบล่างยังเน้นหน้าแรก');
+  const kp = await p.locator('.kp b').allInnerTexts();
+  assert.deepStrictEqual(kp.slice(0, 2), ['10', '57'], 'อายุ 10 วัน ความสนิท 57');
+  assert(/อีก 63 แต้ม/.test(await p.locator('.pfx .pbd').first().innerText()), 'ความสนิทถึงร่างถัดไป');
+  assert.deepStrictEqual(await p.locator('.pfs b').allInnerTexts(), ['3', '4', '7'], 'สตรีคตอนนี้ / นานสุด / วันที่ถึงเป้า');
+  assert(/ปากแข็งแต่ใจดี/.test(await p.locator('.pft2').innerText()), 'นิสัย');
+  // คลังสะสม: ลายครีมแต้มส้มใส่อยู่ ที่เหลือ 8 ลาย + เครื่องประดับ 2 ชิ้นล็อก · ภาพแมววาดแล้ว (ไม่ใช่ผืนผ้าใบว่าง)
+  const k = await p.evaluate(() => ({ on: [...document.querySelectorAll('.pfi.on b')].map(e => e.textContent), lock: document.querySelectorAll('.pfi.pfo .pfth').length,
+    medal: document.querySelectorAll('.pfi.pfo>.ic2').length, drawn: [...document.querySelectorAll('#pfcv,.pfth')].every(c => c.getContext('2d').getImageData(0, 0, 48, 48).data.some(v => v)) }));
+  assert.deepStrictEqual(k, { on: ['ครีมแต้มส้ม'], lock: 10, medal: 3, drawn: true });
+  // ไม่มีเลื่อนแนวนอนบนจอมือถือ · ปุ่มกลับไปหน้าแรก
+  assert(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'หน้าโปรไฟล์ล้นจอแนวนอน');
+  await p.locator('.top .bk').click();
+  assert.strictEqual(await p.evaluate(() => tab), 'home');
+  assert.strictEqual(await p.locator('#petcv').count(), 1, 'กลับหน้าแรกแล้วแมวกลับมา');
+  // สัตว์เลี้ยงรุ่นเก่าที่ไม่มี rv: นับอายุจากวันแรกที่มีใน M.days · กระต่ายไม่มีช่องลายขน
+  await p.evaluate(() => { delete M.pet.rv; M.pet.sp = 1; goProf() });
+  assert.strictEqual((await p.locator('.kp b').allInnerTexts())[0], '10');
+  assert.deepStrictEqual(await p.evaluate(() => [document.querySelectorAll('.pfth').length, document.querySelectorAll('.pfe').length]), [0, 1]);
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('สัตว์เลี้ยงปลอบหลังตอบผิด (ควิซ + ไวยากรณ์) · ช่องตัวแปร {n} {kanji} · สุ่มไม่ซ้ำประโยคล่าสุด', async (b, base) => {
   const p = await fresh(b, base);
   // ช่องตัวแปร: ยังไม่มีค่า → ไม่เลือกประโยคที่มีช่องตัวแปร · มีค่าแล้ว → เติมค่าลงไป ไม่มี { เหลือ
