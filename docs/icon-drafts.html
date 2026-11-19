@@ -77,7 +77,7 @@ const D=[
 ];
 // ---------- แสดงผล ----------
 const big=c=>{const v=document.createElement('canvas');v.width=v.height=512;const x=v.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(c,0,0,512,512);return v.toDataURL()};
-const urls={cur:'../icons/apple-touch-icon.png'};
+const urls={cur:'icon-old.png'};
 D.forEach(o=>{const[c,x]=mk();o.draw(x);urls[o.id]=big(c)});
 const opts=document.getElementById('opts');
 opts.innerHTML=`<div class="opt cur"><span class="tag">ตอนนี้</span><img class="big" src="${urls.cur}" alt=""><b>漢 บนการ์ด</b><p>ใช้ฟอนต์明朝ของเครื่อง แต่ละเครื่องหน้าตาไม่เหมือนกัน และยังไม่มีแมว</p></div>`+D.map(o=>`<div class="opt"><span class="tag">แบบ ${o.id}</span><img class="big" src="${urls[o.id]}" alt=""><b>${o.n}</b><p>${o.d}</p></div>`).join('');

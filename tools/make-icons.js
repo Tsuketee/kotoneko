@@ -1,4 +1,5 @@
 // สร้างไอคอนแอปทั้งหมดใน icons/ จากต้นฉบับ tools/icon.html (พิกเซล 64×64 แมวจาก js/pixelcat.js)
+// ⚠️ เปลี่ยนหน้าตาไอคอนเมื่อไหร่ ให้เปลี่ยนชื่อ apple-touch-icon-vN.png ใน tools/icon.html, index.html และ sw.js ด้วย ไม่งั้น Safari ใช้ไอคอนเก่าจากแคช
 // ใช้: node tools/make-icons.js  (ต้องมี playwright เหมือนชุดทดสอบ) · แก้หน้าตาไอคอนที่ drawIcon() ใน tools/icon.html แล้วรันใหม่ อย่าแก้ไฟล์ใน icons/ มือ
 const http = require('http'), fs = require('fs'), path = require('path');
 const { chromium } = require('playwright');
