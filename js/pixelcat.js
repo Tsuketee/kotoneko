@@ -642,7 +642,10 @@ function poke(){if(cat.mode==='curl'||cat.mode==='loaf'||cat.mode==='nap')setMod
 const CALM={sit:1,pose:1,shy:1,groom:1,wake:1,loaf:1,curl:1,nap:1};
 function doAct(k,ms){if(!POSES[k])return;if(CALM[cat.mode]){cat.pend=null;act(k,ms)}else cat.pend={k,ms}}
 let cv=null,io=null,raf=0,last=0,vis=true,sLast='',pending=null,booted=false;
-const thm=()=>{const t=document.documentElement.getAttribute('data-theme');return t==='dark'||t==='light'?t:(typeof matchMedia==='function'&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')};
+// กลางวัน/กลางคืนของฉากตามเวลาจริงของเครื่อง (06:00–17:59 = กลางวัน) ไม่ผูกกับโหมดมืดของแอป (เจ้าของขอ 2026-11-19: เช้าแล้วห้องยังมืด)
+// ภาพแมวใช้ชุดสีตามฉาก (กลางคืน = เส้นขอบสว่าง) หน้าแอปยังมืด/สว่างตามเครื่องเหมือนเดิม
+let TOD=null;const tod=(d=new Date())=>TOD||(d.getHours()>=6&&d.getHours()<18?'day':'night');
+const thm=()=>tod()==='night'?'dark':'light';
 function paint(){const tm=thm(),[k,f]=catPose();cat.k=k;const now=performance.now(),idle=idleAt(cat,now),X=Math.round(cat.x),live=SCN().live,d=new Date(),
   sw=live&&playing?Math.round(Math.sin(now/1000*Math.PI)*3)/3:0,key=[k,f,idle,X,tm,S.coat,S.acc,PLACE,live?d.getHours()*60+d.getMinutes()+'|'+sw:''].join('|');
  cur={k,f,idle,X,tm};if(key===sLast)return;sLast=key;const sx=cv.getContext('2d');sx.clearRect(0,0,SW,SH);sx.drawImage(sceneBg(tm),0,0);if(live)live(sx,SCN().pal[tm],d,sw);
@@ -681,6 +684,6 @@ function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream'
 function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:Date.now()}}
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
-window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
- _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart}};
+window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
+ _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v}}};
 })();

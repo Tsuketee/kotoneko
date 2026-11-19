@@ -1014,11 +1014,23 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   assert(bxB > bxA + 40, `กล่องคำพูดต้องเลื่อนตามแมว ${bxA} → ${bxB}`);
   const bub = await p.evaluate(() => { const b = document.querySelector('.scn.px .scb').getBoundingClientRect(), c = document.getElementById('petcv').getBoundingClientRect(); return [b.left >= c.left - 1, b.right <= c.right + 1, b.top >= c.top - 1, getComputedStyle(document.querySelector('.scn.px .scb')).visibility] });
   assert.deepStrictEqual(bub, [true, true, true, 'visible'], 'กล่องคำพูดต้องอยู่ในฉาก');
+  // กลางวัน/กลางคืนของฉากตามเวลาจริง ไม่ใช่ตามโหมดมืดของแอป (06:00–17:59 = กลางวัน)
+  assert.deepStrictEqual(await p.evaluate(() => [7, 12, 17, 18, 23, 5].map(h => PixelCat.tod(new Date(2026, 10, 19, h)))), ['day', 'day', 'day', 'night', 'night', 'night']);
+  const px = (x, y) => p.evaluate(([x, y]) => [...document.getElementById('petcv').getContext('2d').getImageData(x, y, 1, 1).data].slice(0, 3).join(','), [x, y]);
+  await p.evaluate(() => { document.documentElement.setAttribute('data-theme', 'dark'); PixelCat._t.setTod('day'); render() }); await p.waitForTimeout(200);
+  assert.strictEqual(await px(5, 5), '255,243,227', 'แอปโหมดมืด + กลางวัน: ผนังห้องต้องสว่าง');
+  assert.strictEqual(await p.locator('.scn[data-tod]').count(), 1);
+  await p.evaluate(() => { document.documentElement.setAttribute('data-theme', 'light'); PixelCat._t.setTod('night'); render() }); await p.waitForTimeout(200);
+  assert.strictEqual(await px(5, 5), '44,37,32', 'แอปโหมดสว่าง + กลางคืน: ผนังห้องต้องมืด');
+  await p.evaluate(() => { document.documentElement.removeAttribute('data-theme'); PixelCat._t.setTod('day'); render() }); await p.waitForTimeout(200);
   const face = await p.evaluate(() => [...document.getElementById('petcv').getContext('2d').getImageData(36, 17, 1, 1).data].slice(0, 3).join(','));
   assert.strictEqual(face, '255,250,240', 'หน้าปัดนาฬิกาในห้อง');
   assert(await p.evaluate(async () => { await document.fonts.ready; await Promise.all([document.fonts.load("700 20px Mali", "สวัสดี"), document.fonts.load("16px Anuphan", "สวัสดี")]); const ok = n => [...document.fonts].some(f => f.family.replace(/["']/g, '') === n && f.status === 'loaded'); return ok('Mali') && ok('Anuphan') }), 'ฟอนต์ Mali/Anuphan');
   await p.evaluate(() => { M.pet.sp = 1; render(); });
   assert.strictEqual(await p.locator('#petcv').count(), 0); assert.strictEqual(await p.locator('.pet').count(), 1); assert.strictEqual(await p.locator('.scn > svg').count(), 1);
+  // ฉาก SVG ของกระต่ายก็ตามเวลาจริง: กลางวันในแอปโหมดมืด ต้องเห็นชิ้นกลางวัน ไม่เห็นชิ้นกลางคืน
+  const svgTod = await p.evaluate(() => { document.documentElement.setAttribute('data-theme', 'dark'); PixelCat._t.setTod('day'); render(); const n = document.querySelector('.scn .night'), d = document.querySelector('.scn .day'); const r = [document.querySelector('.scn').dataset.tod, n ? getComputedStyle(n).display : 'none', d ? getComputedStyle(d).display : 'inline']; document.documentElement.removeAttribute('data-theme'); PixelCat._t.setTod(null); return r });
+  assert.deepStrictEqual(svgTod, ['day', 'none', 'inline']);
   assert.deepStrictEqual(p.errors, []);
 });
 
