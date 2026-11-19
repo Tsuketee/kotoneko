@@ -247,6 +247,14 @@ h2{font-size:16px;margin:20px 0 10px}
 .idtb{display:flex;gap:6px;margin:0 -16px;padding:8px;border-top:1px solid var(--bd);border-radius:0 0 21px 21px;background:color-mix(in srgb,var(--hlt) 8%,var(--card))}
 .idtb button{flex:1;min-height:44px;border:0;border-radius:14px;background:transparent;color:var(--mut);font:inherit;font-size:14px;letter-spacing:.06em;cursor:pointer}.idtb button.on{background:color-mix(in srgb,var(--hlt) 26%,var(--card));color:var(--fg);font-weight:600}
 @media(min-width:700px){.idph{width:152px;height:152px}.idph .pfc{width:144px;height:144px}.idtop{min-height:152px}.idnm b{font-size:28px}}
+/* หน้าเข้าสู่ระบบ (v77 · แนวจากตัวอย่างที่เจ้าของส่งมา): ปุ่มผู้ให้บริการทรงแคปซูลตามแนวทางของ Google/Apple + ลิงก์อีเมลล่างสุด */
+.sgn{display:grid;gap:10px;text-align:center}.sgt{font-family:var(--fd);font-size:20px}.sgn>.st{margin-bottom:4px}
+.sgb{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:52px;padding:10px 18px;border-radius:999px;font:inherit;font-size:16px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}.sgb:active{transform:scale(.98)}.sgb:disabled{opacity:.7}
+.sgg{background:#fff;color:#1f1f1f;border:1px solid #747775}.sga{background:#000;color:#fff;border:1px solid #000}
+.sgm{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;margin:2px auto 0;border:0;background:none;color:var(--ac);font:inherit;font-size:15px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .sgg{background:#131314;color:#e3e3e3;border-color:#8e918f}:root:not([data-theme="light"]) .sga{background:#fff;color:#000;border-color:#fff}}
+:root[data-theme="dark"] .sgg{background:#131314;color:#e3e3e3;border-color:#8e918f}:root[data-theme="dark"] .sga{background:#fff;color:#000;border-color:#fff}
+.pfl2{display:grid;gap:6px;margin-top:10px;font-size:13.5px;color:var(--mut);text-align:left}
 /* แท็บโปรไฟล์ (v76): หัวหน้ามีปุ่มเมนู · หน้าเมนู = การ์ดหัว ปุ่มลัด 3 ช่อง กลุ่มรายการ เวอร์ชัน ออกจากระบบ */
 .mehd{display:flex;align-items:center;justify-content:space-between;gap:10px}.mehd h1{margin:0}
 .mnb{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:6px 16px;border-radius:999px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font:inherit;font-size:15px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}.mnb:active{transform:scale(.97)}

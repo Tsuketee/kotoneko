@@ -104,8 +104,30 @@ test('ข้อมูล: ไฟล์ที่ index.html โหลดและ
 test('เปิดแอปครั้งแรก: เข้าหน้าตั้งค่า และตั้งค่าครบแล้วเข้าหน้าแรกได้', async (b, base) => {
   const p = await fresh(b, base, { seed: false });
   assert(await p.locator('text=ยินดีต้อนรับ').count());
-  await p.evaluate(() => { obn('🐱 แมว'); document.getElementById('nm').value = 'มะลิ'; obt(); obn('N5'); obn('เพื่อไปสอบวัดระดับ JLPT'); obn('10'); });
+  await p.evaluate(() => { obn('🐱 แมว'); document.getElementById('nm').value = 'มะลิ'; obt(); });
+  // ขั้นชื่อเจ้าของ (v77): ช่องกรอก + ปุ่มข้าม · ตัดอักขระ HTML
+  assert(await p.locator('button:text-is("ข้ามไปก่อน")').count() === 1 && await p.locator('#nm[placeholder="ชื่อของเธอ"]').count() === 1);
+  await p.evaluate(() => { document.getElementById('nm').value = 'พ<อ>'; obt(); obn('N5'); obn('เพื่อไปสอบวัดระดับ JLPT'); obn('10'); });
   assert(await p.locator('nav#nav button').count() === 5);
+  assert.deepStrictEqual(await p.evaluate(() => [M.me.name, M.pet.name, M.pet.owner, M.pet.lv, M.pet.min]), ['พอ', 'มะลิ', undefined, 'N5', 10]);
+  assert((await p.locator('.hi').innerText()).includes('สวัสดีค่ะ พอ'), 'ทักทายด้วยชื่อเจ้าของ');
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('เปิดแอปครั้งแรก: ข้ามชื่อเจ้าของได้ แล้วตั้งทีหลังจากบัตรโปรไฟล์', async (b, base) => {
+  const p = await fresh(b, base, { seed: false });
+  await p.evaluate(() => { obn('🐱 แมว'); document.getElementById('nm').value = 'มะลิ'; obt(); });
+  await p.locator('button:text-is("ข้ามไปก่อน")').click();
+  await p.evaluate(() => { obn('N5'); obn('เพื่อไปสอบวัดระดับ JLPT'); obn('10'); });
+  assert.deepStrictEqual(await p.evaluate(() => [M.me.name, M.pet.name]), ['', 'มะลิ']);
+  assert.strictEqual((await p.locator('.hi').innerText()).trim(), 'สวัสดีค่ะ');
+  await p.evaluate(() => goMe());
+  await p.locator('.idr .mnl:text-is("ตั้งชื่อของเธอ")').click();
+  await p.fill('#pfow', 'พอ'); await p.locator('.cov button:text-is("บันทึก")').click();
+  assert.deepStrictEqual(await p.evaluate(() => [M.me.name, M.pet.name, JSON.parse(localStorage.getItem('kn_meta')).me.name]), ['พอ', 'มะลิ', 'พอ']);
+  assert(/เจ้าของ\s*พอ/.test(await p.locator('.idr').first().innerText()));
+  await p.evaluate(() => goMe('menu'));
+  assert((await p.locator('.mnh').innerText()).includes('พอ') && (await p.locator('.mnh').innerText()).includes('เจ้าของมะลิ'));
   assert.deepStrictEqual(p.errors, []);
 });
 
@@ -419,7 +441,7 @@ test('ส่งออก/นำเข้า: ข้อมูลกลับม�
 // ---------- บัญชีและซิงก์คลาวด์ (จำลอง Supabase ไม่ต่อเน็ตจริง) ----------
 // เซิร์ฟเวอร์จำลองใช้ร่วมกันหลายเครื่อง (หลาย browser context) เพื่อทดสอบการซิงก์ข้ามเครื่อง
 function mockCloud() {
-  const db = { row: null, calls: [], n: 0, ent: [], src: {}, rr: [], packs: {}, admin: false, uploads: 0, price: null, checkouts: [] };
+  const db = { row: null, calls: [], n: 0, ent: [], src: {}, rr: [], packs: {}, admin: false, uploads: 0, price: null, checkouts: [], codes: 0 };
   const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS' };
   const json = (route, status, body) => route.fulfill({ status, headers: { ...cors, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const tok = () => ({ access_token: 'at' + (++db.n), refresh_token: 'rt' + db.n, expires_in: 3600, user: { id: 'u1', email: 'a@b.co' } });
@@ -428,6 +450,14 @@ function mockCloud() {
     if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
     db.calls.push(m + ' ' + u.pathname + u.search);
     if (u.pathname === '/auth/v1/otp') return json(route, 200, {});
+    // ----- Google OAuth (PKCE) · db.google = เปิด Google ใน Supabase แล้ว -----
+    if (u.pathname === '/auth/v1/settings') return db.google ? json(route, 200, { external: { email: true, google: true, apple: false } }) : json(route, 404, { message: 'not mocked' });
+    if (u.pathname === '/auth/v1/authorize') { db.auth = Object.fromEntries(u.searchParams); return route.fulfill({ status: 302, headers: { ...cors, Location: db.auth.redirect_to + '?code=gc' + (++db.codes) } }); }
+    if (u.pathname === '/auth/v1/token' && u.searchParams.get('grant_type') === 'pkce') {
+      const ch = require('crypto').createHash('sha256').update(body.code_verifier || '').digest('base64url');
+      if (!db.auth || ch !== db.auth.code_challenge || body.auth_code !== 'gc' + db.codes) return json(route, 400, { msg: 'invalid flow state' });
+      db.pkceOk = true; const t = tok(); t.user.user_metadata = { full_name: 'พอใจ <ทดสอบ>' }; return json(route, 200, t);
+    }
     if (u.pathname === '/auth/v1/verify') return body.token === '123456' ? json(route, 200, tok()) : json(route, 403, { msg: 'Token has expired or is invalid' });
     if (u.pathname === '/auth/v1/token') return body.refresh_token ? json(route, 200, tok()) : json(route, 400, { msg: 'bad' });
     if (u.pathname === '/rest/v1/rpc/delete_my_account') {
@@ -1031,8 +1061,42 @@ test('แท็บโปรไฟล์ = บัตรสัตว์เลี�
   assert.strictEqual(await p.locator('#petcv').count(), 1, 'กลับหน้าแรกแล้วแมวกลับมา');
   // สัตว์เลี้ยงรุ่นเก่าที่ไม่มี rv: นับอายุจากวันแรกที่มีใน M.days · กระต่ายไม่มีช่องลายขน
   await p.evaluate(() => { delete M.pet.rv; M.pet.sp = 1; goProf() });
-  assert(/อายุ\s*10 วัน/.test(await p.locator('.idr').first().innerText()));
+  assert(/อายุ\s*10 วัน/.test(await p.locator('.idr:has-text("อายุ")').innerText()));
   assert.deepStrictEqual(await p.evaluate(() => [document.querySelectorAll('.pfth').length, document.querySelectorAll('.pfe').length]), [0, 1]);
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('เข้าสู่ระบบด้วย Google (PKCE): ปุ่มขึ้นเมื่อเปิดใน Supabase · ไปหน้า Google แล้วกลับมาแลก code · ชื่อจาก Google เป็นชื่อเจ้าของ · ใช้อีเมลแทนได้ · ขากลับผิดปกติไม่พัง', async (b, base) => {
+  // ยังไม่เปิด Google: ฟอร์มอีเมลแบบเดิม ไม่มีปุ่ม Google
+  const d0 = mockCloud(), p0 = await cloudPage(b, base, d0);
+  await p0.evaluate(() => goMe('acct')); for (let i = 0; i < 50 && !d0.calls.some(c => c.startsWith('GET /auth/v1/settings')); i++) await p0.waitForTimeout(50);
+  assert.strictEqual(await p0.locator('.sgg').count(), 0); assert.strictEqual(await p0.locator('#cem').count(), 1);
+  await p0.context().close();
+  const db = mockCloud(); db.google = true;
+  const p = await cloudPage(b, base, db);
+  await p.evaluate(() => goMe('acct'));
+  await p.waitForSelector('.sgg');
+  assert((await p.locator('.sgg').innerText()).includes('ลงชื่อเข้าใช้ด้วย Google'));
+  // ลิงก์ "ใช้อีเมลแทน" → ฟอร์มอีเมล → "เลือกวิธีอื่น" กลับมา
+  await p.locator('.sgm').click(); assert.strictEqual(await p.locator('#cem').count(), 1);
+  await p.locator('button:text-is("‹ เลือกวิธีอื่น")').click(); assert.strictEqual(await p.locator('.sgg').count(), 1);
+  // กด Google → (จำลอง) หน้า Google ส่งกลับมาพร้อม ?code → แลกเป็น session ด้วย code_verifier ที่ตรงกับ code_challenge
+  await Promise.all([p.waitForURL(u => /\?code=gc1$/.test(u)), p.locator('.sgg').click()]);
+  await p.waitForSelector('.toast:has-text("เข้าสู่ระบบแล้วค่ะ")');
+  await p.waitForFunction(() => !cloudBusy && M.me && M.me.name);
+  assert.deepStrictEqual({ pv: db.auth.provider, m: db.auth.code_challenge_method, back: db.auth.redirect_to, ok: db.pkceOk }, { pv: 'google', m: 's256', back: base, ok: true });
+  const st = await p.evaluate(() => ({ in: cloudIn(), via: CS.via, email: CS.email, pk: localStorage.getItem('kn_pkce'), url: location.search, me: M.me.name }));
+  assert.deepStrictEqual(st, { in: true, via: 'google', email: 'a@b.co', pk: null, url: '', me: 'พอใจ ทดสอบ' }, 'ชื่อจาก Google ตัดอักขระ HTML แล้วใช้เป็นชื่อเจ้าของ');
+  assert(db.row, 'ซิงก์ขึ้นคลาวด์หลังเข้าสู่ระบบ');
+  // ขากลับที่ไม่มี code_verifier (เช่น เปิดกลับมาในหน้าต่างอื่น) หรือผู้ใช้กดยกเลิกที่หน้า Google: แจ้งเตือน ลบพารามิเตอร์ ไม่พัง
+  await p.evaluate(() => { cloudForget(); });
+  await p.goto(base + '?code=zzz');
+  await p.waitForSelector('.toast:has-text("ลองกดเข้าสู่ระบบจากในแอปอีกครั้ง")');
+  assert.deepStrictEqual(await p.evaluate(() => [location.search, cloudIn()]), ['', false]);
+  await p.goto(base + '?error=access_denied&error_description=%3Cb%3Ecancelled%3C%2Fb%3E');
+  await p.waitForSelector('.toast:has-text("เข้าสู่ระบบไม่สำเร็จ")');
+  assert.strictEqual(await p.locator('.toast b').count(), 0, 'ข้อความ error ต้อง escape');
+  assert.strictEqual(await p.evaluate(() => location.search), '');
   assert.deepStrictEqual(p.errors, []);
 });
 

@@ -1,4 +1,4 @@
-// บัญชีผู้ใช้และซิงก์ความคืบหน้าบนคลาวด์ (Supabase ผ่าน REST ตรงๆ ไม่ใช้ SDK จึงไม่ต้องโหลดไลบรารีเพิ่มและยังใช้ออฟไลน์ได้)
+// บัญชีผู้ใช้และซิงก์ความคืบหน้าบนคลาวด์ (Supabase ผ่าน REST ตรงๆ ไม่ใช้ SDK จึงไม่ต้องโหลดไลบรารีเพิ่ม · v77 เพิ่มปุ่ม Google ดูหัวข้อ OAuth ด้านล่างและยังใช้ออฟไลน์ได้)
 // - เข้าสู่ระบบด้วยรหัส 6 หลักทางอีเมล (ไม่ใช้ลิงก์ เพราะแอปที่เพิ่มลงหน้าจอโฮมของ iPad แยกที่เก็บข้อมูลจาก Safari ลิงก์จะไปเปิดใน Safari แทน)
 // - เก็บความคืบหน้าทั้งก้อน (ทุก key ใน PK) เป็นแถวเดียวต่อผู้ใช้ในตาราง progress พร้อมเลขรุ่น rev
 // - ส่งขึ้นแบบมีเงื่อนไข "rev ยังเท่าเดิม" ถ้ามีเครื่องอื่นส่งขึ้นก่อนจะรู้ทันที ไม่เขียนทับกันเงียบๆ
@@ -10,6 +10,51 @@ const csave = () => { try { localStorage.setItem(CK, JSON.stringify(CS)) } catch
 const cloudOn = () => !!(typeof CLOUD !== 'undefined' && CLOUD.url && CLOUD.key);
 const cloudIn = () => !!(CS.rt && CS.uid);
 let CU = { step: 'email', email: '', busy: false, err: '' }, cloudBusy = null, cloudOb = false;
+// ---------- เข้าสู่ระบบด้วย Google (OAuth แบบ PKCE · v77 เจ้าของขอ 2026-11-19 · Apple/LINE ไว้ทีหลัง) ----------
+// ปุ่มขึ้นเฉพาะผู้ให้บริการที่เปิดใน Supabase แล้ว (อ่านจาก /auth/v1/settings เก็บสำเนาใน 'kn_auth') จึงไม่มีปุ่มที่กดแล้วเจอหน้า error
+// ขาไป: เก็บ code_verifier ใน 'kn_pkce' แล้วพาไปหน้า Google ในหน้าต่างเดิม (แอปบนหน้าจอโฮมของ iPad จะได้กลับมาที่เดิม) · ขากลับ: ?code= แลกเป็น session
+// 'kn_auth' 'kn_pkce' ไม่ใช่ความคืบหน้า (ไม่อยู่ใน PK) · client secret ของ Google อยู่ในหน้าตั้งค่า Supabase เท่านั้น
+const AK = 'kn_auth', PKK = 'kn_pkce', OAP = ['google', 'apple']; // ลำดับปุ่ม · LINE ต้องทำ Edge Function เอง ยังไม่ทำ
+let CA = null, cloudAuthAsked = false; try { CA = JSON.parse(localStorage.getItem(AK) || 'null') } catch (e) { CA = null }
+const cloudPv = () => OAP.filter(k => CA && CA[k]);
+async function cloudAuthCfg() {
+  try {
+    const j = await sb('/auth/v1/settings', { auth: false }), x = (j && j.external) || {}, n = {};
+    OAP.forEach(k => { n[k] = !!x[k] });
+    const ch = JSON.stringify(n) !== JSON.stringify(CA); CA = n; try { localStorage.setItem(AK, JSON.stringify(n)) } catch (e) {}
+    if (ch && !cloudIn() && !document.querySelector('.cov') && (cloudOb || (tab === 'me' && meView === 'acct'))) render();
+  } catch (e) {}
+}
+const b64u = a => btoa(String.fromCharCode(...new Uint8Array(a))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+async function cloudOAuth(pv) {
+  if (!window.crypto || !crypto.subtle) { CU.err = 'เบราว์เซอร์นี้ใช้วิธีนี้ไม่ได้ ลองใช้อีเมลแทนนะคะ'; return render() }
+  CU = { ...CU, busy: true, err: '' }; render();
+  const v = b64u(crypto.getRandomValues(new Uint8Array(32))), ch = b64u(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v)));
+  try { localStorage.setItem(PKK, JSON.stringify({ v, pv, t: Date.now(), ob: cloudOb })) } catch (e) {}
+  location.href = CLOUD.url.replace(/\/$/, '') + '/auth/v1/authorize?' + new URLSearchParams({ provider: pv, redirect_to: location.origin + location.pathname, code_challenge: ch, code_challenge_method: 's256' });
+}
+// ขากลับจากหน้า Google: ลบ ?code ออกจากแถบที่อยู่ก่อน แลกเป็น session แล้วซิงก์ (เหมือนเข้าสู่ระบบด้วยอีเมล) · ชื่อจากบัญชีใช้เป็นชื่อเจ้าของถ้ายังไม่ได้ตั้ง
+async function cloudOAuthBack() {
+  const q = new URLSearchParams(location.search), code = q.get('code'), er = q.get('error_description') || q.get('error');
+  if (!code && !er) return false;
+  ['code', 'error', 'error_code', 'error_description', 'state'].forEach(k => q.delete(k));
+  try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash) } catch (e) {}
+  let s = null; try { s = JSON.parse(localStorage.getItem(PKK) || 'null'); localStorage.removeItem(PKK) } catch (e) {}
+  if (er) { toast('เข้าสู่ระบบไม่สำเร็จ: ' + esc(er)); return true }
+  if (!s || !s.v || Date.now() - s.t > 15 * 60000) { toast('เข้าสู่ระบบไม่สำเร็จ ลองกดเข้าสู่ระบบจากในแอปอีกครั้ง หรือใช้อีเมลแทนนะคะ'); return true }
+  cloudOb = !!s.ob && !(M.pet && M.pet.name); CU = { ...CU, busy: true, err: '' }; render();
+  try {
+    const j = await sb('/auth/v1/token?grant_type=pkce', { method: 'POST', body: { auth_code: code, code_verifier: s.v }, auth: false });
+    cloudSetSession(j); CS.via = s.pv; delete CS.rev; delete CS.hash; csave();
+    CU = { step: 'email', email: '', busy: false, err: '' };
+    toast('เข้าสู่ระบบแล้วค่ะ'); render();
+    const r = await cloudSync(true, { loud: true });
+    if (r === 'empty' && cloudOb) { cloudOb = false; toast('ยังไม่มีข้อมูลบนคลาวด์ เริ่มตั้งค่าใหม่ได้เลยค่ะ') }
+    const um = (j.user && j.user.user_metadata) || {}, nm = String(um.full_name || um.name || '').replace(/[<>&"']/g, '').trim().slice(0, 20);
+    if (nm && !(M.me && M.me.name)) { M.me = { ...(M.me || {}), name: nm }; saveM(); render() }
+  } catch (e) { CU.busy = false; toast('เข้าสู่ระบบไม่สำเร็จ: ' + esc(e.message)); render() }
+  return true;
+}
 
 // ---------- เรียก API ----------
 async function sb(path, { method = 'GET', body, auth = true, prefer, keepalive } = {}) {
@@ -166,22 +211,28 @@ async function cloudDelete(o) {
   }
   cloudDeleting = false;
 }
-const cloudBack = () => { CU = { ...CU, step: 'email', err: '' }; render() };
+const cloudBack = () => { CU = { ...CU, step: cloudPv().length ? 'mail' : 'email', err: '' }; render() };
 
 // ---------- หน้าจอ ----------
 const INP = 'width:100%;box-sizing:border-box;padding:11px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font-size:16px';
 const PRIV = `<div class="st" style="margin-top:10px">การเข้าสู่ระบบถือว่ารับทราบ<a href="terms.html" target="_blank" rel="noopener" style="color:var(--ac)">ข้อกำหนดการใช้งาน</a>และ<a href="privacy.html" target="_blank" rel="noopener" style="color:var(--ac)">นโยบายความเป็นส่วนตัว</a></div>`;
 function cloudFormHtml() { return cloudFormInner() + PRIV }
+const GLOGO = '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.540 0 6.710 1.220 9.210 3.600l6.850-6.850C35.900 2.380 30.470 0 24 0 14.620 0 6.510 5.380 2.560 13.220l7.980 6.190C12.430 13.720 17.740 9.500 24 9.500z"/><path fill="#4285F4" d="M46.980 24.550c0-1.570-.150-3.090-.380-4.550H24v9.020h12.940c-.580 2.960-2.260 5.480-4.780 7.180l7.730 6c4.510-4.180 7.090-10.360 7.090-17.650z"/><path fill="#FBBC05" d="M10.530 28.590c-.480-1.450-.760-2.990-.760-4.590s.270-3.140.760-4.590l-7.980-6.190C.920 16.460 0 20.120 0 24c0 3.880.920 7.540 2.560 10.780l7.970-6.190z"/><path fill="#34A853" d="M24 48c6.480 0 11.930-2.130 15.890-5.810l-7.730-6c-2.150 1.450-4.920 2.300-8.160 2.300-6.260 0-11.570-4.220-13.470-9.910l-7.980 6.190C6.510 42.620 14.620 48 24 48z"/></svg>';
+const ALOGO = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M16.400 12.600c0-2.400 2-3.600 2.100-3.700-1.100-1.700-2.900-1.900-3.500-1.900-1.500-.200-2.900.900-3.700.900-.800 0-1.900-.900-3.200-.800-1.600 0-3.200 1-4 2.400-1.700 3-.400 7.400 1.200 9.800.800 1.200 1.800 2.500 3 2.400 1.200 0 1.700-.800 3.100-.800 1.500 0 1.900.800 3.200.800 1.300 0 2.200-1.200 3-2.400.900-1.400 1.300-2.700 1.300-2.800-.100 0-2.500-1-2.500-3.900zM14 5.500c.700-.800 1.100-1.900 1-3-1 0-2.100.700-2.800 1.500-.600.700-1.100 1.800-1 2.900 1.100.100 2.100-.600 2.800-1.400z"/></svg>';
 function cloudFormInner() {
-  const dis = CU.busy ? ' disabled' : '', err = CU.err ? `<div class="cer">${CU.err}</div>` : '';
+  if (!cloudAuthAsked) { cloudAuthAsked = true; setTimeout(cloudAuthCfg, 0) } // ถามว่าเปิดผู้ให้บริการไหนไว้ เฉพาะตอนฟอร์มเข้าสู่ระบบแสดง (ครั้งเดียวต่อการเปิดแอป)
+  const dis = CU.busy ? ' disabled' : '', err = CU.err ? `<div class="cer">${CU.err}</div>` : '', pv = cloudPv();
+  // หน้าเลือกวิธี (แนวจากตัวอย่างที่เจ้าของส่งมา): ปุ่มผู้ให้บริการ + ลิงก์อีเมลล่างสุด · ยังไม่รู้ว่าเปิดอะไรไว้ หรือเลือกอีเมลแล้ว → ฟอร์มอีเมลแบบเดิม
+  if (pv.length && CU.step === 'email') return `<div class="sgn"><b class="sgt">เข้าสู่ระบบ</b><div class="st">ด้วยบัญชีที่มีอยู่แล้ว เก็บความคืบหน้าไว้บนคลาวด์ ใช้ต่อบนเครื่องอื่นได้</div>${pv.map(k => k === 'google' ? `<button class="sgb sgg"${dis} onclick="cloudOAuth('google')">${GLOGO}<span>${CU.busy ? 'กำลังไปหน้า Google…' : 'ลงชื่อเข้าใช้ด้วย Google'}</span></button>` : `<button class="sgb sga"${dis} onclick="cloudOAuth('apple')">${ALOGO}<span>ลงชื่อเข้าใช้ด้วย Apple</span></button>`).join('')}${err}<button class="sgm" onclick="CU={...CU,step:'mail',err:''};render()">${icx('mail', 18)}<span>ใช้อีเมลแทน</span></button></div>`;
+  const back = pv.length ? `<button class="lk" onclick="CU={...CU,step:'email',err:''};render()">‹ เลือกวิธีอื่น</button>` : '';
   if (CU.step === 'code') return `<div class="st">ส่งรหัสไปที่ <b>${esc(CU.email)}</b> แล้ว กรอกรหัสตัวเลขจากอีเมล</div><input id="ccd" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="รหัสจากอีเมล" style="${INP};margin-top:10px;letter-spacing:4px;text-align:center" onkeydown="if(event.key==='Enter')cloudVerify()">${err}<div class="btns" style="margin-top:10px"><button${dis} onclick="cloudVerify()">${CU.busy ? 'กำลังตรวจ…' : 'ยืนยัน'}</button></div><button class="lk" onclick="cloudBack()">เปลี่ยนอีเมล / ส่งรหัสใหม่</button>`;
-  return `<div class="st">ใช้อีเมลเข้าสู่ระบบ เราจะส่งรหัสไปให้ ไม่ต้องตั้งรหัสผ่าน</div><input id="cem" type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="อีเมล" value="${esc(CU.email)}" style="${INP};margin-top:10px" onkeydown="if(event.key==='Enter')cloudSend()">${err}<div class="btns" style="margin-top:10px"><button${dis} onclick="cloudSend()">${CU.busy ? 'กำลังส่ง…' : 'ส่งรหัส'}</button></div>`;
+  return `<div class="st">ใช้อีเมลเข้าสู่ระบบ เราจะส่งรหัสไปให้ ไม่ต้องตั้งรหัสผ่าน</div><input id="cem" type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="อีเมล" value="${esc(CU.email)}" style="${INP};margin-top:10px" onkeydown="if(event.key==='Enter')cloudSend()">${err}<div class="btns" style="margin-top:10px"><button${dis} onclick="cloudSend()">${CU.busy ? 'กำลังส่ง…' : 'ส่งรหัส'}</button></div>${back}`;
 }
 const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 function cloudHtml() {
   if (!cloudOn()) return '';
   let b;
-  if (!cloudIn()) b = `<div class="st" style="margin-bottom:6px">เข้าสู่ระบบเพื่อเก็บความคืบหน้าไว้บนคลาวด์ และใช้ต่อบนเครื่องอื่นได้</div>${cloudFormHtml()}`;
+  if (!cloudIn()) b = (cloudPv().length && CU.step === 'email' ? '' : `<div class="st" style="margin-bottom:6px">เข้าสู่ระบบเพื่อเก็บความคืบหน้าไว้บนคลาวด์ และใช้ต่อบนเครื่องอื่นได้</div>`) + cloudFormHtml(); // หน้าเลือกวิธีมีคำอธิบายในตัวแล้ว
   else {
     const last = CS.last ? new Date(CS.last).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : 'ยังไม่เคย';
     b = `<div class="mi" style="padding:0"><span class="mt" style="flex:1"><b>${esc(CS.email)}</b><div class="st">ซิงก์ล่าสุด: ${last}${navigator.onLine ? '' : ' · ออฟไลน์อยู่'}</div></span></div><div class="btns"><button${cloudBusy ? ' disabled' : ''} onclick="cloudSync(true,{loud:true}).then(r=>{if(r==='pushed'||r==='clean'||r==='empty')toast('ซิงก์แล้วค่ะ')})">${cloudBusy ? 'กำลังซิงก์…' : 'ซิงก์ตอนนี้'}</button><button class="g" onclick="cloudLogout()">ออกจากระบบ</button></div><button class="lk" style="color:var(--err)" onclick="cloudDelAsk()">ลบบัญชี</button>${typeof packAcctHtml === 'function' ? packAcctHtml() : ''}`;
@@ -195,10 +246,10 @@ function cloudObHtml() {
 const cloudObLink = () => cloudOn() ? `<button class="lk" onclick="cloudOb=true;render()">มีบัญชีอยู่แล้ว? เข้าสู่ระบบ</button>` : '';
 
 // ---------- เริ่มทำงาน ----------
-function cloudStart() {
+async function cloudStart() {
   try { if (sessionStorage.getItem('kn_pulled')) { sessionStorage.removeItem('kn_pulled'); toast('ดึงความคืบหน้าล่าสุดจากคลาวด์แล้วค่ะ') } } catch (e) {}
   if (!cloudOn()) return;
-  cloudSync(true, { quiet: true });
+  if (!(await cloudOAuthBack())) cloudSync(true, { quiet: true });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') cloudSync(false, { keepalive: true, quiet: true });
     else cloudSync(true, { quiet: true });
