@@ -24,7 +24,7 @@ function lvCard(l) {
 function lvLocked(l) {
   const n = LEVELS[l].n;
   if (!PAID.includes(l) || !cloudOn()) return toast(n + ' กำลังเตรียมเนื้อหาอยู่ค่ะ');
-  if (!cloudIn()) { tab = 'me'; render(); setTimeout(() => { const c = document.getElementById('cloud'); if (c) c.scrollIntoView({ block: 'center' }) }, 50); return toast('เข้าสู่ระบบก่อนนะคะ แล้วระบบจะตรวจสิทธิ์ ' + n + ' ให้') }
+  if (!cloudIn()) { tab = 'me'; meView = 'acct'; render(); setTimeout(() => { const c = document.getElementById('cloud'); if (c) c.scrollIntoView({ block: 'center' }) }, 50); return toast('เข้าสู่ระบบก่อนนะคะ แล้วระบบจะตรวจสิทธิ์ ' + n + ' ให้') }
   if (packWait(l)) return toast('บัญชีนี้ปลดล็อก ' + n + ' แล้ว แต่เนื้อหายังไม่พร้อมบนเซิร์ฟเวอร์ ลองใหม่ภายหลังนะคะ');
   if (buyPrice(l)) return buyAsk(l);
   toast('บัญชีนี้ยังไม่ได้ปลดล็อก ' + n + ' ค่ะ ระบบซื้อกำลังจะเปิดเร็วๆ นี้');

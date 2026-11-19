@@ -6,4 +6,4 @@ function shopHtml(){const p=M.pet,cat=(p.sp||0)===0&&!!window.PixelCat,nc=cat?Ob
 <div class="card shc"><span class="bd b1">เร็วๆ นี้</span><b>ร้านกำลังจัดของอยู่</b><div class="st">เรียนสะสมแต้มไว้ก่อนได้เลย เปิดร้านเมื่อไหร่${p.name}จะบอกนะ</div></div>
 ${box('gift','ตู้สุ่ม','สุ่มของแต่งชิ้นใหม่ให้'+p.name+'และห้อง')}${box('swap','แลกของ','เลือกแลกชิ้นที่อยากได้ตรงๆ')}
 <h2>ของที่จะมีในร้าน</h2><div class="card pfx shl">${cat?`<div>${icx('sparkle',18)} ลายขนแมว ${nc} แบบ</div><div>${icx('bow',18)} เครื่องประดับ ผ้าพันคอ และโบว์</div>`:''}<div>${icx('home',18)} ของแต่งห้อง เช่น โคมกระดาษ</div></div>
-<button class="mer" onclick="goProf()"><span class="pmi">${icx('paw',22)}</span><span class="mrt"><b>ดูคลังสะสมของ${p.name}</b><span class="st">ของที่มีแล้วและที่ยังล็อกอยู่</span></span><span aria-hidden="true">›</span></button>`}
+<button class="mer" onclick="goCol()"><span class="pmi">${icx('paw',22)}</span><span class="mrt"><b>ดูคลังสะสมของ${p.name}</b><span class="st">ของที่มีแล้วและที่ยังล็อกอยู่</span></span><span aria-hidden="true">›</span></button>`}

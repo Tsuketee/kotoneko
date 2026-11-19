@@ -229,6 +229,38 @@ h2{font-size:16px;margin:20px 0 10px}
 .pfi{display:grid;justify-items:center;align-content:start;gap:2px;padding:10px 6px;background:var(--card);border:1px solid var(--bd);border-radius:14px;text-align:center}.pfi b{font-size:12.5px;font-weight:600;line-height:1.3}.pfi>span:last-child{font-size:11.5px;color:var(--mut);font-variant-numeric:tabular-nums}
 .pfi.on{border:2px solid var(--ac)}.pfi.on>span:last-child{color:var(--ac)}.pfi.pfo>.ic2,.pfi.pfo .pfth{opacity:.45;filter:grayscale(.6)}
 .pft3{position:relative;display:block}.pfth{display:block;width:64px;height:64px;image-rendering:pixelated;image-rendering:crisp-edges}.pfl{position:absolute;right:-2px;bottom:2px;color:var(--mut);background:var(--card);border-radius:50%;padding:2px;box-sizing:content-box}
+/* บัตรโปรไฟล์สัตว์เลี้ยง (ร่าง v75): คลิปหนีบ ตราประทับจางๆ มุมขวา ภาพในกรอบ แถวข้อมูล แท็บล่าง */
+.idc{position:relative;margin:22px 0 6px;background:var(--card);border:1px solid var(--bd);border-radius:22px;padding:22px 16px 0;box-shadow:0 2px 0 color-mix(in srgb,var(--bd) 70%,transparent)}
+.idclip{position:absolute;top:-13px;left:50%;transform:translateX(-50%);width:64px;height:24px;border-radius:9px;background:color-mix(in srgb,var(--ac) 50%,#5b3a22);box-shadow:inset 0 2px 0 rgba(255,255,255,.18),inset 0 -3px 0 rgba(0,0,0,.14)}
+.idst{position:absolute;top:4px;right:92px;width:120px;height:80px;fill:none;stroke:var(--bd);stroke-width:2;opacity:.8;pointer-events:none}
+.idrc{flex:1;min-width:0;align-self:stretch;display:flex;flex-direction:column;justify-content:space-between;gap:8px}.idact{position:relative;display:flex;justify-content:flex-end;gap:8px;margin:-8px -4px 0 0}
+.ida{width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:14px;background:color-mix(in srgb,var(--hlt) 22%,var(--card));color:var(--fg);cursor:pointer;-webkit-tap-highlight-color:transparent}.ida:active{transform:scale(.95)}
+.idtop{position:relative;display:flex;align-items:flex-end;gap:14px;min-height:112px}@media(max-width:359px){.idph{width:96px;height:96px}.idph .pfc{width:96px;height:96px}.idtop{min-height:96px}.idnm b{font-size:21px}}
+.idph{flex:none;width:112px;height:112px;border-radius:20px;background:color-mix(in srgb,var(--hlt) 16%,var(--bg));display:grid;place-items:center;overflow:hidden}.idph .pfc{width:96px;height:96px}.idph .pfe{font-size:64px}
+.idnm{display:flex;flex-direction:column;gap:2px;min-width:0;padding-bottom:6px}.idnm b{font-family:var(--fd);font-size:24px;line-height:1.3;overflow-wrap:anywhere}.idnm span{color:var(--mut);font-size:14px}
+.idbd{border-top:1px solid var(--bd);margin-top:16px;padding:12px 2px 14px}
+.idr{display:grid;grid-template-columns:7.2em 1fr;gap:10px;align-items:baseline;padding:7px 0}.idr>span{font-size:12.5px;letter-spacing:.06em;color:var(--mut)}.idr b{font-size:15.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px}.idr small{display:block;color:var(--mut);font-size:12.5px;margin-top:2px}
+.idhb{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;color:var(--err);background:color-mix(in srgb,var(--err) 14%,var(--card))}
+.ids{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;padding-top:12px;border-top:1px dashed var(--bd);font-size:13px;color:var(--mut)}.ids span{display:inline-flex;align-items:center;gap:5px}.ids b{color:var(--fg);font-size:15px;font-variant-numeric:tabular-nums}
+.idtr{display:flex;align-items:center;gap:12px;padding:6px 0 4px}.idtr b{font-family:var(--fd);font-size:17px}.idtr .st{margin-top:3px;line-height:1.55}
+.idq{margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--bg)}.idq span{font-size:12.5px;letter-spacing:.06em;color:var(--mut)}.idq p{margin:6px 0 0;line-height:1.6}
+.idtb{display:flex;gap:6px;margin:0 -16px;padding:8px;border-top:1px solid var(--bd);border-radius:0 0 21px 21px;background:color-mix(in srgb,var(--hlt) 8%,var(--card))}
+.idtb button{flex:1;min-height:44px;border:0;border-radius:14px;background:transparent;color:var(--mut);font:inherit;font-size:14px;letter-spacing:.06em;cursor:pointer}.idtb button.on{background:color-mix(in srgb,var(--hlt) 26%,var(--card));color:var(--fg);font-weight:600}
+@media(min-width:700px){.idph{width:152px;height:152px}.idph .pfc{width:144px;height:144px}.idtop{min-height:152px}.idnm b{font-size:28px}}
+/* แท็บโปรไฟล์ (v76): หัวหน้ามีปุ่มเมนู · หน้าเมนู = การ์ดหัว ปุ่มลัด 3 ช่อง กลุ่มรายการ เวอร์ชัน ออกจากระบบ */
+.mehd{display:flex;align-items:center;justify-content:space-between;gap:10px}.mehd h1{margin:0}
+.mnb{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:6px 16px;border-radius:999px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font:inherit;font-size:15px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}.mnb:active{transform:scale(.97)}
+.mnh{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:14px}
+.idph.sm{width:72px;height:72px;border-radius:18px}.idph.sm .pfc{width:48px;height:48px}.idph.sm .pfe{font-size:40px}
+.mnl{align-self:flex-start;border:0;background:none;padding:2px 0;color:var(--ac);font:inherit;font-size:14px;cursor:pointer}
+.mne{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:6px 14px;border-radius:999px;border:0;background:color-mix(in srgb,var(--hlt) 22%,var(--card));color:var(--fg);font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;flex:none}
+.mnqs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.mnq{display:grid;justify-items:center;gap:6px;padding:14px 4px;border-radius:16px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font:inherit;font-size:14px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}.mnq span{color:var(--ac);display:flex}.mnq:active{transform:scale(.97)}
+.mng{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:0 14px}
+.mnr{display:flex;width:100%;align-items:center;gap:12px;min-height:54px;padding:8px 0;border:0;border-bottom:1px solid var(--bd);background:none;color:var(--fg);font:inherit;font-size:15.5px;text-align:left;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}.mng .mnr:last-child{border-bottom:0}
+.mni{display:flex;color:var(--ac)}.mnt{flex:1;min-width:0}.mnx{color:var(--mut);font-size:13.5px;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnc{color:var(--mut);font-size:22px;line-height:1}
+.mnv{text-align:center;color:var(--mut);font-size:13px;margin:18px 0 8px;min-height:1em}
+.mno{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;margin:6px 0 18px;border-radius:999px;border:1.5px solid var(--ac);background:transparent;color:var(--ac);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
 /* แถบล่าง 5 หมวด (v74): ป้ายสั้นพอดีจอมือถือ · หัวความคืบหน้าสลับภาพรวม/ผิดบ่อย · แถวลิงก์ในหน้าโปรไฟล์/ร้านค้า · หน้าร้านค้าเร็วๆ นี้ */
 #nav button{min-width:0;font-size:11.5px;letter-spacing:-.01em;white-space:nowrap}
 .seg.pgs{display:flex;margin:10px 0 4px}.seg.pgs button{flex:1;min-height:44px}
