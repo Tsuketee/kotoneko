@@ -683,7 +683,7 @@ let PS={};const pk=(k,d=1)=>PS[k]??d;
 // อารมณ์รายวัน ±15% ต่อพฤติกรรม (คงที่ทั้งวัน) ให้แต่ละวันไม่เหมือนกันเป๊ะ
 const jit=k=>{const d=new Date();let x=0;for(const c of d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()+k)x=(x*31+c.charCodeAt(0))>>>0;return .85+(x%1000)/1000*.3};
 // ร้องเองนานๆ ครั้งตอนจบช่วงนั่ง เสียงตามนิสัย (Fe-BARQ วัดการส่งเสียงแยกจากความกระตือรือร้น) ไม่ทับฟองที่กำลังพูดอยู่
-function meow(){if(sayOrig==null&&cv&&cv.isConnected)say([[pk('mw','ニャ'),1100]])}
+function meow(){if(!talking()&&cv&&cv.isConnected)say([[pk('mw','ニャ'),1100]])}
 let PART=null;const dayPart=(h=new Date().getHours())=>PART||(h>=21||h<5?'night':h<9||h>=17?'tw':h>=11&&h<15?'noon':'day'); // tw = เช้า 05–09 / เย็น 17–21
 function decide(){if(Math.random()<(SBP[S.stage]||0)*pk('sb'))return slowBlink();if(Math.random()<.03*pk('voc'))meow();
  const W=Object.entries(DAYW[dayPart()]).map(([k,v])=>[k,v*((PS.w||{})[k]??1)*jit(k)]);let r=Math.random()*W.reduce((a,b)=>a+b[1],0); // น้ำหนักตามช่วงเวลา × นิสัย × อารมณ์รายวัน
@@ -734,8 +734,10 @@ function poke(z,x,y){const m=cat.mode,h=headAt();z=z||(SLEEPM[m]?'sleep':CALM[m]
   const a=Math.max(1,lv);if(a>1&&!(m==='annoy'&&cat.lv>1)){fx('vein',h.x+15,h.y+3);say([['ムッ',1100]])}cat.lv=a;return setMode('annoy',a>1?1600:1300)}
  const busy=m==='pose'&&cat.pose!=='curious'; // กำลังเล่นท่าตามเหตุการณ์ (กิน ดีใจ): ไม่ขัด มีแค่เอฟเฟกต์
  if(z==='head'){fx('tap',x,y,{c:HEART});hearts(h);if(++pets===3&&TIP)TIP('blink');if(busy)return;if(m==='pet'){cat.dur=cat.t+2200;return}
-  if(Math.random()<Math.min(.8,(SHYP[S.stage]||0)*pk('shy')))return setMode('shy',1600);setMode('pet',2200);return say([['ゴロゴロ…',1800]])}
- fx('tap',x,y);if(busy)return;if(m!=='notice')say([['ニャ？',900]]);setMode('notice',1300)} // แตะตัว: หันมอง หูกระดิก
+  if(Math.random()<Math.min(.8,(SHYP[S.stage]||0)*pk('shy')))return setMode('shy',1600);setMode('pet',2200);
+  // ลูบหัวแล้วบางครั้งพูดต่อตามนิสัย (ช่อง pat ใน js/data/pet-lines.js) ความถี่ตาม voc: พลังล้นพูดบ่อยสุด เงียบสงบน้อยสุด (รายงานบทพูด: ความถี่การพูดต่างกันตามนิสัย)
+  const ln=LINE&&Math.random()<Math.min(.9,.65*pk('voc'))?LINE('pat'):'';return say([['ゴロゴロ…',ln?1300:1800]],ln)}
+ fx('tap',x,y);if(busy)return;if(m!=='notice')say([['ニャ？',900]],MAIN);setMode('notice',1300)} // แตะตัว: หันมอง หูกระดิก แล้วพูดประโยคหลักอีกครั้ง
 // ขั้นที่ 3: ぷいっ แล้วเดินหนีไปอีกฝั่ง เลียขน (เลียขนหลังเครียด) พักราว 15–20 วิ · ปิดแอนิเมชัน: ไม่เดิน แค่ทำหน้ารำคาญแล้วพัก
 function leave(h){say([['ぷいっ',1300]]);cat.lv=0;cat.pend=null;
  if(!playing){cat.cool=rr(15000,20000)*pk('cool');return setMode('annoy',1300)}
@@ -784,24 +786,33 @@ function paint(){if(FXS.length)sLast='';const td=tod(),tm=thm(),sk=skey(td),[k,f
 // ไม่ให้ล้นขอบฉาก ถ้าชิดขอบ หางกล่องยังชี้ที่หัว · ไม่มีที่ว่างเหนือหัว (หัวสูง/กล่องสูง) จะชิดขอบบนแทน
 const BB={};function bbox(k,f,tm,idle){const key=[k,f,tm,S.coat,S.acc,idle].join('|');if(BB[key])return BB[key];const g=frame(k,f,tm,S.coat,S.acc,idle);let t=H,l=W,r=-1;
  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]){if(y<t)t=y;if(x<l)l=x;if(x>r)r=x}return BB[key]={t:t<H?t:20,cx:r>=0?(l+r+1)/2:24}}
-let cur=null,bub=null,bx=null,by=null,bw=0,bh=0,bLast='',ro=null,sayT=0,sayOrig=null,pendGreet=0;
-// ฟองคำพูดชั่วคราว (เสียงแมวภาษาญี่ปุ่น) แล้วคืนประโยคเดิม: seq = [[ข้อความ, ms], ...]
-function say(seq){if(!bub)return;if(sayOrig==null)sayOrig=bub.innerHTML;clearTimeout(sayT);const next=i=>{if(!bub)return;if(i>=seq.length){bub.innerHTML=sayOrig;sayOrig=null;bw=0;return}bub.textContent=seq[i][0];bw=0;sayT=setTimeout(()=>next(i+1),seq[i][1])};next(0)}
+let cur=null,bub=null,bx=null,by=null,bw=0,bh=0,bLast='',ro=null,sayT=0,hideT=0,MAIN='',mainUntil=0,LINE=null,RMS=0,pendGreet=0;
+// กล่องคำพูดขึ้นเฉพาะตอนสัตว์เลี้ยงพูด แล้วค่อยๆ จางหายเอง (เจ้าของขอ 2026-11-19 · เดิมค้างตลอด) เวลาตามความยาวประโยค 4–9 วิ
+// ประโยคหลักของหน้าแรก (MAIN) ขึ้นตอนวาดหน้า ถ้าเพิ่งขึ้นประโยคเดิมไปไม่ถึง 2 นาที (เช่น วาดหน้าใหม่หลังให้อาหาร) ไม่ขึ้นซ้ำ · แตะตัวแมว = พูดประโยคหลักอีกครั้ง
+const SEEN={t:'',at:0},readMs=h=>RMS||clamp(2600+h.replace(/<rt>.*?<\/rt>|<[^>]*>/g,'').length*80,4000,9000);
+const talking=()=>!!bub&&bub.classList.contains('on');
+function bhide(ms){clearTimeout(hideT);if(!bub)return;if(ms>0){hideT=setTimeout(()=>bhide(0),ms);return}bub.classList.remove('on')}
+function talk(h,ms){if(!bub||!h)return;clearTimeout(sayT);bub.innerHTML=h;bw=0;bub.classList.add('on');bhide(ms||readMs(h))}
+// ฟองคำพูดชั่วคราว (เสียงแมวภาษาญี่ปุ่น): seq = [[ข้อความ, ms], ...] · after = ประโยคที่พูดต่อ (ลูบหัว แตะตัว)
+// ไม่มี after: คืนประโยคหลัก ถ้ายังอยู่ในช่วงแสดงประโยคหลักก็แสดงต่อ ไม่งั้นจางหาย
+function say(seq,after){if(!bub)return;clearTimeout(sayT);clearTimeout(hideT);bub.classList.add('on');
+ const next=i=>{if(!bub)return;if(i>=seq.length){if(after)return talk(after);bub.innerHTML=MAIN;bw=0;const left=mainUntil-Date.now();return bhide(left>500?Math.max(left,2500):0)}
+  bub.textContent=seq[i][0];bw=0;sayT=setTimeout(()=>next(i+1),seq[i][1])};next(0)}
 function bubble(dt){if(!bub||!cur)return;const b=bbox(cur.k,cur.f,cur.tm,cur.idle),tx=cur.X+b.cx,ty=CY+b.t-2;
  if(bx==null){bx=tx;by=ty}else{const a=Math.min(1,dt/140);bx+=(tx-bx)*a;by+=(ty-by)*a}
  const W2=cv.clientWidth,H2=cv.clientHeight;if(!W2)return;if(!bw){bw=bub.offsetWidth;bh=bub.offsetHeight;bLast=''}
  const px=bx/SW*W2,L=clamp(px,bw/2+6,W2-bw/2-6),T=Math.max(by/SH*H2-8,bh+6),tl=clamp(px-L+bw/2,16,bw-16),key=Math.round(L)+'|'+Math.round(T)+'|'+Math.round(tl);
- if(key===bLast)return;bLast=key;bub.style.transform=`translate(${Math.round(L-bw/2)}px,${Math.round(T-bh)}px)`;bub.style.setProperty('--tl',Math.round(tl)+'px');bub.style.visibility='visible'}
+ if(key===bLast)return;bLast=key;bub.style.transform=`translate(${Math.round(L-bw/2)}px,${Math.round(T-bh)}px)`;bub.style.setProperty('--tl',Math.round(tl)+'px');bub.classList.add('pl')} // pl = วางตำแหน่งแล้ว (ก่อนหน้านั้นซ่อนไว้ ไม่ให้กระพริบที่มุมซ้ายบน)
 function loop(now){if(!cv||!cv.isConnected){stop();return}const dt=Math.min(now-last,100);last=now;
  if(vis&&!document.hidden){if(cat.pend&&CALM[cat.mode]){const p=cat.pend;cat.pend=null;act(p.k,p.ms)}step(dt);fxStep(dt);paint();bubble(dt)}
  raf=requestAnimationFrame(loop)}
 let hold=null;const dropHold=()=>{FXS=FXS.filter(f=>f.type!=='hold');sLast=''};
 function endHold(tap){if(!hold)return;clearTimeout(hold.tm);const h=hold;hold=null;dropHold();if(tap&&!h.done)poke('head',h.x,h.y)}
-function stop(){endHold(false);cancelAnimationFrame(raf);raf=0;if(io){io.disconnect();io=null}if(ro){ro.disconnect();ro=null}cv=null;bub=null}
+function stop(){endHold(false);clearTimeout(sayT);clearTimeout(hideT);cancelAnimationFrame(raf);raf=0;if(io){io.disconnect();io=null}if(ro){ro.disconnect();ro=null}cv=null;bub=null}
 function fit(){if(!cv||!cv.parentElement||cv.closest('.scn'))return; // อยู่ในฉากสถานที่: CSS ขยายเต็มการ์ดเอง
  const w=cv.parentElement.clientWidth||SW*2,s=w>=SW*2?Math.min(5,Math.floor(w/SW)):w/SW;cv.style.width=SW*s+'px';cv.style.height=SH*s+'px'}
 // ใส่แมวลงผืนผ้าใบ (เรียกทุกครั้งที่วาดหน้าหลักใหม่ สถานะแมวต่อเนื่องจากครั้งก่อน)
-function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream';S.acc=o.acc||'none';S.stage=o.stage||1;PS=PERS[o.trait]||{};FXS=[];TIP=o.onTip||null;pets=0;hold=null;PLACE=SCENES[o.place]?o.place:'room';sLast='';vis=true;clearTimeout(sayT);sayOrig=null;bub=o.bubble||null;bx=by=null;bw=0;cur=null;
+function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream';S.acc=o.acc||'none';S.stage=o.stage||1;PS=PERS[o.trait]||{};FXS=[];TIP=o.onTip||null;pets=0;hold=null;PLACE=SCENES[o.place]?o.place:'room';sLast='';vis=true;clearTimeout(sayT);clearTimeout(hideT);bub=o.bubble||null;MAIN=bub?bub.innerHTML:'';LINE=o.line||null;mainUntil=0;bx=by=null;bw=0;cur=null;
  if(bub&&'ResizeObserver'in window){ro=new ResizeObserver(()=>{bw=0});ro.observe(bub);ro.observe(cv)} // ขนาดกล่อง/ฉากเปลี่ยน (ฟอนต์โหลดเสร็จ หมุนจอ) วัดใหม่
  cv.width=SW;cv.height=SH;cv.tabIndex=0;cv.setAttribute('role','button');cv.setAttribute('aria-label',(o.label||'แมว')+' แตะหัวเพื่อลูบ กดค้างที่หัวเพื่อกะพริบตาช้าใส่');
  // นิ้ว เมาส์ Apple Pencil ใช้ pointer event เดียวกัน · โซนอื่นตอบทันทีตอนแตะลง · หัวรอดูว่าแตะ (ลูบหัวตอนยกนิ้ว) หรือกดค้าง (กะพริบตาช้า) มีวงแหวนชมพูค่อยๆ เต็มให้รู้ว่ากำลังกดค้าง
@@ -817,6 +828,7 @@ function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream'
  if('IntersectionObserver'in window){io=new IntersectionObserver(es=>{vis=es[0].isIntersecting;sLast=''});io.observe(cv)} // ไม่อยู่บนจอ = ไม่คำนวณ ไม่วาด
  if(!booted){booted=true;if(o.sleepy){if(SCN().bed!=null){cat.x=SCN().bed;cat.dir=1;setMode('curl',rr(24000,36000))}else setMode('nap',rr(8000,14000))}} // เปิดแอปดึกๆ: ในห้องหลับอยู่บนเบาะ ที่อื่นงีบหมอบ
  fit();paint();bubble(0);
+ if(bub){const now=Date.now();if(SEEN.t!==MAIN||now-SEEN.at>=12e4){SEEN.t=MAIN;SEEN.at=now;const ms=readMs(MAIN);mainUntil=now+ms;talk(MAIN,ms)}}
  if(pendGreet){const g=pendGreet;pendGreet=0;greet(g)}
  if(pending&&Date.now()-pending.t<6e5){doAct(pending.k,pending.ms)}pending=null; // ท่าอารมณ์ที่เกิดตอนไม่ได้อยู่หน้าหลัก เล่นให้ดูตอนกลับมา (ไม่เกิน 10 นาที)
  last=performance.now();raf=requestAnimationFrame(loop)}
@@ -825,5 +837,5 @@ function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:D
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
 window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
- _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk)}};
+ _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk)}};
 })();
