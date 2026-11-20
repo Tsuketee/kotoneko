@@ -1378,6 +1378,63 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
 });
 
 // ---------- iPad / PWA ----------
+test('แมวพิกเซล: ตื่นแล้วหาว/ยืดตัว · นวดก่อนนอนบนเบาะ · น้ำหนักตามสถานที่และช่วงปรับตัวในที่ใหม่', async (b, base) => {
+  const p = await fresh(b, base);
+  await p.waitForTimeout(200);
+  // ท่าใหม่ (v83) วาดได้ทุกลายขน × เครื่องประดับ ทั้งสองโหมด และผ้าพันคอ/โบว์ต้องเห็นทุกเฟรม (ตกลงกันว่าเครื่องประดับต้องใส่ได้ทุกท่า)
+  const bad = await p.evaluate(() => { const { frame, COATS } = PixelCat._t, out = [], n = { yawn: 4, stretchR: 6, stretchL: 6, knead: 4, doze: 8 };
+    for (const k in n) for (const co of Object.keys(COATS)) for (const tm of ['light', 'dark']) for (let f = 0; f < n[k]; f++) { const g0 = JSON.stringify(frame(k, f, tm, co, 'none'));
+      if (!JSON.parse(g0).some(r => r.some(Boolean))) out.push('ว่าง ' + [k, co, tm, f]);
+      for (const acc of ['scarf', 'bow']) if (JSON.stringify(frame(k, f, tm, co, acc)) === g0) out.push('ไม่เห็น' + acc + ' ' + [k, co, tm, f]) }
+    // ยืดตัวเริ่มและจบที่ท่ายืนหันข้าง (ภาพต้องเท่ากันเป๊ะ ไม่กระตุกตอนสลับท่า) และลายไม่สลับข้างเมื่อหันซ้าย (เคยพลาดในร่างแรก: สามสีหันซ้ายกลายเป็นแต้มดำ)
+    for (const co of ['calico', 'cream', 'tuxedo']) for (const d of ['R', 'L']) if (JSON.stringify(frame('stretch' + d, 0, 'light', co, 'bow')) !== JSON.stringify(frame('stand' + d, 2, 'light', co, 'bow'))) out.push('ยืดตัวเฟรมแรกไม่ตรงท่ายืน ' + co + d);
+    return out });
+  assert.deepStrictEqual(bad, []);
+  // ตื่นนอน 200 รอบ: หาวราวครึ่งหนึ่ง ยืดตัวราว 60% ยืดตัวต้องหันข้างก่อน (turnOut) และจบด้วยเดิน/วิ่ง/หันกลับมานั่ง ไม่ออกนอกขอบ
+  const wk = await p.evaluate(() => { const { step, cat, setPart, XMIN, XMAX } = PixelCat._t; setPart('day'); const r = { yawn: 0, stretch: 0, out: 0, badIn: [], badOut: [] };
+    for (let i = 0; i < 200; i++) { Object.assign(cat, { mode: 'wake', t: 0, dur: 10, x: 30 + (i % 5) * 20, then: null, after: null, pend: null, str: 0, wk: 0, tol: 0, cool: 0, lv: 0 }); const seen = [];
+      for (let k = 0; k < 400; k++) { step(50); if (seen[seen.length - 1] !== cat.mode) seen.push(cat.mode); if (cat.x < XMIN || cat.x > XMAX) r.out++ }
+      if (seen.includes('yawn')) r.yawn++; const j = seen.indexOf('stretch'); if (j >= 0) { r.stretch++; if (seen[j - 1] !== 'turnOut') r.badIn.push(seen.join(' ')); if (!['walk', 'run', 'turnIn'].includes(seen[j + 1])) r.badOut.push(seen.join(' ')) } }
+    setPart(null); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null, str: 0 }); return r });
+  assert.strictEqual(wk.out, 0); assert.deepStrictEqual([wk.badIn, wk.badOut], [[], []], 'ลำดับยืดตัวผิด');
+  assert(wk.yawn > 60 && wk.yawn < 140, 'ตื่นแล้วหาวราวครึ่งหนึ่ง ' + JSON.stringify(wk)); assert(wk.stretch > 85 && wk.stretch < 155, 'ตื่นแล้วยืดตัวราว 60% ' + JSON.stringify(wk));
+  // หายไปนาน 4 ชม.ขึ้นไป แมวหลับอยู่: ตื่น → ยืดตัว → เดินหางตั้งมาทัก (Eriksson 2017 แมวยืดตัวมากขึ้นตอนเจ้าของกลับมาหลังหายไปนาน)
+  const gs = await p.evaluate(() => { const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'curl', x: 12, t: 0, dur: 1e9, then: null, str: 0 }); PixelCat.greet(6 * 3600e3); const seen = [];
+    for (let i = 0; i < 400 && cat.mode !== 'walk'; i++) { step(50); if (seen[seen.length - 1] !== cat.mode) seen.push(cat.mode) } return [seen.join(' '), cat.then] });
+  assert.deepStrictEqual(gs, ['wake turnOut stretch walk', 'greet']);
+  // ถึงเบาะในห้อง: นวด ふみふみ ราว 30% (ร่าง 1) → หมอบ → ขด · ที่อื่นไม่มีเบาะจึงไม่นวด
+  const kn = await p.evaluate(() => { const { step, cat } = PixelCat._t; let n = 0, chain = true, say = '';
+    for (let i = 0; i < 300; i++) { Object.assign(cat, { mode: 'turnIn', t: 0, dur: 10, x: 12, then: 'sleep', pend: null }); if (!n) document.querySelector('.scn.px .scb').classList.remove('on'); step(50); // ฟองนวดขึ้นเมื่อไม่ได้พูดอยู่
+      if (cat.mode === 'knead') { n++; if (!say) say = document.querySelector('.scn.px .scb').textContent; step(4000); if (cat.mode !== 'loaf') chain = false } else if (cat.mode !== 'loaf') chain = false }
+    Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return { n, chain, say } });
+  assert(kn.n > 45 && kn.n < 140, 'นวดก่อนนอนราว 30% ' + JSON.stringify(kn));
+  // ง่วงเคลิ้ม = นั่งสัปหงก (v86 แทนท่าหมอบ): ช่วงหมอบก่อนนอน งีบ และตอนตื่น วาดด้วยท่า doze
+  const dz = []; for (const m of ['loaf', 'nap', 'wake']) { await p.evaluate(m => Object.assign(PixelCat._t.cat, { mode: m, t: 0, dur: 1e9, after: null }), m); await p.waitForTimeout(80); dz.push(await p.evaluate(() => PixelCat._t.cat.k)) }
+  await p.evaluate(() => Object.assign(PixelCat._t.cat, { mode: 'sit', t: 0, dur: 1e9 })); assert.deepStrictEqual(dz, ['doze', 'doze', 'doze'], 'ง่วง/งีบ/ตื่นต้องใช้ท่านั่งสัปหงก');
+  // ช่วงปรับตัว: วันแรกระวังตัวเต็มที่ ลดลงวันละหนึ่งในสาม วันที่ 4 ปกติ · อยู่บนจอนานขึ้นก็ผ่อนคลาย · ห้อง/สวนไม่มีช่วงปรับตัว
+  const wy = await p.evaluate(() => { const { setFam, wary } = PixelCat._t, r = []; M.place = { at: 'cafe', got: PLACES.map(q => q.id), fam: {} }; render();
+    for (const [n, ms] of [[1, 0], [2, 0], [4, 0], [1, 6e5]]) { setFam(n, ms); r.push(+wary().toFixed(2)) } M.place = { at: 'garden', got: PLACES.map(q => q.id), fam: {} }; render(); setFam(1); r.push(wary()); return r });
+  assert.deepStrictEqual(wy, [1, 0.67, 0, 0.3, 0]);
+  // น้ำหนักตามสถานที่ (จำลองกลางวัน/เช้าเย็นที่ละ 1 ชม.): คาเฟ่/สถานีไม่วิ่งดีด สวนเดินไกลกว่าห้อง · ช่วงปรับตัวในคาเฟ่ แอบหลังของมากขึ้น เลียขนน้อยลง
+  // ใช้ตัวสุ่มแบบกำหนด seed (mulberry32) ในช่วงจำลองนี้ ผลจึงเหมือนเดิมทุกรอบ ไม่สุ่มตก (จำลอง 1 ชม. แบบสุ่มจริง สวน/ห้องแกว่ง 0.9–1.4 เท่า) · seed 1–20: ครั้งที่ออกเดิน สวน/ห้อง 1.09–1.6 สถานี/ห้อง 0.57–0.9 เกณฑ์จึงตั้งที่ 1.05 และ 0.95 (ทุก seed ผ่าน)
+  const pw = await p.evaluate(seed => { const { step, cat, setPart, setFam, setTrait, XMAX } = PixelCat._t, out = {}, R0 = Math.random; let a = seed >>> 0;
+    Math.random = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296 }; setTrait(-1); setPart('tw');
+    for (const [id, fam] of [['room', 99], ['garden', 99], ['cafe', 99], ['station', 99], ['cafe', 1]]) { M.place = { at: id, got: PLACES.map(q => q.id), fam: {} }; render(); const o = out[id + fam] = { zoom: 0, walk: 0, hide: 0, groom: 0 }; let last = '';
+      Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52, then: null, tol: 0, cool: 0, pend: null, str: 0 });
+      for (let k = 0; k < 72000; k++) { setFam(fam, 0); step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') o.zoom++; if (cat.mode === 'groom') o.groom++; if (cat.mode === 'turnOut' && cat.then === 'sit' && cat.target !== Math.round(cat.x)) o.walk++; last = cat.mode } if (cat.mode === 'sit' && cat.x >= XMAX - 6) o.hide += 50 } }
+    Math.random = R0; setPart(null); setTrait(M.pet.trait); M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return out }, +(process.env.KN_SEED || 7));
+  const PW = JSON.stringify(pw);
+  assert.strictEqual(pw.cafe99.zoom + pw.station99.zoom + pw.cafe1.zoom, 0, 'คาเฟ่/สถานีต้องไม่วิ่งดีด ' + PW); assert(pw.room99.zoom > 0, PW);
+  assert(pw.garden99.walk > pw.room99.walk * 1.05, 'สวนต้องออกเดินบ่อยกว่าห้อง ' + PW); assert(pw.station99.walk < pw.room99.walk * .95, 'สถานีต้องออกเดินน้อยกว่าห้อง ' + PW);
+  assert(pw.cafe1.hide > pw.cafe99.hide * 1.5, 'วันแรกในคาเฟ่ต้องแอบหลังของบ่อยกว่า ' + PW); assert(pw.cafe1.groom < pw.cafe99.groom, 'วันแรกในคาเฟ่ต้องเลียขนน้อยกว่า ' + PW);
+  // นับวันที่อยู่ในแต่ละที่ (M.place.fam): ผู้ใช้เดิมที่อยู่คาเฟ่ก่อนอัปเดตถือว่าคุ้นแล้ว · ไปที่ใหม่เริ่มวันที่ 1 · วันเดียวกันไม่นับซ้ำ · วันถัดไปนับเพิ่ม · อยู่บ้านไม่เขียนลง M
+  const fm = await p.evaluate(() => { const r = []; M.place = { at: 'cafe', got: ['cafe'] }; r.push(plVisit());
+    M.place = { at: 'room', got: [] }; r.push(plVisit(), 'fam' in M.place);
+    M.place = { at: 'station', got: ['station'], fam: {} }; r.push(plVisit(), plVisit()); M.place.fam.station[1] = '2000-01-01'; r.push(plVisit()); return r });
+  assert.deepStrictEqual(fm, [4, 99, false, 1, 1, 2]);
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('iPad แนวตั้งและแนวนอน: หน้าหลักไม่มีแถบเลื่อนแนวนอน', async (b, base) => {
   for (const vp of [{ width: 820, height: 1180 }, { width: 1180, height: 820 }]) {
     const p = await fresh(b, base, { viewport: vp });
@@ -1410,11 +1467,12 @@ test('PWA: manifest ถูกต้องและ service worker ติดต�
   const base = `http://localhost:${server.address().port}/`;
   const browser = await chromium.launch();
   let fail = 0;
-  for (const [name, fn] of tests) {
+  const only = process.argv[2], run = only ? tests.filter(([n]) => n.includes(only)) : tests; // node tests/e2e.js <คำในชื่อข้อ> = รันเฉพาะข้อที่ชื่อมีคำนั้น
+  for (const [name, fn] of run) {
     try { await Promise.race([fn(browser, base), new Promise((_, j) => setTimeout(() => j(new Error('หมดเวลา 30 วินาที')), 30000))]); console.log('  ✓', name); }
     catch (e) { fail++; console.log('  ✗', name, '\n     ', (e.stack || e.message || e).split("\n").slice(0, 4).join(" | ")); }
   }
   await browser.close(); server.close();
-  console.log(fail ? `\nไม่ผ่าน ${fail}/${tests.length}` : `\nผ่านทั้งหมด ${tests.length} ข้อ`);
+  console.log(fail ? `\nไม่ผ่าน ${fail}/${run.length}` : `\nผ่านทั้งหมด ${run.length} ข้อ`);
   process.exit(fail ? 1 : 0);
 })();
