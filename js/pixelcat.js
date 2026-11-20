@@ -553,23 +553,76 @@ function idleAt(o,now){const ok=IDLE_FOR[o.k];if(!ok||!playing)return null;const
 const frameAt=(dur,t)=>{const T=dur.reduce((a,b)=>a+b,0);t%=T;for(let i=0;i<dur.length;i++){if(t<dur[i])return i;t-=dur[i]}return 0};
 const SW=160,SH=90,FLOOR=85,CY=FLOOR-44,XMIN=-2,XMAX=SW-46,CUSH=12,GAIT={walk:{v:12,step:WALK_STEP,n:WALK_N},run:{v:84,step:RUN_STEP,n:RUN.length}}; // step: ระยะต่อเฟรม (เดิน = ระยะที่เท้าบนพื้นถอย เท้าจึงไม่ไถล)
 const SCOL={light:{paper:'#fbf1df',lit:null,trunk:'#9a7250',clk:'#fffaf0',hand:'#4f372b',bob:'#e8b04a',glass:'#f3e3cc',wall:'#fff3e3',wall2:'#fbe7cf',trim:'#e5c9a8',floor:'#efd6b5',floor2:'#e4c6a0',seam:'#d8b68e',sky:'#cfe9f7',sky2:'#e8f6fc',frame:'#c49a73',frame2:'#a97e58',cloud:'#ffffff',
-  cush:'#f3a8a0',cush2:'#de8a83',cush3:'#fbc9c2',pot:'#dd9264',pot2:'#bf744b',pot3:'#efb08a',leaf:'#86b96f',leaf2:'#65985a',leaf3:'#a8d48f',line:'#7a5a43',shade:'rgba(90,58,38,.14)',moon:null},
+  cush:'#f3a8a0',cush2:'#de8a83',cush3:'#fbc9c2',pot:'#dd9264',pot2:'#bf744b',pot3:'#efb08a',leaf:'#86b96f',leaf2:'#65985a',leaf3:'#a8d48f',line:'#7a5a43',shade:'rgba(90,58,38,.14)',moon:null,
+  cork:'#dcb98f',cork2:'#c9a277',note:'#fffaf0',note2:'#fde9a6',note3:'#d6ebf6',ink:'#c7b196',shin:'#8a6446',b1:'#e58f7d',b2:'#7ea9cd',b3:'#ebc66b',b4:'#93bf8c',b5:'#b89acb',spine:'rgba(255,255,255,.38)',mk:'#fffaf2',
+  hill:'#b9d9c3',house:'#f2e3d0',roof:'#cf8f72',lwin:null,cur:'#f6cdbd',cur2:'#e6b09d',cur3:'#d98f7c',bird:'#b07a52',bird2:'#7d5034',bird3:'#f1e2c8',beak:'#e0a040'},
  dark:{paper:'#6a5a4a',lit:'#ffd98a',trunk:'#6b5040',clk:'#d9ccb4',hand:'#2e221c',bob:'#b88a3a',glass:'#3a2f27',wall:'#2c2520',wall2:'#27211c',trim:'#3d332b',floor:'#3a3029',floor2:'#342a23',seam:'#2a221c',sky:'#1e2b47',sky2:'#273860',frame:'#7d604a',frame2:'#634a37',cloud:null,
-  cush:'#a6625c',cush2:'#864d48',cush3:'#bd7a73',pot:'#9a6544',pot2:'#7b4f34',pot3:'#b07a57',leaf:'#5f8c52',leaf2:'#4a7040',leaf3:'#79a868',line:'#b8987a',shade:'rgba(0,0,0,.3)',moon:'#f4e4a6'}};
+  cush:'#a6625c',cush2:'#864d48',cush3:'#bd7a73',pot:'#9a6544',pot2:'#7b4f34',pot3:'#b07a57',leaf:'#5f8c52',leaf2:'#4a7040',leaf3:'#79a868',line:'#b8987a',shade:'rgba(0,0,0,.3)',moon:'#f4e4a6',
+  cork:'#5d4835',cork2:'#4f3d2d',note:'#7a6e60',note2:'#7f6f45',note3:'#5b6a74',ink:'#544638',shin:'#3f2f24',b1:'#8f5a4f',b2:'#4f6a82',b3:'#8f7a45',b4:'#5d7a58',b5:'#6e5d7c',spine:'rgba(255,255,255,.12)',mk:'#cfc6b8',
+  hill:'#18233a',house:'#262c3d',roof:'#352f44',lwin:'#f6d27a',cur:'#5c4340',cur2:'#4b3634',cur3:'#6e4d47',bird:'#b07a52',bird2:'#7d5034',bird3:'#f1e2c8',beak:'#e0a040'}};
 const rect=(c,x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h)};
 const blob=(c,cx,cy,rx,ry,col)=>{c.fillStyle=col;for(let y=Math.floor(cy-ry);y<=cy+ry;y++)for(let x=Math.floor(cx-rx);x<=cx+rx;x++)if(((x+.5-cx)/rx)**2+((y+.5-cy)/ry)**2<=1)c.fillRect(x,y,1,1)};
 const canv=()=>{const v=document.createElement('canvas');v.width=SW;v.height=SH;return v};
+// ---------- ฉากพิกเซลตามสถานที่ (เจ้าเหมียวเที่ยวญี่ปุ่น · js/data/places.js) ----------
+// ทุกฉากขนาด 160×90 เส้นพื้น y=85 เหมือนกัน · มีที่นอน (bed: เบาะ x=12) เฉพาะห้องอ่านหนังสือ (เจ้าของขอ 2026-11-19: ไปเที่ยวแล้วมีเบาะดูแปลก)
+// ที่อื่น bed = null: แมวไม่เดินไปขดหลับลึก แต่งีบหมอบตรงที่อยู่แทน (แมวระวังตัวในที่ไม่คุ้น)
+// วาดเองทั้งหมด (ต้นฉบับ) · ห้ามวาดตัวอักษรญี่ปุ่นปลอม ใช้เส้นหรือไอคอนแทน
+// ชั้นภาพ (v92 ยกระดับฉาก): far (แคช: ฟ้า ภูเขา เมือง) → air (ขยับ: เมฆลอย) → mid (แคช: ราง สายไฟ) → back (ขยับ: รถไฟ) → bg (แคช: ของในฉาก) → live (ขยับ หลังแมว: นาฬิกา แดด นก กระบอกไม้ไผ่)
+//  → แมว → fg (แคช บังแมวได้ มีเส้นขอบอัตโนมัติ) → front (ขยับ หน้าแมว: ไอกาแฟ ผีเสื้อ หิ่งห้อย เข็มนาฬิกาเสา)
+// ชั้นที่ขยับรับ A = {t: performance.now(), ms: Date.now(), d: Date, P: เล่นแอนิเมชันได้, td: ช่วงเวลา} · tick(A) คืนสตริงสถานะ (เปลี่ยนเมื่อไหร่ค่อยวาดใหม่)
+// ตารางเวลาของสิ่งที่ขยับใช้นาฬิกาจริง (Date.now()) เปิดแอปกี่ครั้งก็ตรงกัน · ผู้ใช้ปิดแอนิเมชัน (P = false): เมฆนิ่ง ไม่มีรถไฟ นก ผีเสื้อ หิ่งห้อย ไอกาแฟ
+const poly=(c,P,col)=>{c.fillStyle=col;const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]);
+ for(let y=Math.floor(Math.min(...ys));y<=Math.max(...ys);y++)for(let x=Math.floor(Math.min(...xs));x<=Math.max(...xs);x++){const px=x+.5,py=y+.5;let ins=false;
+  for(let i=0,j=P.length-1;i<P.length;j=i++){const[xi,yi]=P[i],[xj,yj]=P[j];if((yi>py)!==(yj>py)&&px<(xj-xi)*(py-yi)/(yj-yi)+xi)ins=!ins}if(ins)c.fillRect(x,y,1,1)}};
+const dot=(c,x,y,col)=>{c.fillStyle=col;c.fillRect(Math.floor(x),Math.floor(y),1,1)};
+const ring=(c,cx,cy,a,b,col)=>{for(let t=0;t<6.29;t+=.6/Math.max(a,b))dot(c,cx+Math.cos(t)*a,cy+Math.sin(t)*b,col)}; // เส้นวงรีบาง 1 px
+// ฟ้ากลางแจ้ง: sky = ฟ้าด้านบน sky2 = แถบใกล้ขอบฟ้า · เมฆวาดแยกใน clouds() ให้ลอยได้
+const sky=(c,k,y2)=>{rect(c,0,0,SW,y2,k.sky);rect(c,0,y2-16,SW,16,k.sky2);rect(c,0,y2-17,SW,1,k.sky2+'99');
+ if(k.moon){blob(c,132,13,3,3,k.moon);[[78,8],[104,20],[146,26],[90,30],[120,6],[40,14],[60,24],[20,30]].forEach(([x,y])=>rect(c,x,y,1,1,k.moon))}
+ else blob(c,130,k.sunY||12,k.sunY?5:4,k.sunY?5:4,k.sun)};
+// เมฆลอยช้าๆ จากซ้ายไปขวา (เมฆใหญ่ใกล้กว่า ลอยเร็วกว่า) · กลางคืนไม่มีเมฆ
+const CLOUDS=[[78,14,1],[106,24,.75],[22,9,.85],[148,19,.6]],cloudKey=A=>A.P?Math.floor(A.ms/2500):0;
+function clouds(c,k,A){if(!k.cloud)return;const s=A.P?A.ms/2500:0,W=SW+34;
+ CLOUDS.forEach(([x0,y,z])=>{const x=((x0+s*z)%W+W)%W-17;blob(c,x,y,3.5*z+.4,2*z,k.cloud);blob(c,x+3*z,y-z,3*z,2.5*z,k.cloud);blob(c,x-2.6*z,y+.4,2.2*z,1.4*z,k.cloud)})}
+
+// ===== ห้องอ่านหนังสือ (部屋): วอลเปเปอร์ลายจุด บอร์ดก๊อกโน้ต หน้าต่างมีม่านและวิวหลังคาบ้าน ชั้นหนังสือ โคมอันด้ง เบาะ · ฉากหน้า: กระถางต้นไม้
+// ขยับ: นาฬิกาลูกตุ้ม แดดจากหน้าต่างบนพื้นเลื่อนตามชั่วโมง (กลางคืนเป็นแสงจันทร์จางๆ) นกกระจอกมาเกาะขอบหน้าต่างเป็นพักๆ
 function roomBg(c,k){
- rect(c,0,0,SW,SH,k.wall);rect(c,0,52,SW,17,k.wall2);rect(c,0,51,SW,1,k.trim);rect(c,0,69,SW,2,k.trim);          // ผนัง ไม้บัวกลาง บัวเชิงผนัง
- rect(c,0,71,SW,SH-71,k.floor);rect(c,0,80,SW,1,k.floor2);[0,40,80,120].forEach(x=>rect(c,x,71,1,SH-71,k.seam)); // พื้นเสื่อ
- rect(c,92,8,40,32,k.frame2);rect(c,93,9,38,30,k.frame);rect(c,95,11,34,26,k.sky);rect(c,95,11,34,7,k.sky2);      // หน้าต่าง
- if(k.moon){blob(c,122,17,3,3,k.moon);[[99,14],[104,31],[117,29],[100,22],[126,32]].forEach(([x,y])=>rect(c,x,y,1,1,k.moon))}
- else if(k.sunY){blob(c,122,k.sunY,4.5,4.5,k.sun);blob(c,102,16,3.5,1.6,k.cloud);blob(c,105,15.4,2.6,1.6,k.cloud)} // รุ่งเช้า/พลบค่ำ: พระอาทิตย์ต่ำใกล้ขอบหน้าต่าง
- else{blob(c,101,15.5,3.5,2,k.cloud);blob(c,104,14.5,3,2.5,k.cloud);blob(c,120,31,3,1.6,k.cloud);blob(c,122.5,30.4,2.4,2,k.cloud)}
+ rect(c,0,0,SW,SH,k.wall);for(let y=3;y<50;y+=6)for(let x=y%12===3?1:4;x<SW;x+=6)rect(c,x,y,1,1,k.wall2);  // วอลเปเปอร์ลายจุดจางๆ
+ rect(c,0,52,SW,17,k.wall2);rect(c,0,51,SW,1,k.trim);rect(c,0,69,SW,2,k.trim);                             // ไม้บัวกลาง บัวเชิงผนัง
+ rect(c,0,71,SW,SH-71,k.floor);[76,81,86].forEach(y=>rect(c,0,y,SW,1,k.floor2));                            // พื้นไม้เป็นแผ่นเหลื่อมกัน
+ [[71,[26,74,122]],[76,[6,50,98,146]],[81,[30,78,126]],[86,[12,60,108,154]]].forEach(([y,xs])=>xs.forEach(x=>rect(c,x,y,1,5,k.seam)));
+ // บอร์ดก๊อก: โน้ตกระดาษ กระดาษโน้ตเหลือง รูปถ่ายวิว (เส้นแทนตัวหนังสือ)
+ rect(c,54,12,28,21,k.frame2);rect(c,55,13,26,19,k.cork);for(let y=14;y<32;y+=3)for(let x=56+(y%2)*2;x<81;x+=4)rect(c,x,y,1,1,k.cork2);
+ [[57,15,8,7,k.note],[67,14,6,6,k.note2],[74,16,6,8,k.note3],[57,24,7,6,k.note2]].forEach(([x,y,w,h,col],i)=>{rect(c,x+1,y+1,w,h,k.cork2);rect(c,x,y,w,h,col);
+  for(let ly=y+2;ly<y+h-1;ly+=2)rect(c,x+1,ly,w-2-(ly%4?1:0),1,k.ink);rect(c,x+(w>>1),y,1,1,i%2?k.b1:k.b2)});
+ rect(c,67,23,10,9,k.cork2);rect(c,66,22,10,9,k.note);rect(c,67,23,8,5,k.sky);rect(c,67,27,8,2,k.leaf);blob(c,72.5,25,1.2,1.2,k.cloud||k.moon);rect(c,70,22,1,1,k.b1); // รูปถ่าย
+ // หน้าต่าง + วิวเนินกับหลังคาบ้านไกลๆ (กลางคืนบ้านเปิดไฟ)
+ rect(c,92,8,40,32,k.frame2);rect(c,93,9,38,30,k.frame);rect(c,95,11,34,26,k.sky);rect(c,95,11,34,7,k.sky2);
+ if(k.moon){blob(c,122,17,3,3,k.moon);[[99,14],[104,24],[117,27],[100,20],[126,26]].forEach(([x,y])=>rect(c,x,y,1,1,k.moon))}
+ else if(k.sunY){blob(c,122,k.sunY-4,4.5,4.5,k.sun);blob(c,102,16,3.5,1.6,k.cloud);blob(c,105,15.4,2.6,1.6,k.cloud)} // รุ่งเช้า/พลบค่ำ: พระอาทิตย์ต่ำใกล้หลังคา
+ else{blob(c,101,15.5,3.5,2,k.cloud);blob(c,104,14.5,3,2.5,k.cloud);blob(c,120,19,3,1.6,k.cloud);blob(c,122.5,18.4,2.4,2,k.cloud)}
+ poly(c,[[95,34],[103,32],[110,33.5],[117,31.5],[124,33],[129,32],[129,37],[95,37]],k.hill);
+ [[99,33,6],[118,31,7]].forEach(([x,y,w])=>{rect(c,x,y+2,w,35-y,k.house);poly(c,[[x-1,y+2.5],[x+w/2,y-.5],[x+w+1,y+2.5]],k.roof);if(k.lwin)rect(c,x+2,y+3,1,1,k.lwin)});
  rect(c,111,11,2,26,k.frame);rect(c,95,23,34,2,k.frame);rect(c,90,40,44,2,k.frame2);
+ // ม่านรวบสองข้าง
+ rect(c,83,5,58,1,k.frame2);rect(c,83,4,2,3,k.frame2);rect(c,139,4,2,3,k.frame2);
+ [[84,1],[134,0]].forEach(([x,o])=>{rect(c,x,6,6,20,k.cur);rect(c,x+1,28,5,14,k.cur);rect(c,x+o,26,5,2,k.cur3);rect(c,x+2,6,1,20,k.cur2);rect(c,x+4,8,1,18,k.cur2);rect(c,x+3,29,1,13,k.cur2);rect(c,x+1,41,5,1,k.cur2)});
+ // ชั้นหนังสือใต้หน้าต่าง (ห้องอ่านหนังสือ): หนังสือสีพาสเทล เล่มเอียง กองหนังสือนอน ข้างบนมีกระถางเล็ก หนังสือซ้อน และแมวกวัก
+ rect(c,87,47,48,2,k.frame2);rect(c,87,47,48,1,k.frame);rect(c,88,49,46,22,k.frame2);rect(c,90,49,20,9,k.shin);rect(c,112,49,20,9,k.shin);rect(c,90,61,20,8,k.shin);rect(c,112,61,20,8,k.shin);
+ rect(c,88,58,46,3,k.frame2);rect(c,88,58,46,1,k.frame);rect(c,88,69,46,2,k.frame);
+ const B=[k.b1,k.b2,k.b3,k.b4,k.b5],book=(x,yb,w,h,i)=>{rect(c,x,yb-h+1,w,h,B[i%5]);rect(c,x,yb-h+2,w,1,k.spine);if(h>6)rect(c,x,yb-2,w,1,k.spine)};
+ [[90,2,8],[92,3,7],[95,2,9],[97,2,8],[99,3,6],[103,2,8]].forEach(([x,w,h],i)=>book(x,57,w,h,i));poly(c,[[105,57],[107,57],[110,51],[108,50]],k.b4); // แถวบนซ้าย + เล่มเอียง
+ [[112,3,9],[115,2,8],[117,2,7],[119,3,9],[122,2,6]].forEach(([x,w,h],i)=>book(x,57,w,h,i+2));rect(c,126,53,5,5,k.note);rect(c,126,53,5,1,k.b1);   // แถวบนขวา + กล่องเล็ก
+ [[91,66,15,2,0],[92,64,13,2,3],[91,62,14,2,1]].forEach(([x,y,w,h,i])=>{rect(c,x,y,w,h,B[i]);rect(c,x+w-1,y,1,h,k.spine)});                       // กองหนังสือนอน
+ [[112,2,7],[114,3,8],[117,2,6],[119,2,8],[121,3,7],[124,2,8],[126,3,6],[129,2,7]].forEach(([x,w,h],i)=>book(x,68,w,h,i+1));
+ rect(c,91,43,5,4,k.pot);rect(c,90,42,7,1,k.pot2);blob(c,93.5,40,2.6,2.2,k.leaf2);blob(c,92.5,39.5,1.6,1.6,k.leaf);dot(c,95,38,k.leaf3);        // กระถางเล็ก
+ rect(c,102,45,10,2,k.b2);rect(c,103,43,9,2,k.b3);rect(c,111,45,1,2,k.spine);rect(c,111,43,1,2,k.spine);                                            // หนังสือซ้อน
+ blob(c,125.5,44.4,2.6,2.4,k.mk);blob(c,125.5,40.8,2.3,2,k.mk);rect(c,123,38,1,2,k.mk);rect(c,127,38,1,2,k.mk);rect(c,128,38,1,3,k.mk);              // แมวกวัก
+ dot(c,124,40,k.hand);dot(c,126,40,k.hand);rect(c,124,42,4,1,k.b1);dot(c,125,43,k.bob);dot(c,123,39,k.b1);dot(c,127,39,k.b1);
  roomLamp(c,k);
  blob(c,38,84.4,24,4.6,k.cush2);blob(c,38,83.4,23.4,4,k.cush);blob(c,33,81.8,12,1.3,k.cush3);[[14,83],[61,83]].forEach(([x,y])=>rect(c,x,y,1,2,k.cush2)); // เบาะนอน (ซาบุตง) กว้างพอให้ท่าขดนอนอยู่บนเบาะ
- blob(c,147,88.6,10,1.6,k.shade)}
+ blob(c,111,71.6,24,1.2,k.shade);blob(c,147,88.6,10,1.6,k.shade)}
 // โคมกระดาษตั้งพื้น (อันด้ง) ข้างเบาะ (เจ้าของขอ 2026-11-19 · ของตกแต่งชิ้นแรก) ไฟติดตอนรุ่งเช้า พลบค่ำ และกลางคืน (k.lit)
 // แสงบนผนัง/พื้นวาดในฉากหลัง ส่วนแสงที่ตกบนตัวแมววาดทับทีหลังใน roomLight()
 function roomLamp(c,k){const L=k.lit;if(L){blob(c,72,62,30,22,'rgba(255,200,120,.10)');blob(c,72,62,19,14,'rgba(255,205,130,.12)');blob(c,72,79,26,4,'rgba(255,200,120,.16)')}
@@ -584,93 +637,200 @@ function roomFg(c,k){
  [[144,46],[145,47],[139,54],[151,54],[145,41]].forEach(([x,y])=>rect(c,x,y,1,1,k.leaf3));
  for(let y=72;y<=88;y++){const h=y<75?8:7-(y-75)*.2;rect(c,Math.round(147-h),y,Math.round(h*2),1,y<75?k.pot3:k.pot)}rect(c,141,76,1,10,k.pot3);rect(c,152,77,2,10,k.pot2); // กระถาง
 }
-// ---------- ฉากพิกเซลตามสถานที่ (เจ้าเหมียวเที่ยวญี่ปุ่น · js/data/places.js) ----------
-// ทุกฉากขนาด 160×90 เส้นพื้น y=85 เหมือนกัน · มีที่นอน (bed: เบาะ x=12) เฉพาะห้องอ่านหนังสือ (เจ้าของขอ 2026-11-19: ไปเที่ยวแล้วมีเบาะดูแปลก)
-// ที่อื่น bed = null: แมวไม่เดินไปขดหลับลึก แต่งีบหมอบตรงที่อยู่แทน (แมวระวังตัวในที่ไม่คุ้น)
-// ฉากหลัง (bg) อยู่หลังแมว ฉากหน้า (fg) บังแมวได้และมีเส้นขอบอัตโนมัติ · โหมดมืด = กลางคืน
-// วาดเองทั้งหมด (ต้นฉบับ) · มุมซ้ายบนเว้นโล่งไว้ให้กล่องคำพูด
-const poly=(c,P,col)=>{c.fillStyle=col;const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]);
- for(let y=Math.floor(Math.min(...ys));y<=Math.max(...ys);y++)for(let x=Math.floor(Math.min(...xs));x<=Math.max(...xs);x++){const px=x+.5,py=y+.5;let ins=false;
-  for(let i=0,j=P.length-1;i<P.length;j=i++){const[xi,yi]=P[i],[xj,yj]=P[j];if((yi>py)!==(yj>py)&&px<(xj-xi)*(py-yi)/(yj-yi)+xi)ins=!ins}if(ins)c.fillRect(x,y,1,1)}};
-const sky=(c,k,y2)=>{rect(c,0,0,SW,y2,k.sky);rect(c,0,y2-16,SW,16,k.sky2);
- if(k.moon){blob(c,132,13,3,3,k.moon);[[78,8],[104,20],[146,26],[90,30],[120,6]].forEach(([x,y])=>rect(c,x,y,1,1,k.moon))}
- else{blob(c,130,k.sunY||12,k.sunY?5:4,k.sunY?5:4,k.sun);blob(c,78,14,3.5,2,k.cloud);blob(c,81,13,3,2.5,k.cloud);blob(c,106,24,3,1.6,k.cloud);blob(c,108.5,23.4,2.4,2,k.cloud)}};
-
-// สวนญี่ปุ่น (庭): ภูเขาไกล รั้วไม้ไผ่ สนาม ทางกรวดคราด โคมหิน ต้นไม้ นอนบนหินแบน · ฉากหน้า: พุ่มอาซาเลีย
-const GCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',mtn:'#b7d1c6',mtn2:'#a3c2b6',fence:'#d2b07a',fence2:'#ad8a55',grass:'#b4d68f',grass2:'#9cc579',
-  gravel:'#efe8da',gravel2:'#dcd1bc',stone:'#c9c3b8',stone2:'#aaa294',stone3:'#e2ddd4',lan:'#c2bbaf',lan2:'#9e9688',lwin:'#f6e7c0',glow:null,trunk:'#8a6a4a',
-  leaf:'#86b96f',leaf2:'#65985a',leaf3:'#a8d48f',flower:'#f2a0b4',line:'#5f6e4a',shade:'rgba(70,80,50,.16)',moon:null},
- dark:{sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',mtn:'#2f3f4a',mtn2:'#28363f',fence:'#6e5a40',fence2:'#57462f',grass:'#3f5a3a',grass2:'#354d31',
-  gravel:'#4c4741',gravel2:'#403b36',stone:'#625d57',stone2:'#4c4843',stone3:'#736e67',lan:'#5d5952',lan2:'#4a4741',lwin:'#f6d27a',glow:'rgba(246,210,122,.16)',trunk:'#5a4636',
-  leaf:'#5f8c52',leaf2:'#4a7040',leaf3:'#79a868',flower:'#b8738a',line:'#a9b893',shade:'rgba(0,0,0,.3)'}};
-function gardenBg(c,k){sky(c,k,52);
- poly(c,[[0,44],[18,34],[34,41],[58,27],[82,42],[102,35],[126,46],[160,36],[160,52],[0,52]],k.mtn);poly(c,[[0,50],[30,42],[60,49],[96,43],[132,50],[160,45],[160,52],[0,52]],k.mtn2);
- rect(c,0,47,SW,15,k.fence);for(let x=1;x<SW;x+=4)rect(c,x,47,1,15,k.fence2);rect(c,0,46,SW,1,k.fence2);rect(c,0,50,SW,1,k.fence2);rect(c,0,57,SW,1,k.fence2); // รั้วไม้ไผ่
- rect(c,0,62,SW,10,k.grass);[[6,64],[22,67],[48,63],[70,66],[88,64],[118,67],[136,63],[152,66]].forEach(([x,y])=>{rect(c,x,y,1,2,k.grass2);rect(c,x+2,y+1,1,1,k.grass2)});
- rect(c,0,72,SW,18,k.gravel);for(let y=75;y<90;y+=4)for(let x=0;x<SW;x++)if((x+y)%14<10)rect(c,x,y+(x%28<14?0:1),1,1,k.gravel2); // ทางกรวดคราดเป็นลอน
- rect(c,123,26,3,40,k.trunk);rect(c,119,40,5,2,k.trunk);[[116,24,9,5],[131,20,11,6],[124,31,8,4],[112,36,6,3]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf2));
- [[116,23,7,3.5],[131,19,9,4.5],[124,30,6,3]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf));[[113,21],[128,16],[136,18],[121,28]].forEach(([x,y])=>rect(c,x,y,1,1,k.leaf3)); // ต้นสน
- if(k.glow)blob(c,105,54,11,9,k.glow);
- rect(c,98,69,14,3,k.lan2);rect(c,103,59,4,10,k.lan);rect(c,99,57,12,2,k.lan2);rect(c,100,50,10,7,k.lan);rect(c,103,52,4,4,k.lwin);
- poly(c,[[96,51],[105,44],[114,51]],k.lan2);rect(c,104,42,2,2,k.lan2); // โคมหิน (โทโร)
- blob(c,147,88.6,11,1.6,k.shade)}
-function gardenFg(c,k){[[147,79,12,9],[137,83,7,6],[157,82,7,7]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf2));[[146,78,10,7],[137,82,5,4.5],[156,81,5,5]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf));
- [[141,75],[148,72],[154,76],[145,80],[151,79],[136,80],[158,79],[143,84]].forEach(([x,y])=>{rect(c,x,y,2,2,k.flower)});[[150,74],[139,78],[156,84]].forEach(([x,y])=>rect(c,x,y,1,1,k.leaf3))}
-
-// คาเฟ่ (喫茶店): ผนังไม้ กระดานเมนูชอล์ก โคมไฟห้อย ชั้นโหลกาแฟ พื้นตาหมากรุก นอนในตะกร้า · ฉากหน้า: โต๊ะกลมกับกาแฟและโดรายากิ
-const KCOL={light:{wall:'#f1dcc0',wall2:'#e5caa6',trim:'#b9875c',wains:'#cfa274',wains2:'#b98c60',floor:'#ead2b2',floor2:'#dcbf98',board:'#4d6656',frame:'#a97e58',chalk:'#f3efe4',
-  shelf:'#a97e58',jar:'#e9f1f2',beans:'#7a4f34',dora:'#d39a58',dora2:'#b97b3c',cup:'#ffffff',cup2:'#e2d8cc',lamp:'#e08a5e',lamp2:'#c46f45',glow:'rgba(255,214,150,.32)',
-  plant:'#86b96f',bed:'#c08b5c',bed2:'#9f6c3d',bed3:'#f6e6cf',table:'#a97e58',table2:'#8a6040',line:'#7a5a43',shade:'rgba(90,58,38,.14)'},
- dark:{wall:'#3a2e26',wall2:'#33281f',trim:'#5a4331',wains:'#4a3a2c',wains2:'#3f3125',floor:'#3d3128',floor2:'#352a22',board:'#2c3a32',frame:'#7d604a',chalk:'#c9c4b6',
-  shelf:'#7d604a',jar:'#8a9799',beans:'#4d3222',dora:'#9a6c3c',dora2:'#7f5530',cup:'#d8d2ca',cup2:'#a9a197',lamp:'#f0a070',lamp2:'#c47a4e',glow:'rgba(255,190,120,.2)',
-  plant:'#5f8c52',bed:'#86603f',bed2:'#6b4b30',bed3:'#b9a68b',table:'#7d604a',table2:'#634a37',line:'#b8987a',shade:'rgba(0,0,0,.3)'}};
-function cafeBg(c,k){rect(c,0,0,SW,52,k.wall);for(let x=9;x<SW;x+=10)rect(c,x,0,1,51,k.wall2);
- const bx=50;rect(c,bx,14,36,24,k.frame);rect(c,bx+1,15,34,22,k.board);rect(c,bx+4,18,18,1,k.chalk);
- [[23,12],[27,9],[31,13]].forEach(([y,w])=>{rect(c,bx+4,y,w,1,k.chalk);rect(c,bx+26,y,5,1,k.chalk)});rect(c,bx+27,17,2,2,k.chalk); // เมนูชอล์ก (เส้นแทนตัวหนังสือ)
- blob(c,94,20,16,12,k.glow);rect(c,94,0,1,7,k.trim);poly(c,[[88,13],[90,7],[99,7],[101,13]],k.lamp);rect(c,88,13,13,1,k.lamp2);rect(c,93,14,3,1,k.cup); // โคมไฟห้อย
- rect(c,100,22,54,2,k.shelf);rect(c,100,41,54,2,k.shelf);
- rect(c,102,13,8,9,k.jar);rect(c,102,17,8,5,k.beans);rect(c,101,12,10,2,k.shelf);rect(c,114,14,7,8,k.jar);rect(c,114,18,7,4,k.dora);rect(c,113,13,9,2,k.shelf);
- [128,135,142].forEach(x=>{rect(c,x,17,5,5,k.cup);rect(c,x+5,18,1,2,k.cup2)});
- rect(c,104,35,6,6,k.lamp2);blob(c,107,31,4,4,k.plant);[37,39].forEach(y=>rect(c,118,y,11,1,k.cup2));rect(c,119,36,9,1,k.cup);rect(c,136,31,11,10,k.beans);rect(c,138,34,7,3,k.bed3); // ชั้นของ
- rect(c,0,52,SW,17,k.wains);for(let x=19;x<SW;x+=20)rect(c,x,53,1,16,k.wains2);rect(c,0,51,SW,1,k.trim);rect(c,0,69,SW,2,k.trim);
- for(let y=71;y<SH;y+=5)for(let x=0;x<SW;x+=8)rect(c,x,y,8,5,((x/8+(y-71)/5)&1)?k.floor2:k.floor); // พื้นตาหมากรุก
- blob(c,146,88.6,10,1.4,k.shade)}
-function cafeFg(c,k){rect(c,128,63,32,3,k.table);rect(c,128,66,32,1,k.table2);rect(c,144,67,4,19,k.table);rect(c,138,86,16,2,k.table2);
- rect(c,133,62,10,1,k.cup2);rect(c,135,57,6,5,k.cup);rect(c,141,58,1,3,k.cup2);rect(c,136,57,4,1,k.beans); // กาแฟ
- rect(c,147,62,11,1,k.cup2);blob(c,152.5,60.4,4.6,1.8,k.dora2);blob(c,152.5,59.6,4.4,1.6,k.dora)} // โดรายากิ
-
-// สถานีรถไฟ (駅): หลังคาชานชาลา เมืองไกล ป้ายสถานี ตู้กดน้ำ ม้านั่ง แถบเบรลล์สีเหลือง นอนบนผ้าห่มพับ · ฉากหน้า: เสาชานชาลากับนาฬิกา
-const TCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',city:'#b8c6d4',city2:'#a6b5c4',cwin:null,roof:'#6f6a73',roof2:'#5a5660',beam:'#8b8590',sign:'#ffffff',signb:'#4f8fd6',ink:'#3b3540',
-  wall:'#ddd8cf',wall2:'#cbc5bb',vm:'#d9625c',vm2:'#b84c47',vmg:'#eef4f6',vglow:null,d1:'#5b9bd6',d2:'#f0bb55',d3:'#86c49b',bench:'#c49a73',bench2:'#a97e58',plat:'#d8d3cb',plat2:'#c4beb4',edge:'#f0c84a',edge2:'#d4a92c',
-  mat:'#7fb0d8',mat2:'#5f93c0',mat3:'#a9cbe8',pil:'#9aa0a8',pil2:'#80868f',pil3:'#b8bec5',clock:'#ffffff',line:'#5a5660',shade:'rgba(60,60,70,.16)',moon:null},
- dark:{sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',city:'#2b3446',city2:'#252d3d',cwin:'#f4d27a',roof:'#2e2b31',roof2:'#25232a',beam:'#3e3a42',sign:'#cfcac2',signb:'#3b6aa0',ink:'#2a2530',
-  wall:'#3a3631',wall2:'#322e2a',vm:'#9c4744',vm2:'#7e3936',vmg:'#f2f0d8',vglow:'rgba(242,240,216,.14)',d1:'#4a7fae',d2:'#c49a45',d3:'#6d9c7c',bench:'#7d604a',bench2:'#634a37',plat:'#47433e',plat2:'#3c3834',edge:'#b8952f',edge2:'#987a22',
-  mat:'#4f6f8c',mat2:'#3f5a73',mat3:'#6585a2',pil:'#4e535a',pil2:'#41454b',pil3:'#5e636a',clock:'#e8e4dc',line:'#9aa0a8',shade:'rgba(0,0,0,.3)'}};
-function stationBg(c,k){sky(c,k,54);
- [[0,36,14],[16,30,10],[28,40,16],[46,34,9],[57,42,13],[72,31,10],[84,38,17],[103,33,9],[114,41,14],[130,29,11],[143,37,17]].forEach(([x,y,w],i)=>{rect(c,x,y,w,54-y,i%2?k.city2:k.city);
-  if(k.cwin)for(let wy=y+3;wy<50;wy+=5)for(let wx=x+2;wx<x+w-2;wx+=4)if((wx*7+wy*3+i)%5<2)rect(c,wx,wy,1,2,k.cwin)}); // เมืองไกล กลางคืนเปิดไฟ
- rect(c,0,0,SW,6,k.roof);rect(c,0,6,SW,1,k.roof2);rect(c,0,7,SW,2,k.beam); // หลังคาชานชาลา
- rect(c,100,9,1,5,k.beam);rect(c,128,9,1,5,k.beam);rect(c,92,14,45,15,k.ink);rect(c,93,15,43,13,k.sign);rect(c,93,24,43,4,k.signb);
- [[109,17,2,2],[112,15,2,2],[116,15,2,2],[119,17,2,2],[112,19,6,3],[111,20,8,1]].forEach(([x,y,w,h])=>rect(c,x,y,w,h,k.ink)); // ป้ายสถานีเป็นรูปอุ้งเท้า (ไม่ใช้ตัวอักษรปลอม)
- rect(c,95,25,3,1,k.sign);rect(c,131,25,3,1,k.sign);
- rect(c,0,54,SW,16,k.wall);rect(c,0,54,SW,1,k.wall2);for(let x=39;x<SW;x+=40)rect(c,x,55,1,15,k.wall2);
- if(k.vglow)blob(c,13,54,15,15,k.vglow);
- rect(c,4,40,18,30,k.vm);rect(c,4,40,18,2,k.vm2);rect(c,6,43,14,13,k.vmg);[[0,k.d1],[1,k.d2],[2,k.d3],[3,k.d1]].forEach(([i,col])=>{rect(c,7+i*3.5|0,45,2,4,col);rect(c,7+((i+2)%4)*3.5|0,51,2,4,i%2?k.d3:k.d2)});
- rect(c,9,61,8,3,k.vm2);rect(c,18,58,2,2,k.vmg); // ตู้กดน้ำ
- rect(c,96,56,32,2,k.bench);rect(c,96,62,32,2,k.bench);rect(c,98,58,1,4,k.bench2);rect(c,125,58,1,4,k.bench2);rect(c,98,64,2,6,k.bench2);rect(c,124,64,2,6,k.bench2); // ม้านั่ง
- rect(c,0,70,SW,20,k.plat);rect(c,0,70,SW,1,k.plat2);rect(c,0,76,SW,3,k.edge);for(let x=1;x<SW;x+=3)rect(c,x,77,1,1,k.edge2);for(let x=31;x<SW;x+=32)rect(c,x,79,1,11,k.plat2); // ชานชาลา + แถบเบรลล์
- blob(c,150,88.6,7,1.4,k.shade)}
-function stationFg(c,k){rect(c,146,9,8,81,k.pil);rect(c,146,9,2,81,k.pil3);rect(c,152,9,2,81,k.pil2);rect(c,145,86,10,4,k.pil2);
- blob(c,150,30,5,5,k.ink);blob(c,150,30,4,4,k.clock);rect(c,150,27,1,3,k.ink);rect(c,150,30,2,1,k.ink)} // เสากับนาฬิกา
-
 // นาฬิกาลูกตุ้มติดผนังในห้อง: เข็มชั่วโมง/นาทีตามเวลาจริงของเครื่อง ลูกตุ้มแกว่งรอบละ 2 วินาที (ปิดแอนิเมชัน = ลูกตุ้มนิ่ง)
 // วาดทับฉากหลังทุกครั้งที่วาดใหม่ (ฉากหลังแคชไว้ จึงวาดนาฬิกาแยก) หน้าปัดกลางพิกเซล (39,17)
-const hand=(c,a,len,col,w=0)=>{c.fillStyle=col;for(let t=0;t<=len;t+=.25)for(const o of w?[-.45,.45]:[0])c.fillRect(Math.floor(39.5+Math.sin(a)*t+Math.cos(a)*o),Math.floor(17.5-Math.cos(a)*t+Math.sin(a)*o),1,1)}; // w = เข็มหนา (ชั่วโมง)
+const handAt=(c,cx,cy,a,len,col,w=0)=>{c.fillStyle=col;for(let t=0;t<=len;t+=.25)for(const o of w?[-.45,.45]:[0])c.fillRect(Math.floor(cx+Math.sin(a)*t+Math.cos(a)*o),Math.floor(cy-Math.cos(a)*t+Math.sin(a)*o),1,1)}; // w = เข็มหนา (ชั่วโมง)
+const hand=(c,a,len,col,w=0)=>handAt(c,39.5,17.5,a,len,col,w);
 function roomClock(c,k,d,sw){rect(c,37,4,5,2,k.frame2);rect(c,30,6,19,2,k.frame2);rect(c,31,8,17,35,k.frame2);rect(c,32,8,15,34,k.frame);rect(c,31,42,17,1,k.frame2);
  blob(c,39.5,17.5,6.6,6.6,k.frame2);blob(c,39.5,17.5,5.7,5.7,k.clk);[[39,12],[44,17],[39,22],[34,17]].forEach(([x,y])=>rect(c,x,y,1,1,k.frame2));
  const m=d.getMinutes(),h=d.getHours()%12+m/60;hand(c,h/12*2*Math.PI,3,k.hand,1);hand(c,m/60*2*Math.PI,4.8,k.hand);rect(c,39,17,1,1,k.hand);
  rect(c,35,27,9,13,k.glass);const a=sw*.32,ex=39.5+Math.sin(a)*8,ey=27+Math.cos(a)*8;c.fillStyle=k.frame2;for(let t=0;t<=8;t+=.5)c.fillRect(Math.floor(39.5+Math.sin(a)*t),Math.floor(27+Math.cos(a)*t),1,1);blob(c,ex,ey,1.7,1.7,k.bob)}
-const SCENES={room:{pal:SCOL,bg:roomBg,fg:roomFg,bed:CUSH,live:roomClock,over:roomLight},garden:{pal:GCOL,bg:gardenBg,fg:gardenFg,bed:null},cafe:{pal:KCOL,bg:cafeBg,fg:cafeFg,bed:null},station:{pal:TCOL,bg:stationBg,fg:stationFg,bed:null}};
+// แดดจากหน้าต่างตกบนพื้นเป็นสี่ช่องตามกรอบหน้าต่าง เอียงตามชั่วโมง (เช้าเอียงซ้าย บ่ายเอียงขวา) · รุ่งเช้า/พลบค่ำเป็นแสงส้มยาว · กลางคืนแสงจันทร์จางๆ
+// (รายงานพฤติกรรมข้อ 9 "แสงแดดตามนาฬิกา": ภาพทำแล้ว v92 ส่วนแมวไปนอนอาบแดดยังไม่ทำ · ตำแหน่งแดด sunX())
+const sunSkew=(td,d)=>td==='dawn'?-17:td==='dusk'?17:td==='night'?-5:clamp((d.getHours()+d.getMinutes()/60-12)*2.6,-14,14);
+function roomSun(c,k,A){const a=sunSkew(A.td,A.d),col=A.td==='night'?'rgba(190,205,255,.07)':A.td==='day'?'rgba(255,250,222,.34)':'rgba(255,196,140,.26)',
+  TL=[96+a*.15,72],TR=[128+a*.15,72],BL=[93+a,89],BR=[131+a,89],P=(u,v)=>[TL[0]+(TR[0]-TL[0])*u+(BL[0]-TL[0])*v+(BR[0]-BL[0]-TR[0]+TL[0])*u*v,TL[1]+(BL[1]-TL[1])*v];
+ [[0,.46,0,.42],[.54,1,0,.42],[0,.46,.54,1],[.54,1,.54,1]].forEach(([u0,u1,v0,v1])=>poly(c,[P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1)],col))}
+// นกกระจอกมาเกาะขอบหน้าต่างด้านนอก 21 วินาทีทุก 170 วินาที (กลางวัน รุ่งเช้า พลบค่ำ) บินเข้า จิกพื้น กระโดดหนึ่งที แล้วบินออก (ไว้ทำท่าแมวมองนกต่อ)
+const BIRD_T=170000,BIRD_ON=21000,birdAt=A=>{if(!A.P||A.td==='night')return null;const o=A.ms%BIRD_T;return o<BIRD_ON?o:null};
+function roomBird(c,k,A){const o=birdAt(A);if(o==null)return;let x=o>9000?114:118,y=32,fly=0;
+ if(o<500){const p=o/500;x=134-16*p;y=25+7*p;fly=1}else if(o>BIRD_ON-500){const p=(o-BIRD_ON+500)/500;x=114+18*p;y=32-8*p;fly=1}
+ const pk=!fly&&o%1700<220,hy=pk?1:0;x=Math.round(x);y=Math.round(y);c.save();c.beginPath();c.rect(95,11,34,26);c.clip();
+ rect(c,x+2,y+1,4,2,k.bird);rect(c,x+3,y+3,2,1,k.bird3);dot(c,x+6,y+1,k.bird2);dot(c,x+7,y,k.bird2);                 // ตัว ท้อง หาง
+ if(fly){const up=(o/70|0)%2;rect(c,x+3,up?y-1:y+2,3,1,k.bird2)}else{rect(c,x+3,y+1,3,1,k.bird2);dot(c,x+3,y+4,k.bird2);dot(c,x+5,y+4,k.bird2)} // ปีก ขา
+ rect(c,x+1,y+hy,2,2,k.bird2);dot(c,x,y+1+hy,k.beak);c.restore()}
+const roomLive=(c,k,A)=>{roomSun(c,k,A);roomBird(c,k,A);roomClock(c,k,A.d,A.P?Math.round(Math.sin(A.t/1000*Math.PI)*3)/3:0)};
+const roomTick=A=>{const o=birdAt(A);return A.d.getHours()*60+A.d.getMinutes()+'|'+(A.P?Math.round(Math.sin(A.t/1000*Math.PI)*3)/3:0)+'|'+(o==null?'':o<500||o>BIRD_ON-500?'f'+(o/70|0):(o>9000?'h':'')+(o%1700<220?'p':''))};
+
+// ===== สวนญี่ปุ่น (庭): ภูเขาไกลยอดหิมะ แนวไม้หลังรั้ว เมเปิลแดง รั้วไม้ไผ่ผูกเชือก สนาม ทางกรวดคราด หินกลางวงคราด โคมหิน ต้นสน กระบอกไม้ไผ่ตอกหิน (ชิชิโอโดชิ) · ฉากหน้า: พุ่มอาซาเลีย
+// ขยับ: เมฆลอย กระบอกไม้ไผ่รับน้ำแล้วกระดกเทน้ำ ตีหินดังป๊อก ทุก 7 วินาที ผีเสื้อบินตอนกลางวัน หิ่งห้อยกะพริบตอนกลางคืน
+const GCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',mtn:'#b7d1c6',mtn2:'#a3c2b6',snow:'#f4f8fa',far:'#97bc9f',fence:'#d2b07a',fence2:'#ad8a55',rope:'#7d5f3a',grass:'#b4d68f',grass2:'#9cc579',
+  gravel:'#efe8da',gravel2:'#dcd1bc',stone:'#c9c3b8',stone2:'#aaa294',stone3:'#e2ddd4',moss:'#9cbf72',lan:'#c2bbaf',lan2:'#9e9688',lwin:'#f6e7c0',glow:null,trunk:'#8a6a4a',
+  leaf:'#86b96f',leaf2:'#65985a',leaf3:'#a8d48f',mp1:'#e8735a',mp2:'#c9533f',mp3:'#f5a073',flower:'#f2a0b4',bam:'#a9c46a',bam2:'#7f9c48',bam3:'#cfe0a0',post:'#8a6a4a',water:'#a6d6ea',water2:'#e6f6fc',
+  bfly:'#fffaf0',bfly2:'#f2d36b',ff:null,line:'#5f6e4a',shade:'rgba(70,80,50,.16)',moon:null},
+ dark:{sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',mtn:'#2f3f4a',mtn2:'#28363f',snow:'#7f8ea4',far:'#24352f',fence:'#6e5a40',fence2:'#57462f',rope:'#3e3122',grass:'#3f5a3a',grass2:'#354d31',
+  gravel:'#4c4741',gravel2:'#403b36',stone:'#625d57',stone2:'#4c4843',stone3:'#736e67',moss:'#4f6a40',lan:'#5d5952',lan2:'#4a4741',lwin:'#f6d27a',glow:'rgba(246,210,122,.16)',trunk:'#5a4636',
+  leaf:'#5f8c52',leaf2:'#4a7040',leaf3:'#79a868',mp1:'#93473a',mp2:'#76382e',mp3:'#a95a44',flower:'#b8738a',bam:'#62773f',bam2:'#4b5c30',bam3:'#7d9455',post:'#5a4636',water:'#3c5d74',water2:'#6d90a8',
+  ff:'#eaf7a0',line:'#a9b893',shade:'rgba(0,0,0,.3)'}};
+function gardenFar(c,k){sky(c,k,52);
+ poly(c,[[0,44],[18,34],[36,40],[60,21],[84,40],[102,35],[126,46],[160,36],[160,52],[0,52]],k.mtn);poly(c,[[53.5,27],[60,21],[66.5,27],[64,28],[62,26.5],[59.5,28],[57,26.5]],k.snow); // ภูเขาไกลยอดหิมะ
+ poly(c,[[0,50],[30,42],[60,49],[96,43],[132,50],[160,45],[160,52],[0,52]],k.mtn2)}
+function gardenBg(c,k){
+ [[40,46,7,3.5],[52,45,6,4],[64,46.5,7,3],[80,45.5,6,3.5],[92,46,7,3],[146,46,8,4],[158,45,6,4]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.far));                // แนวไม้หลังรั้ว · เมเปิลแดงพุ่มเป็นชั้นตัดแต่งแบบเดียวกับต้นสน
+ rect(c,15,38,2,9,k.trunk);rect(c,12,40,4,1,k.trunk);rect(c,17,36,5,1,k.trunk);
+ [[9,40,7,4],[22,37,8,4.5],[30,42,5,3],[15,31,7,4.2],[5,35,4.5,3.2],[26,30,5,3.4]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.mp2));
+ [[9,38.6,5.6,2.8],[22,35.6,6.4,3.2],[30,41,3.6,2],[15,29.6,5.6,3],[5,34,3.4,2.2],[26,29,3.8,2.4]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.mp1));
+ [[6,36],[11,37],[19,33],[24,33],[13,27],[17,28],[24,27],[29,39],[4,32]].forEach(([x,y])=>rect(c,x,y,2,1,k.mp3));
+ rect(c,0,47,SW,15,k.fence);for(let x=1;x<SW;x+=4)rect(c,x,47,1,15,k.fence2);rect(c,0,46,SW,1,k.fence2);rect(c,0,50,SW,1,k.fence2);rect(c,0,57,SW,1,k.fence2); // รั้วไม้ไผ่
+ for(let x=10;x<SW;x+=20){rect(c,x,49,2,3,k.rope);rect(c,x,56,2,3,k.rope)}                                                                                // ปมเชือกผูกรั้ว
+ rect(c,0,62,SW,10,k.grass);rect(c,0,62,SW,1,k.grass2);[[6,64],[22,67],[48,63],[70,66],[88,64],[118,67],[136,63],[152,66]].forEach(([x,y])=>{rect(c,x,y,1,2,k.grass2);rect(c,x+2,y+1,1,1,k.grass2)});
+ rect(c,0,72,SW,18,k.gravel);for(let y=75;y<90;y+=4)for(let x=0;x<SW;x++)if((x+y)%14<10)rect(c,x,y+(x%28<14?0:1),1,1,k.gravel2); // ทางกรวดคราดเป็นลอน
+ blob(c,78,79,20,8,k.gravel);[[18,7],[14.5,5.4],[11,4]].forEach(([a,b])=>ring(c,78,79,a,b,k.gravel2));                                                    // วงคราดรอบหิน
+ blob(c,78,78.6,7,3.4,k.stone2);blob(c,77,77.6,6,2.6,k.stone);blob(c,75.5,76.6,2.6,1.1,k.stone3);rect(c,73,75,4,1,k.moss);rect(c,79,75,2,1,k.moss);blob(c,86,80,3,1.6,k.stone2);blob(c,85.6,79.6,2.3,1.1,k.stone);
+ // ชิชิโอโดชิ (ส่วนที่ไม่ขยับ): เสาไม้ไผ่กับรางน้ำ อ่างหิน หลักแกน หินรองตี · กระบอกที่กระดกวาดใน gardenLive()
+ rect(c,2,51,3,20,k.bam2);rect(c,3,51,1,20,k.bam);[56,63].forEach(y=>rect(c,2,y,3,1,k.bam3));rect(c,2,53,10,2,k.bam);rect(c,2,53,10,1,k.bam3);rect(c,11,53,1,2,k.bam2);
+ blob(c,11.5,71.4,7,2.8,k.stone2);blob(c,11.5,70.4,6.4,2.2,k.stone);blob(c,11.5,70,4.6,1.2,k.water);rect(c,9,69,2,1,k.water2);
+ blob(c,27,70.4,3.6,2,k.stone2);blob(c,27,69.8,3,1.4,k.stone);rect(c,19,64,2,8,k.post);rect(c,19,64,1,8,k.stone3+'55');
+ if(k.glow)blob(c,105,54,11,9,k.glow);
+ rect(c,98,69,14,3,k.lan2);rect(c,103,59,4,10,k.lan);rect(c,99,57,12,2,k.lan2);rect(c,100,50,10,7,k.lan);rect(c,103,52,4,4,k.lwin);
+ poly(c,[[96,51],[105,44],[114,51]],k.lan2);rect(c,104,42,2,2,k.lan2);rect(c,101,50,1,7,k.stone3);                                                       // โคมหิน (โทโร)
+ rect(c,123,26,3,40,k.trunk);rect(c,124,26,1,40,k.stone2+'66');rect(c,119,40,5,2,k.trunk);rect(c,126,33,4,1,k.trunk);                                     // ต้นสนตัดแต่งเป็นชั้น
+ [[116,24,9,5],[131,20,11,6],[124,31,8,4],[112,36,6,3]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf2));[[116,23,7,3.5],[131,19,9,4.5],[124,30,6,3],[112,35,4.4,2]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf));
+ [[113,21],[128,16],[136,18],[121,28],[133,16],[110,34]].forEach(([x,y])=>rect(c,x,y,2,1,k.leaf3));
+ blob(c,124,66.4,6,1.2,k.shade);blob(c,105,72.4,9,1,k.shade);blob(c,147,88.6,11,1.6,k.shade)}
+function gardenFg(c,k){[[147,79,12,9],[137,83,7,6],[157,82,7,7]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf2));[[146,78,10,7],[137,82,5,4.5],[156,81,5,5]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf));
+ [[141,75],[148,72],[154,76],[145,80],[151,79],[136,80],[158,79],[143,84]].forEach(([x,y])=>{rect(c,x,y,2,2,k.flower)});[[150,74],[139,78],[156,84]].forEach(([x,y])=>rect(c,x,y,1,1,k.leaf3))}
+// ชิชิโอโดชิ: แกนที่ (20,63.5) ปากกระบอกยาว 10 ไปทางซ้าย ท้ายยาว 6 · มุม 0.42 = เงยรับน้ำ · −0.6 = กระดกเทลงอ่าง · รอบละ 7 วินาที
+const SHISHI_T=7000,ease=p=>p*p*(3-2*p);
+function shishiA(A){if(!A.P)return .42;const o=A.ms%SHISHI_T;
+ return o<5400?.42-.3*ease(o/5400):o<5800?.12-.72*(((o-5400)/400)**2):o<6300?-.6:o<6480?-.6+1.12*ease((o-6300)/180):.52-.1*ease((o-6480)/520)}
+function gardenLive(c,k,A){const a=shishiA(A),o=A.ms%SHISHI_T,ca=Math.cos(a),sa=Math.sin(a),at=s=>[20-s*ca,63.5-s*sa];
+ if(A.P&&o<5400){const n=(o/110|0)%3;for(let y=55;y<at(9.6)[1]-1;y++)if((y+n)%3)dot(c,11,y,k.water2)}                                                   // น้ำหยดจากรางลงปากกระบอก
+ for(let s=-6;s<=10;s+=.3){const[x,y]=at(s);dot(c,x+sa,y-ca,k.bam2);dot(c,x,y,k.bam);dot(c,x-sa,y+ca,k.bam2)}for(let s=-6;s<=10;s+=.3){const[x,y]=at(s);dot(c,x+sa*.9,y-ca*.9,k.bam3)}
+ [2,-3].forEach(s=>{const[x,y]=at(s);dot(c,x+sa,y-ca,k.bam2);dot(c,x,y,k.bam2)});const[mx,my]=at(10);dot(c,mx,my,k.post);                                 // ข้อไม้ไผ่ ปากกระบอก
+ if(A.P&&o>=5600&&o<6400){const p=(o-5600)/800;ring(c,11.5,70,1+p*3.6,.4+p*.8,k.water2);if(o<6200)for(let i=0;i<3;i++)dot(c,mx-1+i,my+1+((o/80|0)+i)%2,k.water2)} // น้ำเทลงอ่าง วงน้ำกระเพื่อม
+ if(A.P&&o>=6440&&o<6640){dot(c,30,66,k.stone3);dot(c,31,68,k.stone3);dot(c,24,66,k.stone3)}}                                                                  // ตีหิน ป๊อก!
+// ผีเสื้อกะหล่ำบินวนแถวสนามกับพุ่มดอกไม้ (กลางวัน รุ่งเช้า พลบค่ำ) บางช่วงบินออกนอกจอขวา · หิ่งห้อยกะพริบช้าๆ ตอนกลางคืน
+const FF=[[28,64],[50,58],[88,66],[118,60],[140,70],[68,53],[150,57]];
+function gardenFront(c,k,A){if(!A.P)return;const m=A.ms;
+ if(A.td!=='night'){const x=Math.round(108+52*Math.sin(m/7300)+12*Math.sin(m/1900)),y=Math.round(60+11*Math.sin(m/3300)+3*Math.sin(m/870)),up=(m/120|0)%2;
+  if(x<SW+3){rect(c,x,y,1,2,k.post);if(up){rect(c,x-2,y-2,2,2,k.bfly);rect(c,x+1,y-2,2,2,k.bfly);dot(c,x-2,y-2,k.bfly2);dot(c,x+2,y-2,k.bfly2)}else{rect(c,x-2,y,2,2,k.bfly);rect(c,x+1,y,2,2,k.bfly);dot(c,x-1,y-1,k.bfly);dot(c,x+1,y-1,k.bfly)}}}
+ else FF.forEach(([bx,by],i)=>{const b=Math.sin(m/900+i*1.9);if(b<.1)return;const x=Math.round(bx+7*Math.sin(m/(2600+i*370)+i)),y=Math.round(by+4*Math.sin(m/(1900+i*230)+i*2));
+  if(b>.5){c.fillStyle='rgba(234,247,160,.28)';c.fillRect(x-1,y,3,1);c.fillRect(x,y-1,1,3)}dot(c,x,y,k.ff)})}
+const gardenTick=A=>{if(!A.P)return'';const o=A.ms%SHISHI_T;return cloudKey(A)+'|'+(o>=5400&&o<6700?'s'+(o/40|0):'w'+(o/110|0))+'|'+(A.ms/110|0)};
+
+// ===== คาเฟ่ (喫茶店): หน้าต่างร้านเห็นฟ้าตามเวลาและตึกฝั่งตรงข้าม ม่านคาเฟ่ กระดานเมนูชอล์ก โคมไฟห้อย ชั้นโหลกาแฟ เคาน์เตอร์มีไซฟอน ตู้เค้ก เครื่องบดกาแฟ มอนสเตอร่า พื้นตาหมากรุก
+// ฉากหน้า: โต๊ะกลมกับกาแฟและโดรายากิ · ขยับ: ไอกาแฟลอยขึ้นจากถ้วย
+const KCOL={light:{wall:'#f1dcc0',wall2:'#e5caa6',trim:'#b9875c',wains:'#cfa274',wains2:'#b98c60',floor:'#ead2b2',floor2:'#dcbf98',board:'#4d6656',frame:'#a97e58',chalk:'#f3efe4',
+  shelf:'#a97e58',jar:'#e9f1f2',beans:'#7a4f34',dora:'#d39a58',dora2:'#b97b3c',cup:'#ffffff',cup2:'#e2d8cc',lamp:'#e08a5e',lamp2:'#c46f45',glow:'rgba(255,214,150,.32)',
+  plant:'#86b96f',bed:'#c08b5c',bed2:'#9f6c3d',bed3:'#f6e6cf',table:'#a97e58',table2:'#8a6040',line:'#7a5a43',shade:'rgba(90,58,38,.14)',
+  sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',moon:null,bldg:'#e8d6c0',bldg2:'#d5bfa4',bwin:'#a9cde3',awn:'#d96e5a',awn2:'#f7f1e8',slamp:'#fff4cf',sglow:null,
+  cur:'#fffaf0',cur2:'#ece2d2',ctop:'#c49069',ctop2:'#dcae86',cfront:'#a97e58',cfront2:'#8a6040',case:'#e8f3f5',cream:'#fff8ee',berry:'#e05a5a',pud:'#f2c14e',
+  mon:'#6fa65c',mon2:'#4f8a45',pot:'#c97b54',metal:'#c3c7cb',metal2:'#8f9499',steam:'#ffffff'},
+ dark:{wall:'#3a2e26',wall2:'#33281f',trim:'#5a4331',wains:'#4a3a2c',wains2:'#3f3125',floor:'#3d3128',floor2:'#352a22',board:'#2c3a32',frame:'#7d604a',chalk:'#c9c4b6',
+  shelf:'#7d604a',jar:'#8a9799',beans:'#4d3222',dora:'#9a6c3c',dora2:'#7f5530',cup:'#d8d2ca',cup2:'#a9a197',lamp:'#f0a070',lamp2:'#c47a4e',glow:'rgba(255,190,120,.2)',
+  plant:'#5f8c52',bed:'#86603f',bed2:'#6b4b30',bed3:'#b9a68b',table:'#7d604a',table2:'#634a37',line:'#b8987a',shade:'rgba(0,0,0,.3)',
+  sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',bldg:'#2c3040',bldg2:'#252836',bwin:'#f4d27a',awn:'#7a3a32',awn2:'#8a857c',slamp:'#ffe9a8',sglow:'rgba(255,233,168,.2)',
+  cur:'#b9b2a6',cur2:'#9d968b',ctop:'#7d604a',ctop2:'#94745a',cfront:'#5a4331',cfront2:'#47352a',case:'#4a5559',cream:'#cfc6b8',berry:'#a04646',pud:'#b8923a',
+  mon:'#4a7040',mon2:'#3a5a33',pot:'#86533a',metal:'#7a7e83',metal2:'#5e6267',steam:'#e8e2d8'}};
+function cafeBg(c,k){rect(c,0,0,SW,52,k.wall);for(let x=9;x<SW;x+=10)rect(c,x,0,1,51,k.wall2);
+ // หน้าต่างร้าน: ฟ้าตามเวลา ตึกฝั่งตรงข้ามมีกันสาดลายทาง เสาไฟถนน (กลางคืนเปิดไฟ) · ม่านคาเฟ่ครึ่งล่าง
+ rect(c,3,6,40,43,k.frame);rect(c,5,8,36,39,k.sky);rect(c,5,28,36,19,k.sky2);
+ if(k.moon){blob(c,35,12,2.2,2.2,k.moon);[[9,11],[16,15],[27,10],[31,18]].forEach(([x,y])=>dot(c,x,y,k.moon))}else{blob(c,12,13,3,1.6,k.cloud);blob(c,14.5,12.2,2.4,1.8,k.cloud);blob(c,33,16,2.4,1.2,k.cloud)}
+ rect(c,5,24,19,23,k.bldg);rect(c,26,19,15,28,k.bldg2);[[7,26],[12,26],[17,26]].forEach(([x,y])=>rect(c,x,y,3,3,k.bwin));[[28,22],[33,22],[28,28],[33,28]].forEach(([x,y],i)=>rect(c,x,y,3,3,i===2&&!k.moon?k.bldg:k.bwin));
+ for(let x=5;x<24;x++){rect(c,x,31,1,3,(x>>1)%2?k.awn:k.awn2);if(x%2)dot(c,x,34,(x>>1)%2?k.awn:k.awn2)}                                                     // กันสาดลายทาง
+ if(k.sglow)blob(c,38,21,6,5,k.sglow);rect(c,38,22,1,25,k.metal2);rect(c,36,20,4,2,k.metal2);rect(c,37,22,2,1,k.slamp);                                    // เสาไฟถนน
+ rect(c,22,8,2,39,k.frame);rect(c,5,21,36,1,k.frame);
+ rect(c,4,35,38,1,k.frame2);rect(c,5,36,36,10,k.cur);for(let x=6;x<41;x+=3)rect(c,x,36,1,10,k.cur2);for(let x=5;x<41;x+=2)dot(c,x,46,k.cur);               // ม่านคาเฟ่
+ rect(c,2,47,42,2,k.frame2);rect(c,2,47,42,1,k.trim);rect(c,35,43,5,4,k.pot);blob(c,37.5,41,2.4,2.4,k.mon);dot(c,36,39,k.mon2);                              // ขอบหน้าต่าง + กระบองเพชร
+ // กระดานเมนูชอล์ก (เส้นแทนตัวหนังสือ) + โคมไฟห้อย
+ const bx=50;rect(c,bx,14,36,24,k.frame);rect(c,bx+1,15,34,22,k.board);rect(c,bx+4,18,18,1,k.chalk);
+ [[23,12],[27,9],[31,13]].forEach(([y,w])=>{rect(c,bx+4,y,w,1,k.chalk);rect(c,bx+26,y,5,1,k.chalk)});rect(c,bx+27,17,2,2,k.chalk);
+ blob(c,bx+30,33,2,1.4,k.dora);rect(c,bx+28,33,4,1,k.dora2);rect(c,bx+4,33,6,1,k.chalk+'88');                                                               // รูปโดรายากิชอล์กมุมกระดาน
+ blob(c,94,20,16,12,k.glow);rect(c,94,0,1,7,k.trim);poly(c,[[88,13],[90,7],[99,7],[101,13]],k.lamp);rect(c,88,13,13,1,k.lamp2);rect(c,93,14,3,1,k.cup);
+ // ชั้นโหลกาแฟ ถ้วย ต้นไม้ ถุงกาแฟ
+ rect(c,104,17,52,2,k.shelf);rect(c,104,30,52,2,k.shelf);
+ rect(c,106,9,8,8,k.jar);rect(c,106,12,8,5,k.beans);rect(c,105,8,10,2,k.shelf);rect(c,118,10,7,7,k.jar);rect(c,118,13,7,4,k.dora);rect(c,117,9,9,2,k.shelf);
+ [130,137,144].forEach(x=>{rect(c,x,12,5,5,k.cup);rect(c,x+5,13,1,2,k.cup2)});
+ rect(c,107,25,6,5,k.lamp2);blob(c,110,22,4,3.4,k.plant);[28,26].forEach(y=>rect(c,120,y,11,1,k.cup2));rect(c,121,27,9,1,k.cup);rect(c,121,29,9,1,k.cup);rect(c,138,20,11,10,k.beans);rect(c,140,23,7,3,k.bed3);
+ // ผนังบัวล่าง + เคาน์เตอร์
+ rect(c,0,52,SW,17,k.wains);for(let x=19;x<SW;x+=20)rect(c,x,53,1,16,k.wains2);rect(c,0,51,SW,1,k.trim);rect(c,0,69,SW,2,k.trim);
+ rect(c,96,48,64,3,k.ctop);rect(c,96,48,64,1,k.ctop2);rect(c,97,51,63,18,k.cfront);for(let x=108;x<SW;x+=13)rect(c,x,52,1,16,k.cfront2);rect(c,97,51,63,1,k.cfront2);rect(c,97,68,63,3,k.cfront2);
+ // มอนสเตอร่าในกระถาง (หลังแมว)
+ const mx=8;rect(c,mx,64,9,7,k.pot);rect(c,mx-1,63,11,1,k.lamp2);[[1,57,5,4],[8,55,5,4.5],[4,51,4.5,4],[11,61,4,3],[-2,61,3.6,3]].forEach(([x,y,a,b])=>blob(c,mx+x,y,a,b,k.mon2));
+ [[1,56,3.6,2.8],[8,54,3.6,3.2],[4,50,3.2,2.8],[11,60,2.6,2]].forEach(([x,y,a,b])=>blob(c,mx+x,y,a,b,k.mon));[[1,56],[8,54],[4,50]].forEach(([x,y])=>{dot(c,mx+x,y,k.mon2);dot(c,mx+x+1,y+1,k.mon2)});rect(c,mx+4,58,1,6,k.mon2);
+ // ไซฟอนกาแฟ
+ rect(c,100,46,11,2,k.metal2);rect(c,101,35,1,11,k.metal2);rect(c,101,35,4,1,k.metal2);rect(c,104,33,5,1,k.metal);rect(c,104,34,5,4,k.jar);rect(c,105,38,3,2,k.jar);
+ blob(c,106.5,43,3.6,3.1,k.jar);blob(c,106.5,44,3,2,k.beans);dot(c,105,41,k.cup);rect(c,105,46,4,1,k.lamp);
+ // ตู้เค้ก: ช็อตเค้กสตรอว์เบอร์รี โรลเค้ก พุดดิ้ง
+ rect(c,115,36,26,1,k.metal);rect(c,116,37,24,8,k.case);rect(c,115,45,26,3,k.cfront2);rect(c,115,45,26,1,k.metal);
+ rect(c,118,40,6,5,k.cream);rect(c,118,42,6,1,k.berry);dot(c,120,39,k.berry);dot(c,121,39,k.berry);blob(c,128,42.2,2.6,2.4,k.beans);blob(c,128,42.2,1.3,1.1,k.cream);
+ rect(c,133,40,5,5,k.pud);rect(c,133,40,5,1,k.dora2);dot(c,135,39,k.berry);[[117,38],[118,37],[131,38],[132,37]].forEach(([x,y])=>dot(c,x,y,k.cup));
+ // เครื่องบดกาแฟ
+ rect(c,145,41,7,6,k.cfront2);rect(c,146,42,5,2,k.ctop2);poly(c,[[144,35],[153,35],[151,40],[146,40]],k.metal);rect(c,148,32,1,3,k.metal2);rect(c,148,32,4,1,k.metal2);dot(c,152,31,k.lamp2);
+ for(let y=71;y<SH;y+=5)for(let x=0;x<SW;x+=8)rect(c,x,y,8,5,((x/8+(y-71)/5)&1)?k.floor2:k.floor); // พื้นตาหมากรุก
+ rect(c,96,71,64,1,k.floor2);blob(c,12,71.6,7,1,k.shade);blob(c,146,88.6,10,1.4,k.shade)}
+function cafeFg(c,k){rect(c,128,63,32,3,k.table);rect(c,128,66,32,1,k.table2);rect(c,144,67,4,19,k.table);rect(c,138,86,16,2,k.table2);
+ rect(c,133,62,10,1,k.cup2);rect(c,135,57,6,5,k.cup);rect(c,141,58,1,3,k.cup2);rect(c,136,57,4,1,k.beans); // กาแฟ
+ rect(c,147,62,11,1,k.cup2);blob(c,152.5,60.4,4.6,1.8,k.dora2);blob(c,152.5,59.6,4.4,1.6,k.dora)} // โดรายากิ
+// ไอกาแฟ 3 สายลอยขึ้นจากถ้วยบนโต๊ะ ส่ายเบาๆ แล้วจางหาย
+function cafeFront(c,k,A){if(!A.P)return;for(let i=0;i<3;i++){const p=(A.ms/2100+i/3)%1,y=55-p*12,x=137.6+Math.sin(p*6.5+i*2.1)*1.5;c.globalAlpha=(1-p)*.75;rect(c,Math.round(x),Math.round(y),1,2,k.steam)}c.globalAlpha=1}
+const cafeTick=A=>A.P?''+(A.ms/120|0):'';
+
+// ===== สถานีรถไฟ (駅): หลังคาชานชาลามีไฟ เมืองไกล ชานชาลาฝั่งตรงข้าม รางรถไฟ เสาไฟฟ้าเหนือราง ป้ายสถานีรูปอุ้งเท้า ตู้กดน้ำ ม้านั่ง แถบเบรลล์สีเหลือง · ฉากหน้า: เสาชานชาลากับนาฬิกา
+// ขยับ: เมฆลอย รถไฟสามตู้วิ่งผ่านทุก 95 วินาที (ใช้เวลาราว 4 วินาที วิ่งหลังม้านั่งกับตู้กดน้ำ) เข็มนาฬิกาบนเสาเดินตามเวลาจริง
+const TCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',city:'#b8c6d4',city2:'#a6b5c4',cwin:null,roof:'#6f6a73',roof2:'#5a5660',beam:'#8b8590',sign:'#ffffff',signb:'#4f8fd6',ink:'#3b3540',
+  wall:'#ddd8cf',wall2:'#cbc5bb',vm:'#d9625c',vm2:'#b84c47',vmg:'#eef4f6',vglow:null,d1:'#5b9bd6',d2:'#f0bb55',d3:'#86c49b',bench:'#c49a73',bench2:'#a97e58',plat:'#d8d3cb',plat2:'#c4beb4',edge:'#f0c84a',edge2:'#d4a92c',
+  mat:'#7fb0d8',mat2:'#5f93c0',mat3:'#a9cbe8',pil:'#9aa0a8',pil2:'#80868f',pil3:'#b8bec5',clock:'#ffffff',line:'#5a5660',shade:'rgba(60,60,70,.16)',moon:null,
+  opl:'#d3cec6',opf:'#b5afa5',fen:'#a3a9b0',bal:'#b3aca1',bal2:'#9d968a',slp:'#8f806e',rail:'#7f848b',rail2:'#d0d4d8',pole:'#8b8590',wire:'#6a6670',lampf:'#fdfdf5',lglow:null,white:'#f7f5f0',
+  trn:'#eef1f3',trn2:'#d3d9de',trn3:'#aab3ba',tst:'#4f8fd6',tst2:'#3b6aa0',twin:'#8fb8d8',twin2:'#c4dcee',tun:'#5c6168',wheel:'#3f4248',head:'#fff6c0',pax:'#6f8aa0'},
+ dark:{sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',city:'#2b3446',city2:'#252d3d',cwin:'#f4d27a',roof:'#2e2b31',roof2:'#25232a',beam:'#3e3a42',sign:'#cfcac2',signb:'#3b6aa0',ink:'#2a2530',
+  wall:'#3a3631',wall2:'#322e2a',vm:'#9c4744',vm2:'#7e3936',vmg:'#f2f0d8',vglow:'rgba(242,240,216,.14)',d1:'#4a7fae',d2:'#c49a45',d3:'#6d9c7c',bench:'#7d604a',bench2:'#634a37',plat:'#47433e',plat2:'#3c3834',edge:'#b8952f',edge2:'#987a22',
+  mat:'#4f6f8c',mat2:'#3f5a73',mat3:'#6585a2',pil:'#4e535a',pil2:'#41454b',pil3:'#5e636a',clock:'#e8e4dc',line:'#9aa0a8',shade:'rgba(0,0,0,.3)',
+  opl:'#4a4641',opf:'#3c3935',fen:'#4e535a',bal:'#3d3a36',bal2:'#33302d',slp:'#2e2924',rail:'#4a4d52',rail2:'#8a8f95',pole:'#3e3a42',wire:'#5e5a64',lampf:'#fffbe6',lglow:'rgba(255,248,220,.07)',white:'#bdb9b2',
+  trn:'#b9bec4',trn2:'#9aa0a7',trn3:'#7d838a',tst:'#3b6aa0',tst2:'#2d5280',twin:'#f2e2a8',twin2:'#fff4cc',tun:'#2f3236',wheel:'#232528',head:'#fff6c0',pax:'#8a7a5a'}};
+function stationFar(c,k){sky(c,k,48);
+ [[0,36,14],[16,30,10],[28,40,16],[46,34,9],[57,42,13],[72,31,10],[84,38,17],[103,33,9],[114,41,14],[130,29,11],[143,37,17]].forEach(([x,y,w],i)=>{rect(c,x,y,w,47-y,i%2?k.city2:k.city);
+  if(i%3===1)rect(c,x+(w>>1),y-3,1,3,k.city2);if(k.cwin)for(let wy=y+3;wy<44;wy+=5)for(let wx=x+2;wx<x+w-2;wx+=4)if((wx*7+wy*3+i)%5<2)rect(c,wx,wy,1,2,k.cwin)}); // เมืองไกล เสาอากาศ กลางคืนเปิดไฟ
+}
+// ชานชาลาฝั่งตรงข้าม รั้ว หินโรยทาง หมอนรองราง ราง เสาไฟฟ้าและสายเหนือราง (อยู่หน้าเมฆ หลังรถไฟ)
+function stationMid(c,k){rect(c,0,41,SW,1,k.fen);for(let x=4;x<SW;x+=10)rect(c,x,41,1,6,k.fen);rect(c,0,47,SW,2,k.opl);rect(c,0,47,SW,1,k.white);rect(c,0,49,SW,4,k.opf);            // ชานชาลาฝั่งตรงข้าม + รั้ว
+ rect(c,0,53,SW,17,k.bal);for(let y=54;y<70;y+=2)for(let x=y%4?1:0;x<SW;x+=3)rect(c,x,y,1,1,k.bal2);for(let x=2;x<SW;x+=6)rect(c,x,57,3,10,k.slp);           // หินโรยทาง หมอนรองราง
+ [59,64].forEach(y=>{rect(c,0,y,SW,1,k.rail2);rect(c,0,y+1,SW,1,k.rail)});                                                                                  // ราง
+ [24,112].forEach(x=>{rect(c,x,12,2,41,k.pole);rect(c,x,20,12,1,k.pole);rect(c,x+11,20,1,7,k.pole)});rect(c,0,20,SW,1,k.wire);rect(c,0,26,SW,1,k.wire);for(let x=6;x<SW;x+=14)rect(c,x,21,1,5,k.wire)} // เสาไฟฟ้า สายเหนือราง
+// รถไฟสามตู้ (วาดครั้งเดียวต่อชุดสี) หัวรถอยู่ซ้าย วิ่งจากขวาไปซ้าย · ภาพเริ่มที่ y=26 (สายไฟ) ล้อแตะรางที่ y=64
+const TRAIN_T=95000,TRAIN_V=.11,TRAIN_W=3*72,trC={},trainX=A=>{if(!A.P)return null;const x=SW+6-(A.ms%TRAIN_T)*TRAIN_V;return x>-TRAIN_W-6?Math.round(x):null};
+function trainImg(k){const id=k.trn+k.twin;if(trC[id])return trC[id];const v=document.createElement('canvas');v.width=TRAIN_W;v.height=40;const c=v.getContext('2d');
+ for(let i=0;i<3;i++){const x0=i*72;
+  rect(c,x0+1,7,68,1,k.trn3);rect(c,x0,8,70,24,k.trn);rect(c,x0,27,70,5,k.trn2);rect(c,x0,24,70,2,k.tst);rect(c,x0,26,70,1,k.tst2);rect(c,x0,8,70,1,k.trn2);
+  [10,32,54].forEach(dx=>{rect(c,x0+dx,11,7,21,k.trn2);rect(c,x0+dx+1,12,5,8,k.twin);rect(c,x0+dx+3,11,1,21,k.trn3)});                                       // ประตู
+  [[2,7],[18,13],[40,13],[62,6]].forEach(([dx,w],j)=>{rect(c,x0+dx,12,w,8,k.twin);rect(c,x0+dx,12,w,1,k.twin2);if((i+j)%2)rect(c,x0+dx+2,16,2,4,k.pax)});     // หน้าต่าง + ผู้โดยสาร
+  rect(c,x0+4,32,62,3,k.tun);[[6,12],[52,12]].forEach(([dx,w])=>{rect(c,x0+dx,33,w,3,k.wheel);[2,w-3].forEach(o=>{blob(c,x0+dx+o+.5,36.5,2.2,2.2,k.wheel);dot(c,x0+dx+o,36,k.trn3)})});
+  if(i<2)rect(c,x0+70,12,2,18,k.tun)}
+ c.clearRect(0,8,1,3);c.clearRect(0,8,2,1);rect(c,1,11,4,8,k.twin);rect(c,1,11,4,1,k.twin2);rect(c,0,28,2,2,k.head);                                         // หัวรถมน กระจกหน้า ไฟหน้า
+ rect(c,28,0,14,1,k.wire);for(let t=0;t<=6;t++){dot(c,30+t*.8,1+t,k.tun);dot(c,40-t*.8,1+t,k.tun)}rect(c,31,6,8,1,k.tun);                                   // แพนโทกราฟแตะสายไฟ
+ return trC[id]=v}
+function stationTrain(c,k,A){const x=trainX(A);if(x!=null)c.drawImage(trainImg(k),x,26)}
+function stationBg(c,k){rect(c,0,0,SW,6,k.roof);rect(c,0,6,SW,1,k.roof2);rect(c,0,7,SW,2,k.beam);                                                           // หลังคาชานชาลา
+ [12,52].forEach(x=>{if(k.lglow)blob(c,x+6,12,9,3,k.lglow);rect(c,x,9,12,2,k.pil2);rect(c,x+1,10,10,1,k.lampf)});                   // ไฟใต้หลังคา (กลางคืนแสงตกบนพื้นชานชาลา)
+ rect(c,100,9,1,5,k.beam);rect(c,128,9,1,5,k.beam);rect(c,92,14,45,15,k.ink);rect(c,93,15,43,13,k.sign);rect(c,93,24,43,4,k.signb);
+ [[109,17,2,2],[112,15,2,2],[116,15,2,2],[119,17,2,2],[112,19,6,3],[111,20,8,1]].forEach(([x,y,w,h])=>rect(c,x,y,w,h,k.ink)); // ป้ายสถานีเป็นรูปอุ้งเท้า (ไม่ใช้ตัวอักษรปลอม)
+ rect(c,95,25,3,1,k.sign);rect(c,131,25,3,1,k.sign);
+ rect(c,0,70,SW,20,k.plat);rect(c,0,70,SW,1,k.white);rect(c,0,71,SW,1,k.plat2);rect(c,0,73,SW,3,k.edge);for(let x=1;x<SW;x+=3)rect(c,x,74,1,1,k.edge2);for(let x=31;x<SW;x+=32)rect(c,x,77,1,13,k.plat2); // ชานชาลา + แถบเบรลล์
+ if(k.lglow)[18,58].forEach(x=>blob(c,x,80,20,6,k.lglow));if(k.vglow)blob(c,13,64,15,15,k.vglow);
+ rect(c,4,48,18,32,k.vm);rect(c,4,48,18,2,k.vm2);rect(c,6,51,14,13,k.vmg);[[0,k.d1],[1,k.d2],[2,k.d3],[3,k.d1]].forEach(([i,col])=>{rect(c,7+i*3.5|0,53,2,4,col);rect(c,7+((i+2)%4)*3.5|0,59,2,4,i%2?k.d3:k.d2)});
+ rect(c,9,70,8,3,k.vm2);rect(c,18,66,2,2,k.vmg);rect(c,4,79,18,1,k.vm2);                                                                                   // ตู้กดน้ำ
+ rect(c,96,62,32,2,k.bench);rect(c,96,70,32,2,k.bench);rect(c,96,70,32,1,k.bench2+'88');rect(c,98,64,1,6,k.bench2);rect(c,125,64,1,6,k.bench2);rect(c,98,72,2,8,k.bench2);rect(c,124,72,2,8,k.bench2); // ม้านั่ง
+ blob(c,112,80.4,16,1,k.shade);blob(c,13,80.4,10,1,k.shade);blob(c,150,88.6,7,1.4,k.shade)}
+function stationFg(c,k){rect(c,146,9,8,81,k.pil);rect(c,146,9,2,81,k.pil3);rect(c,152,9,2,81,k.pil2);rect(c,145,86,10,4,k.pil2);
+ blob(c,150,30,5,5,k.ink);blob(c,150,30,4,4,k.clock)} // เสากับหน้าปัดนาฬิกา (เข็มวาดใน stationFront ตามเวลาจริง)
+function stationFront(c,k,A){const d=A.d,m=d.getMinutes(),h=d.getHours()%12+m/60;handAt(c,150,30,h/12*2*Math.PI,2,k.ink);handAt(c,150,30,m/60*2*Math.PI,3.2,k.ink);dot(c,150,30,k.ink)}
+const stationTick=A=>{const x=trainX(A);return A.d.getHours()*60+A.d.getMinutes()+'|'+cloudKey(A)+'|'+(x==null?'':x)};
+
+const SCENES={room:{pal:SCOL,bg:roomBg,fg:roomFg,bed:CUSH,live:roomLive,tick:roomTick,over:roomLight},
+ garden:{pal:GCOL,far:gardenFar,air:clouds,bg:gardenBg,live:gardenLive,fg:gardenFg,front:gardenFront,tick:gardenTick,bed:null},
+ cafe:{pal:KCOL,bg:cafeBg,fg:cafeFg,front:cafeFront,tick:cafeTick,bed:null},
+ station:{pal:TCOL,far:stationFar,air:clouds,mid:stationMid,back:stationTrain,bg:stationBg,fg:stationFg,front:stationFront,tick:stationTick,bed:null}};
 let PLACE='room';const SCN=()=>SCENES[PLACE]||SCENES.room;
 // รุ่งเช้า (05–07) / พลบค่ำ (17–19): ใช้ชุดสีกลางวัน เปลี่ยนฟ้าเป็นชมพูอมพีช/ส้ม พระอาทิตย์ลอยต่ำ แล้วย้อมทั้งภาพด้วยสีอุ่น (WARM, multiply) ให้แมวอมแสงเดียวกัน
 // ฟ้าห้อง: sky = ฟ้าในหน้าต่าง sky2 = แถบบนสุด · ฉากกลางแจ้ง (sky()): sky = ฟ้าด้านบน sky2 = แถบใกล้ขอบฟ้า
@@ -679,7 +839,11 @@ const TWI={dawn:{room:{sky:'#ffd2b8',sky2:'#c9b3e0',sun:'#ffc07a',cloud:'#ffe6dc
 const WARM={dawn:'#f6e2ee',dusk:'#ffd6b8'};
 function palOf(s,sk){if(s.pal[sk])return s.pal[sk];const t=TWI[sk];if(!t)return s.pal.light;return s.pal[sk]={...s.pal.light,...(s===SCENES.room?t.room:t.out),moon:null,lit:t.lit}}
 const bgC={},fgC={};
-function sceneBg(tm){const id=PLACE+'|'+tm;if(bgC[id])return bgC[id];const s=SCN(),v=canv(),c=v.getContext('2d');s.bg(c,palOf(s,tm));return bgC[id]=v}
+// ชั้นภาพที่ไม่ขยับ (far mid bg) แคชตามสถานที่และชุดสี
+function layer(n,tm){const id=PLACE+'|'+n+'|'+tm;if(bgC[id])return bgC[id];const s=SCN(),v=canv();s[n](v.getContext('2d'),palOf(s,tm));return bgC[id]=v}
+// ฉากหลังรวมทุกชั้นแบบนิ่ง (เมฆตำแหน่งเริ่ม ไม่มีรถไฟ) ใช้ในชุดทดสอบและภาพ Design System
+function sceneBg(tm){const id=PLACE+'|all|'+tm;if(bgC[id])return bgC[id];const s=SCN(),v=canv(),c=v.getContext('2d'),A={t:0,ms:0,d:new Date(2026,0,1,12),P:false,td:'day',sk:tm};
+ if(s.far)c.drawImage(layer('far',tm),0,0);if(s.air)s.air(c,palOf(s,tm),A);if(s.mid)c.drawImage(layer('mid',tm),0,0);c.drawImage(layer('bg',tm),0,0);return bgC[id]=v}
 function sceneFg(tm){const id=PLACE+'|'+tm;if(fgC[id])return fgC[id];const s=SCN(),k=palOf(s,tm),v=canv(),c=v.getContext('2d');s.fg(c,k);
  // เส้นขอบรอบฉากหน้า ให้เข้าชุดกับแมว
  const d=c.getImageData(0,0,SW,SH),A=(x,y)=>x>=0&&y>=0&&x<SW&&y<SH&&d.data[(y*SW+x)*4+3]>0,o=[];
@@ -861,10 +1025,13 @@ let cv=null,io=null,raf=0,last=0,vis=true,sLast='',pending=null,booted=false;
 let TOD=null;const tod=(d=new Date())=>{if(TOD)return TOD;const h=d.getHours();return h>=5&&h<7?'dawn':h>=7&&h<17?'day':h>=17&&h<19?'dusk':'night'};
 const thm=()=>tod()==='night'?'dark':'light'; // ชุดสีของภาพแมว (กลางคืน = เส้นขอบสว่าง)
 const skey=t=>t==='day'?'light':t==='night'?'dark':t; // ชุดสีฉาก
-function paint(){if(FXS.length)sLast='';const td=tod(),tm=thm(),sk=skey(td),[k,f]=catPose();cat.k=k;const now=performance.now(),idle=idleAt(cat,now),X=Math.round(cat.x),s=SCN(),live=s.live,d=new Date(),
-  sw=live&&playing?Math.round(Math.sin(now/1000*Math.PI)*3)/3:0,key=[k,f,idle,X,sk,S.coat,S.acc,PLACE,live?d.getHours()*60+d.getMinutes()+'|'+sw:''].join('|');
- cur={k,f,idle,X,tm};if(key===sLast)return;sLast=key;const sx=cv.getContext('2d'),pal=palOf(s,sk);sx.clearRect(0,0,SW,SH);sx.drawImage(sceneBg(sk),0,0);if(live)live(sx,pal,d,sw);
- sx.drawImage(sprite(k,f,tm,S.coat,S.acc,idle),X,CY);sx.drawImage(sceneFg(sk),0,0);if(FXS.length)fxDraw(sx,tm);
+let NOW=null; // เวลาของสิ่งที่ขยับในฉาก (null = นาฬิกาจริง) ตั้งได้จาก _t.setNow() ไว้ทดสอบ/ทำภาพพรีวิว
+function paint(){if(FXS.length)sLast='';const td=tod(),tm=thm(),sk=skey(td),[k,f]=catPose();cat.k=k;const now=performance.now(),idle=idleAt(cat,now),X=Math.round(cat.x),s=SCN(),
+  A={t:now,ms:NOW??Date.now(),d:new Date(),P:playing,td,sk},key=[k,f,idle,X,sk,S.coat,S.acc,PLACE,s.tick?s.tick(A):''].join('|');
+ cur={k,f,idle,X,tm};if(key===sLast)return;sLast=key;const sx=cv.getContext('2d'),pal=palOf(s,sk);sx.clearRect(0,0,SW,SH);
+ if(s.far)sx.drawImage(layer('far',sk),0,0);if(s.air)s.air(sx,pal,A);if(s.mid)sx.drawImage(layer('mid',sk),0,0);if(s.back)s.back(sx,pal,A); // ไกล → เมฆ → ราง → รถไฟ
+ sx.drawImage(layer('bg',sk),0,0);if(s.live)s.live(sx,pal,A);
+ sx.drawImage(sprite(k,f,tm,S.coat,S.acc,idle),X,CY);sx.drawImage(sceneFg(sk),0,0);if(s.front)s.front(sx,pal,A);if(FXS.length)fxDraw(sx,tm);
  if(WARM[td]){sx.save();sx.globalCompositeOperation='multiply';sx.fillStyle=WARM[td];sx.fillRect(0,0,SW,SH);sx.restore()} // แสงอุ่นทั้งภาพ
  if(s.over)s.over(sx,pal)}
 // กล่องคำพูดลอยเหนือหัวสัตว์เลี้ยงและเลื่อนตามเวลาเดิน (เจ้าของขอ 2026-11-18): หาขอบบนของภาพเฟรมปัจจุบัน แล้วค่อยๆ ไล่ตาม ไม่ให้กระตุก
@@ -922,7 +1089,7 @@ function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:D
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
 window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
- _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),
+ _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},
   // ตัวช่วยวาดสำหรับร่างท่าในหน้าพรีวิว/ไฟล์ร่างใน docs/ (เพิ่มท่าร่างลง POSES แล้วเรียก frame ได้) แอปไม่ได้ใช้
   POSES,lib:{sitCat,sdBox,sdEll,sdCap,smin,ear,earPts,headMat,tail,P,put,bean,eyeClosed,eyeSleepy,eyeHappy,mouth,blush,zz,bowPart,RAMP,EYE,IRIS,NOSE,FX,fr,get ACC(){return ACC},get IDLE(){return IDLE}}}};
 })();
