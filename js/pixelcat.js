@@ -304,12 +304,12 @@ const flipPose=p=>({...p,parts:p.parts.map(q=>{const r={...q,sdf:(x,y)=>q.sdf(W-
 // ขาสั้นปลายกลม (ท่ายืน/เดินมุมข้างและสามส่วนสี่): โคนจมในตัว ปลายเป็นอุ้งเท้าทรงรีแตะเส้นพื้นพอดี ขาฝั่งไกลอยู่หลังตัวและเข้มลงหนึ่งขั้น
 const pawLine=()=>{const a=P('paw'),b=P('fur');if(darkRamp(a)&&darkRamp(b))return RAMP[a][0];return lumHex(RAMP[a][4])<lumHex(RAMP[b][4])?RAMP[a][4]:RAMP[b][4]};
 // ขาสั้นอวบปลายกลม: dx เลื่อนเท้าไปหน้า(+)/หลัง(-) · lift ยกเท้า · bend พับข้อเท้าไปด้านหลังจนเห็นอุ้งเท้าสีชมพู (0–1)
-function sideLeg(sx,dx,lift,bend,z,dim,by=0){
+function sideLeg(sx,dx,lift,bend,z,dim,by=0,cy=by){ // cy = จุดเริ่มเส้นขอบ (ยืดตัว: ขาหลังยาวขึ้นแต่เส้นขอบเริ่มที่ใต้ท้องเท่าเดิม ไม่ลากขึ้นไปบนสะโพก)
  const th=bend*1.3,c=Math.cos(th),s=Math.sin(th),px=sx+dx+.5-bend*1.2,py=41.7-lift-bend*.5;
  const Pw=(x,y)=>{const X=x-px,Y=y-py;return[X*c+Y*s,-X*s+Y*c]},pawD=(x,y)=>{const[u,v]=Pw(x,y);return sdEll(u,v,0,0,3,2.3)};
  const L=(x,y)=>sdCap(x,y,sx,35.4+by,px+bend*.8,py-1.3,2.7,2.4);
  return{z,R:2.7,dim,ground:false,skipUp:true,shade:false,cast:false,sdf:(x,y)=>smin(L(x,y),pawD(x,y),1.1),
-  mat:(x,y)=>pawD(x,y)<.35?(bend>.3&&Pw(x,y)[1]>.9?P('inner'):P('paw')):P('limb'),contour:(x,y)=>y>Math.min(38.6+by,py-2.6)?pawLine():false}}
+  mat:(x,y)=>pawD(x,y)<.35?(bend>.3&&Pw(x,y)[1]>.9?P('inner'):P('paw')):P('limb'),contour:(x,y)=>y>Math.min(38.6+cy,py-2.6)?pawLine():false}}
 // โบว์ตามแนวฐานหู (ใช้กับท่าที่หัวไม่หมุน): cx,cy กึ่งกลางฐานหู, ang มุมของฐานหู
 const bowPart=(cx,cy,ang,z=3,k=1)=>{const ca=Math.cos(ang),sa=Math.sin(ang),wing=(u,v,o)=>{const X=u-cx-o*ca,Y=v-cy-o*sa;return sdEll(X*ca+Y*sa,-X*sa+Y*ca,0,0,2.5*k,1.8*k)};
  return{z,R:2.2,ground:false,ramp:'bow',contour:RAMP.bow[4],sdf:(x,y)=>Math.min(wing(x,y,-2.4*k),wing(x,y,2.4*k),sdEll(x,y,cx,cy,1.3*k,1.3*k))}};
@@ -352,8 +352,8 @@ function sideCat(o){
  // ขา: หน้าใกล้ หน้าไกล หลังใกล้ หลังไกล (ฝั่งไกลอยู่หลังตัว เข้มลงหนึ่งขั้น)
  const ph=f/WALK_N,LG=run?R.L:walk?[walkLeg(ph-.25,2.2),walkLeg(ph-.75,2.2),walkLeg(ph,1.8),walkLeg(ph-.5,1.8)]:[[0,0,0],[0,0,0],[0,0,0],[0,0,0]];
  if(bw)LG.forEach((g,i)=>{if(i<2)g[0]=bw*(i?9.6:10.6)}); // ขาหน้าเหยียดไปข้างหน้าเกือบราบกับพื้น
- const legs=[[31.4+e*.5,1.5,0],[28.6+e*.5,-1,1],[16.4+hip+bw*1.2,1.45,0],[13.6+hip-bw*1.4,-1,1]].map( // ยืดตัว: กางขาหลังสองข้างออกจากกัน ไม่ให้ขาฝั่งไกลถูกตัวบังเหลือเส้นบาง (เจ้าของบอก 2026-11-20 ขาดูไม่เท่ากัน)
- ([sx,z,dim],i)=>sideLeg(sx,LG[i][0],LG[i][1],LG[i][2],z,dim,by+(i<2?bw*3.4:rb)));
+ const legs=[[31.4+e*.5,1.5,0],[28.6+e*.5,-1,1],[16.4+hip+bw*.6,bw?.9:1.45,0],[13.6+hip-bw*.6,-1,1]].map( // ยืดตัว: ขาหลังกางออกนิดหน่อยให้เห็นทั้งสองข้าง และขาใกล้อยู่ใต้ต้นขา (z ต่ำกว่า haunch) โผล่ออกมาใต้สะโพกแบบขาแมวจริง ไม่เป็นแถบแปะทับสะโพก (เจ้าของบอก 2026-11-20 ขาดูแปลก/ไม่เท่ากัน)
+ ([sx,z,dim],i)=>sideLeg(sx,LG[i][0],LG[i][1],LG[i][2],z,dim,by+(i<2?bw*3.4:rb),i<2?by+bw*3.4:by+bw*1.2));
  // หาง: ยืน/เดินตั้งโค้งปลายแกว่งช้าๆ · วิ่งพองฟู (แมวตื่นเต้น) ชี้ไปด้านหลังเฉียงขึ้น
  const fl=IDLE==='flick'?1:0,tb=11.6+hip*1.2;let tl;const ty=by+rb; // หางยกตามสะโพก
  if(run){const s2=[0,.6,1,.6,0,-.4][f],lag=(RUN[(f+5)%6].by-by)*.9; // หางพองสะบัดตามหลังตัว: ตัวขึ้น ปลายหางยังค้างต่ำกว่าหนึ่งจังหวะ
