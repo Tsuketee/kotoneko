@@ -843,18 +843,36 @@ const TCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',ci
   wall:'#ddd8cf',wall2:'#cbc5bb',vm:'#d9625c',vm2:'#b84c47',vmg:'#eef4f6',vglow:null,d1:'#5b9bd6',d2:'#f0bb55',d3:'#86c49b',bench:'#c49a73',bench2:'#a97e58',plat:'#d8d3cb',plat2:'#c4beb4',edge:'#f0c84a',edge2:'#d4a92c',
   mat:'#7fb0d8',mat2:'#5f93c0',mat3:'#a9cbe8',pil:'#9aa0a8',pil2:'#80868f',pil3:'#b8bec5',clock:'#ffffff',line:'#5a5660',shade:'rgba(60,60,70,.16)',moon:null,
   opl:'#d3cec6',opf:'#b5afa5',fen:'#a3a9b0',bal:'#b3aca1',bal2:'#9d968a',slp:'#8f806e',rail:'#7f848b',rail2:'#d0d4d8',pole:'#8b8590',wire:'#6a6670',lampf:'#fdfdf5',lglow:null,white:'#f7f5f0',
+  c1:'#ece4d6',c2:'#cfdbe5',c3:'#e6d3c5',c4:'#d6dfcd',btop:'#a9b3bd',bsh:'rgba(60,70,90,.16)',win:'#a7c3d8',win2:'#eef6fb',balc:'#f6f3ec',haze:'#c6d4e1',haze2:'#b3c4d4',tank:'#c2bbb0',ac:'#dcdcd8',sgn1:'#e8735a',sgn2:'#f0bb55',sgn3:'#5f93c0',
+  led0:'#1f1d23',ledO:'#f2a93b',ledG:'#7fd36b',ledR:'#ff6b5a',ledGl:null,vmw:'#f4f8fa',d4:'#e8735a',d5:'#f7f4ec',d6:'#7a4f34',cap:'#b9bec4',btn1:'#7fd3ff',btn2:'#ff9a8a',lcd:'#2f3a2f',bin1:'#5f93c0',bin2:'#86c49b',seat:'#5f93c0',seat2:'#4a78a8',seat3:'#8ab4dc',mark:'#6fbf8a',
   trn:'#eef1f3',trn2:'#d3d9de',trn3:'#aab3ba',tst:'#4f8fd6',tst2:'#3b6aa0',twin:'#8fb8d8',twin2:'#c4dcee',tun:'#5c6168',wheel:'#3f4248',head:'#fff6c0',pax:'#6f8aa0'},
  dark:{sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',city:'#2b3446',city2:'#252d3d',cwin:'#f4d27a',roof:'#2e2b31',roof2:'#25232a',beam:'#3e3a42',sign:'#cfcac2',signb:'#3b6aa0',ink:'#2a2530',
   wall:'#3a3631',wall2:'#322e2a',vm:'#9c4744',vm2:'#7e3936',vmg:'#f2f0d8',vglow:'rgba(242,240,216,.14)',d1:'#4a7fae',d2:'#c49a45',d3:'#6d9c7c',bench:'#7d604a',bench2:'#634a37',plat:'#47433e',plat2:'#3c3834',edge:'#b8952f',edge2:'#987a22',
   mat:'#4f6f8c',mat2:'#3f5a73',mat3:'#6585a2',pil:'#4e535a',pil2:'#41454b',pil3:'#5e636a',clock:'#e8e4dc',line:'#9aa0a8',shade:'rgba(0,0,0,.3)',
   opl:'#4a4641',opf:'#3c3935',fen:'#4e535a',bal:'#3d3a36',bal2:'#33302d',slp:'#2e2924',rail:'#4a4d52',rail2:'#8a8f95',pole:'#3e3a42',wire:'#5e5a64',lampf:'#fffbe6',lglow:'rgba(255,248,220,.07)',white:'#bdb9b2',
+  c1:'#2f3748',c2:'#28303f',c3:'#333a4b',c4:'#2a3342',btop:'#3d4659',bsh:'rgba(0,0,0,.22)',win:'#1c2232',win2:'#1c2232',balc:'#3f4859',haze:'#222a3a',haze2:'#283044',tank:'#3a4050',ac:'#3a4050',sgn1:'#d0644f',sgn2:'#d9ad48',sgn3:'#4f86c0',
+  led0:'#141317',ledO:'#ffb347',ledG:'#8ff07a',ledR:'#ff7a68',ledGl:'rgba(255,190,90,.10)',vmw:'#f6f4dc',d4:'#c0604c',d5:'#e8e4d4',d6:'#5e3c28',cap:'#9aa0a7',btn1:'#8fe0ff',btn2:'#ffa898',lcd:'#22301f',bin1:'#3f6a96',bin2:'#5e8f6c',seat:'#3f6a96',seat2:'#335a82',seat3:'#5a86b4',mark:'#4f9a6a',
   trn:'#b9bec4',trn2:'#9aa0a7',trn3:'#7d838a',tst:'#3b6aa0',tst2:'#2d5280',twin:'#f2e2a8',twin2:'#fff4cc',tun:'#2f3236',wheel:'#232528',head:'#fff6c0',pax:'#8a7a5a'}};
 function stationFar(c,k){sky(c,k,48);
- [[0,36,14],[16,30,10],[28,40,16],[46,34,9],[57,42,13],[72,31,10],[84,38,17],[103,33,9],[114,41,14],[130,29,11],[143,37,17]].forEach(([x,y,w],i)=>{rect(c,x,y,w,47-y,i%2?k.city2:k.city);
-  if(i%3===1)rect(c,x+(w>>1),y-3,1,3,k.city2);if(k.cwin)for(let wy=y+3;wy<44;wy+=5)for(let wx=x+2;wx<x+w-2;wx+=4)if((wx*7+wy*3+i)%5<2)rect(c,wx,wy,1,2,k.cwin)}); // เมืองไกล เสาอากาศ กลางคืนเปิดไฟ
-}
+ const R=rng(41),win=()=>k.cwin?(R()<.42?k.cwin:k.win):(R()<.14?k.win2:k.win);
+ [[6,22,8],[47,20,7],[86,17,6],[121,21,9],[150,24,8]].forEach(([x,y,w],i)=>{rect(c,x,y,w,47-y,k.haze);if(i===2){rect(c,x+3,y-6,1,6,k.haze);dot(c,x+3,y-7,k.sgn1)}
+  for(let wy=y+2;wy<40;wy+=3)for(let wx=x+1;wx<x+w-1;wx+=2)if(R()<.5)dot(c,wx,wy,k.cwin&&R()<.5?k.cwin:k.haze2)});                           // ตึกสูงไกลๆ (จางในหมอก)
+ CITY.forEach(([x,y,w,t],i)=>bldg(c,x,y,w,t,k,R,win,i))}
+// ตึกฉากหลังสถานี: office = กระจกเป็นตาราง · apt = แมนชันมีระเบียงทุกชั้นและผ้าตาก · shop = ตึกเตี้ยมีป้ายโฆษณาบนหลังคา (สีล้วน ไม่มีตัวหนังสือ)
+// ของบนดาดฟ้า: ถังน้ำ แอร์ เสาอากาศ ราวกันตก · ด้านขวามีเงา 1 px · กลางคืนหน้าต่างเปิดไฟบางบาน
+const CITY=[[0,33,13,'apt'],[13,27,10,'off'],[23,37,14,'shop'],[37,30,9,'off'],[46,35,12,'apt'],[58,39,11,'shop'],[69,26,11,'off'],[80,34,16,'apt'],[96,30,10,'off'],[106,38,12,'shop'],[118,31,12,'apt'],[130,25,12,'off'],[142,34,18,'apt']];
+function bldg(c,x,y,w,t,k,R,win,i){const B=47;rect(c,x,y,w,B-y,[k.c1,k.c2,k.c3,k.c4][i%4]);rect(c,x,y,w,1,k.btop);
+ if(t==='off'){for(let wy=y+2;wy<B-1;wy+=3)for(let wx=x+1;wx<x+w-2;wx+=3)rect(c,wx,wy,2,2,win());rect(c,x+(w>>1),y-4,1,4,k.btop);dot(c,x+(w>>1),y-5,k.sgn1)}
+ else if(t==='apt'){for(let wy=y+3;wy<B;wy+=4){for(let wx=x+1;wx<x+w-2;wx+=3)rect(c,wx,wy-2,2,2,win());rect(c,x,wy,w-1,1,k.balc);if(R()<.45)dot(c,x+2+((R()*(w-5))|0),wy-1,[k.d1,k.d2,k.d3,k.white][(R()*4)|0])}
+  rect(c,x+1,y-3,3,2,k.tank);dot(c,x+1,y-1,k.btop);dot(c,x+3,y-1,k.btop);rect(c,x+w-5,y-2,3,2,k.ac);for(let rx=x;rx<x+w;rx+=2)dot(c,rx,y-1,k.btop)}
+ else{for(let wx=x+1;wx<x+w-2;wx+=3)rect(c,wx,y+3,2,3,win());rect(c,x,y+7,w-1,1,k.balc);rect(c,x+1,y+8,w-3,B-y-8,k.win);
+  const sc=[k.sgn1,k.sgn2,k.sgn3][i%3];rect(c,x+1,y-5,w-2,4,sc);rect(c,x+2,y-4,w-4,2,k.white);rect(c,x+3,y-4,2,2,sc);dot(c,x+2,y-1,k.btop);dot(c,x+w-3,y-1,k.btop)} // ป้ายบนหลังคา
+ rect(c,x+w-1,y,1,B-y,k.bsh)}
 // ชานชาลาฝั่งตรงข้าม รั้ว หินโรยทาง หมอนรองราง ราง เสาไฟฟ้าและสายเหนือราง (อยู่หน้าเมฆ หลังรถไฟ)
-function stationMid(c,k){rect(c,0,41,SW,1,k.fen);for(let x=4;x<SW;x+=10)rect(c,x,41,1,6,k.fen);rect(c,0,47,SW,2,k.opl);rect(c,0,47,SW,1,k.white);rect(c,0,49,SW,4,k.opf);            // ชานชาลาฝั่งตรงข้าม + รั้ว
+function stationMid(c,k){rect(c,0,41,SW,1,k.fen);for(let x=4;x<SW;x+=10)rect(c,x,41,1,6,k.fen);
+ rect(c,64,36,1,11,k.pole);rect(c,77,36,1,11,k.pole);rect(c,62,33,18,6,k.ink);rect(c,63,34,16,4,k.sign);rect(c,63,37,16,1,k.signb);rect(c,69,35,4,1,k.ink);   // ป้ายสถานีฝั่งตรงข้าม (ไม่มีตัวหนังสือ)
+ rect(c,30,43,12,1,k.seat2);rect(c,30,41,12,2,k.seat);dot(c,31,44,k.pole);dot(c,40,44,k.pole);rect(c,118,40,6,6,k.vm2);rect(c,119,41,4,3,k.vmg);              // ม้านั่งกับตู้กดน้ำฝั่งตรงข้าม
+ rect(c,0,47,SW,2,k.opl);rect(c,0,47,SW,1,k.white);rect(c,0,49,SW,4,k.opf);            // ชานชาลาฝั่งตรงข้าม + รั้ว
  rect(c,0,53,SW,17,k.bal);for(let y=54;y<70;y+=2)for(let x=y%4?1:0;x<SW;x+=3)rect(c,x,y,1,1,k.bal2);for(let x=2;x<SW;x+=6)rect(c,x,57,3,10,k.slp);           // หินโรยทาง หมอนรองราง
  [59,64].forEach(y=>{rect(c,0,y,SW,1,k.rail2);rect(c,0,y+1,SW,1,k.rail)});                                                                                  // ราง
  [24,112].forEach(x=>{rect(c,x,12,2,41,k.pole);rect(c,x,20,12,1,k.pole);rect(c,x+11,20,1,7,k.pole)});rect(c,0,20,SW,1,k.wire);rect(c,0,26,SW,1,k.wire);for(let x=6;x<SW;x+=14)rect(c,x,21,1,5,k.wire)} // เสาไฟฟ้า สายเหนือราง
@@ -872,18 +890,34 @@ function trainImg(k){const id=k.trn+k.twin;if(trC[id])return trC[id];const v=doc
  return trC[id]=v}
 function stationTrain(c,k,A){const x=trainX(A);if(x!=null)c.drawImage(trainImg(k),x,26)}
 function stationBg(c,k){rect(c,0,0,SW,6,k.roof);rect(c,0,6,SW,1,k.roof2);rect(c,0,7,SW,2,k.beam);                                                           // หลังคาชานชาลา
- [12,52].forEach(x=>{if(k.lglow)blob(c,x+6,12,9,3,k.lglow);rect(c,x,9,12,2,k.pil2);rect(c,x+1,10,10,1,k.lampf)});                   // ไฟใต้หลังคา (กลางคืนแสงตกบนพื้นชานชาลา)
+ [6,72].forEach(x=>{if(k.lglow)blob(c,x+6,12,9,3,k.lglow);rect(c,x,9,12,2,k.pil2);rect(c,x+1,10,10,1,k.lampf)});
+ // ป้ายบอกเวลารถออก (ไฟ LED เป็นแถบสี ไม่มีตัวหนังสือ)
+ rect(c,36,9,1,3,k.beam);rect(c,62,9,1,3,k.beam);rect(c,32,12,34,9,k.ink);rect(c,33,13,32,7,k.led0);
+ [[14,[[34,2,k.ledR],[38,5,k.ledO],[45,3,k.ledO],[50,6,k.ledG],[59,4,k.ledO]]],[17,[[34,2,k.ledG],[38,4,k.ledO],[44,5,k.ledO],[51,5,k.ledG],[59,4,k.ledO]]]].forEach(([y,S])=>S.forEach(([x,w,col])=>rect(c,x,y,w,1,col)));
+ if(k.lglow)blob(c,49,16,18,6,k.ledGl);                   // ไฟใต้หลังคา (กลางคืนแสงตกบนพื้นชานชาลา)
  rect(c,100,9,1,5,k.beam);rect(c,128,9,1,5,k.beam);rect(c,92,14,45,15,k.ink);rect(c,93,15,43,13,k.sign);rect(c,93,24,43,4,k.signb);
  [[109,17,2,2],[112,15,2,2],[116,15,2,2],[119,17,2,2],[112,19,6,3],[111,20,8,1]].forEach(([x,y,w,h])=>rect(c,x,y,w,h,k.ink)); // ป้ายสถานีเป็นรูปอุ้งเท้า (ไม่ใช้ตัวอักษรปลอม)
- rect(c,95,25,3,1,k.sign);rect(c,131,25,3,1,k.sign);
+ rect(c,95,25,1,2,k.sign);rect(c,96,24,1,4,k.sign);rect(c,97,25,2,2,k.sign);rect(c,134,25,1,2,k.sign);rect(c,133,24,1,4,k.sign);rect(c,131,25,2,2,k.sign);                                             // ลูกศรสถานีถัดไปซ้าย/ขวา
+ blob(c,97,19,2.6,2.6,k.tst);blob(c,97,19,1.5,1.5,k.sign);rect(c,92,29,45,1,k.ink+'55');                                                                   // วงสัญลักษณ์สายรถไฟ
  rect(c,0,70,SW,20,k.plat);rect(c,0,70,SW,1,k.white);rect(c,0,71,SW,1,k.plat2);rect(c,0,73,SW,3,k.edge);for(let x=1;x<SW;x+=3)rect(c,x,74,1,1,k.edge2);for(let x=31;x<SW;x+=32)rect(c,x,77,1,13,k.plat2); // ชานชาลา + แถบเบรลล์
- if(k.lglow)[18,58].forEach(x=>blob(c,x,80,20,6,k.lglow));if(k.vglow)blob(c,13,64,15,15,k.vglow);
- rect(c,4,48,18,32,k.vm);rect(c,4,48,18,2,k.vm2);rect(c,6,51,14,13,k.vmg);[[0,k.d1],[1,k.d2],[2,k.d3],[3,k.d1]].forEach(([i,col])=>{rect(c,7+i*3.5|0,53,2,4,col);rect(c,7+((i+2)%4)*3.5|0,59,2,4,i%2?k.d3:k.d2)});
- rect(c,9,70,8,3,k.vm2);rect(c,18,66,2,2,k.vmg);rect(c,4,79,18,1,k.vm2);                                                                                   // ตู้กดน้ำ
- rect(c,96,62,32,2,k.bench);rect(c,96,70,32,2,k.bench);rect(c,96,70,32,1,k.bench2+'88');rect(c,98,64,1,6,k.bench2);rect(c,125,64,1,6,k.bench2);rect(c,98,72,2,8,k.bench2);rect(c,124,72,2,8,k.bench2); // ม้านั่ง
- blob(c,112,80.4,16,1,k.shade);blob(c,13,80.4,10,1,k.shade);blob(c,150,88.6,7,1.4,k.shade)}
+ [40,84].forEach(x=>{rect(c,x,76,5,1,k.mark);rect(c,x+1,77,3,1,k.mark);dot(c,x+2,78,k.mark)});                                                       // เครื่องหมายจุดขึ้นรถบนพื้น
+ if(k.lglow)[12,78].forEach(x=>blob(c,x,80,20,6,k.lglow));if(k.vglow)blob(c,12,62,16,17,k.vglow);
+ // ตู้กดน้ำ: ไฟหัวตู้ ตู้โชว์เครื่องดื่ม 3 ชั้น (กระป๋อง/ขวด ฝาสีเทา) ปุ่มกดใต้แต่ละชั้น ช่องหยอดเหรียญ ช่องธนบัตร จอเล็ก ช่องรับของมีฝาพับ
+ rect(c,3,44,19,36,k.vm);rect(c,3,44,19,2,k.vm2);rect(c,20,46,2,34,k.vm2);rect(c,5,46,15,2,k.vmg);rect(c,5,49,11,17,k.vmw);
+ const DR=[k.d1,k.d2,k.d3,k.d4,k.d5,k.d6];[50,55,60].forEach((ry,r)=>{for(let j=0;j<4;j++){const x=6+j*2.6|0,col=DR[(r*4+j*3)%6],can=(r+j)%3===0;rect(c,x,ry+(can?1:0),2,can?3:4,col);dot(c,x,ry+(can?1:0),can?k.cup||'#ddd':k.cap);if(!can)dot(c,x+1,ry+1,k.cap)}
+  rect(c,5,ry+4,11,1,k.vm2);for(let j=0;j<4;j++)dot(c,6+j*2.6|0,ry+4,(r+j)%2?k.btn1:k.btn2)});
+ rect(c,16,49,3,2,k.lcd);dot(c,17,50,k.ledG);rect(c,17,53,2,1,k.ink);rect(c,16,56,3,1,k.ink);dot(c,18,59,k.vmg);rect(c,16,62,3,2,k.vm2);
+ rect(c,5,68,11,5,k.vm2);rect(c,6,69,9,3,k.ink);rect(c,6,69,9,1,k.vm2);rect(c,3,78,19,2,k.vm2);dot(c,5,47,k.white);
+ // ถังขยะแยกขวด/กระป๋อง สองถัง ฝามีรูกลม
+ [[23,k.bin1],[28,k.bin2]].forEach(([x,col])=>{rect(c,x,71,4,9,col);rect(c,x,70,4,1,k.pil3);blob(c,x+2,71.5,1.2,.9,k.ink);rect(c,x+3,72,1,8,k.pil2+'88');rect(c,x,74,4,1,k.white)});
+ // เก้าอี้พลาสติกขึ้นรูปสี่ที่นั่งบนโครงเหล็ก
+ for(let i=0;i<4;i++){const x=96+i*8;rect(c,x,63,7,6,k.seat);dot(c,x,63,k.plat);dot(c,x+6,63,k.plat);rect(c,x+1,64,1,4,k.seat3);rect(c,x+6,64,1,5,k.seat2);rect(c,x,69,7,2,k.seat2);rect(c,x,69,7,1,k.seat3)}
+ rect(c,95,71,36,1,k.pil2);rect(c,97,72,1,8,k.pil2);rect(c,128,72,1,8,k.pil2);rect(c,112,72,1,8,k.pil2);rect(c,96,79,3,1,k.pil2);rect(c,127,79,3,1,k.pil2);
+ blob(c,112,80.4,17,1,k.shade);blob(c,12,80.4,11,1,k.shade);blob(c,27,80.4,6,.8,k.shade);blob(c,150,88.6,7,1.4,k.shade)}
 function stationFg(c,k){rect(c,146,9,8,81,k.pil);rect(c,146,9,2,81,k.pil3);rect(c,152,9,2,81,k.pil2);rect(c,145,86,10,4,k.pil2);
- blob(c,150,30,5,5,k.ink);blob(c,150,30,4,4,k.clock)} // เสากับหน้าปัดนาฬิกา (เข็มวาดใน stationFront ตามเวลาจริง)
+ blob(c,150,30,5,5,k.ink);blob(c,150,30,4,4,k.clock); // หน้าปัดนาฬิกา (เข็มวาดใน stationFront ตามเวลาจริง)
+ rect(c,146,38,8,8,k.ink);rect(c,147,39,6,6,k.sign);rect(c,150,40,1,4,k.ink);dot(c,149,41,k.ink);rect(c,149,44,3,1,k.ink);                                 // ป้ายชานชาลาเลข 1
+ rect(c,145,49,10,6,k.ink);rect(c,146,50,8,4,k.edge);rect(c,147,52,5,1,k.ink);dot(c,151,51,k.ink);dot(c,151,53,k.ink);dot(c,152,52,k.ink)}                   // ป้ายทางออกสีเหลืองลูกศรขวา
 function stationFront(c,k,A){const d=A.d,m=d.getMinutes(),h=d.getHours()%12+m/60;handAt(c,150,30,h/12*2*Math.PI,2,k.ink);handAt(c,150,30,m/60*2*Math.PI,3.2,k.ink);dot(c,150,30,k.ink)}
 const stationTick=A=>{const x=trainX(A);return A.d.getHours()*60+A.d.getMinutes()+'|'+cloudKey(A)+'|'+(x==null?'':x)};
 
