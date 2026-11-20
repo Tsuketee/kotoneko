@@ -1288,15 +1288,16 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   const freq = await p.evaluate(() => { const { step, cat, setPart } = PixelCat._t, out = {}; for (const part of ['tw', 'noon', 'night', 'day']) { setPart(part); let run = 0, bed = 0, last = ''; Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52 }); for (let i = 0; i < 72000; i++) { step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') run++; if (cat.mode === 'curl') bed++; last = cat.mode } } out[part] = { run, bed } } setPart(null); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9 }); return out });
   assert(freq.tw.run > freq.noon.run, 'เช้า/เย็นต้องวิ่งดีดบ่อยกว่าเที่ยง ' + JSON.stringify(freq));
   assert(freq.night.bed > freq.day.bed, 'กลางคืนต้องเข้านอนบ่อยกว่ากลางวัน ' + JSON.stringify(freq));
-  // นิสัยกำหนดพฤติกรรม (v63 · Feline Five): จำลองนิสัยละ 1 ชม. ตอนกลางวัน
+  // นิสัยกำหนดพฤติกรรม (v63 · Feline Five): จำลองนิสัยละ 6 ชม. ตอนกลางวัน
   // พลังล้นวิ่งพล่านบ่อยกว่าขี้เซา · ขี้เซางีบนานกว่าพลังล้น · ปากแข็งเดินมานั่งใกล้ๆ เองบ่อยกว่าขี้อาย · ขี้อายไปแอบหลังของฝั่งขวาบ่อยกว่า · ทนลูบ: ปากแข็ง < พลังล้น < ขี้เซา
-  const per = await p.evaluate(() => { const { step, cat, setTrait, setPart, XMAX } = PixelCat._t, out = {}; setPart('day');
+  const per = await p.evaluate(() => { const { step, cat, setTrait, setPart, setTod, XMAX } = PixelCat._t, out = {}; setPart('day'); setTod('day');
     for (const i of [0, 2, 3, 4]) { setTrait(i); const o = out[i] = { zoom: 0, nap: 0, come: 0, hide: 0, pets: 0 }; let last = ''; Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52, then: null, tol: 0, cool: 0, pend: null });
-      for (let k = 0; k < 72000; k++) { step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') o.zoom++; if (cat.mode === 'turnOut' && cat.then === 'come') o.come++; last = cat.mode } if (cat.mode === 'nap' || cat.mode === 'bask') o.nap += 50; if (cat.mode === 'sit' && cat.x >= XMAX - 6) o.hide += 50 }
+      for (let k = 0; k < 432000; k++) { step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') o.zoom++; if (cat.mode === 'turnOut' && cat.then === 'come') o.come++; last = cat.mode } if (cat.mode === 'nap') o.nap += 50; if (cat.mode === 'sit' && cat.x >= XMAX - 6) o.hide += 50 }
       Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, tol: 0, cool: 0, then: null, lv: 0 }); while (cat.then !== 'leave' && o.pets < 40) { PixelCat.poke('head'); o.pets++ } }
-    setPart(null); setTrait(M.pet.trait); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, tol: 0, cool: 0, then: null, lv: 0 }); return out });
+    setPart(null); setTod(null); setTrait(M.pet.trait); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, tol: 0, cool: 0, then: null, lv: 0 }); return out });
   const PJ = JSON.stringify(per);
-  // งีบ = nap + นอนอาบแดด (v97 ขี้เซาไปอาบแดดบ่อยสุด เวลานอนพักจึงย้ายจาก nap ไป bask ถ้านับแค่ nap ข้อนี้ตกเป็นบางรอบ)
+  // v104: จำลองนิสัยละ 6 ชม. และตรึงช่วงเวลาเป็นกลางวัน (เดิม 1 ชม. ตามนาฬิกาจริง ตั้งแต่มีอาบแดด v97 ผลแกว่งตามเวลาที่รันจนข้อขี้เซาตกเป็นบางรอบ)
+  // วัด 40 รอบ: งีบ (nap อย่างเดียว) ต่ำสุด 1.69 มัธยฐาน 2.2 · ถ้านับอาบแดดรวมด้วยกลับแกว่งกว่า (ต่ำสุด 1.4) เพราะพลังล้นก็อาบแดดนาน
   // เกณฑ์อัตราส่วนตั้งต่ำกว่าค่าต่ำสุดที่วัดได้ (จำลอง 30 รอบบน main 2026-11-19: งีบ มัธยฐาน 2.2 ต่ำสุด 1.72 · เดินมาหา ต่ำสุด 2.0 · แอบ ต่ำสุด 1.5)
   // เดิมใช้ 2 เท่าทุกข้อ ซึ่งอยู่กลางการกระจายของการสุ่ม ชุดทดสอบจึงตกราว 1 ใน 4 รอบโดยที่โค้ดไม่ผิด · ทิศทางของนิสัยยังตรวจเหมือนเดิม
   assert(per[0].zoom > per[4].zoom * 2, 'พลังล้นต้องวิ่งพล่านบ่อยกว่าขี้เซา ' + PJ); assert(per[4].nap > per[0].nap * 1.4, 'ขี้เซาต้องงีบนานกว่า ' + PJ);
@@ -1492,6 +1493,34 @@ test('แมวพิกเซล: ท่าที่ใช้ของในฉ
   assert.strictEqual(k[0], 'bask'); assert(['yawn', 'turnOut', 'groom', 'sit', 'stretch'].includes(k[1]), 'ตื่นจากอาบแดด ' + k[1]);
   const heart = await p.evaluate(() => JSON.stringify(PixelCat._t.frame('bask', 1, 'light', 'cream', 'none')).includes('#ef7d92')); assert(!heart, 'นอนอาบแดดไม่มีหัวใจลอย');
   await p.evaluate(() => { const T = PixelCat._t; T.setNow(null); T.setTod(null); T.setFam(99, 0); M.place = { at: 'room', got: [] }; render(); Object.assign(T.cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }) });
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ฉากกลางคืน: พระจันทร์เฟสและเวลาขึ้นตกตามโลกจริง', async (b, base) => {
+  const p = await fresh(b, base);
+  await p.waitForTimeout(200);
+  // เฟสเทียบวันจริง (เวลาท้องถิ่นของเครื่อง เหมือนในแอป): เต็มดวง 24 พ.ย. 2026 · ดับ 9 ธ.ค. 2026 · ครึ่งดวงข้างขึ้น 17 ธ.ค. · ครึ่งดวงข้างแรม 1 ธ.ค.
+  const ph = await p.evaluate(() => { const { moonAt, moonIdx } = PixelCat._t, at = s => moonAt(new Date(s).getTime());
+    return { full: at('2026-11-24T21:00:00'), nw: at('2026-12-09T21:00:00'), q1: at('2026-12-17T21:00:00'), q3: at('2026-12-01T21:00:00'),
+      idx: [0, .07, .15, .25, .33, .42, .5, .58, .67, .75, .85, .93, .99].map(moonIdx) } });
+  assert(Math.abs(ph.full.p - .5) < .04 && ph.full.lit > .98, 'เต็มดวง ' + JSON.stringify(ph.full));
+  assert(ph.nw.p < .04 || ph.nw.p > .96, 'จันทร์ดับ ' + JSON.stringify(ph.nw));
+  assert(Math.abs(ph.q1.p - .25) < .05 && Math.abs(ph.q3.p - .75) < .05, 'ครึ่งดวง ' + JSON.stringify([ph.q1.p, ph.q3.p]));
+  assert.deepStrictEqual(ph.idx, [0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 0], 'ลำดับภาพเฟส');
+  // ขึ้น-ตก: เต็มดวงอยู่บนฟ้าตอนเที่ยงคืน ไม่อยู่ตอนเที่ยงวัน · ข้างขึ้นครึ่งดวงเห็นหัวค่ำ ตกราวเที่ยงคืน · ข้างแรมครึ่งดวงขึ้นราวเที่ยงคืน
+  const up = await p.evaluate(() => { const { moonAt } = PixelCat._t, u = s => moonAt(new Date(s).getTime()).up;
+    return [u('2026-11-24T23:30:00'), u('2026-11-24T12:00:00'), u('2026-12-17T20:00:00'), u('2026-12-18T02:30:00'), u('2026-12-01T21:00:00'), u('2026-12-02T04:00:00')] });
+  assert.deepStrictEqual(up, [true, false, true, false, false, true], 'ขึ้น-ตก ' + up);
+  // วาดในทุกสถานที่: ฉากกลางคืนตอนพระจันทร์ขึ้นต่างจากตอนจันทร์ดับ · เปลี่ยนเฟสแล้วชั้นภาพแคชใหม่ (ไม่ค้างดวงเก่า) · กลางวันไม่มีพระจันทร์
+  const draw = await p.evaluate(() => { const T = PixelCat._t, cv = document.createElement('canvas'), out = {};
+    const img = (pl, s) => { T.setNow(new Date(s).getTime()); PixelCat.mount(cv, { place: pl, coat: 'cream' }); return T.sceneBg('dark').toDataURL() };
+    const scenes = { room: ['2026-11-24T23:00:00', '2026-12-17T19:30:00'], garden: ['2026-11-25T00:00:00', '2026-12-17T19:30:00'], cafe: ['2026-11-25T00:00:00', '2026-12-14T19:30:00'], station: ['2026-11-25T00:00:00', '2026-12-17T19:30:00'] };
+    T.setTod('night');
+    for (const [pl, [a, c]] of Object.entries(scenes)) { const none = img(pl, '2026-12-09T23:00:00'); out[pl] = [img(pl, a) !== none, img(pl, c) !== none, img(pl, a) !== img(pl, c)] }
+    T.setTod('day'); T.setNow(new Date('2026-11-24T23:00:00').getTime()); PixelCat.mount(cv, { place: 'garden', coat: 'cream' }); out.day = T.sceneBg('light').toDataURL() === (T.setNow(new Date('2026-12-09T23:00:00').getTime()), T.sceneBg('light').toDataURL());
+    T.setNow(null); T.setTod(null); M.place = { at: 'room', got: [] }; render(); return out });
+  for (const pl of ['room', 'garden', 'cafe', 'station']) assert.deepStrictEqual(draw[pl], [true, true, true], 'พระจันทร์ในฉาก ' + pl);
+  assert(draw.day, 'กลางวันไม่มีพระจันทร์');
   assert.deepStrictEqual(p.errors, []);
 });
 
