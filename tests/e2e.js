@@ -1382,10 +1382,12 @@ test('แมวพิกเซล: ตื่นแล้วหาว/ยืด�
   const p = await fresh(b, base);
   await p.waitForTimeout(200);
   // ท่าใหม่ (v83) วาดได้ทุกลายขน × เครื่องประดับ ทั้งสองโหมด และผ้าพันคอ/โบว์ต้องเห็นทุกเฟรม (ตกลงกันว่าเครื่องประดับต้องใส่ได้ทุกท่า)
-  const bad = await p.evaluate(() => { const { frame, COATS } = PixelCat._t, out = [], n = { yawn: 6, stretchR: 6, stretchL: 6, knead: 4 };
+  const bad = await p.evaluate(() => { const { frame, COATS } = PixelCat._t, out = [], n = { yawn: 4, stretchR: 6, stretchL: 6, knead: 4 };
     for (const k in n) for (const co of Object.keys(COATS)) for (const tm of ['light', 'dark']) for (let f = 0; f < n[k]; f++) { const g0 = JSON.stringify(frame(k, f, tm, co, 'none'));
       if (!JSON.parse(g0).some(r => r.some(Boolean))) out.push('ว่าง ' + [k, co, tm, f]);
       for (const acc of ['scarf', 'bow']) if (JSON.stringify(frame(k, f, tm, co, acc)) === g0) out.push('ไม่เห็น' + acc + ' ' + [k, co, tm, f]) }
+    // ยืดตัวเริ่มและจบที่ท่ายืนหันข้าง (ภาพต้องเท่ากันเป๊ะ ไม่กระตุกตอนสลับท่า) และลายไม่สลับข้างเมื่อหันซ้าย (เคยพลาดในร่างแรก: สามสีหันซ้ายกลายเป็นแต้มดำ)
+    for (const co of ['calico', 'cream', 'tuxedo']) for (const d of ['R', 'L']) if (JSON.stringify(frame('stretch' + d, 0, 'light', co, 'bow')) !== JSON.stringify(frame('stand' + d, 2, 'light', co, 'bow'))) out.push('ยืดตัวเฟรมแรกไม่ตรงท่ายืน ' + co + d);
     return out });
   assert.deepStrictEqual(bad, []);
   // ตื่นนอน 200 รอบ: หาวราวครึ่งหนึ่ง ยืดตัวราว 60% ยืดตัวต้องหันข้างก่อน (turnOut) และจบด้วยเดิน/วิ่ง/หันกลับมานั่ง ไม่ออกนอกขอบ
