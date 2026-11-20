@@ -1382,7 +1382,7 @@ test('แมวพิกเซล: ตื่นแล้วหาว/ยืด�
   const p = await fresh(b, base);
   await p.waitForTimeout(200);
   // ท่าใหม่ (v83) วาดได้ทุกลายขน × เครื่องประดับ ทั้งสองโหมด และผ้าพันคอ/โบว์ต้องเห็นทุกเฟรม (ตกลงกันว่าเครื่องประดับต้องใส่ได้ทุกท่า)
-  const bad = await p.evaluate(() => { const { frame, COATS } = PixelCat._t, out = [], n = { yawn: 4, stretchR: 6, stretchL: 6, knead: 4 };
+  const bad = await p.evaluate(() => { const { frame, COATS } = PixelCat._t, out = [], n = { yawn: 4, stretchR: 6, stretchL: 6, knead: 4, doze: 8 };
     for (const k in n) for (const co of Object.keys(COATS)) for (const tm of ['light', 'dark']) for (let f = 0; f < n[k]; f++) { const g0 = JSON.stringify(frame(k, f, tm, co, 'none'));
       if (!JSON.parse(g0).some(r => r.some(Boolean))) out.push('ว่าง ' + [k, co, tm, f]);
       for (const acc of ['scarf', 'bow']) if (JSON.stringify(frame(k, f, tm, co, acc)) === g0) out.push('ไม่เห็น' + acc + ' ' + [k, co, tm, f]) }
@@ -1407,7 +1407,10 @@ test('แมวพิกเซล: ตื่นแล้วหาว/ยืด�
     for (let i = 0; i < 300; i++) { Object.assign(cat, { mode: 'turnIn', t: 0, dur: 10, x: 12, then: 'sleep', pend: null }); if (!n) document.querySelector('.scn.px .scb').classList.remove('on'); step(50); // ฟองนวดขึ้นเมื่อไม่ได้พูดอยู่
       if (cat.mode === 'knead') { n++; if (!say) say = document.querySelector('.scn.px .scb').textContent; step(4000); if (cat.mode !== 'loaf') chain = false } else if (cat.mode !== 'loaf') chain = false }
     Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return { n, chain, say } });
-  assert(kn.n > 45 && kn.n < 140, 'นวดก่อนนอนราว 30% ' + JSON.stringify(kn)); assert(kn.chain, 'นวดแล้วต้องหมอบต่อ'); assert(kn.say.includes('ふみふみ'), kn.say);
+  assert(kn.n > 45 && kn.n < 140, 'นวดก่อนนอนราว 30% ' + JSON.stringify(kn));
+  // ง่วงเคลิ้ม = นั่งสัปหงก (v86 แทนท่าหมอบ): ช่วงหมอบก่อนนอน งีบ และตอนตื่น วาดด้วยท่า doze
+  const dz = []; for (const m of ['loaf', 'nap', 'wake']) { await p.evaluate(m => Object.assign(PixelCat._t.cat, { mode: m, t: 0, dur: 1e9, after: null }), m); await p.waitForTimeout(80); dz.push(await p.evaluate(() => PixelCat._t.cat.k)) }
+  await p.evaluate(() => Object.assign(PixelCat._t.cat, { mode: 'sit', t: 0, dur: 1e9 })); assert.deepStrictEqual(dz, ['doze', 'doze', 'doze'], 'ง่วง/งีบ/ตื่นต้องใช้ท่านั่งสัปหงก');
   // ช่วงปรับตัว: วันแรกระวังตัวเต็มที่ ลดลงวันละหนึ่งในสาม วันที่ 4 ปกติ · อยู่บนจอนานขึ้นก็ผ่อนคลาย · ห้อง/สวนไม่มีช่วงปรับตัว
   const wy = await p.evaluate(() => { const { setFam, wary } = PixelCat._t, r = []; M.place = { at: 'cafe', got: PLACES.map(q => q.id), fam: {} }; render();
     for (const [n, ms] of [[1, 0], [2, 0], [4, 0], [1, 6e5]]) { setFam(n, ms); r.push(+wary().toFixed(2)) } M.place = { at: 'garden', got: PLACES.map(q => q.id), fam: {} }; render(); setFam(1); r.push(wary()); return r });

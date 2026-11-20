@@ -480,6 +480,16 @@ Object.assign(POSES,{
   fx:(a,by)=>{const o=f>>1;put(a,6,16+o,[[1,0],[0,1],[0,2],[1,3]],FX);put(a,41,17-o,[[0,0],[1,1],[1,2],[0,3]],FX); // เส้นโค้งข้างหู = คราง
    if(!(f%2)){const x=l0?27:21;put(a,x-4,43+by,[[0,0]],FX);put(a,x+4,43+by,[[0,0]],FX)}}})} // ขีดเล็กข้างอุ้งเท้าที่กำลังกดลง
 });
+// ง่วงเคลิ้ม = นั่งสัปหงก (v86 · เจ้าของเลือกจากร่าง 3 แบบใน docs/loaf-drafts.js 2026-11-20 แทนท่าหมอบ loaf ที่ตาและตัวดูใหญ่กว้างไป)
+// นั่งตัวปกติ หางโค้งมนโอบมาหน้าเท้า หัวค่อยๆ ก้มทีละนิด ตาปรือเล็ก → เหลือแค่เปลือกตา → หลับ ‿ มี Zz → สะดุ้งเงยหน้าลืมตา → ปรือใหม่
+// หัวไม่เอียง (เอียงแล้วหน้าที่หมุนทำให้ปากเบี้ยวที่ขนาดพิกเซลนี้) · ตาเล็ก 3 px (ตาปรือเดิมกว้าง 4 px หนา 2 แถวดูใหญ่)
+const lid3=(a,x,y,o=1)=>{put(a,x,y,[[0,0],[1,0],[2,0]],EYE);if(o)put(a,x+1,y+1,[[0,0]],IRIS)},shut3=(a,x,y)=>put(a,x,y,[[0,0],[1,1],[2,0]],EYE);
+const DOZE=[{hy:0,e:1,ear:.04},{hy:.4,e:1,ear:.06},{hy:.9,e:0,ear:.09},{hy:1.4,e:-1,ear:.12,z:1},{hy:1.9,e:-1,ear:.15,z:2},{hy:2.2,e:-1,ear:.17,z:3},{hy:-.4,e:2,ear:0},{hy:0,e:1,ear:.03}];
+POSES.doze=f=>{const D=DOZE[f],sw=[0,.2,.4,.6,.8,.6,0,-.2][f];return sitCat({hy:D.hy,ear:D.ear,tailFront:true,
+  tail:[[35.4,41],[37.4,42.6],[37.2,44.4],[34.6,45.5],[29.6,45.8],[24.6+sw*.3,45.4],[20.8+sw*.6,44.6-sw*.3]],tr0:2,tr1:1.25, // โผล่จากหลังสะโพกที่ระดับพื้น โค้งมนเป็นเส้นเดียว ไม่หักที่โคน
+  face:(a,hx,y)=>{[17,28].forEach(x=>D.e===2?bean(a,x+.6,y+.4,3):D.e<0?shut3(a,x,y+1.6):lid3(a,x,y+1,D.e)); // สะดุ้ง = ตาเม็ดถั่วสั้น
+   mouth(a,22,y+4.6);blush(a,13,y+3.4);blush(a,32,y+3.4)},
+  fx:a=>{if(D.z)zz(a,38+(D.z>2?1:0),10-D.z*1.6,D.z>2)}})};
 // ยืดตัวโค้งคำนับ: จากท่ายืนหันข้าง ค่อยๆ ก้มอกลงแนบพื้น เหยียดขาหน้า สะโพกยก หลับตา (หาวไปด้วยตอนสุด) แล้วกลับมายืน · ต่อด้วยเดินได้เลย
 const STRETCH=[0,.55,1,1,.55,0];
 const stretchCat=(dir,f)=>{const b=STRETCH[f];return sideCat({dir,f:f+2,bow:b,shut:b>.9})}; // ส่ง dir ให้ sideCat เลือกช่องลายตามข้างจริง (หันซ้ายลายไม่สลับข้าง)
@@ -491,7 +501,8 @@ const INFO=[['sit','นั่งรอ','สะโพกกลม ขาหน�
  ['happy','ดีใจ','กระโดดเบาๆ หางตั้งตรงปลายงอแกว่งไปมา (แมวดีใจหางจะตั้ง) ตา > < ปากอ้า (ตอบถูก ได้เหรียญ ครบสตรีค โตเป็นร่างใหม่)',[180,120,160,120]],
  ['sad','เสียใจ','หูลู่ หัวก้ม หางแบนราบกับพื้น น้ำตาไหล คิ้วตก (ตอบผิด หายไปนาน)',[450,450,550,450]],
  ['curl','นอนหลับ','นอนขดเป็นโดนัท คางวางบนอุ้งเท้า หางโค้งเลียบก้นมาด้านหน้า หน้า - . - ท้องพองยุบ (ดึก)',[650,650,650,650]],
- ['loaf','ง่วง เคลิ้ม','หมอบแบบขนมปัง ซุกเท้าใต้อก ตาปรือ สัปหงกแล้วสะดุ้ง (ใกล้ดึก ไม่ได้เรียนนาน)',[650,500,450,350]],
+ ['doze','ง่วง สัปหงก','นั่งตัวตรง หางโค้งโอบหน้าเท้า หัวค่อยๆ ก้ม ตาปรือเล็ก → หลับ มี Zz → สะดุ้งเงยหน้าลืมตา แล้วปรือใหม่ (งีบ ก่อนนอน ตอนตื่น · แทนท่าหมอบตั้งแต่ v86)',[620,480,420,420,460,640,260,520]],
+ ['loaf','หมอบ (ไม่ได้ใช้แล้ว)','หมอบแบบขนมปัง ซุกเท้าใต้อก ตาปรือ สัปหงกแล้วสะดุ้ง (ใกล้ดึก ไม่ได้เรียนนาน)',[650,500,450,350]],
  ['eat','กินข้าวปั้น','สองมือถือข้าวปั้นที่ถูกกัดไปคำหนึ่ง เคี้ยวแก้มตุ่ย ตาปิดอร่อย (ตอนให้อาหาร)',[300,260,300,260]],
  ['shy','เขินอาย','อุ้งเท้าสองข้างปิดปาก แก้มแดงมีขีด /// ตาเหลือบหลบ หางม้วนพันเท้า เหงื่อตก (ถูกชม แตะเล่น)',[400,400,400,400]],
  ['curious','สงสัย','เอียงหัว หูข้างหนึ่งเอน นั่งขาหน้าเท่ากัน หางเป็นรูปเครื่องหมาย ? (เจอคำใหม่ เปิดบทไวยากรณ์)',[400,400,400,400]],
@@ -528,9 +539,9 @@ let playing=!RM;
 // ท่าที่ใช้ท่าย่อยแบบสุ่มได้ (สร้างจาก sitCat) และช่วงเวลาสุ่มของแต่ละท่าย่อย (ms)
 // ท่าย่อยแบบสุ่ม: blink กะพริบ · twitchL/twitchR หูกระดิกข้างเดียว สองทีติดกันแบบแมวจริง (สุ่มข้าง) · flick สะบัดปลายหาง
 // ตอนนอน (ขด หมอบ นอนหงาย) มีแค่หูกระดิกกับปลายหางกระตุก และนานกว่าตอนตื่น
-const AWAKE=['sit','think','read','happy','sad','eat','shy','curious','standR','standL','turnR','turnL'],ASLEEP=['curl','loaf','belly'];
+const AWAKE=['sit','think','read','happy','sad','eat','shy','curious','standR','standL','turnR','turnL'],ASLEEP=['curl','loaf','belly','doze'];
 const IDLES={blink:{every:[2500,6500],len:140},twitch:{every:[9000,20000],sleep:[12000,28000],len:300,on:[[0,90],[170,280]]},flick:{every:[4500,10000],sleep:[15000,32000],len:320}};
-const IDLE_FOR=Object.fromEntries([...AWAKE.map(k=>[k,['blink','twitch','flick']]),...ASLEEP.map(k=>[k,['twitch','flick']])]),IDLE_NAMES=['blink','twitchL','twitchR','flick'];
+const IDLE_FOR=Object.fromEntries([...AWAKE.map(k=>[k,['blink','twitch','flick']]),...ASLEEP.map(k=>[k,k==='doze'?['twitch']:['twitch','flick']])]),IDLE_NAMES=['blink','twitchL','twitchR','flick']; // สัปหงก: หางโอบหน้าเท้า ไม่สะบัด
 const rnd=([a,b])=>a+Math.random()*(b-a);
 // เลือกท่าย่อยของผืนผ้าใบนี้ตามเวลาจริง: แต่ละผืนสุ่มของตัวเอง แมวจึงไม่กะพริบพร้อมกันทุกตัว
 function idleAt(o,now){const ok=IDLE_FOR[o.k];if(!ok||!playing)return null;const sl=ASLEEP.includes(o.k);o.ev=o.ev||{};
@@ -775,7 +786,7 @@ function step(dt){const m=cat.mode;if(playing)AT_MS+=dt;if(cat.tol>0)cat.tol=Mat
   pose:()=>{if(cat.beg){cat.beg=0;return setMode('pet',2000)}cat.pose==='eat'&&Math.random()<.6?groom():setMode('sit',rr(2500,5000))}, // หลังกินมักเลียขน · ขออาหาร: มองเสร็จแล้วถูหัว
   shy:()=>setMode('sit',rr(2000,4000)),pet:()=>setMode('sit',rr(2500,5000)),notice:()=>setMode('sit',rr(2000,4000)),annoy:()=>{cat.lv=0;setMode('sit',rr(2500,4500))},sblink:()=>setMode('sit',rr(2500,5000))})[m]()}
 function catPose(){const m=cat.mode,D=cat.dir>0?'R':'L';if(m==='walk'||m==='run')return[(m==='walk'&&(cat.then==='greet'||cat.then==='come'||cat.then==='beg')?'walkUp':m)+D,Math.floor(cat.dist/GAIT[m].step)%GAIT[m].n];if(m==='skid')return['stand'+(cat.dir>0?'L':'R'),0]; // หยุดกึกยังหันทางเดิมก่อนกลับตัว
- const k=m==='rise'||m==='halt'?'stand'+D:m==='turnOut'||m==='turnIn'?'turn'+D:m==='stretch'?'stretch'+D:(m==='pose'?cat.pose:{sit:'sit',loaf:'loaf',nap:'loaf',wake:'loaf',curl:'curl',shy:'shy',groom:cat.gk||'groom',pet:'pet',notice:'curious',annoy:cat.lv>1?'lash':'annoyed',sblink:'slowBlink',yawn:'yawn',knead:'knead'}[m]);return[k,playing?frameAt(DUR[k],cat.t):0]}
+ const k=m==='rise'||m==='halt'?'stand'+D:m==='turnOut'||m==='turnIn'?'turn'+D:m==='stretch'?'stretch'+D:(m==='pose'?cat.pose:{sit:'sit',loaf:'doze',nap:'doze',wake:'doze',curl:'curl',shy:'shy',groom:cat.gk||'groom',pet:'pet',notice:'curious',annoy:cat.lv>1?'lash':'annoyed',sblink:'slowBlink',yawn:'yawn',knead:'knead'}[m]);return[k,playing?frameAt(DUR[k],cat.t):0]}
 const sprC={};function sprite(k,f,tm,coat,acc,idle){const key=[k,f,tm,coat,acc,idle].join('|');let v=sprC[key];if(!v){v=document.createElement('canvas');v.width=W;v.height=H;draw(v.getContext('2d'),frame(k,f,tm,coat,acc,idle));sprC[key]=v}return v}
 // ---------- ผูกกับแอป ----------
 // ท่าอารมณ์ตามเหตุการณ์: ถ้าแมวกำลังเดิน/หันตัวอยู่ให้รอจบก่อน (ไม่ให้ท่าสะดุด) แล้วค่อยเล่นตอนนั่งพัก
