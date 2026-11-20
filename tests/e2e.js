@@ -1292,10 +1292,11 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   // พลังล้นวิ่งพล่านบ่อยกว่าขี้เซา · ขี้เซางีบนานกว่าพลังล้น · ปากแข็งเดินมานั่งใกล้ๆ เองบ่อยกว่าขี้อาย · ขี้อายไปแอบหลังของฝั่งขวาบ่อยกว่า · ทนลูบ: ปากแข็ง < พลังล้น < ขี้เซา
   const per = await p.evaluate(() => { const { step, cat, setTrait, setPart, XMAX } = PixelCat._t, out = {}; setPart('day');
     for (const i of [0, 2, 3, 4]) { setTrait(i); const o = out[i] = { zoom: 0, nap: 0, come: 0, hide: 0, pets: 0 }; let last = ''; Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52, then: null, tol: 0, cool: 0, pend: null });
-      for (let k = 0; k < 72000; k++) { step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') o.zoom++; if (cat.mode === 'turnOut' && cat.then === 'come') o.come++; last = cat.mode } if (cat.mode === 'nap') o.nap += 50; if (cat.mode === 'sit' && cat.x >= XMAX - 6) o.hide += 50 }
+      for (let k = 0; k < 72000; k++) { step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') o.zoom++; if (cat.mode === 'turnOut' && cat.then === 'come') o.come++; last = cat.mode } if (cat.mode === 'nap' || cat.mode === 'bask') o.nap += 50; if (cat.mode === 'sit' && cat.x >= XMAX - 6) o.hide += 50 }
       Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, tol: 0, cool: 0, then: null, lv: 0 }); while (cat.then !== 'leave' && o.pets < 40) { PixelCat.poke('head'); o.pets++ } }
     setPart(null); setTrait(M.pet.trait); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, tol: 0, cool: 0, then: null, lv: 0 }); return out });
   const PJ = JSON.stringify(per);
+  // งีบ = nap + นอนอาบแดด (v97 ขี้เซาไปอาบแดดบ่อยสุด เวลานอนพักจึงย้ายจาก nap ไป bask ถ้านับแค่ nap ข้อนี้ตกเป็นบางรอบ)
   // เกณฑ์อัตราส่วนตั้งต่ำกว่าค่าต่ำสุดที่วัดได้ (จำลอง 30 รอบบน main 2026-11-19: งีบ มัธยฐาน 2.2 ต่ำสุด 1.72 · เดินมาหา ต่ำสุด 2.0 · แอบ ต่ำสุด 1.5)
   // เดิมใช้ 2 เท่าทุกข้อ ซึ่งอยู่กลางการกระจายของการสุ่ม ชุดทดสอบจึงตกราว 1 ใน 4 รอบโดยที่โค้ดไม่ผิด · ทิศทางของนิสัยยังตรวจเหมือนเดิม
   assert(per[0].zoom > per[4].zoom * 2, 'พลังล้นต้องวิ่งพล่านบ่อยกว่าขี้เซา ' + PJ); assert(per[4].nap > per[0].nap * 1.4, 'ขี้เซาต้องงีบนานกว่า ' + PJ);
