@@ -701,10 +701,14 @@ function clumpPad(c,cx,cy,w,h,C,seed){const R=rng(seed),n=Math.max(3,Math.round(
  T.forEach(([x,y,r])=>blob(c,x,y-.2,r-.55,r*.75-.6,C[1]));
  T.forEach(([x,y,r])=>blob(c,x-.6,y-.9,r*.52,r*.3,C[2]));
  T.forEach(([x,y,r],i)=>{dot(c,x-1+(i&1),y-r*.6,C[3]);if(R()<.55)dot(c,x+.8,y+.5,C[0]);if(R()<.4)dot(c,x-r*.5,y+.2,C[0])})}
-// ลำต้นโค้งจากโคนถึงยอดตามจุด P (y ลดลง) กว้าง w0 → w1 · C = [เปลือก, ขอบรับแสง, เงา] ลายเปลือกเป็นเกล็ดขีดสั้น
-function trunkPath(c,P,w0,w1,C,seed){const R=rng(seed),y0=P[0][1],y1=P[P.length-1][1];
- for(let y=y0;y>=y1;y--){let i=0;while(i<P.length-2&&P[i+1][1]>y)i++;const[xa,ya]=P[i],[xb,yb]=P[i+1],x=xa+(xb-xa)*(ya-y)/(ya-yb||1),w=Math.max(1,Math.round(w0+(w1-w0)*(y0-y)/(y0-y1))),l=Math.round(x-w/2);
-  rect(c,l,y,w,1,C[0]);if(w>2){dot(c,l,y,C[1]);dot(c,l+w-1,y,C[2])}if(w>3&&R()<.35)dot(c,l+1+((R()*(w-2))|0),y,C[2])}}
+// เนื้อไม้ต่อเนื่อง (v110 เจ้าของบอกว่าลำต้นขาด): ลำต้นและกิ่งทุกเส้นปั๊มเป็นวงกลมเรียวตามทางลงหน้ากากเดียวกันก่อน แล้วค่อยลงสีทีละพิกเซล
+// ขอบซ้ายรับแสง C[1] ขอบขวาเงา C[2] ข้างในสีเปลือก C[0] มีขีดลายเปลือกสุ่ม · กิ่งเส้นเดียวกว้าง 1 px ใช้สีเปลือก · S = [[จุด, กว้างโคน, กว้างปลาย], …]
+function wood(c,S,C,seed){const R=rng(seed),M=new Uint8Array(SW*SH);let X0=SW,X1=0,Y0=SH,Y1=0;
+ S.forEach(([P,w0,w1])=>{const L=[0];for(let i=1;i<P.length;i++)L.push(L[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));const T=L[L.length-1]||1;
+  for(let i=0;i<P.length-1;i++){const[ax,ay]=P[i],[bx,by]=P[i+1],n=Math.ceil(Math.hypot(bx-ax,by-ay)*4)||1;
+   for(let j=0;j<=n;j++){const t=j/n,x=ax+(bx-ax)*t,y=ay+(by-ay)*t,r=Math.max(.72,(w0+(w1-w0)*(L[i]+(L[i+1]-L[i])*t)/T)/2);
+    for(let yy=Math.floor(y-r);yy<=y+r;yy++)for(let xx=Math.floor(x-r);xx<=x+r;xx++)if(xx>=0&&yy>=0&&xx<SW&&yy<SH&&(xx+.5-x)**2+(yy+.5-y)**2<=r*r){M[yy*SW+xx]=1;if(xx<X0)X0=xx;if(xx>X1)X1=xx;if(yy<Y0)Y0=yy;if(yy>Y1)Y1=yy}}}});
+ for(let y=Y0;y<=Y1;y++)for(let x=X0;x<=X1;x++){const i=y*SW+x;if(!M[i])continue;const l=!M[i-1],r=!M[i+1];c.fillStyle=l&&r?C[0]:l?C[1]:r?C[2]:R()<.16?C[2]:C[0];c.fillRect(x,y,1,1)}}
 // กิ่ง: เส้นหนา w ผ่านจุด P
 const limb=(c,P,w,col)=>{for(let i=0;i<P.length-1;i++){const[xa,ya]=P[i],[xb,yb]=P[i+1],n=Math.ceil(Math.hypot(xb-xa,yb-ya)*2);for(let j=0;j<=n;j++)rect(c,Math.floor(xa+(xb-xa)*j/n),Math.floor(ya+(yb-ya)*j/n),1,w,col)}};
 // ก้านโค้ง (เบซิเยร์กำลังสอง) จาก (x0,y0) ผ่านจุดคุม (qx,qy) ถึง (x1,y1)
@@ -834,11 +838,11 @@ const roomTick=A=>{const o=birdAt(A),se=season(A.ms);return(A.P&&(se==='winter'|
 // ขยับ: เมฆลอย กระบอกไม้ไผ่รับน้ำแล้วกระดกเทน้ำ ตีหินดังป๊อก ทุก 7 วินาที ผีเสื้อบินตอนกลางวัน หิ่งห้อยกะพริบตอนกลางคืน
 const GCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',cloud2:'#d5e2ee',mtn:'#b7d1c6',mtn2:'#a3c2b6',snow:'#f4f8fa',far:'#97bc9f',fence:'#d2b07a',fence2:'#ad8a55',rope:'#7d5f3a',grass:'#b4d68f',grass2:'#9cc579',
   gravel:'#efe8da',gravel2:'#dcd1bc',stone:'#c9c3b8',stone2:'#aaa294',stone3:'#e2ddd4',moss:'#9cbf72',lan:'#c2bbaf',lan2:'#9e9688',lwin:'#f6e7c0',glow:null,trunk:'#8a6a4a',
-  leaf:'#86b96f',leaf2:'#65985a',leaf3:'#a8d48f',mp0:'#9c3a2e',mp1:'#e8735a',mp2:'#c9533f',mp3:'#f8ae80',pn1:'#3d6b4a',pn2:'#56895a',pn3:'#78a968',pn4:'#a2cb86',bark:'#7a5a40',bark2:'#9b7a5a',bark3:'#57402e',flower:'#f2a0b4',bam:'#a9c46a',bam2:'#7f9c48',bam3:'#cfe0a0',post:'#8a6a4a',water:'#a6d6ea',water2:'#e6f6fc',
+  leaf:'#86b96f',leaf2:'#65985a',leaf3:'#a8d48f',mp0:'#9c3a2e',mp1:'#e8735a',mp2:'#c9533f',mp3:'#f8ae80',pn1:'#3d6b4a',pn2:'#56895a',pn3:'#78a968',pn4:'#a2cb86',bark:'#7a5a40',bark2:'#9b7a5a',bark3:'#57402e',flower:'#f2a0b4',flower2:'#fcd3de',flower3:'#d97b93',az0:'#4f7f47',az1:'#64995a',az2:'#82b86c',az3:'#a9d48c',bam:'#a9c46a',bam2:'#7f9c48',bam3:'#cfe0a0',post:'#8a6a4a',water:'#a6d6ea',water2:'#e6f6fc',
   bfly:'#fffaf0',bfly2:'#f2d36b',ff:null,line:'#5f6e4a',shade:'rgba(70,80,50,.16)',moon:null},
  dark:{sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',mtn:'#2f3f4a',mtn2:'#28363f',snow:'#7f8ea4',far:'#24352f',fence:'#6e5a40',fence2:'#57462f',rope:'#3e3122',grass:'#3f5a3a',grass2:'#354d31',
   gravel:'#4c4741',gravel2:'#403b36',stone:'#625d57',stone2:'#4c4843',stone3:'#736e67',moss:'#4f6a40',lan:'#5d5952',lan2:'#4a4741',lwin:'#f6d27a',glow:'rgba(246,210,122,.16)',trunk:'#5a4636',
-  leaf:'#5f8c52',leaf2:'#4a7040',leaf3:'#79a868',mp0:'#55241f',mp1:'#93473a',mp2:'#76382e',mp3:'#b0644c',pn1:'#21382a',pn2:'#2f4f37',pn3:'#426849',pn4:'#5a855a',bark:'#4a3a2c',bark2:'#5e4a38',bark3:'#30251c',flower:'#b8738a',bam:'#62773f',bam2:'#4b5c30',bam3:'#7d9455',post:'#5a4636',water:'#3c5d74',water2:'#6d90a8',
+  leaf:'#5f8c52',leaf2:'#4a7040',leaf3:'#79a868',mp0:'#55241f',mp1:'#93473a',mp2:'#76382e',mp3:'#b0644c',pn1:'#21382a',pn2:'#2f4f37',pn3:'#426849',pn4:'#5a855a',bark:'#4a3a2c',bark2:'#5e4a38',bark3:'#30251c',flower:'#b8738a',flower2:'#d79bae',flower3:'#91566a',az0:'#253b25',az1:'#34512f',az2:'#466c3e',az3:'#5f8c54',bam:'#62773f',bam2:'#4b5c30',bam3:'#7d9455',post:'#5a4636',water:'#3c5d74',water2:'#6d90a8',
   ff:'#eaf7a0',line:'#a9b893',shade:'rgba(0,0,0,.3)'}};
 function gardenFar(c,k){sky(c,k,52)}
 // ภูเขาอยู่หน้าเมฆ (เมฆลอยหลังยอดเขา)
@@ -852,11 +856,12 @@ function gardenBg(c,k){
  const se=k.season,wi=se==='winter',FAR=[[40,46,7,3.5],[52,45,6,4],[64,46.5,7,3],[80,45.5,6,3.5],[92,46,7,3],[146,46,8,4],[158,45,6,4]];
  FAR.forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.far));if(wi)FAR.forEach(([x,y,a,b])=>blob(c,x-.5,y-b*.55,a*.75,1.2,k.sn));                                   // แนวไม้หลังรั้ว (หนาว: หิมะบนยอด)
  // เมเปิลหลังรั้ว: ลำต้นเรียวแตกกิ่งเป็นง่าม ใบเป็นกอโปร่งหลายชั้น · สีใบตามฤดู (ซากุระชมพู เขียว แดง) หนาวเป็นกิ่งโล่งมีหิมะเกาะ
- const MB=[k.bark,k.bark2,k.bark3],MP=[k.mp0,k.mp2,k.mp1,k.mp3];trunkPath(c,[[16,47],[15,41],[17,36],[16,32]],3,2,MB,7);
- limb(c,[[15,42],[11,39],[7,37]],1,k.bark);limb(c,[[16,38],[21,35],[25,32]],1,k.bark);limb(c,[[17,40],[24,39],[29,39]],1,k.bark);
- if(wi){limb(c,[[16,32],[15,27],[17,23]],1,k.bark);limb(c,[[16,30],[11,27],[8,25]],1,k.bark3);limb(c,[[17,29],[22,26],[24,24]],1,k.bark3);limb(c,[[7,37],[4,34]],1,k.bark3);limb(c,[[7,37],[6,33]],1,k.bark3);
-  limb(c,[[25,32],[27,29]],1,k.bark3);limb(c,[[25,32],[29,31]],1,k.bark3);limb(c,[[29,39],[32,36]],1,k.bark3);limb(c,[[11,39],[9,42]],1,k.bark3);limb(c,[[21,35],[20,31]],1,k.bark3);  // กิ่งฝอยปลายกิ่ง
-  [[8,36],[12,38],[19,34],[22,33],[22,38],[26,38],[15,26],[10,26],[21,25],[5,33]].forEach(([x,y])=>rect(c,x,y,2,1,k.sn))}                                  // หิมะเกาะบนกิ่ง
+ const MB=[k.bark,k.bark2,k.bark3],MP=[k.mp0,k.mp2,k.mp1,k.mp3];
+ // ลำต้นกับกิ่งหลักวาดเป็นเนื้อเดียว กิ่งยื่นไปถึงใต้กอใบทุกกอ (v110 เจ้าของบอกว่าลำต้นขาด: เดิมกิ่ง 1 px ถูกกอใบบังจนกอใบดูลอย)
+ const MW=[[[[16,47],[15,42],[17,37],[16,31],[16,26]],3.4,1.8],[[[15,42],[11,39],[7,35]],2.2,1.3],[[[17,37],[21,34],[25,30]],2.1,1.3],[[[16,40],[23,39],[30,37]],2,1.3],[[[16,34],[11,33],[7,32]],1.7,1.2],[[[16,31],[20,29],[23,27]],1.5,1.1]];
+ if(wi)MW.push(...[[[16,26],[15,23]],[[16,30],[11,27],[8,25]],[[17,29],[22,26],[24,24]],[[7,35],[4,32]],[[7,35],[6,31]],[[25,30],[27,27]],[[25,30],[29,29]],[[30,37],[32,34]],[[11,39],[9,42]],[[21,34],[20,31]],[[7,32],[4,30]]].map(P=>[P,1.4,1]));  // หนาว: กิ่งฝอยปลายกิ่ง
+ wood(c,MW,MB,7);
+ if(wi)[[8,34],[12,38],[19,33],[22,32],[22,38],[26,37],[15,25],[10,26],[21,25],[5,31]].forEach(([x,y])=>rect(c,x,y,2,1,k.sn));                            // หิมะเกาะบนกิ่ง
  else [[16,27,7,3,3],[6,33,5,2.6,5],[25,29,5,2.6,9],[10,39,6,2.8,11],[22,35,6,3,13],[30,38,4,2.2,17]].forEach(([x,y,w,h,sd])=>clumpPad(c,x,y,w,h,MP,sd));
  rect(c,0,47,SW,15,k.fence);for(let x=1;x<SW;x+=4)rect(c,x,47,1,15,k.fence2);rect(c,0,46,SW,1,k.fence2);rect(c,0,50,SW,1,k.fence2);rect(c,0,57,SW,1,k.fence2); // รั้วไม้ไผ่
  for(let x=10;x<SW;x+=20){rect(c,x,49,2,3,k.rope);rect(c,x,56,2,3,k.rope)}                                                                                // ปมเชือกผูกรั้ว
@@ -878,17 +883,25 @@ function gardenBg(c,k){
  // ต้นสนดำตัดแต่ง (นิวากิ): โคนบานมีราก ลำต้นคดเอียง ลายเปลือกเป็นเกล็ด กิ่งยื่นออกไปรับพุ่มเข็มทรงก้อนเมฆ 5 ก้อน
  const PB=[k.bark,k.bark2,k.bark3],PN=[k.pn1,k.pn2,k.pn3,k.pn4];
  rect(c,119,65,12,1,k.bark3);rect(c,120,64,10,1,k.bark);dot(c,118,65,k.bark3);dot(c,131,65,k.bark3);                                                  // รากแผ่
- trunkPath(c,[[125,65],[123,58],[126,50],[122,42],[121,36],[124,29],[127,24]],6,2,PB,3);
- limb(c,[[123,45],[118,43],[113,42],[109,41]],2,k.bark);limb(c,[[121,37],[117,34],[114,31]],2,k.bark);limb(c,[[123,31],[129,29],[134,27],[138,27]],2,k.bark);
- limb(c,[[125,52],[130,50],[134,49]],1,k.bark);limb(c,[[118,43],[116,45]],1,k.bark3);
+ // ลำต้นคดและกิ่งวาดเป็นเนื้อเดียว (v110 เจ้าของบอกว่าลำต้นขาด: เดิมวาดทีละแถว ช่วงที่เอียงและเรียวแถวไม่ต่อกัน กิ่งเป็นขั้นบันได)
+ wood(c,[[[[125,65],[123.5,58],[125.5,50],[122.5,43],[121.5,36],[124,29],[127,22]],6.2,2.4],[[[123,46],[118,43.5],[113,42],[109,41]],2.6,1.6],[[[121.8,38],[117.5,34.5],[114.5,31]],2.4,1.5],
+  [[[123.5,31],[129,29],[134,27],[138,26.5]],2.4,1.5],[[[125,53],[130,50.5],[134,49]],2,1.3],[[[118,43.5],[116,45.5]],1.4,1.1]],PB,3);
  [[108,39,6,2.8,21],[115,29,8,3.2,23],[137,25,8,3.2,29],[134,47,4,2,31],[127,19,9,4,37]].forEach(([x,y,w,h,sd])=>{clumpPad(c,x,y,w,h,PN,sd);if(wi){blob(c,x,y-h*.62,w*.82,1.3,k.sn2);blob(c,x-.4,y-h*.72,w*.7,1,k.sn)}}); // หนาว: หิมะบนพุ่มสน
  blob(c,124,66.4,6,1.2,k.shade);blob(c,105,72.4,9,1,k.shade);blob(c,147,88.6,11,1.6,k.shade)}
-// พุ่มอาซาเลีย: ใบไม้ผลิออกดอกเต็มพุ่ม · ร้อนดอกเหลือน้อย · ใบไม้ร่วงใบแดงแซม · หนาวมีหิมะคลุมยอด
-function gardenFg(c,k){const se=k.season;[[147,79,12,9],[137,83,7,6],[157,82,7,7]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf2));[[146,78,10,7],[137,82,5,4.5],[156,81,5,5]].forEach(([x,y,a,b])=>blob(c,x,y,a,b,k.leaf));
- const FL=[[141,75],[148,72],[154,76],[145,80],[151,79],[136,80],[158,79],[143,84]];
- if(se==='spring')FL.forEach(([x,y])=>rect(c,x,y,2,2,k.flower));else if(se==='summer')FL.slice(0,3).forEach(([x,y])=>rect(c,x,y,2,2,k.flower));else if(se==='autumn')FL.forEach(([x,y],i)=>rect(c,x,y,2,i%2?1:2,i%3?k.mp1:k.mp2));
- [[150,74],[139,78],[156,84]].forEach(([x,y])=>rect(c,x,y,1,1,k.leaf3));
- if(se==='winter'){[[146,73,9,2],[137,78.5,5,1.4],[156,77,5,1.6]].forEach(([x,y,a,b])=>{blob(c,x,y+.6,a,b,k.sn2);blob(c,x,y,a-.6,b-.5,k.sn)})}}
+// พุ่มอาซาเลีย (v110 เจ้าของขอให้ดูดีขึ้น): พุ่มนูนจากกอใบกลมหลายกอซ้อนกัน แสงจากบนซ้าย ใต้พุ่มเงาเข้ม มีขีดใบเล็กๆ
+// ใบไม้ผลิดอกเต็มพุ่ม (ดอก 2×2 มีไฮไลต์) · ร้อนเหลือไม่กี่ดอก · ใบไม้ร่วงใบแดงแซมเป็นหย่อม · หนาวหิมะคลุมยอดกอ
+const AZ=[[147,77.5,8.5,5.6],[137.5,80.5,6.5,4.6],[157,79.5,6.5,4.8],[142,84,7.5,4.6],[152.5,84,8,4.6],[133,85.5,5,3.4],[161,85,4.5,3.6]];
+function gardenFg(c,k){const se=k.season,R=rng(41);
+ blob(c,147,86,18,5.6,k.az0);                                                                                                   // ฐานพุ่ม (เงาใต้กอ)
+ AZ.forEach(([x,y,a,b])=>blob(c,x,y+1,a,b,k.az0));AZ.forEach(([x,y,a,b])=>blob(c,x,y,a-.7,b-.7,k.az1));                           // เงากอ → สีกลาง
+ AZ.forEach(([x,y,a,b])=>blob(c,x-a*.18,y-b*.22,a*.68,b*.58,k.az2));AZ.forEach(([x,y,a,b])=>blob(c,x-a*.32,y-b*.45,a*.34,b*.28,k.az3)); // ด้านรับแสง → ไฮไลต์บนซ้าย
+ for(let i=0;i<46;i++){const[x,y,a,b]=AZ[i%AZ.length],u=(R()-.5)*2*a*.8,v=(R()-.2)*b*.9;dot(c,x+u,y+v,R()<.6?k.az1:k.az0);if(R()<.5)dot(c,x+u+1,y+v-1,k.az0)} // ขีดใบ
+ const FL=[[143,73],[148,71.5],[153,74],[139,77],[146,77],[156,77.5],[134,81],[150,80],[160,81],[141,81],[154,82],[137,84]],fl=(x,y)=>{x=Math.round(x);y=Math.round(y);rect(c,x,y,2,2,k.flower);dot(c,x,y,k.flower2);dot(c,x+1,y+1,k.flower3)};
+ if(se==='spring')FL.forEach(([x,y])=>fl(x,y));else if(se==='summer')[FL[1],FL[5],FL[7]].forEach(([x,y])=>fl(x,y));
+ else if(se==='autumn')FL.forEach(([x,y],i)=>{const C=[k.mp1,k.mp2,k.mp3];rect(c,Math.round(x),Math.round(y),2,1,C[i%3]);dot(c,x+(i&1),y+1,C[(i+1)%3]);if(i%3===0)dot(c,x+2,y,C[i%3])});
+ if(se==='winter'){const X0=126,Y0=64,w=SW-X0,h=SH-Y0,d=c.getImageData(X0,Y0,w,h).data;                                 // หนาว: หิมะคลุมตามแนวยอดพุ่มจริง (หนา 2 px ย้อยลงบางจุด)
+  for(let x=0;x<w;x++){let y=0;while(y<h&&!d[(y*w+x)*4+3])y++;if(y>=h)continue;const t=Y0+y,X=X0+x,deep=2+((x*7)%5===0)+((x*13)%7===0);
+   rect(c,X,t,1,deep,k.sn);dot(c,X,t+deep,k.sn2)}}}
 // ชิชิโอโดชิ: แกนที่ (20,63.5) ปากกระบอกยาว 10 ไปทางซ้าย ท้ายยาว 6 · มุม 0.42 = เงยรับน้ำ · −0.6 = กระดกเทลงอ่าง · รอบละ 7 วินาที
 const SHISHI_T=7000,ease=p=>p*p*(3-2*p);
 function shishiA(A){if(!A.P)return .42;const o=A.ms%SHISHI_T;
