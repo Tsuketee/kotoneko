@@ -1,6 +1,6 @@
 // Service worker: ทำให้แอปเปิดได้ตอนออฟไลน์
 // ⚠️ ทุกครั้งที่แก้ไฟล์แล้วจะปล่อยเวอร์ชันใหม่ ให้เพิ่มเลข VERSION ไม่งั้นเครื่องผู้ใช้จะยังเห็นไฟล์เก่า
-const VERSION = 'v98';
+const VERSION = 'v99';
 const CACHE = 'kotoneko-' + VERSION;
 const FILES = [
   './',
