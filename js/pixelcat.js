@@ -304,10 +304,10 @@ const flipPose=p=>({...p,parts:p.parts.map(q=>{const r={...q,sdf:(x,y)=>q.sdf(W-
 // ขาสั้นปลายกลม (ท่ายืน/เดินมุมข้างและสามส่วนสี่): โคนจมในตัว ปลายเป็นอุ้งเท้าทรงรีแตะเส้นพื้นพอดี ขาฝั่งไกลอยู่หลังตัวและเข้มลงหนึ่งขั้น
 const pawLine=()=>{const a=P('paw'),b=P('fur');if(darkRamp(a)&&darkRamp(b))return RAMP[a][0];return lumHex(RAMP[a][4])<lumHex(RAMP[b][4])?RAMP[a][4]:RAMP[b][4]};
 // ขาสั้นอวบปลายกลม: dx เลื่อนเท้าไปหน้า(+)/หลัง(-) · lift ยกเท้า · bend พับข้อเท้าไปด้านหลังจนเห็นอุ้งเท้าสีชมพู (0–1)
-function sideLeg(sx,dx,lift,bend,z,dim,by=0,cy=by,ps=1){ // ps = ขนาดอุ้งเท้า (ยืดตัว: ขาหน้าเรียวลง) // cy = จุดเริ่มเส้นขอบ (ยืดตัว: ขาหลังยาวขึ้นแต่เส้นขอบเริ่มที่ใต้ท้องเท่าเดิม ไม่ลากขึ้นไปบนสะโพก)
- const th=bend*1.3,c=Math.cos(th),s=Math.sin(th),px=sx+dx+.5-bend*1.2,py=41.7-lift-bend*.5;
- const Pw=(x,y)=>{const X=x-px,Y=y-py;return[X*c+Y*s,-X*s+Y*c]},pawD=(x,y)=>{const[u,v]=Pw(x,y);return sdEll(u,v,0,0,3*ps,2.3*ps)};
- const L=(x,y)=>sdCap(x,y,sx,35.4+by,px+bend*.8,py-1.3*ps,2.7,2.4*ps);
+function sideLeg(sx,dx,lift,bend,z,dim,by=0,cy=by,ps=1,rp=0){ // ps = ขนาดอุ้งเท้า (ยืดตัว: ขาหน้าเรียวลง) · rp = ขาหลังตอนยืดตัว: อุ้งเท้ารีแบนกว้างกว่าข้อเท้านิดหน่อย มุมมน (เจ้าของ: มน ไม่เอากลม) ไม่เป็นแท่งตัดเหลี่ยม // cy = จุดเริ่มเส้นขอบ (ยืดตัว: ขาหลังยาวขึ้นแต่เส้นขอบเริ่มที่ใต้ท้องเท่าเดิม ไม่ลากขึ้นไปบนสะโพก)
+ const th=bend*1.3,c=Math.cos(th),s=Math.sin(th),px=sx+dx+.5-bend*1.2,py=41.7-lift-bend*.5+rp*.4;
+ const Pw=(x,y)=>{const X=x-px,Y=y-py;return[X*c+Y*s,-X*s+Y*c]},pawD=(x,y)=>{const[u,v]=Pw(x,y);return sdEll(u,v,0,0,3*ps+rp*.5,2.3*ps-rp*.4)};
+ const L=(x,y)=>sdCap(x,y,sx,35.4+by,px+bend*.8,py-1.3*ps-rp*.3,2.7,2.4*ps-rp*.3);
  return{z,R:2.7,dim,ground:false,skipUp:true,shade:false,cast:false,sdf:(x,y)=>smin(L(x,y),pawD(x,y),1.1),
   mat:(x,y)=>pawD(x,y)<.35?(bend>.3&&Pw(x,y)[1]>.9?P('inner'):P('paw')):P('limb'),contour:(x,y)=>y>Math.min(38.6+cy,py-2.6)?pawLine():false}}
 // โบว์ตามแนวฐานหู (ใช้กับท่าที่หัวไม่หมุน): cx,cy กึ่งกลางฐานหู, ang มุมของฐานหู
@@ -353,7 +353,7 @@ function sideCat(o){
  const ph=f/WALK_N,LG=run?R.L:walk?[walkLeg(ph-.25,2.2),walkLeg(ph-.75,2.2),walkLeg(ph,1.8),walkLeg(ph-.5,1.8)]:[[0,0,0],[0,0,0],[0,0,0],[0,0,0]];
  if(bw)LG.forEach((g,i)=>{if(i<2)g[0]=bw*(i?10.4:11.4)}); // ขาหน้าเหยียดไปข้างหน้าเกือบราบกับพื้น
  const legs=[[31.4+e*.5,1.5,0],[28.6+e*.5,-1,1],[16.4+hip+bw*.6,bw?.9:1.45,0],[13.6+hip-bw*.6,-1,1]].map( // ยืดตัว: ขาหลังกางออกนิดหน่อยให้เห็นทั้งสองข้าง และขาใกล้อยู่ใต้ต้นขา (z ต่ำกว่า haunch) โผล่ออกมาใต้สะโพกแบบขาแมวจริง ไม่เป็นแถบแปะทับสะโพก (เจ้าของบอก 2026-11-20 ขาดูแปลก/ไม่เท่ากัน)
- ([sx,z,dim],i)=>sideLeg(sx,LG[i][0],LG[i][1],LG[i][2],z,dim,by+(i<2?bw*3.4:rb),i<2?by+bw*3.4:by-bw*3.6,i<2?1-bw*.25:1));
+ ([sx,z,dim],i)=>sideLeg(sx,LG[i][0],LG[i][1],LG[i][2],z,dim,by+(i<2?bw*3.4:rb),i<2?by+bw*3.4:by-bw*3.6,i<2?1-bw*.25:1,i<2?0:bw));
  // หาง: ยืน/เดินตั้งโค้งปลายแกว่งช้าๆ · วิ่งพองฟู (แมวตื่นเต้น) ชี้ไปด้านหลังเฉียงขึ้น
  const fl=IDLE==='flick'?1:0,tb=11.6+hip*1.2;let tl;const ty=by+rb; // หางยกตามสะโพก
  if(run){const s2=[0,.6,1,.6,0,-.4][f],lag=(RUN[(f+5)%6].by-by)*.9; // หางพองสะบัดตามหลังตัว: ตัวขึ้น ปลายหางยังค้างต่ำกว่าหนึ่งจังหวะ
@@ -704,10 +704,11 @@ function arrive(){if(cat.then==='zoom2'){cat.then='sit';const tx=(XMIN+XMAX)/2+r
 // ก่อนนอนบนเบาะ: นวด ふみふみ 30% (สนิทขึ้นนวดบ่อยขึ้น) → หมอบ → ขด · การนวดยังไม่มีงานวิจัยเชิงลึก ใช้เป็นลูกเล่นตอนผ่อนคลาย ไม่ให้เกิดทุกครั้ง
 const KNP=[0,.3,.4,.5];
 function rouse(){if(Math.random()<.5){cat.wk=1;return yawn()}rouse2()}
-function rouse2(){cat.wk=0;const st=Math.random()<.6,zw=Math.min(2,((PS.w||{}).zoom??1)*((PLW[PLACE]||{}).zoom??1))*(1-wary()),r=Math.random()*(.9+.1*zw); // วิ่งดีดคูณนิสัยและสถานที่ (ขี้เซาแทบไม่วิ่ง คาเฟ่/สถานี/ช่วงปรับตัวไม่วิ่ง)
+function rouse2(){cat.wk=0;const st=Math.random()<.6,pw=PLW[PLACE]||{},wy=wary(),tw=k=>((PS.w||{})[k]??1)*(pw[k]??1)*(1+((WARYW[k]??1)-1)*wy), // คิดตามนิสัย × สถานที่ × ช่วงปรับตัว เหมือน decide()
+  zw=Math.min(2,tw('zoom')),cw=Math.min(2.5,tw('come')),r=Math.random()*(.75+.15*cw+.1*zw); // เลียขน .35 / เดินมาหา .15 / นั่ง .40 / วิ่งดีด .10 (ขี้อายแทบไม่เดินมาหา ขี้เซาแทบไม่วิ่ง)
  if(r<.35)return st?stretchHere('groom'):groom();
- if(r<.5){cat.str=st;return goTo((XMIN+XMAX)/2+rr(-10,10),'come')}
- if(r>=.9){cat.str=st;return zoom()}
+ if(r<.35+.15*cw){cat.str=st;return goTo((XMIN+XMAX)/2+rr(-10,10),'come')}
+ if(r>=.75+.15*cw){cat.str=st;return zoom()}
  if(st)return stretchHere('sit');setMode('sit',rr(3000,6000))}
 function yawn(){setMode('yawn',GT('yawn'));if(!talking()&&Math.random()<.5)say([['ふわぁ〜',1300]])}
 // ยืดตัวอยู่กับที่: หันข้างไปทางกลางฉาก ยืดตัว แล้วหันกลับมานั่ง (turnIn → arrive)
