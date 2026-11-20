@@ -330,14 +330,14 @@ function sideCat(o){
  const dir=o.dir,f=o.f,mode=o.mode||'stand',run=mode==='run',walk=mode==='walk',N=dir>0?'L':'R',F=dir>0?'R':'L',nP=dir>0?'patchL':'patch';
  const R=run?RUN[f]:null,e=run?R.e:0,by=run?R.by:walk?[0,-.3,-.6,-.3,0,-.3,-.6,-.3][f]:0;
  // bw = ยืดตัวโค้งคำนับ 0–1 (ท่ายืน): อกต่ำลงแนบพื้น ขาหน้าเหยียดไปข้างหน้า สะโพกยกขึ้น หัวต่ำลงเหนือขาหน้า หูเอนไปหลัง หางตั้ง · rb = สะโพกยก
- const bw=o.bow||0,rb=-bw*2.4,hd=bw*7.4;
+ const bw=o.bow||0,rb=-bw*5,hd=bw*8.4; // v88 ตามภาพตัวอย่างของเจ้าของ: ก้นเป็นจุดสูงสุด ขาหลังยืดตรงยาว หลังลาดลงเป็นทางลาดถึงอก หัวต่ำระดับขาหน้า
  // หัวกลมโตเท่าท่าหันหน้า หูอยู่บนกลางหัว หูฝั่งไกลโผล่ด้านหน้าเล็กน้อย · ตอนเดินหัวนิ่ง (แมวจริงประคองหัวให้นิ่ง) ตอนวิ่งหูลู่ไปด้านหลัง
  const hx=33.4+e*.5-bw*.6,hy=22.8+(run?by*.8:0)+hd,hyF=23+Math.round((run?by*.8:0)+hd),tw=IDLE==='twitch'+N?1:0,twF=IDLE==='twitch'+F?1:0,eb=run?.7:Math.max(tw,bw*.45),back=SIDE_EAR==='back';
  const NE=[[hx-7,hy-5.6],[hx-3.6-eb*1.4,hy-15+eb*1.6],[hx+1.4,hy-9]],NI=[[hx-3.8,hy-7.6],[hx-3.4-eb*1.2,hy-12.4+eb*1.4],[hx+.2,hy-8.8]];
  const FE=back?[[hx-10.4,hy-3.6],[hx-9.4-twF*1.2,hy-13+twF*1.4],[hx-4.6,hy-8.6]]:[[hx-.4,hy-8.8],[hx+3.6-(run?.8:0)+twF*1.2,hy-14.2+(run?.8:0)+twF*1.4],[hx+6.6,hy-6.2]];
- const bx=22.6,brx=12.4+e*.6,bry=7.2-e*.3,cx=30.6+e*.5,hip=-e*.5;
+ const bx=22.6-bw*5,brx=12.4+e*.6-bw*4.4,bry=7.2-e*.3-bw,cx=30.6+e*.5,hip=-e*.5; // ยืดตัว: ตัวส่วนหลังหดเหลือแค่ก้น
  const ccx=cx+bw*.6,ccy=32.4+by+bw*4.6; // อก
- const bodyS=(x,y)=>Math.max(smin(sdEll(x,y,bx,33.8+by+rb,brx,bry),sdEll(x,y,ccx,ccy,6.6,6.6-bw*1.4),3),y-(41.6+by-Math.min(0,e)*.3));
+ const bodyS=(x,y)=>Math.max(smin(smin(sdEll(x,y,bx,33.8+by+rb,brx,bry),sdEll(x,y,ccx,ccy,6.6,6.6-bw*1.4),3),sdCap(x,y,bx,33.8+by+rb,ccx,ccy,bw*5.6,bw*4.8),2),y-(41.6+by-Math.min(0,e)*.3)); // ยืดตัว: แท่งเชื่อมก้นกับอกเป็นหลังลาด
  const flank=(x,y)=>sdEll(x,y,19+hip,30.4+by+rb,6,4.2)<0;
  const body={z:0,R:9,sdf:bodyS,mat:(x,y)=>{if(sdEll(x,y,24,40.6+by,10.5+e*.5,3.2)<0||sdEll(x,y,ccx+4.2,ccy+3,3.2,4.6-bw)<0)return P('under');
   const st=y<37.5+by&&x<cx+1.4&&fr(x/3.2+.15)<.34;return flank(x,y)?P(nP,st):P('fur',st)}};
@@ -351,9 +351,9 @@ function sideCat(o){
  const farEar={z:1.8,R:2.5,dim:back?0:1,ground:false,sdf:(x,y)=>ear(x,y,...FE),mat:(x,y)=>back||sdTri(x,y,[hx+.8,hy-8.8],[hx+3.6+twF,hy-12.2+twF*1.2],[hx+5.2,hy-7.2])>0?P('ear'+F):P('inner')};
  // ขา: หน้าใกล้ หน้าไกล หลังใกล้ หลังไกล (ฝั่งไกลอยู่หลังตัว เข้มลงหนึ่งขั้น)
  const ph=f/WALK_N,LG=run?R.L:walk?[walkLeg(ph-.25,2.2),walkLeg(ph-.75,2.2),walkLeg(ph,1.8),walkLeg(ph-.5,1.8)]:[[0,0,0],[0,0,0],[0,0,0],[0,0,0]];
- if(bw)LG.forEach((g,i)=>{if(i<2)g[0]=bw*(i?9.6:10.6)}); // ขาหน้าเหยียดไปข้างหน้าเกือบราบกับพื้น
+ if(bw)LG.forEach((g,i)=>{if(i<2)g[0]=bw*(i?10.4:11.4)}); // ขาหน้าเหยียดไปข้างหน้าเกือบราบกับพื้น
  const legs=[[31.4+e*.5,1.5,0],[28.6+e*.5,-1,1],[16.4+hip+bw*.6,bw?.9:1.45,0],[13.6+hip-bw*.6,-1,1]].map( // ยืดตัว: ขาหลังกางออกนิดหน่อยให้เห็นทั้งสองข้าง และขาใกล้อยู่ใต้ต้นขา (z ต่ำกว่า haunch) โผล่ออกมาใต้สะโพกแบบขาแมวจริง ไม่เป็นแถบแปะทับสะโพก (เจ้าของบอก 2026-11-20 ขาดูแปลก/ไม่เท่ากัน)
- ([sx,z,dim],i)=>sideLeg(sx,LG[i][0],LG[i][1],LG[i][2],z,dim,by+(i<2?bw*3.4:rb),i<2?by+bw*3.4:by+bw*1.2));
+ ([sx,z,dim],i)=>sideLeg(sx,LG[i][0],LG[i][1],LG[i][2],z,dim,by+(i<2?bw*3.4:rb),i<2?by+bw*3.4:by-bw*3.6));
  // หาง: ยืน/เดินตั้งโค้งปลายแกว่งช้าๆ · วิ่งพองฟู (แมวตื่นเต้น) ชี้ไปด้านหลังเฉียงขึ้น
  const fl=IDLE==='flick'?1:0,tb=11.6+hip*1.2;let tl;const ty=by+rb; // หางยกตามสะโพก
  if(run){const s2=[0,.6,1,.6,0,-.4][f],lag=(RUN[(f+5)%6].by-by)*.9; // หางพองสะบัดตามหลังตัว: ตัวขึ้น ปลายหางยังค้างต่ำกว่าหนึ่งจังหวะ
