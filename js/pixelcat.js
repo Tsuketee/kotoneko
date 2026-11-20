@@ -352,7 +352,8 @@ function sideCat(o){
  // ขา: หน้าใกล้ หน้าไกล หลังใกล้ หลังไกล (ฝั่งไกลอยู่หลังตัว เข้มลงหนึ่งขั้น)
  const ph=f/WALK_N,LG=run?R.L:walk?[walkLeg(ph-.25,2.2),walkLeg(ph-.75,2.2),walkLeg(ph,1.8),walkLeg(ph-.5,1.8)]:[[0,0,0],[0,0,0],[0,0,0],[0,0,0]];
  if(bw)LG.forEach((g,i)=>{if(i<2)g[0]=bw*(i?9.6:10.6)}); // ขาหน้าเหยียดไปข้างหน้าเกือบราบกับพื้น
- const legs=[[31.4+e*.5,1.5,0],[28.6+e*.5,-1,1],[16.4+hip,1.45,0],[13.6+hip,-1,1]].map(([sx,z,dim],i)=>sideLeg(sx,LG[i][0],LG[i][1],LG[i][2],z,dim,by+(i<2?bw*3.4:rb)));
+ const legs=[[31.4+e*.5,1.5,0],[28.6+e*.5,-1,1],[16.4+hip+bw*1.2,1.45,0],[13.6+hip-bw*1.4,-1,1]].map( // ยืดตัว: กางขาหลังสองข้างออกจากกัน ไม่ให้ขาฝั่งไกลถูกตัวบังเหลือเส้นบาง (เจ้าของบอก 2026-11-20 ขาดูไม่เท่ากัน)
+ ([sx,z,dim],i)=>sideLeg(sx,LG[i][0],LG[i][1],LG[i][2],z,dim,by+(i<2?bw*3.4:rb)));
  // หาง: ยืน/เดินตั้งโค้งปลายแกว่งช้าๆ · วิ่งพองฟู (แมวตื่นเต้น) ชี้ไปด้านหลังเฉียงขึ้น
  const fl=IDLE==='flick'?1:0,tb=11.6+hip*1.2;let tl;const ty=by+rb; // หางยกตามสะโพก
  if(run){const s2=[0,.6,1,.6,0,-.4][f],lag=(RUN[(f+5)%6].by-by)*.9; // หางพองสะบัดตามหลังตัว: ตัวขึ้น ปลายหางยังค้างต่ำกว่าหนึ่งจังหวะ
@@ -510,7 +511,7 @@ const INFO=[['sit','นั่งรอ','สะโพกกลม ขาหน�
  ['pet','ถูกลูบหัว','ดันหัวขึ้นหามือ เอียงถูไปมา ตา ⌒ หูเอนนิดๆ หางตั้งปลายงอ มีเส้นโค้งข้างหู (แตะโซนหัว + ฟอง ゴロゴロ)',[260,260,260,260]],
  ['annoyed','รำคาญ ขั้น 1','หูเอนออกข้าง ตาครึ่งปิด ปากแบน ปลายหางสะบัดเร็ว (แตะถี่เกินไป หรือแตะหาง)',[110,110,110,110]],
  ['slowBlink','กะพริบตาช้า','หรี่ตา ลืม หรี่อีกครั้งแล้วหลับตาค้างราว 1 วิ ค่อยๆ ลืม (แมวบอกว่าไว้ใจ · ตอบเมื่อผู้ใช้กดค้างที่หน้า และทำเองบ่อยขึ้นตามความสนิท)',[320,260,340,1100,380,500]],
- ['yawn','หาว','เงยหน้า หลับตาแน่น หูเอนไปหลัง อ้าปากเห็นลิ้น แล้วหุบปากเลียริมฝีปาก (ตื่นนอน งีบเสร็จ)',[220,420,300,380]],
+ ['yawn','หาว','เงยหน้า หลับตาแน่น หูเอนไปหลัง อ้าปากเห็นลิ้น แล้วหุบปากเลียริมฝีปาก (ตื่นนอน งีบเสร็จ)',[280,760,400,460]],
  ['stretchR','ยืดตัว (ขวา)','จากท่ายืน ก้มอกแนบพื้น เหยียดขาหน้าไปข้างหน้า สะโพกยก หางตั้ง หลับตาตอนยืดสุด แล้วกลับมายืน (ตื่นนอนก่อนเดิน)',[240,300,620,560,300,240]],
  ['stretchL','ยืดตัว (ซ้าย)','เหมือนยืดตัวหันขวา กลับรูปทรง ลายไม่สลับ',[240,300,620,560,300,240]],
  ['knead','นวด ふみふみ','นั่งย่อตัว อุ้งเท้าหน้ายกกดสลับซ้ายขวา ตาหรี่อิ่มใจ คราง (ก่อนนอนบนเบาะ)',[260,200,260,200]],
@@ -909,5 +910,7 @@ function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:D
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
 window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
- _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk)}};
+ _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),
+  // ตัวช่วยวาดสำหรับร่างท่าในหน้าพรีวิว/ไฟล์ร่างใน docs/ (เพิ่มท่าร่างลง POSES แล้วเรียก frame ได้) แอปไม่ได้ใช้
+  POSES,lib:{sitCat,sdBox,sdEll,sdCap,smin,ear,earPts,headMat,tail,P,put,bean,eyeClosed,eyeSleepy,eyeHappy,mouth,blush,zz,bowPart,RAMP,EYE,IRIS,NOSE,FX,fr,get ACC(){return ACC},get IDLE(){return IDLE}}}};
 })();
