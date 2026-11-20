@@ -633,27 +633,47 @@ const dot=(c,x,y,col)=>{c.fillStyle=col;c.fillRect(Math.floor(x),Math.floor(y),1
 // ha = ชม.หลังผ่านกลางฟ้า (ลบ = ยังขึ้นอยู่ฝั่งตะวันออก ซ้ายจอ · บวก = ลงฝั่งตะวันตก ขวาจอ)
 const SYN=29.530588853,NM0=Date.UTC(2000,0,6,18,14),TAU=Math.PI*2;
 function moonAt(ms){const p=(((ms-NM0)/864e5/SYN)%1+1)%1,d=new Date(ms),h=d.getHours()+d.getMinutes()/60,ha=((h-12-24*p)%24+36)%24-12;
- return{p,lit:(1-Math.cos(TAU*p))/2,ha,up:Math.abs(ha)<6.2}}
+ return{p,lit:(1-Math.cos(TAU*p))/2,ha,up:Math.abs(ha)<6.2,k:moonTilt(ms,p,h)}}
+// ทิศด้านสว่าง (v105 เจ้าของขอ "เสี้ยวนอนเป็นเรือแบบที่เห็นจากเมืองไทย"): ด้านสว่างหันหาดวงอาทิตย์เสมอ คิดตำแหน่งดวงอาทิตย์กับดวงจันทร์บนฟ้าจริง
+// ที่ละติจูด 14°N (กรุงเทพฯ) ตามวันในปี (ระนาบสุริยวิถีเอียง 23.44°) แล้วหาทิศจากดวงจันทร์ไปดวงอาทิตย์บนจอ (มองไปทางใต้: ตะวันออกซ้าย ตะวันตกขวา)
+// ปัดเป็น 8 ทิศ k: 0 ขวา 1 ขวาล่าง 2 ล่าง (เสี้ยวหงายเป็นเรือ) 3 ซ้ายล่าง 4 ซ้าย 5 ซ้ายบน 6 บน 7 ขวาบน · ถือว่าเวลาเครื่อง ≈ เวลาสุริยะท้องถิ่น
+const LAT=14*Math.PI/180,OBL=23.44*Math.PI/180,RAD=Math.PI/180;
+function moonTilt(ms,p,h){const dd=(ms-Date.UTC(2000,0,1,12))/864e5,ls=(280.46+.9856474*dd)*RAD,lm=ls+p*TAU,
+ eq=l=>[Math.atan2(Math.cos(OBL)*Math.sin(l),Math.cos(l)),Math.asin(Math.sin(OBL)*Math.sin(l))],[ras,des]=eq(ls),[ram,dem]=eq(lm),
+ hs=(h-12)*15*RAD,hm=hs-(ram-ras),
+ aa=(H,de)=>{const al=Math.asin(Math.sin(LAT)*Math.sin(de)+Math.cos(LAT)*Math.cos(de)*Math.cos(H)),az=Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(LAT)-Math.tan(de)*Math.cos(LAT));return[al,az]}, // az วัดจากทิศใต้ไปทางตะวันตก
+ [a1,z1]=aa(hm,dem),[a2,z2]=aa(hs,des),dz=z2-z1,dx=Math.cos(a2)*Math.sin(dz),dy=Math.cos(a1)*Math.sin(a2)-Math.sin(a1)*Math.cos(a2)*Math.cos(dz);
+ return((Math.round(Math.atan2(-dy,dx)/(Math.PI/4))%8)+8)%8}
 let MOON=moonAt(Date.now());
 // ตำแหน่งบนฟ้าเป็นเส้นโค้ง: (xz,yz) = จุดสูงสุดตอนผ่านกลางฟ้า (ha=0) · xe/xw = x ที่ขอบฟ้าฝั่งขึ้น (ซ้าย) / ฝั่งตก (ขวา) · h = ระยะลงถึงขอบฟ้า
 // แต่ละฉากวางจุดสูงสุดไว้กลางช่องกระจก/ช่องฟ้าที่เห็นชัด ไม่ให้ค้างหลังกรอบหน้าต่างหรือป้าย (ขึ้น-ตกแล้วหายหลังภูเขา ตึก หรือกรอบ)
 const moonXY=(xz,yz,xe,xw,h)=>{const a=clamp(MOON.ha/6,-1.05,1.05);return[xz+a*(a<0?xz-xe:xw-xz),yz+h*(1-Math.cos(a*Math.PI/2))]};
-// ดวงจันทร์ 7×7 วาดมือทีละเฟส (คำนวณเป็นวงกลมเล็กขนาดนี้แล้วเสี้ยวขาดเป็นจุด) · L = ด้านสว่าง D = ด้านมืด (แสงโลกจางๆ) · วาดเฟสข้างขึ้น ข้างแรมกลับซ้ายขวา
-// ช่วงเฟส p: ดับ <.035 · เสี้ยวบาง <.11 · เสี้ยว <.19 · ครึ่งดวง <.28 · ค่อนดวง <.36 · เกือบเต็ม <.45 · เต็มดวง
+// ดวงจันทร์ 7×7 วาดมือทีละเฟส (คำนวณเป็นวงกลมเล็กขนาดนี้แล้วเสี้ยวขาดเป็นจุด) · L = ด้านสว่าง D = ด้านมืด (แสงโลกจางๆ)
+// วาดไว้ 2 ทิศ: ด้านสว่างหันขวา (MOONS) กับหันขวาล่าง (MOONSD · ทแยง) แล้วหมุนทีละ 90° ได้ครบ 8 ทิศ (moonTilt)
+// ช่วงเฟส q = ระยะจากจันทร์ดับ: ดับ <.035 · เสี้ยวบาง <.11 · เสี้ยว <.19 · ครึ่งดวง <.28 · ค่อนดวง <.36 · เกือบเต็ม <.45 · เต็มดวง
 const MPH=[.035,.11,.19,.28,.36,.45,.5],MOONS=[null,
  ['..DDL..','.DDDDL.','DDDDDLL','DDDDDLL','DDDDDLL','.DDDDL.','..DDL..'],
  ['..DDL..','.DDDLL.','DDDDLLL','DDDDLLL','DDDDLLL','.DDDLL.','..DDL..'],
  ['..DLL..','.DDLLL.','DDDLLLL','DDDLLLL','DDDLLLL','.DDLLL.','..DLL..'],
  ['..DLL..','.DLLLL.','DDLLLLL','DDLLLLL','DDLLLLL','.DLLLL.','..DLL..'],
  ['..LLL..','.DLLLL.','DLLLLLL','DLLLLLL','DLLLLLL','.DLLLL.','..LLL..'],
- ['..LLL..','.LLLLL.','LLLLLLL','LLLLLLL','LLLLLLL','.LLLLL.','..LLL..']];
+ ['..LLL..','.LLLLL.','LLLLLLL','LLLLLLL','LLLLLLL','.LLLLL.','..LLL..']],
+ MOONSD=[null,
+ ['..DDD..','.DDDDD.','DDDDDDL','DDDDDDL','DDDDDLL','.DDDLL.','..LLL..'],
+ ['..DDD..','.DDDDD.','DDDDDLL','DDDDDLL','DDDDLLL','.DLLLL.','..LLL..'],
+ ['..DDD..','.DDDDL.','DDDDLLL','DDDLLLL','DDLLLLL','.LLLLL.','..LLL..'],
+ ['..DDD..','.DDDLL.','DDDLLLL','DDLLLLL','DLLLLLL','.LLLLL.','..LLL..'],
+ ['..DDL..','.DLLLL.','DLLLLLL','DLLLLLL','LLLLLLL','.LLLLL.','..LLL..'],
+ MOONS[6]];
+const rot90=B=>B.map((r,y)=>[...r].map((_,x)=>B[6-x][y]).join('')); // หมุนตามเข็ม 90° (ขวา → ล่าง)
+const moonBmp=(n,k)=>{let B=(k%2?MOONSD:MOONS)[n];for(let i=0;i<k>>1;i++)B=rot90(B);return B};
 const moonIdx=p=>{const q=p<.5?p:1-p,i=MPH.findIndex(t=>q<t);return i<0?MPH.length-1:i}; // q = .5 พอดี = เต็มดวง
-function moonDisc(c,cx,cy,col){const M=MOON;if(!M.up)return;const n=moonIdx(M.p),B=MOONS[n];if(!B)return;const wax=M.p<.5,x0=Math.round(cx)-3,y0=Math.round(cy)-3,
+function moonDisc(c,cx,cy,col){const M=MOON;if(!M.up)return;const n=moonIdx(M.p);if(!MOONS[n])return;const B=moonBmp(n,M.k),x0=Math.round(cx)-3,y0=Math.round(cy)-3,
  eh=col+Math.round(48*(1-M.lit)**2).toString(16).padStart(2,'0'); // แสงโลกชัดตอนเสี้ยวบาง หายไปตอนเกือบเต็มดวง
- B.forEach((r,y)=>[...r].forEach((ch,x)=>{if(ch==='.')return;c.fillStyle=ch==='L'?col:eh;c.fillRect(x0+(wax?x:6-x),y0+y,1,1)}))}
+ B.forEach((r,y)=>[...r].forEach((ch,x)=>{if(ch==='.')return;c.fillStyle=ch==='L'?col:eh;c.fillRect(x0+x,y0+y,1,1)}))}
 // ดาว + พระจันทร์ (ดาวที่จะชิดขอบดวงไม่วาด ไม่ให้เป็นปุ่มนูนข้างดวง) · ดวงกว้าง 7 px ทุกฉาก
 function moonSky(c,stars,[mx,my],col,r=3.4){const show=MOON.up&&moonIdx(MOON.p)>0;stars.forEach(([x,y])=>{if(!show||Math.hypot(x+.5-Math.round(mx)-.5,y+.5-Math.round(my)-.5)>r+1.6)rect(c,x,y,1,1,col)});moonDisc(c,mx,my,col)}
-const moonKey=ms=>{const M=moonAt(ms),n=moonIdx(M.p);return M.up&&n>0?n+(M.p<.5?'w':'n')+':'+Math.round(M.ha*6)+':'+Math.round(M.lit*8):'-'}; // เปลี่ยนเมื่อเฟส/แสงโลกเปลี่ยน หรือทุก 10 นาที (ตำแหน่ง)
+const moonKey=ms=>{const M=moonAt(ms),n=moonIdx(M.p);return M.up&&n>0?n+'/'+M.k+':'+Math.round(M.ha*6)+':'+Math.round(M.lit*8):'-'}; // เปลี่ยนเมื่อเฟส/แสงโลกเปลี่ยน หรือทุก 10 นาที (ตำแหน่ง)
 const ring=(c,cx,cy,a,b,col)=>{for(let t=0;t<6.29;t+=.6/Math.max(a,b))dot(c,cx+Math.cos(t)*a,cy+Math.sin(t)*b,col)}; // เส้นวงรีบาง 1 px
 // ---- ต้นไม้ (v92 เจ้าของขอให้สมจริงขึ้น) · สุ่มแบบกำหนด seed ภาพจึงเหมือนเดิมทุกครั้ง ----
 const rng=s=>()=>(s=s*16807%2147483647)/2147483647;
@@ -711,7 +731,7 @@ function roomBg(c,k){
  rect(c,67,23,10,9,k.cork2);rect(c,66,22,10,9,k.note);rect(c,67,23,8,5,k.sky);rect(c,67,27,8,2,k.leaf);blob(c,72.5,25,1.2,1.2,k.cloud||k.moon);rect(c,70,22,1,1,k.b1); // รูปถ่าย
  // หน้าต่าง + วิวเนินกับหลังคาบ้านไกลๆ (กลางคืนบ้านเปิดไฟ)
  rect(c,92,8,40,32,k.frame2);rect(c,93,9,38,30,k.frame);rect(c,95,11,34,26,k.sky);rect(c,95,11,34,7,k.sky2);
- if(k.moon)moonSky(c,[[99,14],[104,24],[117,27],[100,20],[126,26]],moonXY(121,17,97,133,18),k.moon) // สูงสุดกลางบานบนขวา ขึ้นจากหลังเนิน ตกพ้นกรอบขวา
+ if(k.moon)moonSky(c,[[99,14],[104,24],[117,27],[100,20],[126,26]],moonXY(121,17,116,128,16),k.moon) // อยู่ในบานขวาตลอด (v105 ไม่ให้หายหลังเสากลางนานๆ) สูงสุดกลางบานบน ขึ้น-ตกหลังเนิน
  else if(k.sunY){blob(c,106,k.sunY-4,4.5,4.5,k.sun);c.drawImage(cloudImg(k,12,5,4),114,13)} // รุ่งเช้า/พลบค่ำ: พระอาทิตย์ต่ำใกล้หลังคา
  else{c.drawImage(cloudImg(k,13,6,4),96,12);c.drawImage(cloudImg(k,10,4,6),117,16)}
  poly(c,[[95,34],[103,32],[110,33.5],[117,31.5],[124,33],[129,32],[129,37],[95,37]],k.hill);
@@ -772,8 +792,11 @@ function roomClock(c,k,d,sw){rect(c,37,4,5,2,k.frame2);rect(c,30,6,19,2,k.frame2
 // แดดจากหน้าต่างตกบนพื้นเป็นสี่ช่องตามกรอบหน้าต่าง เอียงตามชั่วโมง (เช้าเอียงซ้าย บ่ายเอียงขวา) · รุ่งเช้า/พลบค่ำเป็นแสงส้มยาว · กลางคืนแสงจันทร์จางๆ
 // (รายงานพฤติกรรมข้อ 9 "แสงแดดตามนาฬิกา": ภาพทำแล้ว v92 ส่วนแมวไปนอนอาบแดดยังไม่ทำ · ตำแหน่งแดด sunX())
 const sunSkew=(td,d)=>td==='dawn'?-17:td==='dusk'?17:td==='night'?-5:clamp((d.getHours()+d.getMinutes()/60-12)*2.6,-14,14);
-function roomSun(c,k,A){const a=sunSkew(A.td,A.d),col=A.td==='night'?'rgba(190,205,255,.07)':A.td==='day'?'rgba(255,250,222,.34)':'rgba(255,196,140,.26)',
-  TL=[96+a*.15,72],TR=[128+a*.15,72],BL=[93+a,89],BR=[131+a,89],P=(u,v)=>[TL[0]+(TR[0]-TL[0])*u+(BL[0]-TL[0])*v+(BR[0]-BL[0]-TR[0]+TL[0])*u*v,TL[1]+(BL[1]-TL[1])*v];
+// กลางคืน = แสงจันทร์ (v105 เจ้าของขอ): สว่างตามเฟส (เต็มดวงชัดสุด เสี้ยวจางมาก) เอียงตามตำแหน่งดวง · พระจันทร์ยังไม่ขึ้น/ตกแล้ว/ดับ = ไม่มีแสงบนพื้น
+const moonGlow=ms=>{const M=moonAt(ms);return M.up&&moonIdx(M.p)?{a:clamp(M.ha*2.6,-14,14),al:+(.02+.11*M.lit).toFixed(3)}:null}; // ความเอียง + ความทึบแสงจันทร์บนพื้น (null = ไม่มีแสง)
+function roomSun(c,k,A){let a=sunSkew(A.td,A.d),col=A.td==='day'?'rgba(255,250,222,.34)':'rgba(255,196,140,.26)';
+ if(A.td==='night'){const g=moonGlow(A.ms);if(!g)return;a=g.a;col='rgba(190,205,255,'+g.al+')'}
+ const TL=[96+a*.15,72],TR=[128+a*.15,72],BL=[93+a,89],BR=[131+a,89],P=(u,v)=>[TL[0]+(TR[0]-TL[0])*u+(BL[0]-TL[0])*v+(BR[0]-BL[0]-TR[0]+TL[0])*u*v,TL[1]+(BL[1]-TL[1])*v];
  [[0,.46,0,.42],[.54,1,0,.42],[0,.46,.54,1],[.54,1,.54,1]].forEach(([u0,u1,v0,v1])=>poly(c,[P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1)],col))}
 // ชิมะเอนางะ (นกติ๊ดหางยาวฮอกไกโด · v95 เจ้าของขอ): ตัวกลมฟูสีขาว ตาดำเม็ดเล็ก ปากจิ๋ว แถบดำกับขนชมพูน้ำตาลข้างปีก หางดำยาว
 // มาเกาะขอบหน้าต่างด้านนอก 21 วิ ทุก 170 วิ (กลางวัน รุ่งเช้า พลบค่ำ): บินเข้า นั่ง พองขน เอียงคอ กระโดดหนึ่งที แล้วบินออก (ไว้ทำท่าแมวมองนกต่อ)
@@ -961,7 +984,7 @@ const TCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',cl
   c1:'#2f3748',c2:'#28303f',c3:'#333a4b',c4:'#2a3342',btop:'#3d4659',bsh:'rgba(0,0,0,.22)',win:'#1c2232',win2:'#1c2232',balc:'#3f4859',haze:'#222a3a',haze2:'#283044',tank:'#3a4050',ac:'#3a4050',sgn1:'#d0644f',sgn2:'#d9ad48',sgn3:'#4f86c0',
   led0:'#141317',ledO:'#ffb347',ledG:'#8ff07a',ledR:'#ff7a68',ledGl:'rgba(255,190,90,.10)',vmw:'#f6f4dc',d4:'#c0604c',d5:'#e8e4d4',d6:'#5e3c28',cap:'#9aa0a7',btn1:'#8fe0ff',btn2:'#ffa898',lcd:'#22301f',bin1:'#3f6a96',bin2:'#5e8f6c',seat:'#3f6a96',seat2:'#335a82',seat3:'#5a86b4',mark:'#4f9a6a',
   trn:'#b9bec4',trn2:'#9aa0a7',trn3:'#7d838a',tst:'#3b6aa0',tst2:'#2d5280',twin:'#f2e2a8',twin2:'#fff4cc',tun:'#2f3236',wheel:'#232528',head:'#fff6c0',pax:'#8a7a5a'}};
-function stationFar(c,k){sky(c,k,48,[143,12,20,164,14])} // พระจันทร์: สูงสุดในช่องฟ้าขวาระหว่างหลังคากับเมือง
+function stationFar(c,k){sky(c,k,48,[79,16,58,102,9])} // พระจันทร์: อยู่ในช่องฟ้าระหว่างป้ายไฟกับป้ายสถานี (v105 เดิมไปค้างหลังเสานาฬิกา) ขึ้น-ตกหลังป้ายและตึก
 // เมืองอยู่หน้าเมฆ (v95 เจ้าของบอกว่าตึกรก: ลดเหลือ 7 หลัง เว้นช่องให้เห็นฟ้า ตึกสูงไกลเหลือ 2 หลัง)
 function stationCity(c,k){const R=rng(41),win=()=>k.cwin?(R()<.42?k.cwin:k.win):(R()<.14?k.win2:k.win);
  [[38,23,8],[95,19,7]].forEach(([x,y,w],i)=>{rect(c,x,y,w,47-y,k.haze);if(i){rect(c,x+3,y-6,1,6,k.haze);dot(c,x+3,y-7,k.sgn1)}
@@ -1327,7 +1350,7 @@ function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:D
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
 window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
- _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},moonAt,moonKey,moonIdx,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
+ _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},moonAt,moonKey,moonIdx,moonBmp,moonGlow,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
   // ตัวช่วยวาดสำหรับร่างท่าในหน้าพรีวิว/ไฟล์ร่างใน docs/ (เพิ่มท่าร่างลง POSES แล้วเรียก frame ได้) แอปไม่ได้ใช้
   POSES,lib:{sitCat,sdBox,sdEll,sdCap,smin,ear,earPts,headMat,tail,P,put,bean,eyeClosed,eyeSleepy,eyeHappy,mouth,blush,zz,bowPart,RAMP,EYE,IRIS,NOSE,FX,fr,get ACC(){return ACC},get IDLE(){return IDLE}}}};
 })();

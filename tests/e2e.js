@@ -1511,6 +1511,15 @@ test('ฉากกลางคืน: พระจันทร์เฟสแล
   const up = await p.evaluate(() => { const { moonAt } = PixelCat._t, u = s => moonAt(new Date(s).getTime()).up;
     return [u('2026-11-24T23:30:00'), u('2026-11-24T12:00:00'), u('2026-12-17T20:00:00'), u('2026-12-18T02:30:00'), u('2026-12-01T21:00:00'), u('2026-12-02T04:00:00')] });
   assert.deepStrictEqual(up, [true, false, true, false, false, true], 'ขึ้น-ตก ' + up);
+  // v105 ทิศด้านสว่าง (ละติจูดกรุงเทพฯ): เสี้ยวหัวค่ำ/เสี้ยวก่อนรุ่งหงายเป็นเรือ (ด้านสว่างหันลง k 1–3) · ครึ่งดวงข้างขึ้นตอนอยู่กลางฟ้าหัวค่ำ ด้านสว่างหันขวา (ตะวันตก k 7/0/1)
+  // ภาพเรือ: เสี้ยวบางหันลง แถวล่างสุดสว่าง แถวบนมืด · แสงจันทร์บนพื้น: เต็มดวงสว่างกว่าเสี้ยว จันทร์ดับ/ยังไม่ขึ้นไม่มีแสง
+  const tl = await p.evaluate(() => { const { moonAt, moonBmp, moonGlow } = PixelCat._t, k = s => moonAt(new Date(s).getTime()).k, g = s => moonGlow(new Date(s).getTime());
+    return { eve: ['2026-12-12T19:00:00', '2026-12-13T19:30:00', '2026-12-14T20:00:00', '2026-06-20T19:30:00', '2026-03-22T19:30:00'].map(k), morn: ['2026-12-06T05:00:00', '2026-12-07T05:30:00'].map(k), q1: k('2026-12-17T18:30:00'),
+      boat: moonBmp(1, 2), full: g('2026-11-24T23:30:00'), cres: g('2026-12-13T19:30:00'), nw: g('2026-12-09T12:00:00'), down: g('2026-11-24T12:00:00') } });
+  assert(tl.eve.concat(tl.morn).every(k => k >= 1 && k <= 3), 'เสี้ยวหงายเป็นเรือ ' + JSON.stringify(tl));
+  assert([7, 0, 1].includes(tl.q1), 'ครึ่งดวงหัวค่ำ ' + tl.q1);
+  assert(tl.boat[6].includes('L') && !tl.boat[0].includes('L') && !tl.boat[1].includes('L'), 'ภาพเรือ ' + tl.boat.join('|'));
+  assert(tl.full && tl.cres && tl.full.al > tl.cres.al * 2 && tl.nw === null && tl.down === null, 'แสงจันทร์บนพื้น ' + JSON.stringify([tl.full, tl.cres, tl.nw, tl.down]));
   // วาดในทุกสถานที่: ฉากกลางคืนตอนพระจันทร์ขึ้นต่างจากตอนจันทร์ดับ · เปลี่ยนเฟสแล้วชั้นภาพแคชใหม่ (ไม่ค้างดวงเก่า) · กลางวันไม่มีพระจันทร์
   const draw = await p.evaluate(() => { const T = PixelCat._t, cv = document.createElement('canvas'), out = {};
     const img = (pl, s) => { T.setNow(new Date(s).getTime()); PixelCat.mount(cv, { place: pl, coat: 'cream' }); return T.sceneBg('dark').toDataURL() };
