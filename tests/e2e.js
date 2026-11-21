@@ -171,11 +171,12 @@ test('สถานที่: เริ่มที่ห้อง ไปสว�
 
 test('สถานที่: ทุกฉากใช้สีจาก token (มีครบทั้งโหมดสว่างและมืด) และประโยคประจำที่ใช้เฉพาะคันจิ N5', async () => {
   const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8'), js = fs.readFileSync(path.join(ROOT, 'js/data/places.js'), 'utf8');
-  const used = new Set([...js.matchAll(/\bf-([rgkt]-[a-z0-9]+)/g)].map(m => m[1]));
-  [...new Set([...js.matchAll(/\b(s-[rgkt]-[a-z0-9]+)/g)].map(m => m[1]))].forEach(c => assert(css.includes('.' + c + '{'), 'ไม่มีสไตล์เส้น ' + c));
+  const used = new Set([...js.matchAll(/\bf-([a-z]-[a-z0-9]+)/g)].map(m => m[1]));
+  [...new Set([...js.matchAll(/\b(s-[a-z]-[a-z0-9]+)/g)].map(m => m[1]))].forEach(c => assert(css.includes('.' + c + '{'), 'ไม่มีสไตล์เส้น ' + c));
   const blk = re => (css.match(re) || [, ''])[1];
   const lt = blk(/ฉากสถานที่[\s\S]*?\n:root\{([^}]*)\}/), dk = blk(/ฉากสถานที่[\s\S]*?:root\[data-theme="dark"\]\{([^}]*)\}/);
   used.forEach(t => { assert(lt.includes('--' + t + ':'), 'ไม่มีสีโหมดสว่าง ' + t); assert(dk.includes('--' + t + ':'), 'ไม่มีสีโหมดมืด ' + t) });
+  [lt, dk].forEach(B => { const m = B.match(/[^;{\s]--[a-z]+-[a-z0-9]+:/); assert(!m, 'ลืม ; ก่อน token (token ถัดไปจะใช้ไม่ได้ทั้งตัว): ' + (m && m[0])) }); // v120 เคยต่อ token ท้าย --sc-gop:.22 ที่ไม่มี ; แล้วสีทั้งฉากหาย
   assert(!/(fill|stroke)="#/.test(js), 'ห้ามใส่สีตรงๆ ในฉาก ต้องใช้ class/token');
   const ctx = {}; new Function('ctx', js.replace(/^const (\w+)/gm, 'ctx.$1') )(ctx);
   const k5 = fs.readFileSync(path.join(ROOT, 'js/data/kanji-n5.js'), 'utf8');
@@ -1529,13 +1530,13 @@ test('แมวพิกเซล: ยืดขาหลังต่อจาก
   // เดินไปดมของ: ทุกสถานที่ จมูกแตะของใน poi (ห่างไม่เกิน 2 px) และหันหน้าเข้าหาของ · ไม่ออกนอกขอบ · ดมแล้วกลับมานั่ง (บางทีเอียงคอสงสัย)
   const sn = await p.evaluate(() => { const T = PixelCat._t, { step, cat, XMIN, XMAX } = T, cv = document.createElement('canvas'), out = { bad: [], n: 0, out: 0, end: new Set() }, R0 = Math.random; let a = 11;
     Math.random = () => (a = (a * 1103515245 + 12345) % 2147483648) / 2147483648;
-    for (const pl of ['room', 'garden', 'cafe', 'station']) { PixelCat.mount(cv, { place: pl, coat: 'cream' }); const P = T.scenes[pl].poi;
+    for (const pl of Object.keys(T.scenes)) { PixelCat.mount(cv, { place: pl, coat: 'cream' }); const P = T.scenes[pl].poi;
       for (let i = 0; i < 25; i++) { Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: XMIN + (i * 37) % (XMAX - XMIN), then: null, str: 0, hunt: 0, sniff: 0, bs: 0 }); T.sniffGo(); let hit = false;
         for (let k = 0; k < 600; k++) { step(50); if (cat.x < XMIN || cat.x > XMAX) out.out++;
           if (cat.mode === 'sniff' && !hit) { hit = true; out.n++; const nose = cat.dir > 0 ? cat.x + 46.5 : cat.x + 1.5; if (!P.some(x => Math.abs(x - nose) <= 2)) out.bad.push(pl + ' จมูก ' + nose) }
           if (hit && cat.mode !== 'sniff' && cat.mode !== 'turnIn') { out.end.add(cat.mode); break } } } }
     Math.random = R0; M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return { ...out, end: [...out.end] } });
-  assert.deepStrictEqual(sn.bad, []); assert.strictEqual(sn.out, 0); assert(sn.n >= 95, 'ไปดมครบเกือบทุกครั้ง ' + sn.n);
+  assert.deepStrictEqual(sn.bad, []); assert.strictEqual(sn.out, 0); assert(sn.n >= 165, 'ไปดมครบเกือบทุกครั้ง ' + sn.n);
   assert(sn.end.every(m => m === 'sit' || m === 'pose') && sn.end.includes('pose'), 'ดมแล้วนั่ง/สงสัย ' + sn.end);
   // ถึงเบาะ: ดมเบาะราว 40% → หมุนตัว 1–2 รอบ (สลับทิศ) → หันหน้า → นวด/หมอบ → ขด
   const bd = await p.evaluate(() => { const { step, cat } = PixelCat._t; const r = { sniff: 0, circle: 0, bad: [] };
@@ -1617,6 +1618,30 @@ test('แมวพิกเซล: นาฬิกาชีวิตประจ
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('สถานที่ใหม่ v120: ร้านสะดวกซื้อ ห้องเรียน ศาลเจ้า ปลดล็อกด้วยคำหมวดของตัวเอง · ฉากพิกเซลมีของขยับ · แมวระวังตัวในร้านกับห้องเรียน', async (b, base) => {
+  const p = await fresh(b, base);
+  await home(p); await p.locator('.scgo').click();
+  const dlg = await p.locator('.cdl').innerText();
+  for (const [id, n] of [['konbini', 'ร้านสะดวกซื้อ'], ['classroom', 'ห้องเรียน'], ['shrine', 'ศาลเจ้า']]) { assert(dlg.includes(n), n); assert(await p.locator(`.plr[data-p="${id}"]`).isDisabled(), n + ' ยังล็อก') }
+  await p.locator('.cdl button[data-x]').click();
+  // จำคำหมวดของใช้ได้แม่น 10 คำ → ได้ตั๋วร้านสะดวกซื้ออย่างเดียว
+  await p.evaluate(() => { const L = [...W, ...V].filter(x => x.c === 'ของใช้').slice(0, 10), sw = {}, sv = {}; L.forEach(x => { (W.includes(x) ? sw : sv)[x.k] = { b: 5, w: 0, d: Date.now() + 864e5 } }); localStorage.setItem('kw1', JSON.stringify(sw)); localStorage.setItem('kv1', JSON.stringify(sv)) });
+  await home(p); await p.waitForSelector('.toast:has-text("ได้ตั๋วไปร้านสะดวกซื้อแล้ว")');
+  assert.deepStrictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).place.got), ['konbini']);
+  await p.locator('.scgo').click(); await p.locator('.plr[data-p="konbini"]').click();
+  const h = await home(p); assert(h.includes('ร้านสะดวกซื้อ') && h.includes('ทบทวนคำหมวดของใช้'), h.slice(0, 300));
+  assert.strictEqual(await p.locator('.scn.px[data-place="konbini"] > canvas#petcv').count(), 1);
+  // ของขยับในฉาก (ไอโอเด้ง ป้ายแกว่ง · ม่านไหว นาฬิกา · เชือกกระดิ่ง แผ่นเอมะ) เปลี่ยนตามเวลา · ปิดแอนิเมชันแล้วนิ่ง · ช่วงปรับตัว: ร้าน/ห้องเรียนระวังตัว ศาลเจ้าไม่
+  const r = await p.evaluate(() => { const T = PixelCat._t, cv = document.createElement('canvas'), out = {};
+    for (const pl of ['konbini', 'classroom', 'shrine']) { PixelCat.mount(cv, { place: pl, coat: 'cream' }); const s = T.scenes[pl], k = T.palOf(pl, 'light');
+      const shot = (ms, P) => { const c = document.createElement('canvas'); c.width = 160; c.height = 90; const x = c.getContext('2d'), A = { t: 0, ms, d: new Date(ms), P, td: 'day', sk: 'light' }; s.live(x, k, A); if (s.front) s.front(x, k, A); return c.toDataURL() };
+      const t0 = new Date('2026-07-10T10:00:00').getTime(); out[pl] = [shot(t0, true) !== shot(t0 + 700, true), shot(t0, false) === shot(t0 + 700, false), s.bed === null, s.poi.length >= 4];
+      T.setFam(1, 0); out[pl].push(T.wary() > .5) }
+    T.setFam(99, 0); M.place = { at: 'room', got: [] }; render(); return out });
+  assert.deepStrictEqual(r.konbini, [true, true, true, true, true]); assert.deepStrictEqual(r.classroom, [true, true, true, true, true]); assert.deepStrictEqual(r.shrine, [true, true, true, true, false]);
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('ฉากตามฤดู: ซากุระ เมเปิลเขียว เมเปิลแดง กิ่งโล่งหิมะ · ของตกตามฤดู · หิมะตกบางวัน · หน้าต่างคาเฟ่มีเมฆ', async (b, base) => {
   const p = await fresh(b, base);
   await p.waitForTimeout(200);
@@ -1625,7 +1650,8 @@ test('ฉากตามฤดู: ซากุระ เมเปิลเข�
     out.map = ['2026-03-01', '2026-05-31', '2026-06-01', '2026-08-31', '2026-09-01', '2026-11-30', '2026-12-01', '2027-02-28'].map(d => T.season(at(d + 'T12:00:00')));
     const img = (pl, se, tm = 'light', fg) => { T.setSeason(se); PixelCat.mount(cv, { place: pl, coat: 'cream' }); return (fg ? T.sceneFg(tm) : T.sceneBg(tm)).toDataURL() };
     T.setNow(at('2026-11-20T10:00:00'));
-    for (const pl of ['room', 'garden', 'cafe', 'station']) { const I = ['spring', 'summer', 'autumn', 'winter'].map(se => img(pl, se)); out[pl] = I; out[pl + 'N'] = img(pl, 'winter', 'dark') !== img(pl, 'summer', 'dark') }
+    for (const pl of Object.keys(T.scenes)) { const I = ['spring', 'summer', 'autumn', 'winter'].map(se => img(pl, se)); out[pl] = I; out[pl + 'N'] = img(pl, 'winter', 'dark') !== img(pl, 'summer', 'dark') }
+    out.places = Object.keys(T.scenes);
     out.gfg = img('garden', 'winter', 'light', 1) !== img('garden', 'summer', 'light', 1);
     // ผีเสื้อไม่มีหน้าหนาว (จึงไม่มีซุ่ม) · มีในฤดูอื่นตอนกลางวัน
     const A = (se, td = 'day') => ({ ms: { spring: at('2026-04-10T10:00:00'), summer: at('2026-07-10T10:00:00'), autumn: at('2026-10-10T10:00:00'), winter: at('2027-01-10T10:00:00') }[se], P: true, td, sk: td === 'night' ? 'dark' : 'light', t: 0 });
@@ -1647,7 +1673,8 @@ test('ฉากตามฤดู: ซากุระ เมเปิลเข�
     out.cloud = 0; for (let i = 0; i < d.length; i += 4) if (((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]) === h) out.cloud++;
     T.setSeason(null); T.setNow(null); M.place = { at: 'room', got: [] }; render(); return out });
   assert.deepStrictEqual(r.map, ['spring', 'spring', 'summer', 'summer', 'autumn', 'autumn', 'winter', 'winter'], 'แบ่งฤดู');
-  for (const pl of ['room', 'garden', 'cafe', 'station']) { assert.notStrictEqual(r[pl][1], r[pl][3], 'หนาวต่างจากร้อน ' + pl); assert(r[pl + 'N'], 'กลางคืนหนาวต่างจากร้อน ' + pl) }
+  assert.strictEqual(r.places.length, 7, 'ฉาก ' + r.places); for (const pl of r.places) { assert.notStrictEqual(r[pl][1], r[pl][3], 'หนาวต่างจากร้อน ' + pl); assert(r[pl + 'N'], 'กลางคืนหนาวต่างจากร้อน ' + pl) }
+  for (const pl of ['classroom', 'shrine', 'konbini']) assert.strictEqual(new Set(r[pl]).size, 4, 'ต่างกันทั้ง 4 ฤดู ' + pl);
   assert.strictEqual(new Set(r.garden).size, 4, 'สวนต่างกันทั้ง 4 ฤดู'); assert.notStrictEqual(r.room[0], r.room[1], 'ห้อง: ใบไม้ผลิมีต้นซากุระบนเนิน');
   assert(r.gfg, 'พุ่มอาซาเลียตามฤดู');
   assert.deepStrictEqual(r.bfly, [true, true, true, false], 'ผีเสื้อ ' + r.bfly);
@@ -1696,12 +1723,12 @@ test('ฉากกลางคืน: พระจันทร์เฟสแล
   // วาดในทุกสถานที่: ฉากกลางคืนตอนพระจันทร์ขึ้นต่างจากตอนจันทร์ดับ · เปลี่ยนเฟสแล้วชั้นภาพแคชใหม่ (ไม่ค้างดวงเก่า) · กลางวันไม่มีพระจันทร์
   const draw = await p.evaluate(() => { const T = PixelCat._t, cv = document.createElement('canvas'), out = {};
     const img = (pl, s) => { T.setNow(new Date(s).getTime()); PixelCat.mount(cv, { place: pl, coat: 'cream' }); return T.sceneBg('dark').toDataURL() };
-    const scenes = { room: ['2026-11-24T23:00:00', '2026-12-17T19:30:00'], garden: ['2026-11-25T00:00:00', '2026-12-17T19:30:00'], cafe: ['2026-11-25T00:00:00', '2026-12-14T19:30:00'], station: ['2026-11-25T00:00:00', '2026-12-17T19:30:00'] };
+    const scenes = { room: ['2026-11-24T23:00:00', '2026-12-17T19:30:00'], garden: ['2026-11-25T00:00:00', '2026-12-17T19:30:00'], cafe: ['2026-11-25T00:00:00', '2026-12-14T19:30:00'], station: ['2026-11-25T00:00:00', '2026-12-17T19:30:00'], konbini: ['2026-11-25T00:00:00', '2026-12-17T19:30:00'], classroom: ['2026-11-25T00:00:00', '2026-12-17T19:30:00'], shrine: ['2026-11-25T00:00:00', '2026-12-17T19:30:00'] };
     T.setTod('night');
     for (const [pl, [a, c]] of Object.entries(scenes)) { const none = img(pl, '2026-12-09T23:00:00'); out[pl] = [img(pl, a) !== none, img(pl, c) !== none, img(pl, a) !== img(pl, c)] }
     T.setTod('day'); T.setSeason('autumn'); T.setNow(new Date('2026-11-24T23:00:00').getTime()); PixelCat.mount(cv, { place: 'garden', coat: 'cream' }); out.day = T.sceneBg('light').toDataURL() === (T.setNow(new Date('2026-12-09T23:00:00').getTime()), T.sceneBg('light').toDataURL()); T.setSeason(null); // คนละเดือน คนละฤดู จึงตรึงฤดูไว้
     T.setNow(null); T.setTod(null); M.place = { at: 'room', got: [] }; render(); return out });
-  for (const pl of ['room', 'garden', 'cafe', 'station']) assert.deepStrictEqual(draw[pl], [true, true, true], 'พระจันทร์ในฉาก ' + pl);
+  for (const pl of ['room', 'garden', 'cafe', 'station', 'konbini', 'classroom', 'shrine']) assert.deepStrictEqual(draw[pl], [true, true, true], 'พระจันทร์ในฉาก ' + pl);
   assert(draw.day, 'กลางวันไม่มีพระจันทร์');
   assert.deepStrictEqual(p.errors, []);
 });
