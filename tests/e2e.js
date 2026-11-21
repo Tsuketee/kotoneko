@@ -1546,13 +1546,54 @@ test('แมวพิกเซล: ยืดขาหลังต่อจาก
     Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null, bs: 0 }); return r });
   assert.deepStrictEqual(bd.bad, []); assert(bd.sniff > 85 && bd.sniff < 160, 'ดมเบาะราว 40% ' + bd.sniff);
   // ที่ใหม่ดมบ่อยกว่าที่คุ้น · ขี้สงสัยดมบ่อยกว่าขี้อาย (จำลองการตัดสินใจ 4,000 ครั้ง ตรึงการสุ่ม)
-  const nv = await p.evaluate(() => { const T = PixelCat._t, { cat } = T, cv = document.createElement('canvas'), R0 = Math.random; let a = 5;
+  const nv = await p.evaluate(() => { const T = PixelCat._t, { cat } = T, cv = document.createElement('canvas'), R0 = Math.random; let a = 5; T.setBox(false); // วันที่มีกล่องแมวไปดมกล่องใหม่ก่อน (ข้อ v118) ตรึงไม่ให้มีกล่อง
     const cnt = (pl, fam, tr) => { Math.random = () => (a = (a * 1103515245 + 12345) % 2147483648) / 2147483648; PixelCat.mount(cv, { place: pl, coat: 'cream' }); T.setFam(fam, 9e5); T.setTrait(tr); T.setPart('day'); let n = 0;
       for (let i = 0; i < 4000; i++) { Object.assign(cat, { mode: 'sit', t: 0, dur: 0, x: 50, then: null, str: 0 }); T.decide(); if (cat.then === 'sniff' || cat.then === 'sniffed') n++ } return n };
     const o = { gNew: cnt('garden', 1, 0), gOld: cnt('garden', 99, 0), cur: cnt('room', 99, 6), shy: cnt('room', 99, 2), nov: [1, 2, 3, 4].map(f => (PixelCat.mount(cv, { place: 'garden', coat: 'cream' }), T.setFam(f, 0), T.novel())) };
-    Math.random = R0; T.setPart(null); T.setFam(99, 0); T.setTrait(M.pet.trait); M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return o });
+    Math.random = R0; T.setPart(null); T.setFam(99, 0); T.setTrait(M.pet.trait); T.setBox(null); M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return o });
   assert(nv.gNew > nv.gOld * 1.8, 'ที่ใหม่ดมบ่อยกว่า ' + JSON.stringify(nv)); assert(nv.cur > nv.shy * 2.5, 'ขี้สงสัยดมบ่อยกว่าขี้อาย ' + JSON.stringify(nv));
   assert.deepStrictEqual(nv.nov.map(x => Math.round(x * 100) / 100), [1, .67, .33, 0], 'ความใหม่ลดลงทุกวัน');
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('แมวพิกเซล: กล่องกระดาษในห้องบางวัน · ดมกล่องใหม่ · มุดกล่องโผล่หัว · หนีไปหลบในกล่อง (v118)', async (b, base) => {
+  const p = await fresh(b, base);
+  await p.waitForTimeout(200);
+  const r = await p.evaluate(() => { const T = PixelCat._t, { step, cat, BOX } = T, cv = document.createElement('canvas'), out = {}, at = s => new Date(s).getTime(), R0 = Math.random; let a = 3;
+    // กล่องโผล่ราว 40% ของวัน คงที่ทั้งวัน
+    const days = []; for (let d = at('2026-11-01T12:00:00'); d < at('2027-03-01T12:00:00'); d += 864e5) days.push(d);
+    out.days = [days.filter(d => T.boxDay(d)).length, days.length]; out.same = days.every(d => T.boxDay(d) === T.boxDay(d + 9 * 36e5) && T.boxDay(d) === T.boxDay(d - 11 * 36e5));
+    // ภาพ: ห้องที่มีกล่องต่างจากไม่มี ทั้งฉากหลังและฉากหน้า สองโหมด · สถานที่อื่นไม่มีกล่อง
+    const img = (pl, on, tm = 'light', fg) => { T.setBox(on); PixelCat.mount(cv, { place: pl, coat: 'cream' }); return (fg ? T.sceneFg(tm) : T.sceneBg(tm)).toDataURL() };
+    out.room = ['light', 'dark'].map(tm => img('room', true, tm) !== img('room', false, tm) && img('room', true, tm, 1) !== img('room', false, tm, 1));
+    out.garden = img('garden', true) === img('garden', false);
+    // วันที่มีกล่อง (ห้อง): ตัดสินใจครั้งแรกๆ มักไปดมกล่องใหม่ · ดมแล้วมุดกล่อง → โผล่หัว (เลื่อนลง BOX.dy) → ออกมานั่ง
+    Math.random = () => (a = (a * 1103515245 + 12345) % 2147483648) / 2147483648;
+    T.setBox(true); T.setBoxSeen(false); M.place = { at: 'room', got: [] }; PixelCat.mount(cv, { place: 'room', coat: 'cream' }); T.setPart('day');
+    const seq = []; let inBox = null; Object.assign(cat, { mode: 'sit', t: 0, dur: 1, x: 110, then: null, str: 0, bs: 0 });
+    for (let i = 0; i < 6000 && seq.length < 400; i++) { step(50); if (seq[seq.length - 1] !== cat.mode) seq.push(cat.mode); if (cat.mode === 'box' && !inBox) inBox = { x: cat.x, dy: cat.dy } }
+    const j = seq.join(' '); out.j = j.slice(0, 600); out.firstSniff = j.indexOf('sniff') >= 0 && j.indexOf('sniff') < j.indexOf('boxin'); out.inBox = inBox; out.chain = /boxin box boxout sit/.test(j);
+    // แตะตอนอยู่ในกล่อง: ไม่ออกมา
+    Object.assign(cat, { mode: 'box', t: 0, dur: 1e9, x: BOX.cx, dy: BOX.dy, bz: true, then: 'sit' }); T.poke('head'); out.tapStay = cat.mode === 'box' && cat.bz === false;
+    // แตะจนเดินหนี (ขั้น 3) วันที่มีกล่อง: หนีไปหลบในกล่อง ไม่ใช่อีกฝั่ง
+    Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 110, then: null, cool: 0, tol: 0 }); T.leave(); out.leave = cat.then; for (let i = 0; i < 400 && cat.mode !== 'box'; i++) step(50); out.leaveBox = cat.mode === 'box' && cat.cool > 0;
+    // ขี้อายมุดกล่องบ่อยกว่าพลังล้น (กล่องไม่ใหม่แล้ว)
+    const cnt = tr => { T.setTrait(tr); T.setBoxSeen(true); let n = 0; for (let i = 0; i < 3000; i++) { Object.assign(cat, { mode: 'sit', t: 0, dur: 0, x: 100, then: null, str: 0 }); T.decide(); if (cat.then === 'box') n++ } return n };
+    out.shy = cnt(2); out.energy = cnt(0);
+    Math.random = R0; T.setPart(null); T.setTrait(M.pet.trait); T.setBox(null); T.setBoxSeen(false); render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null, cool: 0, dy: 0 }); return out });
+  assert(r.days[0] > r.days[1] * .25 && r.days[0] < r.days[1] * .55 && r.same, 'กล่องบางวัน ' + JSON.stringify(r.days));
+  assert.deepStrictEqual(r.room, [true, true], 'ห้องมีกล่อง'); assert(r.garden, 'สวนไม่มีกล่อง');
+  assert(r.firstSniff, 'ดมกล่องใหม่ก่อนมุด ' + r.j); assert(r.inBox && r.inBox.x === 48 && r.inBox.dy === 6, 'นั่งกลางกล่อง โผล่หัว ' + JSON.stringify(r.inBox)); assert(r.chain, 'มุด → อยู่ในกล่อง → ออกมานั่ง');
+  assert(r.tapStay, 'แตะในกล่องแล้วไม่ออก (ลืมตา)'); assert(r.leave === 'boxhide' && r.leaveBox, 'หนีไปหลบในกล่อง');
+  assert(r.shy > r.energy * 2.5, 'ขี้อายมุดกล่องบ่อยกว่า ' + [r.shy, r.energy]);
+  // ภาพจริงบนผืนผ้าใบ: อยู่ในกล่องแล้วไม่เห็นขา/หางใต้กล่อง (แถว 87–89 เหมือนตอนแมวอยู่ที่อื่น) แต่เห็นหัวเหนือขอบกล่อง
+  const px = await p.evaluate(async () => { const T = PixelCat._t, { cat, BOX } = T, c = document.getElementById('petcv'); T.setBox(true); T.setTod('day'); render(); const c2 = document.getElementById('petcv');
+    const grab = async st => { Object.assign(cat, st); await new Promise(r => setTimeout(r, 250)); return [...c2.getContext('2d').getImageData(0, 0, 160, 90).data] };
+    const inb = await grab({ mode: 'box', t: 0, dur: 1e9, x: BOX.cx, dy: BOX.dy, bz: false, then: 'sit' }), away = await grab({ mode: 'sit', t: 0, dur: 1e9, x: 114, dy: 0, then: null });
+    let below = 0, head = 0; for (let y = 87; y < 90; y++) for (let x = 50; x < 95; x++) { const i = (y * 160 + x) * 4; if (inb.slice(i, i + 3).join() !== away.slice(i, i + 3).join()) below++ }
+    for (let y = 58; y < 74; y++) for (let x = 58; x < 86; x++) { const i = (y * 160 + x) * 4; if (inb.slice(i, i + 3).join() !== away.slice(i, i + 3).join()) head++ }
+    T.setBox(null); T.setTod(null); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, dy: 0 }); render(); return { below, head } });
+  assert(px.below === 0 && px.head > 150, 'ตัดขาใต้กล่อง เห็นหัว ' + JSON.stringify(px));
   assert.deepStrictEqual(p.errors, []);
 });
 
