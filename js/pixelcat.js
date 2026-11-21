@@ -657,15 +657,24 @@ const SYN=29.530588853,NM0=Date.UTC(2000,0,6,18,14),TAU=Math.PI*2;
 function moonAt(ms){const p=(((ms-NM0)/864e5/SYN)%1+1)%1,d=new Date(ms),h=d.getHours()+d.getMinutes()/60,ha=((h-12-24*p)%24+36)%24-12;
  return{p,lit:(1-Math.cos(TAU*p))/2,ha,up:Math.abs(ha)<6.2,k:moonTilt(ms,p,h)}}
 // ทิศด้านสว่าง (v105 เจ้าของขอ "เสี้ยวนอนเป็นเรือแบบที่เห็นจากเมืองไทย"): ด้านสว่างหันหาดวงอาทิตย์เสมอ คิดตำแหน่งดวงอาทิตย์กับดวงจันทร์บนฟ้าจริง
-// ที่ละติจูด 14°N (กรุงเทพฯ) ตามวันในปี (ระนาบสุริยวิถีเอียง 23.44°) แล้วหาทิศจากดวงจันทร์ไปดวงอาทิตย์บนจอ (มองไปทางใต้: ตะวันออกซ้าย ตะวันตกขวา)
+// ที่ละติจูดตามเขตเวลาเครื่อง (LAT · ค่าเริ่มต้น 14°N กรุงเทพฯ) ตามวันในปี (ระนาบสุริยวิถีเอียง 23.44°) แล้วหาทิศจากดวงจันทร์ไปดวงอาทิตย์บนจอ (มองไปทางใต้: ตะวันออกซ้าย ตะวันตกขวา)
 // ปัดเป็น 8 ทิศ k: 0 ขวา 1 ขวาล่าง 2 ล่าง (เสี้ยวหงายเป็นเรือ) 3 ซ้ายล่าง 4 ซ้าย 5 ซ้ายบน 6 บน 7 ขวาบน · ถือว่าเวลาเครื่อง ≈ เวลาสุริยะท้องถิ่น
-const LAT=14*Math.PI/180,OBL=23.44*Math.PI/180,RAD=Math.PI/180;
+// v115 ละติจูดตามเขตเวลาของเครื่อง (เดิมกรุงเทพฯ ทุกเครื่อง): ผู้ใช้ญี่ปุ่นเห็นเสี้ยวเอียงแบบญี่ปุ่น · ไม่รู้จักเขตเวลา = 14°N
+// ซีกโลกใต้มองไปทางเหนือ (ตะวันออกอยู่ขวา) แต่ฉากวาดพระจันทร์ขึ้นซ้ายตกขวาเสมอ จึงใช้ภาพสะท้อนของท้องฟ้าจริงทั้งภาพ (moonTilt กลับ dx) · _t.setLat(องศา) ตรึงไว้ทดสอบ/พรีวิว
+const TZLAT={Bangkok:13.75,Vientiane:18,Phnom_Penh:11.6,Ho_Chi_Minh:10.8,Saigon:10.8,Yangon:16.8,Rangoon:16.8,Tokyo:35.7,Seoul:37.6,Shanghai:31.2,Chongqing:29.6,Hong_Kong:22.3,Macau:22.2,Taipei:25,
+ Singapore:1.35,Kuala_Lumpur:3.1,Jakarta:-6.2,Makassar:-5.1,Manila:14.6,Kolkata:22.6,Calcutta:22.6,Dhaka:23.8,Kathmandu:27.7,Dubai:25.2,Riyadh:24.7,Karachi:24.9,
+ London:51.5,Paris:48.9,Berlin:52.5,Madrid:40.4,Rome:41.9,Moscow:55.8,New_York:40.7,Chicago:41.9,Denver:39.7,Los_Angeles:34.1,Toronto:43.7,Vancouver:49.3,Mexico_City:19.4,Honolulu:21.3,
+ Sao_Paulo:-23.5,Buenos_Aires:-34.6,Santiago:-33.4,Lima:-12,Bogota:4.6,Johannesburg:-26.2,Cairo:30,Lagos:6.5,Nairobi:-1.3,
+ Sydney:-33.9,Melbourne:-37.8,Brisbane:-27.5,Perth:-31.95,Adelaide:-34.9,Darwin:-12.5,Hobart:-42.9,Auckland:-36.85},
+ TZREG={Asia:25,Europe:50,America:35,Africa:5,Australia:-30,Pacific:-15,Atlantic:35,Indian:-10},
+ latOf=tz=>{if(!tz)return 14;const P=tz.split('/'),c=TZLAT[P[P.length-1]];return c!=null?c:TZREG[P[0]]!=null?TZREG[P[0]]:14};
+let LAT=(()=>{try{return latOf(Intl.DateTimeFormat().resolvedOptions().timeZone)}catch(e){return 14}})()*Math.PI/180;const OBL=23.44*Math.PI/180,RAD=Math.PI/180;
 function moonTilt(ms,p,h){const dd=(ms-Date.UTC(2000,0,1,12))/864e5,ls=(280.46+.9856474*dd)*RAD,lm=ls+p*TAU,
  eq=l=>[Math.atan2(Math.cos(OBL)*Math.sin(l),Math.cos(l)),Math.asin(Math.sin(OBL)*Math.sin(l))],[ras,des]=eq(ls),[ram,dem]=eq(lm),
  hs=(h-12)*15*RAD,hm=hs-(ram-ras),
  aa=(H,de)=>{const al=Math.asin(Math.sin(LAT)*Math.sin(de)+Math.cos(LAT)*Math.cos(de)*Math.cos(H)),az=Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(LAT)-Math.tan(de)*Math.cos(LAT));return[al,az]}, // az วัดจากทิศใต้ไปทางตะวันตก
  [a1,z1]=aa(hm,dem),[a2,z2]=aa(hs,des),dz=z2-z1,dx=Math.cos(a2)*Math.sin(dz),dy=Math.cos(a1)*Math.sin(a2)-Math.sin(a1)*Math.cos(a2)*Math.cos(dz);
- return((Math.round(Math.atan2(-dy,dx)/(Math.PI/4))%8)+8)%8}
+ return((Math.round(Math.atan2(-dy,LAT<0?-dx:dx)/(Math.PI/4))%8)+8)%8}
 let MOON=moonAt(Date.now());
 // ตำแหน่งบนฟ้าเป็นเส้นโค้ง: (xz,yz) = จุดสูงสุดตอนผ่านกลางฟ้า (ha=0) · xe/xw = x ที่ขอบฟ้าฝั่งขึ้น (ซ้าย) / ฝั่งตก (ขวา) · h = ระยะลงถึงขอบฟ้า
 // แต่ละฉากวางจุดสูงสุดไว้กลางช่องกระจก/ช่องฟ้าที่เห็นชัด ไม่ให้ค้างหลังกรอบหน้าต่างหรือป้าย (ขึ้น-ตกแล้วหายหลังภูเขา ตึก หรือกรอบ)
@@ -1417,7 +1426,7 @@ function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:D
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
 window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
- _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},setSeason:v=>{SEAS=v;sLast=''},setSnow:v=>{SNOWF=v;sLast=''},snowDay,season,fall,moonAt,moonKey,moonIdx,moonBmp,moonGlow,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
+ _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},setSeason:v=>{SEAS=v;sLast=''},setSnow:v=>{SNOWF=v;sLast=''},setLat:d=>{LAT=d*Math.PI/180;MOON=moonAt(NOW??Date.now());for(const k in bgC)delete bgC[k];sLast=''},latOf,lat:()=>LAT*180/Math.PI,snowDay,season,fall,moonAt,moonKey,moonIdx,moonBmp,moonGlow,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
   // ตัวช่วยวาดสำหรับร่างท่าในหน้าพรีวิว/ไฟล์ร่างใน docs/ (เพิ่มท่าร่างลง POSES แล้วเรียก frame ได้) แอปไม่ได้ใช้
   POSES,lib:{sitCat,sdBox,sdEll,sdCap,smin,ear,earPts,headMat,tail,P,put,bean,eyeClosed,eyeSleepy,eyeHappy,mouth,blush,zz,bowPart,RAMP,EYE,IRIS,NOSE,FX,fr,get ACC(){return ACC},get IDLE(){return IDLE}}}};
 })();

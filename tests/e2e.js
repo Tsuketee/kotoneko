@@ -1541,7 +1541,7 @@ test('ฉากตามฤดู: ซากุระ เมเปิลเข�
   assert.deepStrictEqual(p.errors, []);
 });
 
-test('ฉากกลางคืน: พระจันทร์เฟสและเวลาขึ้นตกตามโลกจริง', async (b, base) => {
+test('ฉากกลางคืน: พระจันทร์เฟสและเวลาขึ้นตกตามโลกจริง · ทิศเสี้ยวตามเขตเวลา', async (b, base) => {
   const p = await fresh(b, base);
   await p.waitForTimeout(200);
   // เฟสเทียบวันจริง (เวลาท้องถิ่นของเครื่อง เหมือนในแอป): เต็มดวง 24 พ.ย. 2026 · ดับ 9 ธ.ค. 2026 · ครึ่งดวงข้างขึ้น 17 ธ.ค. · ครึ่งดวงข้างแรม 1 ธ.ค.
@@ -1564,6 +1564,15 @@ test('ฉากกลางคืน: พระจันทร์เฟสแล
   assert(tl.eve.concat(tl.morn).every(k => k >= 1 && k <= 3), 'เสี้ยวหงายเป็นเรือ ' + JSON.stringify(tl));
   assert([7, 0, 1].includes(tl.q1), 'ครึ่งดวงหัวค่ำ ' + tl.q1);
   assert(tl.boat[6].includes('L') && !tl.boat[0].includes('L') && !tl.boat[1].includes('L'), 'ภาพเรือ ' + tl.boat.join('|'));
+  // v115 ละติจูดตามเขตเวลาเครื่อง: ญี่ปุ่น/ไทย/ออสเตรเลียได้ละติจูดของตัวเอง ไม่รู้จัก = 14°N · ยิ่งไกลเส้นศูนย์สูตรเสี้ยวหัวค่ำยิ่งเอียงตะแคง (ลอนดอนฤดูใบไม้ร่วงนอนข้าง k 0)
+  // ซีกโลกใต้: ฉากยังขึ้นซ้ายตกขวา จึงเป็นภาพสะท้อนของฟ้าจริง เสี้ยวหัวค่ำยังหันลง (k 1–3) ไม่กลับหัว
+  const la = await p.evaluate(() => { const T = PixelCat._t, ev = ['2026-12-13T19:30:00', '2026-06-20T19:30:00', '2026-03-22T19:30:00', '2026-09-15T19:30:00'], o = { def: T.lat() };
+    for (const L of [13.75, 51.5, -33.9]) { T.setLat(L); o[L] = ev.map(d => T.moonAt(new Date(d).getTime()).k) } T.setLat(o.def);
+    o.map = ['Asia/Tokyo', 'Asia/Bangkok', 'Australia/Sydney', 'Europe/Oslo', 'Etc/UTC', undefined].map(T.latOf); return o });
+  assert.deepStrictEqual(la.map, [35.7, 13.75, -33.9, 50, 14, 14], 'ละติจูดตามเขตเวลา');
+  // ดวงอาทิตย์ตกทางขวาของฉาก เสี้ยวหัวค่ำจึงหันด้านสว่างไปขวา/ลง (k 0–2) ทั้งสองซีกโลก (ไม่สะท้อนซีกโลกใต้จะได้ k 3 หันซ้าย)
+  assert(la['13.75'].every(k => k >= 1 && k <= 2) && la['-33.9'].every(k => k >= 0 && k <= 2), 'เสี้ยวหัวค่ำไทย/ซีกโลกใต้ ' + JSON.stringify(la));
+  assert(la['51.5'].every(k => k === 0 || k === 1) && la['51.5'].includes(0) && la['51.5'].join() !== la['13.75'].join(), 'ลอนดอนเสี้ยวตะแคง ' + JSON.stringify(la));
   assert(tl.full && tl.cres && tl.full.al > tl.cres.al * 2 && tl.nw === null && tl.down === null, 'แสงจันทร์บนพื้น ' + JSON.stringify([tl.full, tl.cres, tl.nw, tl.down]));
   // วาดในทุกสถานที่: ฉากกลางคืนตอนพระจันทร์ขึ้นต่างจากตอนจันทร์ดับ · เปลี่ยนเฟสแล้วชั้นภาพแคชใหม่ (ไม่ค้างดวงเก่า) · กลางวันไม่มีพระจันทร์
   const draw = await p.evaluate(() => { const T = PixelCat._t, cv = document.createElement('canvas'), out = {};
