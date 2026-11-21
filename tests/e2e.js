@@ -1401,14 +1401,14 @@ test('แมวพิกเซล: ตื่นแล้วหาว/ยืด�
   const wk = await p.evaluate(() => { const { step, cat, setPart, XMIN, XMAX } = PixelCat._t; setPart('day'); const r = { yawn: 0, stretch: 0, out: 0, badIn: [], badOut: [] };
     for (let i = 0; i < 200; i++) { Object.assign(cat, { mode: 'wake', t: 0, dur: 10, x: 30 + (i % 5) * 20, then: null, after: null, pend: null, str: 0, wk: 0, tol: 0, cool: 0, lv: 0 }); const seen = [];
       for (let k = 0; k < 400; k++) { step(50); if (seen[seen.length - 1] !== cat.mode) seen.push(cat.mode); if (cat.x < XMIN || cat.x > XMAX) r.out++ }
-      if (seen.includes('yawn')) r.yawn++; const j = seen.indexOf('stretch'); if (j >= 0) { r.stretch++; if (seen[j - 1] !== 'turnOut') r.badIn.push(seen.join(' ')); if (!['walk', 'run', 'turnIn'].includes(seen[j + 1])) r.badOut.push(seen.join(' ')) } }
+      if (seen.includes('yawn')) r.yawn++; const j = seen.indexOf('stretch'); if (j >= 0) { r.stretch++; if (seen[j - 1] !== 'turnOut') r.badIn.push(seen.join(' ')); if (!['walk', 'run', 'turnIn', 'hind'].includes(seen[j + 1])) r.badOut.push(seen.join(' ')) } }
     setPart(null); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null, str: 0 }); return r });
   assert.strictEqual(wk.out, 0); assert.deepStrictEqual([wk.badIn, wk.badOut], [[], []], 'ลำดับยืดตัวผิด');
   assert(wk.yawn > 60 && wk.yawn < 140, 'ตื่นแล้วหาวราวครึ่งหนึ่ง ' + JSON.stringify(wk)); assert(wk.stretch > 85 && wk.stretch < 155, 'ตื่นแล้วยืดตัวราว 60% ' + JSON.stringify(wk));
   // หายไปนาน 4 ชม.ขึ้นไป แมวหลับอยู่: ตื่น → ยืดตัว → เดินหางตั้งมาทัก (Eriksson 2017 แมวยืดตัวมากขึ้นตอนเจ้าของกลับมาหลังหายไปนาน)
   const gs = await p.evaluate(() => { const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'curl', x: 12, t: 0, dur: 1e9, then: null, str: 0 }); PixelCat.greet(6 * 3600e3); const seen = [];
     for (let i = 0; i < 400 && cat.mode !== 'walk'; i++) { step(50); if (seen[seen.length - 1] !== cat.mode) seen.push(cat.mode) } return [seen.join(' '), cat.then] });
-  assert.deepStrictEqual(gs, ['wake turnOut stretch walk', 'greet']);
+  assert(/^wake turnOut stretch (hind )?walk$/.test(gs[0]) && gs[1] === 'greet', 'ตื่นแล้วยืดตัว (บางทียืดขาหลังต่อ) แล้วเดินมาทัก ' + gs);
   // ถึงเบาะในห้อง: นวด ふみふみ ราว 30% (ร่าง 1) → หมอบ → ขด · ที่อื่นไม่มีเบาะจึงไม่นวด
   const kn = await p.evaluate(() => { const { step, cat } = PixelCat._t; let n = 0, chain = true, say = '';
     for (let i = 0; i < 300; i++) { Object.assign(cat, { mode: 'turnIn', t: 0, dur: 10, x: 12, then: 'sleep', pend: null }); if (!n) document.querySelector('.scn.px .scb').classList.remove('on'); step(50); // ฟองนวดขึ้นเมื่อไม่ได้พูดอยู่
@@ -1500,6 +1500,59 @@ test('แมวพิกเซล: ท่าที่ใช้ของในฉ
   assert.strictEqual(k[0], 'bask'); assert(['yawn', 'turnOut', 'groom', 'sit', 'stretch'].includes(k[1]), 'ตื่นจากอาบแดด ' + k[1]);
   const heart = await p.evaluate(() => JSON.stringify(PixelCat._t.frame('bask', 1, 'light', 'cream', 'none')).includes('#ef7d92')); assert(!heart, 'นอนอาบแดดไม่มีหัวใจลอย');
   await p.evaluate(() => { const T = PixelCat._t; T.setNow(null); T.setTod(null); T.setSeason(null); T.setFam(99, 0); M.place = { at: 'room', got: [] }; render(); Object.assign(T.cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }) });
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('แมวพิกเซล: ยืดขาหลังต่อจากยืดตัว · เดินไปดมของในฉาก · ดมเบาะแล้วหมุนตัวก่อนนอน (v117)', async (b, base) => {
+  const p = await fresh(b, base);
+  await p.waitForTimeout(200);
+  // ท่าใหม่วาดได้ทุกลายขน ทั้งสองโหมด ผ้าพันคอ/โบว์เห็นทุกเฟรม · ยืดขาหลังเริ่มใกล้ท่ายืน (ไม่กระตุก) · หันซ้ายไม่ใช่ภาพกลับด้านของหันขวา (ลายไม่สลับข้าง)
+  const bad = await p.evaluate(() => { const { frame, COATS, DUR } = PixelCat._t, out = [];
+    for (const k of ['hindR', 'hindL', 'sniffR', 'sniffL']) for (const co of Object.keys(COATS)) for (const tm of ['light', 'dark']) for (let f = 0; f < DUR[k].length; f++) { const g0 = JSON.stringify(frame(k, f, tm, co, 'none'));
+      if (!JSON.parse(g0).some(r => r.some(Boolean))) out.push('ว่าง ' + [k, co, tm, f]);
+      for (const acc of ['scarf', 'bow']) if (JSON.stringify(frame(k, f, tm, co, acc)) === g0) out.push('ไม่เห็น' + acc + ' ' + [k, co, tm, f]) }
+    const g = frame('sniffR', 0, 'light', 'calico', 'none'), m = frame('sniffL', 0, 'light', 'calico', 'none');
+    if (JSON.stringify(g.map(r => [...r].reverse())) === JSON.stringify(m)) out.push('สามสีหันซ้ายลายสลับข้าง');
+    // ยืดขาหลังสุด: มีพิกเซลของขาเหยียดออกไปด้านหลังตัว (ซ้ายของท่ายืน) ใต้ระดับหาง
+    const px = F => { let n = 0; for (let y = 34; y < 44; y++) for (let x = 0; x < 9; x++) if (F[y][x]) n++; return n }, st = frame('standR', 2, 'light', 'cream', 'none');
+    if (!(px(frame('hindR', 2, 'light', 'cream', 'none')) > px(st) + 6)) out.push('ไม่เห็นขาหลังเหยียด ' + [px(frame('hindR', 2, 'light', 'cream', 'none')), px(st)]);
+    // ดม: หัวต่ำกว่าท่ายืน (ขอบบนของภาพต่ำลง)
+    const top = F => F.findIndex(r => r.some(Boolean)); if (!(top(frame('sniffR', 0, 'light', 'cream', 'none')) > top(st) + 5)) out.push('ดมแล้วหัวไม่ต่ำลง');
+    return out });
+  assert.deepStrictEqual(bad, []);
+  // ยืดตัวจบแล้วยืดขาหลังต่อราวครึ่งหนึ่ง แล้วเดิน/วิ่ง/หันกลับมานั่ง
+  const hd = await p.evaluate(() => { const { step, cat } = PixelCat._t; let n = 0; const after = new Set();
+    for (let i = 0; i < 200; i++) { Object.assign(cat, { mode: 'stretch', t: 0, dur: 10, x: 50, target: 50, then: 'sit', run: false, dir: 1 }); step(50);
+      if (cat.mode === 'hind') { n++; step(4000); after.add(cat.mode) } }
+    Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return { n, after: [...after] } });
+  assert(hd.n > 65 && hd.n < 135, 'ยืดขาหลังราวครึ่งหนึ่ง ' + JSON.stringify(hd)); assert(hd.after.every(m => ['turnIn', 'walk', 'run', 'sit', 'pose', 'groom'].includes(m)), 'หลังยืดขาหลัง ' + hd.after);
+  // เดินไปดมของ: ทุกสถานที่ จมูกแตะของใน poi (ห่างไม่เกิน 2 px) และหันหน้าเข้าหาของ · ไม่ออกนอกขอบ · ดมแล้วกลับมานั่ง (บางทีเอียงคอสงสัย)
+  const sn = await p.evaluate(() => { const T = PixelCat._t, { step, cat, XMIN, XMAX } = T, cv = document.createElement('canvas'), out = { bad: [], n: 0, out: 0, end: new Set() }, R0 = Math.random; let a = 11;
+    Math.random = () => (a = (a * 1103515245 + 12345) % 2147483648) / 2147483648;
+    for (const pl of ['room', 'garden', 'cafe', 'station']) { PixelCat.mount(cv, { place: pl, coat: 'cream' }); const P = T.scenes[pl].poi;
+      for (let i = 0; i < 25; i++) { Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: XMIN + (i * 37) % (XMAX - XMIN), then: null, str: 0, hunt: 0, sniff: 0, bs: 0 }); T.sniffGo(); let hit = false;
+        for (let k = 0; k < 600; k++) { step(50); if (cat.x < XMIN || cat.x > XMAX) out.out++;
+          if (cat.mode === 'sniff' && !hit) { hit = true; out.n++; const nose = cat.dir > 0 ? cat.x + 46.5 : cat.x + 1.5; if (!P.some(x => Math.abs(x - nose) <= 2)) out.bad.push(pl + ' จมูก ' + nose) }
+          if (hit && cat.mode !== 'sniff' && cat.mode !== 'turnIn') { out.end.add(cat.mode); break } } } }
+    Math.random = R0; M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return { ...out, end: [...out.end] } });
+  assert.deepStrictEqual(sn.bad, []); assert.strictEqual(sn.out, 0); assert(sn.n >= 95, 'ไปดมครบเกือบทุกครั้ง ' + sn.n);
+  assert(sn.end.every(m => m === 'sit' || m === 'pose') && sn.end.includes('pose'), 'ดมแล้วนั่ง/สงสัย ' + sn.end);
+  // ถึงเบาะ: ดมเบาะราว 40% → หมุนตัว 1–2 รอบ (สลับทิศ) → หันหน้า → นวด/หมอบ → ขด
+  const bd = await p.evaluate(() => { const { step, cat } = PixelCat._t; const r = { sniff: 0, circle: 0, bad: [] };
+    for (let i = 0; i < 300; i++) { Object.assign(cat, { mode: 'halt', t: 0, dur: 10, x: 12, dir: i % 2 ? 1 : -1, then: 'sleep', bs: 0, pend: null }); const seen = [], dirs = new Set();
+      for (let k = 0; k < 200 && !['loaf', 'knead'].includes(cat.mode); k++) { step(50); if (seen[seen.length - 1] !== cat.mode) seen.push(cat.mode); if (cat.mode === 'circle') dirs.add(PixelCat._t.catPose()[0].slice(-1)) }
+      const j = seen.join(' ');
+      if (seen.includes('sniff')) { r.sniff++; if (!/^sniff circle turnIn (knead|loaf)$/.test(j)) r.bad.push(j); if (dirs.size < 2) r.bad.push('หมุนตัวไม่สลับทิศ') } else if (!/^turnIn (knead|loaf)$/.test(j)) r.bad.push(j) }
+    Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null, bs: 0 }); return r });
+  assert.deepStrictEqual(bd.bad, []); assert(bd.sniff > 85 && bd.sniff < 160, 'ดมเบาะราว 40% ' + bd.sniff);
+  // ที่ใหม่ดมบ่อยกว่าที่คุ้น · ขี้สงสัยดมบ่อยกว่าขี้อาย (จำลองการตัดสินใจ 4,000 ครั้ง ตรึงการสุ่ม)
+  const nv = await p.evaluate(() => { const T = PixelCat._t, { cat } = T, cv = document.createElement('canvas'), R0 = Math.random; let a = 5;
+    const cnt = (pl, fam, tr) => { Math.random = () => (a = (a * 1103515245 + 12345) % 2147483648) / 2147483648; PixelCat.mount(cv, { place: pl, coat: 'cream' }); T.setFam(fam, 9e5); T.setTrait(tr); T.setPart('day'); let n = 0;
+      for (let i = 0; i < 4000; i++) { Object.assign(cat, { mode: 'sit', t: 0, dur: 0, x: 50, then: null, str: 0 }); T.decide(); if (cat.then === 'sniff' || cat.then === 'sniffed') n++ } return n };
+    const o = { gNew: cnt('garden', 1, 0), gOld: cnt('garden', 99, 0), cur: cnt('room', 99, 6), shy: cnt('room', 99, 2), nov: [1, 2, 3, 4].map(f => (PixelCat.mount(cv, { place: 'garden', coat: 'cream' }), T.setFam(f, 0), T.novel())) };
+    Math.random = R0; T.setPart(null); T.setFam(99, 0); T.setTrait(M.pet.trait); M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return o });
+  assert(nv.gNew > nv.gOld * 1.8, 'ที่ใหม่ดมบ่อยกว่า ' + JSON.stringify(nv)); assert(nv.cur > nv.shy * 2.5, 'ขี้สงสัยดมบ่อยกว่าขี้อาย ' + JSON.stringify(nv));
+  assert.deepStrictEqual(nv.nov.map(x => Math.round(x * 100) / 100), [1, .67, .33, 0], 'ความใหม่ลดลงทุกวัน');
   assert.deepStrictEqual(p.errors, []);
 });
 

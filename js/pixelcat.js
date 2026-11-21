@@ -360,16 +360,16 @@ const RUN=[{e:-1.6,by:-2.2,L:[[-3,3.2,.9],[-2.2,3.6,.8],[3.4,2.6,.4],[2.6,2.8,.5
  {e:-.4,by:-1.2,L:[[-1.6,0,0],[-.6,0,0],[0,3,.8],[.8,3.2,.7]]}],RUN_STEP=4.4;
 function sideCat(o){
  const dir=o.dir,f=o.f,mode=o.mode||'stand',run=mode==='run',walk=mode==='walk',N=dir>0?'L':'R',F=dir>0?'R':'L',nP=dir>0?'patchL':'patch';
- const cr=o.cr||0,wig=o.wig||0,rch=o.reach||0; // cr = หมอบซุ่ม 0–1 (ตัวต่ำ ขาพับ หัวต่ำยื่นไปหน้า) · wig = ก้นส่ายก่อนกระโจน · reach = ขาหน้าเหยียดไปตะปบ
+ const cr=o.cr||0,wig=o.wig||0,rch=o.reach||0,hs=o.hs||0,sn=o.sn||0; // hs = ยืดขาหลัง 0–1 (v117 · o.hl 0 ขาใกล้ 1 ขาไกล) · sn = ก้มดมพื้น 0–1 (v117) // cr = หมอบซุ่ม 0–1 (ตัวต่ำ ขาพับ หัวต่ำยื่นไปหน้า) · wig = ก้นส่ายก่อนกระโจน · reach = ขาหน้าเหยียดไปตะปบ
  const R=run?(o.R||RUN[f]):null,e=run?R.e:0,by=run?R.by:walk?[0,-.3,-.6,-.3,0,-.3,-.6,-.3][f]:cr*3.4;
  // bw = ยืดตัวโค้งคำนับ 0–1 (ท่ายืน): อกต่ำลงแนบพื้น ขาหน้าเหยียดไปข้างหน้า สะโพกยกขึ้น หัวต่ำลงเหนือขาหน้า หูเอนไปหลัง หางตั้ง · rb = สะโพกยก
- const bw=o.bow||0,rb=-bw*5-cr*1.4-wig*.9,hd=bw*8.4+cr*1.6+rch*.4; // v88 ตามภาพตัวอย่างของเจ้าของ: ก้นเป็นจุดสูงสุด ขาหลังยืดตรงยาว หลังลาดลงเป็นทางลาดถึงอก หัวต่ำระดับขาหน้า
+ const bw=o.bow||0,rb=-bw*5-cr*1.4-wig*.9+hs*.6-sn*1.4,hd=bw*8.4+cr*1.6+rch*.4+sn*(9.4+(o.nb||0)*.5)+hs*1.2,sc=sn*2.4; // ดม: สะโพกยกนิด อกต่ำลง (ศอกงอ) หัวก้มต่ำกว่าไหล่ เส้นหลังลาดลงหาหัว // v88 ตามภาพตัวอย่างของเจ้าของ: ก้นเป็นจุดสูงสุด ขาหลังยืดตรงยาว หลังลาดลงเป็นทางลาดถึงอก หัวต่ำระดับขาหน้า
  // หัวกลมโตเท่าท่าหันหน้า หูอยู่บนกลางหัว หูฝั่งไกลโผล่ด้านหน้าเล็กน้อย · ตอนเดินหัวนิ่ง (แมวจริงประคองหัวให้นิ่ง) ตอนวิ่งหูลู่ไปด้านหลัง
- const hx=33.4+e*.5-bw*.6+cr*2.4,hy=22.8+(run?by*.8:cr*3.4)+hd,hyF=23+Math.round((run?by*.8:cr*3.4)+hd),tw=IDLE==='twitch'+N?1:0,twF=IDLE==='twitch'+F?1:0,eb=run?.7:Math.max(tw,bw*1.1),back=SIDE_EAR==='back';
+ const hx=33.4+e*.5-bw*.6+cr*2.4+sn*2.4+hs*1,hy=22.8+(run?by*.8:cr*3.4)+hd,hyF=23+Math.round((run?by*.8:cr*3.4)+hd),tw=IDLE==='twitch'+N?1:0,twF=IDLE==='twitch'+F?1:0,eb=run?.7:Math.max(tw,bw*1.1,hs*.8),back=SIDE_EAR==='back';
  const NE=[[hx-7,hy-5.6],[hx-3.6-eb*1.4,hy-15+eb*1.6],[hx+1.4,hy-9]],NI=[[hx-3.8,hy-7.6],[hx-3.4-eb*1.2,hy-12.4+eb*1.4],[hx+.2,hy-8.8]];
  const FE=back?[[hx-10.4,hy-3.6],[hx-9.4-twF*1.2,hy-13+twF*1.4],[hx-4.6,hy-8.6]]:[[hx-.4,hy-8.8],[hx+3.6-(run?.8:0)-bw*2+twF*1.2,hy-14.2+(run?.8:0)+bw*1.8+twF*1.4],[hx+6.6,hy-6.2]]; // ยืดตัว: หูลู่ไปด้านหลัง (เจ้าของขอ 2026-11-20)
  const bx=22.6-bw*5,brx=12.4+e*.6-bw*4.4,bry=7.2-e*.3-bw,cx=30.6+e*.5+cr*.8,hip=-e*.5+wig*.5; // ยืดตัว: ตัวส่วนหลังหดเหลือแค่ก้น
- const ccx=cx+bw*.6,ccy=32.4+by+bw*4.6; // อก
+ const ccx=cx+bw*.6,ccy=32.4+by+bw*4.6+sc; // อก
  const bodyS=(x,y)=>Math.max(smin(smin(sdEll(x,y,bx,33.8+by+rb,brx,bry),sdEll(x,y,ccx,ccy,6.6,6.6-bw*1.4),3),sdCap(x,y,bx,33.8+by+rb,ccx,ccy,bw*5.6,bw*4.8),2),y-Math.min(42.6,41.6+by-Math.min(0,e)*.3)); // หมอบ: ท้องแตะพื้นแต่ไม่ล้นเส้นพื้น // ยืดตัว: แท่งเชื่อมก้นกับอกเป็นหลังลาด
  const flank=(x,y)=>sdEll(x,y,19+hip,30.4+by+rb,6,4.2)<0;
  const body={z:0,R:9,sdf:bodyS,mat:(x,y)=>{if(sdEll(x,y,24,40.6+by,10.5+e*.5,3.2)<0||sdEll(x,y,ccx+4.2,ccy+3,3.2,4.6-bw)<0)return P('under');
@@ -385,15 +385,18 @@ function sideCat(o){
  // ขา: หน้าใกล้ หน้าไกล หลังใกล้ หลังไกล (ฝั่งไกลอยู่หลังตัว เข้มลงหนึ่งขั้น)
  const ph=f/WALK_N,LG=run?R.L:walk?[walkLeg(ph-.25,2.2),walkLeg(ph-.75,2.2),walkLeg(ph,1.8),walkLeg(ph-.5,1.8)]:[[0,0,0],[0,0,0],[0,0,0],[0,0,0]];
  if(bw)LG.forEach((g,i)=>{if(i<2)g[0]=bw*(i?10.4:11.4)}); // ขาหน้าเหยียดไปข้างหน้าเกือบราบกับพื้น
- if(cr&&!run)LG.forEach((g,i)=>{g[0]=i<2?rch*(i?.85:1)+cr*.8:-cr*1.2}); // หมอบ: ขาหลังรวบใต้ตัว · ตะปบ: ขาหน้ายื่นไปข้างหน้า
+ if(cr&&!run)LG.forEach((g,i)=>{g[0]=i<2?rch*(i?.85:1)+cr*.8:-cr*1.2});
+ if(hs){const i=2+(o.hl||0);LG[i]=[-11*hs,4.6*hs,.4*hs];LG[5-i][0]+=.8*hs;LG[0][0]-=.5*hs;LG[1][0]-=.5*hs} // ยืดขาหลัง: ขาข้างหนึ่งเหยียดตรงไปด้านหลัง ปลายเท้าชี้ เห็นอุ้งเท้าชมพู ตัวโน้มไปหน้า // หมอบ: ขาหลังรวบใต้ตัว · ตะปบ: ขาหน้ายื่นไปข้างหน้า
  const legs=[[31.4+e*.5,1.5,0],[28.6+e*.5,-1,1],[16.4+hip+bw*.6,bw?.9:1.45,0],[13.6+hip-bw*.6,-1,1]].map( // ยืดตัว: ขาหลังกางออกนิดหน่อยให้เห็นทั้งสองข้าง และขาใกล้อยู่ใต้ต้นขา (z ต่ำกว่า haunch) โผล่ออกมาใต้สะโพกแบบขาแมวจริง ไม่เป็นแถบแปะทับสะโพก (เจ้าของบอก 2026-11-20 ขาดูแปลก/ไม่เท่ากัน)
- ([sx,z,dim],i)=>sideLeg(sx,LG[i][0],LG[i][1],LG[i][2],z,dim,by+(i<2?bw*3.4:rb),i<2?by+bw*3.4:by-bw*3.6,i<2?1-bw*.25:1,i<2?0:bw));
+ ([sx,z,dim],i)=>sideLeg(sx,LG[i][0],LG[i][1],LG[i][2],z,dim,by+(i<2?bw*3.4+sc:rb),i<2?by+bw*3.4+sc:by-bw*3.6,i<2?1-bw*.25:1,i<2?0:bw));
  // หาง: ยืน/เดินตั้งโค้งปลายแกว่งช้าๆ · วิ่งพองฟู (แมวตื่นเต้น) ชี้ไปด้านหลังเฉียงขึ้น
  const fl=IDLE==='flick'?1:0,tb=11.6+hip*1.2;let tl;const ty=by+rb; // หางยกตามสะโพก
  if(run){const s2=[0,.6,1,.6,0,-.4][f],lag=(RUN[(f+5)%6].by-by)*.9; // หางพองสะบัดตามหลังตัว: ตัวขึ้น ปลายหางยังค้างต่ำกว่าหนึ่งจังหวะ
   tl=tail([[tb,31.6+by],[tb-4.4,30+by+lag*.3],[tb-7.8,27.4+by+lag*.7],[tb-9.2+s2,23.6+by-s2+lag]],2.7,1.9,-.5,{tip:.8})}
  else if(cr){const t=o.tf||0; // หมอบซุ่ม: หางต่ำเหยียดไปด้านหลังเกือบติดพื้น ปลายหางกระตุก
   tl=tail([[tb,31.6+ty],[tb-4.4,33.4+ty],[tb-8.6,35+ty],[tb-11.8,35.6+ty-t*.8],[tb-13.6+t*.4,34.4+ty-t*2]],2.1,1.15,-.5,{tip:.8})}
+ else if(hs){const w=(A,l)=>A*Math.sin(2*Math.PI*(f/8-l)); // ยืดขาหลัง: หางยกเหยียดไปด้านหลังเฉียงขึ้น ปลายงอนิดๆ
+  tl=tail([[tb,31.6+ty],[tb-3.2,28.8+ty-hs*.4],[tb-5.8,25.4+ty-hs*.8],[tb-7.4+w(.2,0),21.6+ty-hs],[tb-7.6+w(.4,.15),18.4+ty-hs]],2.1,1.15,-.5,{tip:.8})}
  else if(o.up||bw){const w=(A,l)=>A*Math.sin(2*Math.PI*(ph-l)); // หางตั้ง (ทักทาย Cafazzo & Natoli 2009): ตั้งตรงเกือบดิ่ง ปลายงอไปทางหัว แกว่งเบาๆ
   tl=tail([[tb,31.6+ty],[tb-1.8,27.4+ty],[tb-2.4+w(.15,0),22+ty],[tb-1.8+w(.3,.12),16.6+ty],[tb+.4+w(.5,.22),13.2+ty],[tb+2.4+w(.6,.3),12.8+ty]],2.1,1.15,-.5,{tip:.8})}
  else{const q=walk?ph:f/8,k=walk?1.1:.85,w=(A,l)=>k*A*Math.sin(2*Math.PI*(q-l)); // คลื่นจากโคนไปปลาย ปลายหางตามหลัง
@@ -401,14 +404,16 @@ function sideCat(o){
  const parts=[body,haunch,head,farEar,...legs,tl];
  const acc=o.acc||ACC;
  if(acc==='scarf'){const fw=run?.6+[0,.4,.8,1.2,.8,.3][f]:walk?.5+.5*Math.sin(2*Math.PI*ph):0,fu=run?1:0; // ชายผ้าปลิวไปด้านหลังตอนวิ่ง
-  parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,hx-6.4,hy+6.6,hx+.4,hy+8.8,2.4,2.4),ramp:'scarf',contour:RAMP.scarf[4]},
-   {z:1.95,R:2,ground:false,skipUp:true,sdf:(x,y)=>sdCap(x,y,hx-5,hy+9,hx-8.4-fw-fu-bw*1.8,hy+13.4-fu-bw*2.6,1.9,1.5),ramp:'scarf',contour:RAMP.scarf[4]})}
+  const sy=hy-sn*5.4-hs*.6; // ดม: ผ้าพันคออยู่ที่คอระหว่างอกกับหัว ไม่ห้อยลงใต้พื้น
+  parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,hx-6.4-sn*1.4,sy+6.6,hx+.4-sn*2,sy+8.8,2.4,2.4),ramp:'scarf',contour:RAMP.scarf[4]},
+   {z:1.95,R:2,ground:false,skipUp:true,sdf:(x,y)=>sdCap(x,y,hx-5-sn*1.6,sy+9,hx-8.4-fw-fu-bw*1.8-sn*1.6,sy+13.4-fu-bw*2.6-sn*2.4,1.9,1.5),ramp:'scarf',contour:RAMP.scarf[4]})}
  if(acc==='bow')parts.push(N==='R'?bowPart(hx-4.8-eb*.4,hy-6.6,-.39):back?bowPart(hx-7.4,hy-6.4,-.5,1.85,.85):bowPart(hx+4.6,hy-8,.55,1.85,.85)); // โบว์อยู่หูซ้ายของแมวเสมอ: หันซ้ายอยู่หูใกล้ หันขวาอยู่หูไกล
  const a=[];
  if(run||o.wide)put(a,hx+4.4,hyF-.4,[[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2],[1,3]],IRIS),a.push([hx+4.4,hyF-.4,'#ffffff']); // ตาโตตื่นเต้น (วิ่ง ซุ่ม กระโจน)
  else if(o.shut)put(a,hx+4,hyF+2,[[0,0],[1,1],[2,1],[3,0]],EYE); // หลับตาอิ่มใจ (ยืดตัวสุด)
  else if(IDLE==='blink')put(a,hx+4.4,hyF+2.6,[[0,0],[1,0],[2,0]],EYE);else bean(a,hx+5,hyF,4,true); // ตาเม็ดถั่วเดียวกับท่าหันหน้า ค่อนไปทางหน้า
- a.push([hx+10.6,hyF+2,NOSE]);put(a,hx+9.6,hyF+3.2,[[1,0],[0,1]],EYE);blush(a,hx+2.2,hyF+3.6);   // จมูกที่ปลายหน้า ปากเล็กอยู่ในหน้า ไม่ยื่นออกนอกเส้น
+ a.push([hx+10.6,hyF+2,NOSE]);put(a,hx+9.6,hyF+3.2,[[1,0],[0,1]],EYE);blush(a,hx+2.2,hyF+3.6);
+ if(sn)put(a,hx+11.4,hyF+4,o.nb?[[0,0],[0,2],[1,4]]:[[0,1],[1,3]],FX); // ดมฟุดฟิด: จุดเล็กใต้ปลายจมูกสลับตำแหน่ง   // จมูกที่ปลายหน้า ปากเล็กอยู่ในหน้า ไม่ยื่นออกนอกเส้น
  if(run&&R.lines&&!o.R)put(a,0,34,R.lines>1?[[0,0],[1,0],[2,0],[3,0],[1,3],[2,3],[3,3],[4,3],[5,3]]:[[1,0],[2,0],[3,0],[2,3],[3,3],[4,3]],FX); // เส้นความเร็ว
  if(run&&R.dust)put(a,R.dust>1?5:7,41,R.dust>1?[[1,0],[2,0],[0,1],[1,1],[2,1],[3,1],[5,1],[6,0]]:[[1,0],[0,1],[1,1],[2,1]],DUST); // ฝุ่นตอนเท้าหลังลงพื้น
  const pose={parts,decals:a,shadow:[24,44.4,16+by*1.3,2.4+by*.15],ground:by<-1?0:44};
@@ -530,6 +535,12 @@ POSES.doze=f=>{const D=DOZE[f],sw=[0,.2,.4,.6,.8,.6,0,-.2][f];return sitCat({hy:
 const STRETCH=[0,.55,1,1,.55,0];
 const stretchCat=(dir,f)=>{const b=STRETCH[f];return sideCat({dir,f:f+2,bow:b,shut:b>.9})}; // ส่ง dir ให้ sideCat เลือกช่องลายตามข้างจริง (หันซ้ายลายไม่สลับข้าง)
 Object.assign(POSES,{stretchR:f=>stretchCat(1,f),stretchL:f=>stretchCat(-1,f)});
+// ยืดขาหลัง (v117 · ต่อจากโค้งคำนับ · รายงานข้อ 6): ตัวโน้มไปหน้า เหยียดขาหลังทีละข้างตรงไปด้านหลัง ปลายเท้าชี้ เห็นอุ้งเท้าชมพู หลับตาตอนยืดสุด หางยกเหยียด · ขาใกล้ก่อนแล้วขาไกล
+const HIND=[[.4,0],[.8,0],[1,0],[1,0],[.3,0],[.6,1],[1,1],[.4,1]];
+const hindCat=(dir,f)=>{const[h,l]=HIND[f];return sideCat({dir,f,hs:h,hl:l,shut:h>.9})};
+// ดม (v117): ยืนหันข้าง ก้มหัวลงชิดพื้น จมูกฟุดฟิด (เดินไปดมของในฉาก · ดมเบาะก่อนนอน)
+const sniffCat=(dir,f)=>sideCat({dir,f:f*2,sn:1,nb:f%2});
+Object.assign(POSES,{hindR:f=>hindCat(1,f),hindL:f=>hindCat(-1,f),sniffR:f=>sniffCat(1,f),sniffL:f=>sniffCat(-1,f)});
 // ---------- ท่าที่ใช้ของในฉาก (v97) ----------
 // ซุ่มผีเสื้อ (สวน): หมอบต่ำ ตาโต ก้นส่ายซ้ายขวา ปลายหางกระตุก → กระโจน (ถีบขาหลัง ลอยยืดตัว) → ตะปบ ขาหน้าเหยียดกดพื้น หัวก้มดูใต้อุ้งเท้า
 const PNC=[{e:1.2,by:-2,L:[[3,5.6,.2],[2.2,5.8,.2],[-1.6,2.4,0],[-.8,2.8,.2]]},{e:2.2,by:-6.4,L:[[3.6,9.4,0],[2.8,9.6,0],[-3.4,8.6,.4],[-2.6,9,.3]]}]; // ขายกตามตัว ขาจึงสั้นเท่าเดิม แค่ยื่นไปหน้า/หลัง (เจ้าของขอ: ขาไม่ยืดยาว)
@@ -567,6 +578,10 @@ const INFO=[['sit','นั่งรอ','สะโพกกลม ขาหน�
  ['yawn','หาว','เงยหน้า หลับตาแน่น หูเอนไปหลัง อ้าปากเห็นลิ้น แล้วหุบปากเลียริมฝีปาก (ตื่นนอน งีบเสร็จ)',[280,760,400,460]],
  ['stretchR','ยืดตัว (ขวา)','จากท่ายืน ก้มอกแนบพื้น เหยียดขาหน้าไปข้างหน้า สะโพกยก หางตั้ง หลับตาตอนยืดสุด แล้วกลับมายืน (ตื่นนอนก่อนเดิน)',[240,300,900,820,300,240]],
  ['stretchL','ยืดตัว (ซ้าย)','เหมือนยืดตัวหันขวา กลับรูปทรง ลายไม่สลับ',[240,300,900,820,300,240]],
+ ['hindR','ยืดขาหลัง (ขวา)','ต่อจากยืดตัว ตัวโน้มไปหน้า เหยียดขาหลังทีละข้างไปด้านหลัง ปลายเท้าชี้ เห็นอุ้งเท้าชมพู หลับตาตอนยืดสุด',[200,240,620,480,200,240,520,220]],
+ ['hindL','ยืดขาหลัง (ซ้าย)','เหมือนยืดขาหลังหันขวา กลับรูปทรง ลายไม่สลับ',[200,240,620,480,200,240,520,220]],
+ ['sniffR','ดม (ขวา)','ยืนก้มหัวลงชิดพื้น จมูกฟุดฟิด (ดมของในฉาก ดมเบาะก่อนนอน)',[220,160,220,160]],
+ ['sniffL','ดม (ซ้าย)','เหมือนดมหันขวา กลับรูปทรง',[220,160,220,160]],
  ['knead','นวด ふみふみ','นั่งย่อตัว อุ้งเท้าหน้ายกกดสลับซ้ายขวา ตาหรี่อิ่มใจ คราง (ก่อนนอนบนเบาะ)',[260,200,260,200]],
  ['birdwatch','มองนก','เงยหน้ามองหน้าต่าง ตาโต หูตั้ง ปากสั่นแกะๆ ปลายหางกระตุก (นกชิมะเอนางะมาเกาะหน้าต่างห้อง)',[200,130,200,130]],
  ['startle','สะดุ้ง','กระโดดตัวลอย หูลู่ ตาโตกลม หางพองเป็นแปรง มี ! แล้วย่อตัวนิ่ง หูค่อยกลับ (รถไฟผ่านที่สถานี)',[180,260,900,600]],
@@ -1128,10 +1143,11 @@ const SNOW={light:{sn:'#fbfcfe',sn2:'#dbe4ee'},dark:{sn:'#c3cddc',sn2:'#8f9db2'}
   winter:{light:{hill:'#eef3f7',roof:'#f7f9fc',...SNOW.light},dark:{hill:'#2f3a50',roof:'#535d72',...SNOW.dark}}},
  KSEA={winter:{light:{...SNOW.light},dark:{...SNOW.dark}}},
  TSEA={winter:{light:{btop:'#f7f9fc',...SNOW.light},dark:{btop:'#8d99ad',...SNOW.dark}}};
-const SCENES={room:{pal:SCOL,sea:RSEA,bg:roomBg,fg:roomFg,bed:CUSH,live:roomLive,tick:roomTick,over:roomLight},
- garden:{pal:GCOL,sea:GSEA,far:gardenFar,air:clouds,mid:gardenMid,bg:gardenBg,live:gardenLive,fg:gardenFg,front:gardenFront,tick:gardenTick,bed:null},
- cafe:{pal:KCOL,sea:KSEA,bg:cafeBg,live:cafeLive,fg:cafeFg,front:cafeFront,tick:cafeTick,bed:null},
- station:{pal:TCOL,sea:TSEA,far:stationFar,air:clouds,mid:stationMid,back:stationBack,bg:stationBg,fg:stationFg,front:stationFront,tick:stationTick,bed:null}};
+// poi = จุดของในฉากระดับพื้นที่แมวเดินไปดม (x ของขอบของ จมูกจะแตะตรงนั้น · v117)
+const SCENES={room:{pal:SCOL,sea:RSEA,bg:roomBg,fg:roomFg,bed:CUSH,live:roomLive,tick:roomTick,over:roomLight,poi:[66,79,100,120,138]},
+ garden:{pal:GCOL,sea:GSEA,far:gardenFar,air:clouds,mid:gardenMid,bg:gardenBg,live:gardenLive,fg:gardenFg,front:gardenFront,tick:gardenTick,bed:null,poi:[18,30,72,88,98,122,128]},
+ cafe:{pal:KCOL,sea:KSEA,bg:cafeBg,live:cafeLive,fg:cafeFg,front:cafeFront,tick:cafeTick,bed:null,poi:[24,98,118,138]},
+ station:{pal:TCOL,sea:TSEA,far:stationFar,air:clouds,mid:stationMid,back:stationBack,bg:stationBg,fg:stationFg,front:stationFront,tick:stationTick,bed:null,poi:[21,31,96,128,145]}};
 let PLACE='room';const SCN=()=>SCENES[PLACE]||SCENES.room;
 // รุ่งเช้า (05–07) / พลบค่ำ (17–19): ใช้ชุดสีกลางวัน เปลี่ยนฟ้าเป็นชมพูอมพีช/ส้ม พระอาทิตย์ลอยต่ำ แล้วย้อมทั้งภาพด้วยสีอุ่น (WARM, multiply) ให้แมวอมแสงเดียวกัน
 // ฟ้าห้อง: sky = ฟ้าในหน้าต่าง sky2 = แถบบนสุด · ฉากกลางแจ้ง (sky()): sky = ฟ้าด้านบน sky2 = แถบใกล้ขอบฟ้า
@@ -1155,7 +1171,7 @@ function sceneFg(tm){const id=PLACE+'|'+tm+'|'+season();if(fgC[id])return fgC[id
 const cat={x:52,dir:1,mode:'sit',t:0,dur:2500,dist:0,target:52,then:null,k:'sit'};
 const rr=(a,b)=>a+Math.random()*(b-a),DUR=Object.fromEntries(INFO.map(i=>[i[0],i[3]]));
 function setMode(m,dur=0){if(m==='sit')dur*=pk('sit');else if(m==='nap'||m==='curl')dur*=pk('nap');cat.mode=m;cat.t=0;cat.dur=dur;cat.ev=null} // นิสัยยืด/ย่อเวลานั่งและงีบ
-function goTo(tx,then,run=false){cat.target=Math.round(clamp(tx,XMIN,XMAX));cat.then=then;cat.run=run;if(cat.target===Math.round(cat.x)){cat.x=cat.target;cat.str=0;arrive();return}cat.dir=cat.target>cat.x?1:-1;setMode('turnOut',run?120:260)}
+function goTo(tx,then,run=false){cat.bs=0;cat.target=Math.round(clamp(tx,XMIN,XMAX));cat.then=then;cat.run=run;if(cat.target===Math.round(cat.x)){cat.x=cat.target;cat.str=0;arrive();return}cat.dir=cat.target>cat.x?1:-1;setMode('turnOut',run?120:260)}
 // วิ่งดีด: วิ่งไปเกือบสุดอีกฝั่งของห้อง แล้ววิ่งกลับมาครึ่งทาง
 function zoom(){const far=cat.x<(XMIN+XMAX)/2?XMAX-rr(0,8):XMIN+rr(0,8);goTo(far,'zoom2',true)}
 function arrive(){if(cat.then==='zoom2'){cat.then='sit';const tx=(XMIN+XMAX)/2+rr(-20,20);cat.target=Math.round(tx);cat.dir=cat.target>cat.x?1:-1;setMode('skid',220);return}
@@ -1164,10 +1180,12 @@ function arrive(){if(cat.then==='zoom2'){cat.then='sit';const tx=(XMIN+XMAX)/2+r
  if(cat.then==='come'){cat.then='sit';return setMode('sit',rr(5000,9000))} // มานั่งใกล้ๆ แล้วอยู่นานหน่อย
  if(cat.then==='bird'){cat.then='sit';const o=birdAt(env());if(o==null){cat.pose='curious';return setMode('pose',1500)}act('birdwatch',Math.max(1500,BIRD_ON-o-300));if(!talking())say([['カカカッ',1300]]);return} // ใต้หน้าต่างแล้ว: มองนก
  if(cat.then==='bask'){cat.then='sit';setMode('bask',rr(20000,32000));if(!talking()&&Math.random()<.5)say([['ぽかぽか…',1500]]);return} // นอนในแดด
+ if(cat.then==='sniff'){cat.then='sniffed';cat.dir=cat.sd||cat.dir;cat.sniff=1;return setMode('turnOut',260)} // ถึงจุดแล้วตั้งแต่ต้น: หันข้างเข้าหาของแล้วดม
+ if(cat.then==='sniffed'){cat.then='sit';if(Math.random()<.35){cat.pose='curious';return setMode('pose',rr(1200,2200))}return setMode('sit',rr(2500,5000))}
  if(cat.then==='hunted'){cat.then='sit';cat.pose='curious';setMode('pose',1800);cat.gA=Math.random()<.5;return} // ผีเสื้อบินหนี: เงยมองตาม แล้วบางทีเลียขนกลบเกลื่อน
  if(cat.then==='leave'){cat.then='sit';cat.cool=rr(15000,20000)*pk('cool');return groom()} // เดินหนีแล้วเลียขน พักราว 15–20 วิ
  if(cat.then==='groom'){cat.then='sit';return groom()} // ยืดตัวเสร็จแล้วเลียขน
- if(cat.then==='sleep'){if(Math.random()<(KNP[S.stage]||0)*pk('knead')){setMode('knead',rr(2400,3600));if(!talking())say([['ふみふみ…',1400],['ゴロゴロ…',1400]]);return}return setMode('loaf',rr(3000,4500))}
+ if(cat.then==='sleep'){cat.bs=0;if(Math.random()<(KNP[S.stage]||0)*pk('knead')){setMode('knead',rr(2400,3600));if(!talking())say([['ふみふみ…',1400],['ゴロゴロ…',1400]]);return}return setMode('loaf',rr(3000,4500))}
  setMode('sit',rr(3000,7000))}
 // ---------- ตื่นนอน / ก่อนนอน (รายงานพฤติกรรมข้อ 6–7 · v83 · ตาราง "ทางแยกหลังเหตุการณ์") ----------
 // ตื่น: หาว 50% → ยืดตัวโค้งคำนับ 60% → แยกเป็น เลียขน 35% / วิ่งดีด 10% / เดินมาหาผู้ใช้ 15% / นั่งต่อ 40%
@@ -1204,8 +1222,8 @@ function act(k,ms){cat.pose=k;cat.beg=0;setMode('pose',ms)}
 // น้ำหนักการตัดสินใจตามช่วงเวลาจริงของเครื่อง (รายงาน reports/พฤติกรรมแมวบ้าน… 2026-11-19): แมวจริงคึกช่วงเช้า/เย็น ง่วงช่วงเที่ยงและกลางคืน
 // วิ่งดีดเป็นเหตุการณ์นานๆ ครั้ง · งีบอยู่กับที่ (nap = ท่าหมอบ 8–14 วิ) เพิ่มเวลาพักโดยไม่ต้องเดินไปเบาะบ่อย · นั่งมอง (watch = ท่าสงสัย)
 // ทิศทางมีหลักฐานระดับปานกลาง ส่วนตัวเลขเป็นค่าของเกม (บีบเวลา: งีบจริง ~79 นาที → curl 24–36 วิ)
-const DAYW={day:{bed:9,nap:14,zoom:2,groom:14,walk:31,watch:8,come:3,sit:19},tw:{bed:5,nap:9,zoom:6,groom:12,walk:37,watch:9,come:4,sit:18},
- noon:{bed:14,nap:20,zoom:1,groom:14,walk:22,watch:8,come:2,sit:19},night:{bed:25,nap:20,zoom:1,groom:13,walk:16,watch:5,come:1,sit:19}}; // come = เดินมานั่งใกล้ๆ ผู้ใช้เอง
+const DAYW={day:{bed:9,nap:14,zoom:2,groom:14,walk:31,watch:8,come:3,sit:19,sniff:4},tw:{bed:5,nap:9,zoom:6,groom:12,walk:37,watch:9,come:4,sit:18,sniff:5},
+ noon:{bed:14,nap:20,zoom:1,groom:14,walk:22,watch:8,come:2,sit:19,sniff:2},night:{bed:25,nap:20,zoom:1,groom:13,walk:16,watch:5,come:1,sit:19,sniff:2}}; // sniff = เดินไปดมของในฉาก (v117 · ที่ใหม่ดมบ่อยขึ้น) // come = เดินมานั่งใกล้ๆ ผู้ใช้เอง
 // ---------- นิสัย → พฤติกรรม (v63 · รายงาน "บทพูดสัตว์เลี้ยงตามนิสัย 10 แบบ" หัวข้อ Feline Five) ----------
 // บุคลิกแมวจริงมีแกนซ้ำกันข้ามงานวิจัย: กระตือรือร้น ความกลัว ความเป็นมิตรกับคน ความหุนหัน (Litchfield 2017 แมว 2,802 ตัว · Salonen 2019) ความกระตือรือร้นต่างกันมากที่สุด
 // ลำดับตรงกับ TR ใน js/data/pet-lines.js · ตัวคูณทุกตัวเป็นค่าของเกม (แมวกลาง = 1) · ผูกกับมิติจริงได้มั่นใจ: พลังล้น ขี้เซา ขี้สงสัย (สูง) เงียบสงบ ขี้อาย ตัวน้อย (กลาง) ที่เหลือเป็นกรอบทางสังคม
@@ -1213,14 +1231,14 @@ const DAYW={day:{bed:9,nap:14,zoom:2,groom:14,walk:31,watch:8,come:3,sit:19},tw:
 const PERS=[
  {w:{zoom:2,nap:.6,bed:.7,walk:1.2,watch:.6,hunt:1.8,bask:.6},startle:.8,sit:.8,voc:1.2,sb:.8,mw:'ニャッ！'},                         // 0 พลังล้น: E สูง วิ่งพล่าน นั่งไม่ติด
  {w:{zoom:.4,nap:1.5,walk:.8,hunt:.5,bask:1.4},startle:.7,sit:1.3,tol:1.2,shy:.5,sb:1.3,voc:.5,knead:1.3,mw:'…ニャ'},                 // 1 เงียบสงบ: N ต่ำ I ต่ำ หมอบนาน กะพริบตาช้าบ่อย พูดน้อย
- {w:{come:.4,zoom:.6,hunt:.8},startle:1.6,tol:[.6,.8,1],shy:2,sb:.7,cool:1.3,hide:.35,mw:'にゃ…'},                  // 2 ขี้อาย: N สูง แอบหลังของ ทนลูบน้อยแล้วโตตามร่าง เขินบ่อย
+ {w:{come:.4,zoom:.6,hunt:.8,sniff:.7},startle:1.6,tol:[.6,.8,1],shy:2,sb:.7,cool:1.3,hide:.35,mw:'にゃ…'},                  // 2 ขี้อาย: N สูง แอบหลังของ ทนลูบน้อยแล้วโตตามร่าง เขินบ่อย
  {w:{come:2.2},tol:.7,shy:1.5,voc:.7,mw:'ニャ'},                                                // 3 ปากแข็งแต่ใจดี: เดินมานั่งข้างๆ เอง แต่ทนการลูบที่ผู้ใช้เริ่มสั้นกว่า (ให้แมวเลือก Haywood 2021)
  {w:{nap:2,bed:1.6,zoom:.3,walk:.7,hunt:.4,bask:1.8},bird:.6,nap:1.4,sit:1.2,tol:1.4,sb:1.2,voc:.6,knead:1.4,mw:'ふにゃ…'},          // 4 ชิลๆ ขี้เซา: E ต่ำ งีบบ่อยและนาน ทนลูบ
  {w:{zoom:1.6,walk:1.1,nap:.7,hunt:2},bird:1.2,sit:.7,tol:.9,voc:1.1,mw:'ニャ〜'},                                      // 5 ขี้เล่นจอมแซว: E สูง I สูง พุ่งกะทันหัน เปลี่ยนท่าไว
- {w:{watch:2.8,walk:1.3,nap:.8,hunt:1.3},bird:1.2,voc:1,mw:'ンニャ？'},                                             // 6 ขี้สงสัย: E สูง N ต่ำ นั่งจ้องสงสัยบ่อย เดินสำรวจ
+ {w:{watch:2.8,walk:1.3,nap:.8,hunt:1.3,sniff:2.6},bird:1.2,voc:1,mw:'ンニャ？'},                                             // 6 ขี้สงสัย: E สูง N ต่ำ นั่งจ้องสงสัยบ่อย เดินสำรวจ
  {w:{come:1.6,groom:1.3,zoom:.5,hunt:.8},tol:1.1,sb:1.2,voc:.6,mw:'ニャン'},                            // 7 สุภาพเรียบร้อย: A สูง I ต่ำ เดินหางตั้งมาทัก เลียขนเรียบร้อย ไม่เรียกร้อง
  {w:{watch:2,zoom:.5},sit:1.2,voc:.8,mw:'ニャ。'},                                              // 8 นักวิชาการ: นั่งเฝ้ามอง (แมวจริงไม่มีมิติวิชาการ ความมั่นใจต่ำ)
- {w:{walk:1.3,zoom:1.2,hunt:1.4},startle:.6,cool:.6,voc:1.1,mw:'ニャッ'}];                                          // 9 ตัวน้อยขยันสู้: N ต่ำ กล้า เดินสำรวจ ฟื้นไวหลังเดินหนี
+ {w:{walk:1.3,zoom:1.2,hunt:1.4,sniff:1.3},startle:.6,cool:.6,voc:1.1,mw:'ニャッ'}];                                          // 9 ตัวน้อยขยันสู้: N ต่ำ กล้า เดินสำรวจ ฟื้นไวหลังเดินหนี
 let PS={};const pk=(k,d=1)=>PS[k]??d;
 // ---------- น้ำหนักตามสถานที่ (รายงานพฤติกรรมข้อ 10 · v83) ----------
 // สวน: ที่โล่ง เดินสำรวจ วิ่งดีด นั่งมองบ่อยขึ้น · คาเฟ่/สถานี: ที่แคบและคนเยอะ ไม่วิ่งดีด เดินน้อย นั่ง/หมอบ/มานั่งใกล้ผู้ใช้มากขึ้น
@@ -1229,7 +1247,7 @@ const PLW={garden:{walk:1.3,zoom:1.5,watch:1.2},cafe:{zoom:0,walk:.5,sit:1.5,nap
 // ช่วงปรับตัว (คาเฟ่/สถานี): วันแรกที่ไประวังตัวเต็มที่ แล้วลดลงวันละหนึ่งในสาม หายเป็นปกติวันที่ 4 (FAM = จำนวนวันที่เคยอยู่ที่นั้น จาก plVisit() ใน js/place.js)
 // อยู่บนจอที่นั้นนานขึ้นในรอบเดียวกันก็ค่อยๆ ผ่อนคลาย (10 นาทีเหลือ 30%) · ระวังตัว = นั่งมองรอบตัว แอบหลังของ มานั่งใกล้ผู้ใช้ (เจ้าของเป็นที่พึ่ง) งีบ/เลียขน/เดินเล่นน้อยลง ไม่วิ่งดีด กะพริบตาช้าน้อยลง
 // ห้ามทำเป็นความกลัวที่ดูทรมาน (ไม่ขู่ ไม่หูแบนค้าง) เพราะผู้ใช้ไม่ได้ทำอะไรผิด แค่พาไปเที่ยว
-const WARYW={walk:.5,groom:.4,nap:.3,bed:.3,zoom:0,watch:2.2,come:1.6},WARY_AT={cafe:1,station:1};
+const WARYW={walk:.5,groom:.4,nap:.3,bed:.3,zoom:0,watch:2.2,come:1.6,sniff:1.5},WARY_AT={cafe:1,station:1};
 let FAM=99,AT_MS=0;
 const wary=()=>WARY_AT[PLACE]?clamp(1-(FAM-1)/3,0,1)*Math.max(.3,1-AT_MS/6e5*.7):0;
 // อารมณ์รายวัน ±15% ต่อพฤติกรรม (คงที่ทั้งวัน) ให้แต่ละวันไม่เหมือนกันเป๊ะ
@@ -1262,13 +1280,22 @@ function hunt(){const b=bflyAt(env());if(!b||b.x>SW-6){return setMode('sit',rr(2
  let T=clamp(d>0?b.x-62:b.x+14,XMIN,XMAX); // จุดซุ่ม: หัวห่างผีเสื้อราว 18 px (หันขวาหัวอยู่ที่ x+44 หันซ้ายที่ x+4)
  if(Math.abs(T-cat.x)<6){cat.dir=d;cat.hunt=1;cat.run=false;cat.str=0;return setMode('turnOut',220)} // อยู่ที่จุดซุ่มแล้ว: หันข้างแล้วหมอบเลย
  cat.str=0;goTo(T,'stalk')} // ใกล้เกินก็ถอยไปจุดซุ่มก่อน แล้วค่อยหันเข้าหาผีเสื้อตอนหยุด (halt)
+// ---------- ดมของ + ดม/หมุนตัวก่อนนอน (v117 · รายงานข้อ 7 · ท่าใหม่ sniff) ----------
+// เดินไปดมของในฉาก (SCENES[ที่].poi): แมวสำรวจที่ใหม่ด้วยจมูกก่อน ที่ที่เพิ่งมา (FAM 1–3 วัน) ดมบ่อยขึ้นสูงสุด 2.5 เท่า · ขี้สงสัยดมบ่อยสุด · ดมแล้วบางทีนั่งเอียงคอสงสัย
+// ก่อนนอนบนเบาะ: ดมเบาะ แล้วหมุนตัวกลับไปมา 1–2 รอบ (ย่ำที่นอน) ก่อนนวด/หมอบ · รายงานบอกว่ายังไม่มีหลักฐานในแมว (มีในสุนัข) จึงให้เกิดแค่บางครั้ง ค่าทั้งหมดเป็นค่าของเกม
+const novel=()=>PLACE==='room'?0:clamp((4-FAM)/3,0,1),SNP=.4;let SNIFF_LAST=-1;
+function sniffGo(){const P=(SCN().poi||[]).filter(x=>x!==SNIFF_LAST);if(!P.length)return setMode('sit',rr(2500,5000));const px=P[Math.floor(Math.random()*P.length)];SNIFF_LAST=px;
+ const O=[[1,px-46.5],[-1,px-1.5]].filter(([,t])=>t>=XMIN&&t<=XMAX),M=O.filter(([d,t])=>d>0?t>=cat.x-2:t<=cat.x+2),C=(M.length?M:O).sort((a,b)=>Math.abs(a[1]-cat.x)-Math.abs(b[1]-cat.x))[0]; // จมูกหันขวาอยู่ที่ x+46.5 หันซ้ายที่ x+1.5 · เลือกฝั่งที่เดินไปแล้วหันหน้าเข้าหาของพอดี
+ if(!C)return setMode('sit',rr(2500,5000));cat.sd=C[0];cat.str=0;goTo(C[1],'sniff')}
+// หมุนตัวก่อนนอน: ยืน → หันสามส่วนสี่ → หันอีกฝั่ง → ยืนอีกฝั่ง (1 หรือ 2 รอบ) ใช้ท่าที่มีอยู่ ไม่ต้องวาดใหม่
+function circleSteps(d,n){const S=[];for(let i=0;i<n;i++){S.push(['turn',d,200],['turn',-d,200],['stand',-d,320]);d=-d}return S}
 function decide(){const wy=wary(),pw=PLW[PLACE]||{};if(Math.random()<(SBP[S.stage]||0)*pk('sb')*(1-wy*.6))return slowBlink();if(Math.random()<.03*pk('voc'))meow();
- const W=Object.entries({...DAYW[dayPart()],...sceneW()}).map(([k,v])=>[k,v*((PS.w||{})[k]??1)*(pw[k]??1)*(1+((WARYW[k]??1)-1)*wy)*jit(k)]);let r=Math.random()*W.reduce((a,b)=>a+b[1],0); // น้ำหนักตามช่วงเวลา × นิสัย × สถานที่ × ช่วงปรับตัว × อารมณ์รายวัน
+ const W=Object.entries({...DAYW[dayPart()],...sceneW()}).map(([k,v])=>[k,v*((PS.w||{})[k]??1)*(pw[k]??1)*(1+((WARYW[k]??1)-1)*wy)*jit(k)*(k==='sniff'?1+1.5*novel():1)]);let r=Math.random()*W.reduce((a,b)=>a+b[1],0); // น้ำหนักตามช่วงเวลา × นิสัย × สถานที่ × ช่วงปรับตัว × อารมณ์รายวัน
  for(const[k,v]of W){if((r-=v)>=0)continue;
   if(k==='come')return goTo((XMIN+XMAX)/2+rr(-10,10),'come');
   if(k==='bed'&&SCN().bed!=null)return goTo(SCN().bed,'sleep');if(k==='nap'||k==='bed')return setMode('nap',rr(8000,14000));if(k==='zoom')return zoom();if(k==='groom')return groom();
   if(k==='watch'){cat.pose='curious';return setMode('pose',rr(3000,6000))}
-  if(k==='hunt')return hunt();if(k==='bask')return goTo(baskX(),'bask');
+  if(k==='hunt')return hunt();if(k==='bask')return goTo(baskX(),'bask');if(k==='sniff')return sniffGo();
   if(k==='walk'){if(Math.random()<Math.max(pk('hide',0),.35*wy))return goTo(XMAX-rr(0,6),'sit'); // ขี้อาย/ที่ไม่คุ้น: ไปแอบหลังของฉากหน้าฝั่งขวา (กระถาง พุ่มไม้ โต๊ะ เสา) โผล่แค่หัว
    let tx,n=0;do tx=rr(XMIN,XMAX);while(Math.abs(tx-cat.x)<24&&++n<20);return goTo(tx,'sit')}break}
  setMode('sit',rr(2500,5000))}
@@ -1277,18 +1304,24 @@ function step(dt){if(playing)sceneEvents();const m=cat.mode;if(playing)AT_MS+=dt
  if(m==='pounce')cat.x=clamp(cat.x+cat.dir*.04*dt,XMIN,XMAX); // กระโจนไปข้างหน้าราว 17 px
  if(m==='walk'||m==='run'){const d=GAIT[m].v*dt/1000,left=cat.target-cat.x;if(Math.abs(left)<=d){cat.x=cat.target;if(m==='run'&&cat.then==='zoom2')arrive();else setMode('halt',m==='run'?240:300)}else{cat.x+=Math.sign(left)*d;cat.dist+=d}return}
  if(!cat.dur||cat.t<cat.dur)return;
- ({sit:decide,turnOut:()=>{if(cat.hunt===1){cat.hunt=2;return setMode('crouch',rr(1800,3000))}if(cat.str){cat.str=0;return setMode('stretch',GT('stretchR'))}cat.run?setMode('run'):setMode('rise',260)},
+ ({sit:decide,turnOut:()=>{if(cat.hunt===1){cat.hunt=2;return setMode('crouch',rr(1800,3000))}if(cat.sniff){cat.sniff=0;return setMode('sniff',rr(1600,2600))}if(cat.str){cat.str=0;return setMode('stretch',GT('stretchR'))}cat.run?setMode('run'):setMode('rise',260)},
   crouch:()=>{setMode('pounce',GT('pounceR'));if(!talking()&&Math.random()<.4)say([['ニャッ',800]])},pounce:()=>setMode('pin',GT('pinR')*1.4),pin:()=>{cat.hunt=0;cat.then='hunted';setMode('turnIn',260)}, // ซุ่ม → กระโจน → ตะปบ → หันกลับมามอง
   bask:()=>{cat.wk=1;rouse()},
-  stretch:()=>cat.target===Math.round(cat.x)?setMode('turnIn',260):setMode(cat.run?'run':'walk'), // ยืดตัวจบที่ท่ายืน เดินต่อได้เลย
-  yawn:()=>cat.wk?rouse2():setMode('sit',rr(2500,5000)),knead:()=>setMode('loaf',rr(3000,4500)),skid:()=>setMode('run'),rise:()=>setMode('walk'),halt:()=>{if(cat.then==='stalk'){cat.then='sit';cat.hunt=2;const b=bflyAt(env());if(b)cat.dir=b.x>cat.x+24?1:-1;return setMode('crouch',rr(1800,3000))}setMode('turnIn',260)},turnIn:arrive,loaf:()=>setMode('curl',rr(24000,36000)),curl:()=>setMode('wake',1500),nap:()=>{cat.wk=0;Math.random()<.3?yawn():setMode('sit',rr(2500,5000))}, // งีบเสร็จบางทีหาว
+  stretch:()=>Math.random()<.5?setMode('hind',GT('hindR')):cat.target===Math.round(cat.x)?setMode('turnIn',260):setMode(cat.run?'run':'walk'), // ยืดตัวจบที่ท่ายืน เดินต่อได้เลย · ครึ่งหนึ่งยืดขาหลังต่อ (v117)
+  hind:()=>cat.target===Math.round(cat.x)?setMode('turnIn',260):setMode(cat.run?'run':'walk'),
+  sniff:()=>{if(cat.bs===1){cat.bs=2;cat.cs=circleSteps(cat.dir,Math.random()<.5?1:2);return setMode('circle',cat.cs.reduce((a,b)=>a+b[2],0))}setMode('turnIn',260)},
+  circle:()=>{const L=cat.cs[cat.cs.length-1];cat.dir=L[1];cat.cs=null;setMode('turnIn',260)},
+  yawn:()=>cat.wk?rouse2():setMode('sit',rr(2500,5000)),knead:()=>setMode('loaf',rr(3000,4500)),skid:()=>setMode('run'),rise:()=>setMode('walk'),halt:()=>{if(cat.then==='sniff'){cat.then='sniffed';cat.dir=cat.sd||cat.dir;return setMode('sniff',rr(1600,2600))}
+   if(cat.then==='sleep'&&!cat.bs&&Math.random()<SNP){cat.bs=1;return setMode('sniff',rr(1100,1700))} // ก่อนนอน: ดมเบาะ → หมุนตัว
+   if(cat.then==='stalk'){cat.then='sit';cat.hunt=2;const b=bflyAt(env());if(b)cat.dir=b.x>cat.x+24?1:-1;return setMode('crouch',rr(1800,3000))}setMode('turnIn',260)},turnIn:arrive,loaf:()=>setMode('curl',rr(24000,36000)),curl:()=>setMode('wake',1500),nap:()=>{cat.wk=0;Math.random()<.3?yawn():setMode('sit',rr(2500,5000))}, // งีบเสร็จบางทีหาว
   wake:()=>{if(cat.after==='greet'){cat.after=null;cat.str=1;return greetGo()}if(cat.after==='beg'){cat.after=null;return beg(true)}rouse()}, // หายไปนาน: ตื่นแล้วยืดตัวก่อนเดินมาทัก (Eriksson 2017)
   groom:()=>cat.gk==='groom'&&Math.random()<.6?groom('groomLeg'):setMode('sit',rr(2500,5000)),
   pose:()=>{if(cat.beg){cat.beg=0;return setMode('pet',2000)}if(cat.hideA){cat.hideA=0;return goTo(XMAX-rr(0,4),'sit')}if(cat.gA){cat.gA=0;return groom()}cat.pose==='eat'&&Math.random()<.6?groom():setMode('sit',rr(2500,5000))}, // หลังกินมักเลียขน · ขออาหาร: มองเสร็จแล้วถูหัว
   shy:()=>setMode('sit',rr(2000,4000)),pet:()=>setMode('sit',rr(2500,5000)),notice:()=>setMode('sit',rr(2000,4000)),annoy:()=>{cat.lv=0;setMode('sit',rr(2500,4500))},sblink:()=>setMode('sit',rr(2500,5000))})[m]()}
 function catPose(){const m=cat.mode,D=cat.dir>0?'R':'L';if(m==='walk'||m==='run')return[(m==='walk'&&(cat.then==='greet'||cat.then==='come'||cat.then==='beg')?'walkUp':m)+D,Math.floor(cat.dist/GAIT[m].step)%GAIT[m].n];if(m==='skid')return['stand'+(cat.dir>0?'L':'R'),0]; // หยุดกึกยังหันทางเดิมก่อนกลับตัว
  if(m==='crouch'||m==='pounce'||m==='pin'){const k=m+D;return[k,playing?frameAt(DUR[k],cat.t):0]}
- const k=m==='rise'||m==='halt'?'stand'+D:m==='turnOut'||m==='turnIn'?'turn'+D:m==='stretch'?'stretch'+D:(m==='pose'?cat.pose:{sit:'sit',loaf:'doze',nap:'doze',wake:'doze',curl:'curl',shy:'shy',groom:cat.gk||'groom',pet:'pet',notice:'curious',annoy:cat.lv>1?'lash':'annoyed',sblink:'slowBlink',yawn:'yawn',knead:'knead',bask:'bask'}[m]);return[k,playing?frameAt(DUR[k],cat.t):0]}
+ if(m==='circle'&&cat.cs){let t=cat.t,i=0;while(i<cat.cs.length-1&&t>=cat.cs[i][2])t-=cat.cs[i++][2];const[q,d]=cat.cs[i],k=q+(d>0?'R':'L');return[k,playing?frameAt(DUR[k],t):0]} // หมุนตัวก่อนนอน
+ const k=m==='rise'||m==='halt'?'stand'+D:m==='turnOut'||m==='turnIn'?'turn'+D:m==='stretch'||m==='hind'||m==='sniff'?m+D:(m==='pose'?cat.pose:{sit:'sit',loaf:'doze',nap:'doze',wake:'doze',curl:'curl',shy:'shy',groom:cat.gk||'groom',pet:'pet',notice:'curious',annoy:cat.lv>1?'lash':'annoyed',sblink:'slowBlink',yawn:'yawn',knead:'knead',bask:'bask'}[m]);return[k,playing?frameAt(DUR[k],cat.t):0]}
 const sprC={};function sprite(k,f,tm,coat,acc,idle){const key=[k,f,tm,coat,acc,idle].join('|');let v=sprC[key];if(!v){v=document.createElement('canvas');v.width=W;v.height=H;draw(v.getContext('2d'),frame(k,f,tm,coat,acc,idle));sprC[key]=v}return v}
 // ---------- ผูกกับแอป ----------
 // ท่าอารมณ์ตามเหตุการณ์: ถ้าแมวกำลังเดิน/หันตัวอยู่ให้รอจบก่อน (ไม่ให้ท่าสะดุด) แล้วค่อยเล่นตอนนั่งพัก
@@ -1426,7 +1459,7 @@ function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:D
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
 window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,season:()=>season(),coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
- _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},setSeason:v=>{SEAS=v;sLast=''},setSnow:v=>{SNOWF=v;sLast=''},setLat:d=>{LAT=d*Math.PI/180;MOON=moonAt(NOW??Date.now());for(const k in bgC)delete bgC[k];sLast=''},latOf,lat:()=>LAT*180/Math.PI,snowDay,season,fall,moonAt,moonKey,moonIdx,moonBmp,moonGlow,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
+ _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},setSeason:v=>{SEAS=v;sLast=''},sniffGo,novel,circleSteps,decide,catPose,setSnow:v=>{SNOWF=v;sLast=''},setLat:d=>{LAT=d*Math.PI/180;MOON=moonAt(NOW??Date.now());for(const k in bgC)delete bgC[k];sLast=''},latOf,lat:()=>LAT*180/Math.PI,snowDay,season,fall,moonAt,moonKey,moonIdx,moonBmp,moonGlow,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
   // ตัวช่วยวาดสำหรับร่างท่าในหน้าพรีวิว/ไฟล์ร่างใน docs/ (เพิ่มท่าร่างลง POSES แล้วเรียก frame ได้) แอปไม่ได้ใช้
   POSES,lib:{sitCat,sdBox,sdEll,sdCap,smin,ear,earPts,headMat,tail,P,put,bean,eyeClosed,eyeSleepy,eyeHappy,mouth,blush,zz,bowPart,RAMP,EYE,IRIS,NOSE,FX,fr,get ACC(){return ACC},get IDLE(){return IDLE}}}};
 })();
