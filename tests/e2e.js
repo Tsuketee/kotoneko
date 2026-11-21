@@ -1498,7 +1498,7 @@ test('แมวพิกเซล: ท่าที่ใช้ของในฉ
   assert.deepStrictEqual(p.errors, []);
 });
 
-test('ฉากตามฤดู: ซากุระ เมเปิลเขียว เมเปิลแดง กิ่งโล่งหิมะ · ของตกตามฤดู · หน้าต่างคาเฟ่มีเมฆ', async (b, base) => {
+test('ฉากตามฤดู: ซากุระ เมเปิลเขียว เมเปิลแดง กิ่งโล่งหิมะ · ของตกตามฤดู · หิมะตกบางวัน · หน้าต่างคาเฟ่มีเมฆ', async (b, base) => {
   const p = await fresh(b, base);
   await p.waitForTimeout(200);
   const r = await p.evaluate(() => { const T = PixelCat._t, cv = document.createElement('canvas'), at = s => new Date(s).getTime(), out = {};
@@ -1512,8 +1512,17 @@ test('ฉากตามฤดู: ซากุระ เมเปิลเข�
     const A = (se, td = 'day') => ({ ms: { spring: at('2026-04-10T10:00:00'), summer: at('2026-07-10T10:00:00'), autumn: at('2026-10-10T10:00:00'), winter: at('2027-01-10T10:00:00') }[se], P: true, td, sk: td === 'night' ? 'dark' : 'light', t: 0 });
     T.setSeason(null); out.bfly = ['spring', 'summer', 'autumn', 'winter'].map(se => !!T.bflyAt(A(se)));
     // ของตก: นับพิกเซลที่วาด (ใบไม้ผลิ ใบไม้ร่วง หนาว มี · ร้อนไม่มี · ปิดแอนิเมชันไม่มี)
-    const n = (se, P = true) => { const c = document.createElement('canvas'); c.width = 160; c.height = 90; const x = c.getContext('2d'); T.fall(x, { ...A(se), P }, se, [0, 0, 160, 90], 20); const d = x.getImageData(0, 0, 160, 90).data; let k = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) k++; return k };
-    out.fall = ['spring', 'summer', 'autumn', 'winter'].map(se => n(se)); out.fallOff = n('winter', false);
+    const n = (se, P = true, ms) => { const c = document.createElement('canvas'); c.width = 160; c.height = 90; const x = c.getContext('2d'); T.fall(x, { ...A(se), P, ...(ms ? { ms } : {}) }, se, [0, 0, 160, 90], 20); const d = x.getImageData(0, 0, 160, 90).data; let k = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) k++; return k };
+    T.setSnow(true); out.fall = ['spring', 'summer', 'autumn', 'winter'].map(se => n(se)); out.fallOff = n('winter', false); T.setSnow(null);
+    // v114 หิมะตกเฉพาะบางวัน: นับวันที่ตกตลอดหน้าหนาว · วันไม่ตกไม่มีหิมะตก (แต่ใบไม้ผลิ/ใบไม้ร่วงยังตกทุกวัน) · วันเดียวกันได้ผลเดิมทุกเวลา
+    const days = []; for (let d = at('2026-12-01T12:00:00'); d < at('2027-03-01T00:00:00'); d += 864e5) days.push(d);
+    const sd = days.filter(d => T.snowDay(d)); out.snowN = [sd.length, days.length];
+    out.noSnow = days.filter(d => !T.snowDay(d)).slice(0, 3).map(d => n('winter', true, d)); out.yesSnow = sd.slice(0, 3).map(d => n('winter', true, d));
+    out.sameDay = days.every(d => T.snowDay(d) === T.snowDay(d - 5 * 36e5) && T.snowDay(d) === T.snowDay(d + 11 * 36e5));
+    out.notWinter = [at('2026-07-10T10:00:00'), at('2026-10-10T10:00:00')].map(d => T.snowDay(d));
+    // ห้องในวันไม่ตก: ฉากไม่ต้องวาดใหม่ทุก 120 ms
+    T.setSeason('winter'); M.place = { at: 'room', got: [] }; PixelCat.mount(cv, { place: 'room', coat: 'cream' }); const tk = d => T.scenes.room.tick({ ms: d, d: new Date(d), P: true, t: 0, td: 'day', sk: 'light' });
+    const nd = days.find(d => !T.snowDay(d)), yd = sd[0]; out.tickStill = tk(nd) === tk(nd + 240); out.tickMove = tk(yd) !== tk(yd + 240); T.setSeason(null);
     // หน้าต่างคาเฟ่กลางวันมีเมฆ (v109 แก้บั๊ก v104: คอมเมนต์ทับ else ทำให้เมฆหาย)
     T.setSeason('autumn'); PixelCat.mount(cv, { place: 'cafe', coat: 'cream' }); const k = T.palOf('cafe', 'light'), d = T.sceneBg('light').getContext('2d').getImageData(5, 8, 36, 18).data, h = parseInt(k.cloud.slice(1), 16);
     out.cloud = 0; for (let i = 0; i < d.length; i += 4) if (((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]) === h) out.cloud++;
@@ -1525,6 +1534,10 @@ test('ฉากตามฤดู: ซากุระ เมเปิลเข�
   assert.deepStrictEqual(r.bfly, [true, true, true, false], 'ผีเสื้อ ' + r.bfly);
   assert(r.fall[0] > 0 && r.fall[1] === 0 && r.fall[2] > 0 && r.fall[3] > 0 && r.fallOff === 0, 'ของตก ' + JSON.stringify([r.fall, r.fallOff]));
   assert(r.cloud > 10, 'หน้าต่างคาเฟ่มีเมฆ ' + r.cloud);
+  assert(r.snowN[0] > r.snowN[1] * .25 && r.snowN[0] < r.snowN[1] * .65, 'หิมะตกบางวัน ' + r.snowN);
+  assert(r.noSnow.length === 3 && r.noSnow.every(x => x === 0) && r.yesSnow.every(x => x > 0), 'วันไม่ตกไม่มีหิมะ ' + JSON.stringify([r.noSnow, r.yesSnow]));
+  assert(r.sameDay, 'ทั้งวันตกหรือไม่ตกเหมือนกัน'); assert.deepStrictEqual(r.notWinter, [false, false], 'นอกหน้าหนาวไม่มีวันหิมะ');
+  assert(r.tickStill && r.tickMove, 'วันไม่ตกไม่วาดใหม่ทุก 120 ms ' + [r.tickStill, r.tickMove]);
   assert.deepStrictEqual(p.errors, []);
 });
 

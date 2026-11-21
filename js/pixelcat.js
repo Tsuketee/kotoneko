@@ -630,10 +630,16 @@ const dot=(c,x,y,col)=>{c.fillStyle=col;c.fillRect(Math.floor(x),Math.floor(y),1
 // ใบไม้ผลิ มี.ค.–พ.ค. (เมเปิลในสวนเป็นซากุระ กลีบปลิว) · ร้อน มิ.ย.–ส.ค. (เมเปิลเขียว หิ่งห้อย) · ใบไม้ร่วง ก.ย.–พ.ย. (เมเปิลแดง ใบร่วง) · หนาว ธ.ค.–ก.พ. (กิ่งโล่ง หิมะ)
 // คิดจากเดือนของนาฬิกาฉาก (NOW หรือเวลาเครื่อง) · ชุดสีของฉากรวมสีตามฤดูจาก SCENES[ที่].sea · ภาพแคชแยกตามฤดู · _t.setSeason() ตรึงฤดูไว้ทดสอบ/พรีวิว
 let SEAS=null;const SEASONS=['spring','summer','autumn','winter'],season=(ms=NOW??Date.now())=>SEAS||SEASONS[((new Date(ms).getMonth()+10)%12)/3|0];
+// หิมะตกเฉพาะบางวัน (v114 · เดิมตกทุกวันของหน้าหนาว): สุ่มกำหนดตามวันที่ของเครื่อง ทั้งวันจึงตกหรือไม่ตกเหมือนกันทุกครั้งที่เปิด
+// โอกาส ธ.ค. 35% · ม.ค. 50% · ก.พ. 45% (ค่าของเกม · ต้นหนาวยังตกน้อย) · หิมะบนพื้นและหลังคายังอยู่ทั้งหน้าหนาว · _t.setSnow(true/false) ตรึงไว้ทดสอบ/พรีวิว
+let SNOWF=null;const SNOWP={11:.35,0:.5,1:.45},
+ snowDay=(ms=NOW??Date.now())=>{if(SNOWF!=null)return SNOWF;const d=new Date(ms),pr=SNOWP[d.getMonth()];if(!pr)return false;
+  let h=(d.getFullYear()*372+d.getMonth()*31+d.getDate())*2654435761>>>0;h^=h>>>15;h=Math.imul(h,2246822519)>>>0;h^=h>>>13;return(h>>>0)/4294967296<pr},
+ falling=(se,ms)=>se==='spring'||se==='autumn'||(se==='winter'&&snowDay(ms)); // วันนี้มีของตกไหม (กลีบ/ใบตกทุกวันของฤดู)
 // ของที่ตกลงมาตามฤดู: กลีบซากุระ ใบเมเปิล หิมะ · เส้นทางคิดจากนาฬิกาฉากล้วน (ไม่เก็บสถานะ เปิดกี่ครั้งก็ตรงกัน) · ปิดแอนิเมชัน = ไม่มี
 // R = [x, y, กว้าง, สูง] ช่วงที่ตก · ok(x,y) = วาดเฉพาะจุดที่ผ่าน (หน้าต่าง: เฉพาะพิกเซลที่เป็นฟ้า ไม่ทับกรอบ ม่าน เมฆ)
 const FALLC={spring:[['#f7c4d2','#ec9fb5'],['#b98399','#9c6a80']],autumn:[['#e8735a','#c9533f','#f0a05a'],['#93473a','#76382e','#a0663e']],winter:[['#ffffff','#eef3f8'],['#dde5f0','#b8c4d6']]};
-function fall(c,A,se,[x0,y0,w,h],n,ok){if(!A.P||!FALLC[se])return;const C=FALLC[se][A.sk==='dark'?1:0],wi=se==='winter';
+function fall(c,A,se,[x0,y0,w,h],n,ok){if(!A.P||!FALLC[se]||!falling(se,A.ms))return;const C=FALLC[se][A.sk==='dark'?1:0],wi=se==='winter';
  for(let i=0;i<n;i++){const T=(wi?11000:se==='spring'?13000:9000)+(i*7919)%6000,p=(A.ms/T+i*.618)%1,
   rx=(((i*37.7)%w+p*w*(wi?.1:.35)+Math.sin(A.ms/(650+i*53)+i)*(wi?1.3:2.6))%w+w)%w,x=Math.floor(x0+rx),y=Math.floor(y0+p*h),f=((A.ms/(wi?400:260))+i)|0;
   const P=wi?(i%5?[[0,0]]:[[0,0],[1,0],[0,1],[1,1]]):se==='spring'?(f%2?[[0,0],[1,0]]:[[0,0],[0,1]]):(f%2?[[0,0],[1,0],[0,1]]:[[1,0],[0,1],[1,1]]);
@@ -641,7 +647,7 @@ function fall(c,A,se,[x0,y0,w,h],n,ok){if(!A.P||!FALLC[se])return;const C=FALLC[
 // หน้ากากช่องฟ้าของภาพแคช: พิกเซลที่เป็นสี sky/sky2 พอดี (แคชต่อผืนผ้าใบ)
 const MASKS=new WeakMap();function skyMask(v,k){let m=MASKS.get(v);if(m)return m;const d=v.getContext('2d').getImageData(0,0,SW,SH).data,S=[k.sky,k.sky2].filter(x=>x&&x[0]==='#').map(x=>parseInt(x.slice(1,7),16));
  m=new Uint8Array(SW*SH);for(let i=0;i<SW*SH;i++)if(d[i*4+3]===255&&S.includes((d[i*4]<<16)|(d[i*4+1]<<8)|d[i*4+2]))m[i]=1;MASKS.set(v,m);return m}
-const fallIn=(c,k,A,se,R,n)=>{if(!A.P||!FALLC[se])return;const M=skyMask(layer('bg',A.sk),k);fall(c,A,se,R,n,(x,y)=>x>=0&&y>=0&&x<SW&&y<SH&&M[y*SW+x])};
+const fallIn=(c,k,A,se,R,n)=>{if(!A.P||!FALLC[se]||!falling(se,A.ms))return;const M=skyMask(layer('bg',A.sk),k);fall(c,A,se,R,n,(x,y)=>x>=0&&y>=0&&x<SW&&y<SH&&M[y*SW+x])};
 // ---------- พระจันทร์ตามโลกจริง (v104 เจ้าของขอ) ----------
 // เฟสคิดจากเดือนจันทรคติเฉลี่ย 29.53 วัน นับจากจันทร์ดับ 6 ม.ค. 2000 18:14 UTC (คลาดจากจริงไม่เกินราวครึ่งวัน)
 // p: 0 = ดับ · .25 = ข้างขึ้นครึ่งดวง · .5 = เต็มดวง · .75 = ข้างแรมครึ่งดวง · ซีกโลกเหนือ: ข้างขึ้นสว่างฝั่งขวา ข้างแรมสว่างฝั่งซ้าย
@@ -832,7 +838,7 @@ function roomBird(c,k,A){const o=birdAt(A);if(o==null)return;const B=birdPose(o)
  else{const sd=td>0?1:-1;rect(c,cx+sd*4,cy+1,1,2,k.bird4);dot(c,cx+sd*3,cy+2,k.bird6);dot(c,cx+sd*3,cy+3,k.bird6);dot(c,cx-1,cy+Math.ceil(ry)+.3,k.bird4);dot(c,cx+1,cy+Math.ceil(ry)+.3,k.bird4)} // ปีกดำกับขนชมพูด้านหลัง ขาเกาะ
  const fx=cx+(B.tilt||0);dot(c,fx-2,cy-1,k.eye);dot(c,fx+2,cy-1,k.eye);dot(c,fx,cy,k.eye);c.restore()}                                            // ตาเม็ดเล็กห่างกัน ปากจิ๋วตรงกลาง
 const roomLive=(c,k,A)=>{const se=season(A.ms);if(se==='winter'||se==='spring')fallIn(c,k,A,se,[95,8,34,30],se==='winter'?13:4);roomSun(c,k,A);roomBird(c,k,A);roomClock(c,k,A.d,A.P?Math.round(Math.sin(A.t/1000*Math.PI)*3)/3:0)};
-const roomTick=A=>{const o=birdAt(A),se=season(A.ms);return(A.P&&(se==='winter'||se==='spring')?(A.ms/120|0)+'|':'')+A.d.getHours()*60+A.d.getMinutes()+'|'+(A.P?Math.round(Math.sin(A.t/1000*Math.PI)*3)/3:0)+'|'+(o==null?'':(B=>B.fly?'f'+(o/35|0):B.x+'|'+B.tilt+'|'+B.puff)(birdPose(o)))};
+const roomTick=A=>{const o=birdAt(A),se=season(A.ms);return(A.P&&(se==='winter'||se==='spring')&&falling(se,A.ms)?(A.ms/120|0)+'|':'')+A.d.getHours()*60+A.d.getMinutes()+'|'+(A.P?Math.round(Math.sin(A.t/1000*Math.PI)*3)/3:0)+'|'+(o==null?'':(B=>B.fly?'f'+(o/35|0):B.x+'|'+B.tilt+'|'+B.puff)(birdPose(o)))};
 
 // ===== สวนญี่ปุ่น (庭): ภูเขาไกลยอดหิมะ แนวไม้หลังรั้ว เมเปิลแดง รั้วไม้ไผ่ผูกเชือก สนาม ทางกรวดคราด หินกลางวงคราด โคมหิน ต้นสน กระบอกไม้ไผ่ตอกหิน (ชิชิโอโดชิ) · ฉากหน้า: พุ่มอาซาเลีย
 // ขยับ: เมฆลอย กระบอกไม้ไผ่รับน้ำแล้วกระดกเทน้ำ ตีหินดังป๊อก ทุก 7 วินาที ผีเสื้อบินตอนกลางวัน หิ่งห้อยกะพริบตอนกลางคืน
@@ -1101,7 +1107,7 @@ function stationFg(c,k){rect(c,146,9,8,81,k.pil);rect(c,146,9,2,81,k.pil3);rect(
  rect(c,146,38,8,8,k.ink);rect(c,147,39,6,6,k.sign);rect(c,150,40,1,4,k.ink);dot(c,149,41,k.ink);rect(c,149,44,3,1,k.ink);                                 // ป้ายชานชาลาเลข 1
  rect(c,145,49,10,6,k.ink);rect(c,146,50,8,4,k.edge);rect(c,147,52,5,1,k.ink);dot(c,151,51,k.ink);dot(c,151,53,k.ink);dot(c,152,52,k.ink)}                   // ป้ายทางออกสีเหลืองลูกศรขวา
 function stationFront(c,k,A){const d=A.d,m=d.getMinutes(),h=d.getHours()%12+m/60;handAt(c,150,30,h/12*2*Math.PI,2,k.ink);handAt(c,150,30,m/60*2*Math.PI,3.2,k.ink);dot(c,150,30,k.ink)}
-const stationTick=A=>{const x=trainX(A);return(A.P&&season(A.ms)==='winter'?(A.ms/120|0)+'|':'')+A.d.getHours()*60+A.d.getMinutes()+'|'+cloudKey(A)+'|'+(x==null?'':x)};
+const stationTick=A=>{const x=trainX(A);return(A.P&&season(A.ms)==='winter'&&snowDay(A.ms)?(A.ms/120|0)+'|':'')+A.d.getHours()*60+A.d.getMinutes()+'|'+cloudKey(A)+'|'+(x==null?'':x)};
 
 // สีตามฤดูของแต่ละฉาก (ทับชุดสีหลัก · รุ่งเช้า/พลบค่ำใช้ชุดสว่างของฤดูแล้วทับด้วย TWI) · sn/sn2 = หิมะ/เงาหิมะ (มีเฉพาะหน้าหนาว)
 const SNOW={light:{sn:'#fbfcfe',sn2:'#dbe4ee'},dark:{sn:'#c3cddc',sn2:'#8f9db2'}},
@@ -1411,7 +1417,7 @@ function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:D
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
 window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
- _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},setSeason:v=>{SEAS=v;sLast=''},season,fall,moonAt,moonKey,moonIdx,moonBmp,moonGlow,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
+ _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},setSeason:v=>{SEAS=v;sLast=''},setSnow:v=>{SNOWF=v;sLast=''},snowDay,season,fall,moonAt,moonKey,moonIdx,moonBmp,moonGlow,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
   // ตัวช่วยวาดสำหรับร่างท่าในหน้าพรีวิว/ไฟล์ร่างใน docs/ (เพิ่มท่าร่างลง POSES แล้วเรียก frame ได้) แอปไม่ได้ใช้
   POSES,lib:{sitCat,sdBox,sdEll,sdCap,smin,ear,earPts,headMat,tail,P,put,bean,eyeClosed,eyeSleepy,eyeHappy,mouth,blush,zz,bowPart,RAMP,EYE,IRIS,NOSE,FX,fr,get ACC(){return ACC},get IDLE(){return IDLE}}}};
 })();
