@@ -60,6 +60,10 @@ function psay(p,dn){const k=dstr(new Date()),hr=new Date().getHours();ptr(p);psa
  p.lastTs=Date.now();saveM();
  if(dn>=3)return pline(p,'done');if(dn===0){if(p.rv===k)return pline(p,'first');if(p.back===k)return pline(p,'back')}
  if(dn>0)return pline(p,'partial');
+ return pgen(p,hr)}
+// ประโยคทั่วไป (ไม่มีเหตุการณ์): ตามช่วงเวลา · ชั่วโมง 05 09 13 17 21 ใช้ประโยคตามฤดูแบบญี่ปุ่นแทน (v116 · ROADMAP เฟส 3) ไม่ชนกับประโยคประจำสถานที่ที่ใช้ชั่วโมงคู่ (plSay)
+const pseason=()=>window.PixelCat&&PixelCat.season?PixelCat.season():['spring','summer','autumn','winter'][((new Date().getMonth()+10)%12)/3|0];
+function pgen(p,hr){if(hr>=5&&hr%4===1){const l=pline(p,pseason());if(l){psayG=false;return l}}
  psayG=true;return pline(p,hr<5?'late':hr<11?'morning':hr<15?'noon':hr<21?'evening':'night')}
 function petHtml(cta=''){pens();if(pAway==null)pAway=M.pet.lastTs?Date.now()-M.pet.lastTs:0;const p=M.pet,st=pstage(p.bond),dn=Object.keys(p.d.done).length,sp=SPC[p.sp||0],md=dn>=3?'ดีใจมาก':dn?'อารมณ์ดี':'ง่วงๆ รอเรียนด้วยกันอยู่นะ',say=psay(p,dn),g=M.goal,tot=pmast(),bd=tot>=250?icx('medal',18,'m3'):tot>=100?icx('medal',18,'m2'):tot>=25?icx('medal',18,'m1'):'';
  const wk=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return `<div class="${i==6?'on':''}">${['อา','จ','อ','พ','พฤ','ศ','ส'][d.getDay()]}<br><b>${d.getDate()}</b><br>${(M.days[dstr(d)]||0)>=g?icx('flame',14,'hl-i'):'·'}</div>`}).join('');

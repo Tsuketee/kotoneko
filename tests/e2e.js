@@ -37,7 +37,7 @@ test('ข้อมูล: คำคันจิใช้เฉพาะคัน
     const bad = [];
     W.forEach(x => kj(x.k).forEach(c => ok.has(c) || bad.push(x.k + ':' + c)));
     D.forEach(d => d.turns.forEach(t => kj(t[1]).forEach(c => ok.has(c) || bad.push(t[1] + ':' + c))));
-    const EXP = { first: 1, morning: 2, noon: 2, evening: 2, night: 2, late: 1, partial: 3, done: 3, back: 2, feed: 6, hungry: 3, lv2: 1, lv3: 1, s3: 1, s7: 1, s30: 1, b25: 1, b100: 1, b250: 1, goal: 1, wrong: 8, pat: 12 };
+    const EXP = { first: 1, morning: 2, noon: 2, evening: 2, night: 2, late: 1, partial: 3, done: 3, back: 2, feed: 6, hungry: 3, lv2: 1, lv3: 1, s3: 1, s7: 1, s30: 1, b25: 1, b100: 1, b250: 1, goal: 1, wrong: 8, pat: 12, spring: 2, summer: 2, autumn: 2, winter: 2 };
     const FORBID = ['อิตาโดริ', 'ลูฟี่', 'โจรสลัด', 'วันพีซ', 'วันพืช', 'Luffy', 'One Piece', 'Itadori'];
     const tbad = [];
     if (TR.length !== 10) tbad.push('จำนวนนิสัย ' + TR.length);
@@ -47,7 +47,7 @@ test('ข้อมูล: คำคันจิใช้เฉพาะคัน
       if (JSON.stringify(got) !== JSON.stringify(EXP)) tbad.push('ช่อง/จำนวนประโยคนิสัย ' + i + ' ' + JSON.stringify(got));
       const all = [t.n, ...Object.values(t.s).flat()];
       all.forEach(l => { if (!l || !l.trim()) tbad.push('ประโยคว่าง ' + i); FORBID.forEach(w => { if (l.includes(w)) tbad.push('ห้ามใช้ชื่อเฉพาะ "' + w + '" ในนิสัย ' + i); }); });
-      if (new Set(Object.values(t.s).flat()).size !== 56) tbad.push('ประโยคซ้ำในนิสัย ' + i);
+      if (new Set(Object.values(t.s).flat()).size !== 64) tbad.push('ประโยคซ้ำในนิสัย ' + i);
       // ช่องตัวแปรมีแค่ {n} {kanji} และทุกช่องต้องมีประโยคที่ไม่มีช่องตัวแปร (ไม่งั้นตอนยังไม่มีค่าจะไม่มีประโยคให้เลือก)
       Object.entries(t.s).forEach(([k, v]) => { if (!v.some(l => !/\{/.test(l))) tbad.push('ทุกประโยคในช่อง ' + k + ' มีช่องตัวแปร นิสัย ' + i); v.forEach(l => { if (/\{(?!n\}|kanji\})|(?<!\{n|\{kanji)\}/.test(l)) tbad.push('ช่องตัวแปรผิด นิสัย ' + i + ': ' + l) }) });
       // กฎภาษา (รายงานบทพูดตามนิสัย v62): ไม่มี !! วงเล็บท่าทาง คำทักแปลตรง · "…" ไม่เกิน 1 (ยกเว้นขี้เซา) · ไม่เกิน 60 ตัว · นิสัยเงียบ/ขี้เซา/สุภาพ/นักวิชาการไม่มี ! · คันจิในประโยคต้องเป็น N5
@@ -323,24 +323,29 @@ test('ไวยากรณ์: เปิดรายการ อ่านบ�
   assert.deepStrictEqual(p.errors, []);
 });
 
-test('สัตว์เลี้ยง: บทพูดตามช่วงเวลาคงที่ในชั่วโมงเดียว, เหตุการณ์ต่างๆ, ข้อความเด้งต่อคิว', async (b, base) => {
+test('สัตว์เลี้ยง: บทพูดตามช่วงเวลาและฤดูคงที่ในชั่วโมงเดียว, เหตุการณ์ต่างๆ, ข้อความเด้งต่อคิว', async (b, base) => {
   const p = await fresh(b, base);
   const at = async (iso) => { await p.clock.setFixedTime(new Date(iso)); };
   const lines = await p.evaluate(() => TR[0].s);
   const say = (dn = 0) => p.evaluate(dn => { const q = M.pet; return psay(q, dn); }, dn);
   // นิสัย 0 เจอกันวันนี้: dn=0 และ rv=วันนี้ => first ; ปิดโดยตั้ง rv เป็นวันเก่า
   await p.evaluate(() => { M.pet.trait = 0; M.pet.rv = '2000-01-01'; M.pet.back = null; });
-  const slots = [['2026-11-11T09:10:00', 'morning'], ['2026-11-11T13:00:00', 'noon'], ['2026-11-11T17:30:00', 'evening'], ['2026-11-11T22:00:00', 'night'], ['2026-11-11T02:00:00', 'late']];
+  const slots = [['2026-11-11T10:10:00', 'morning'], ['2026-11-11T14:00:00', 'noon'], ['2026-11-11T18:30:00', 'evening'], ['2026-11-11T22:00:00', 'night'], ['2026-11-11T02:00:00', 'late'],
+    // v116 ตามฤดูแบบญี่ปุ่น: ชั่วโมง 05 09 13 17 21 · เดือนเดียวกับฉาก (พ.ย. = ใบไม้ร่วง)
+    ['2026-11-11T09:10:00', 'autumn'], ['2027-01-11T13:00:00', 'winter'], ['2026-04-11T17:30:00', 'spring'], ['2026-07-11T21:05:00', 'summer'], ['2026-07-11T05:20:00', 'summer']];
   for (const [iso, key] of slots) {
-    await at(iso);
+    await at(iso); await p.evaluate(() => { M.pet.lastTs = Date.now(); M.pet.back = null; }); // ข้ามเดือนแล้วไม่นับเป็นกลับมาหลังหาย
     const a = await say(), b2 = await say(), c = await say();
     assert(lines[key].includes(a), key + ' ต้องอยู่ในรายการ: ' + a);
     assert(a === b2 && b2 === c, key + ' ต้องคงที่ภายในชั่วโมงเดียว');
   }
   // ต่างชั่วโมง/ต่างวัน อย่างน้อยหนึ่งช่วงที่มีสองประโยคต้องเลือกได้ครบทั้งสองประโยคในหลายวัน
   const seen = new Set();
-  for (let d = 1; d <= 20; d++) { await at(`2026-11-${String(d).padStart(2, '0')}T09:10:00`); seen.add(await say()); }
+  for (let d = 1; d <= 20; d++) { await at(`2026-11-${String(d).padStart(2, '0')}T10:10:00`); if (d === 1) await p.evaluate(() => { M.pet.lastTs = Date.now(); M.pet.back = null; }); seen.add(await say()); }
   assert.strictEqual(seen.size, 2, 'ควรเห็นทั้งสองประโยคเช้าในหลายวัน');
+  // ประโยคตามฤดูไม่ถูกประโยคประจำสถานที่ทับ (psayG = false) · ประโยคตามช่วงเวลายังให้สถานที่ทับได้
+  await at('2026-11-11T09:10:00'); assert.strictEqual(await p.evaluate(() => (psay(M.pet, 0), psayG)), false, 'ฤดู: ไม่ใช่ประโยคทั่วไป');
+  await at('2026-11-11T10:10:00'); assert.strictEqual(await p.evaluate(() => (psay(M.pet, 0), psayG)), true, 'ช่วงเวลา: ประโยคทั่วไป');
   // ภารกิจ: บางส่วน / ครบ
   await at('2026-11-11T09:10:00');
   await p.evaluate(() => { pens(); M.pet.d.done = { rev: 1 }; });
