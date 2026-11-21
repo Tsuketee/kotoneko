@@ -1597,6 +1597,26 @@ test('แมวพิกเซล: กล่องกระดาษในห้
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('แมวพิกเซล: นาฬิกาชีวิตประจำตัว ตื่นเช้า/ปกติ/นอนดึก เลื่อนช่วงคึกและง่วง (v119)', async (b, base) => {
+  const p = await fresh(b, base);
+  await p.waitForTimeout(200);
+  const r = await p.evaluate(() => { const T = PixelCat._t, out = {};
+    // คงที่ต่อสัตว์เลี้ยง (วันเกิด + นิสัย) · นิสัยเอนเอียง: พลังล้นตื่นเช้าบ่อย ขี้เซานอนดึกบ่อย · ทุกนิสัยมีครบสามแบบได้
+    const dist = tr => { const c = { '-1': 0, 0: 0, 1: 0 }; for (let i = 0; i < 600; i++) { const d = new Date(2025, 0, 1 + i); c[pchrono({ trait: tr, rv: dstr(d) })]++ } return c };
+    out.e = dist(0); out.s = dist(4); out.n = dist(6); out.same = pchrono({ trait: 3, rv: '2026-05-05' }) === pchrono({ trait: 3, rv: '2026-05-05' });
+    // ช่วงของวันเลื่อน 2 ชม.: ตื่นเช้าง่วงตั้งแต่ 1 ทุ่ม คึกตอนตี 3 · นอนดึกยังคึกตอน 4 ทุ่ม ง่วงถึง 7 โมง
+    const dp = (c, h) => { T.setChrono(c); return T.dayPart(h) };
+    out.dp = [dp(0, 19), dp(-1, 19), dp(0, 3), dp(-1, 3), dp(0, 22), dp(1, 22), dp(0, 6), dp(1, 6), dp(1, 12), dp(-1, 10)]; T.setChrono(0);
+    return out });
+  assert(r.e['-1'] > r.e['1'] * 1.8 && r.s['1'] > r.s['-1'] * 2.5, 'นิสัยเอนเอียง ' + JSON.stringify([r.e, r.s]));
+  assert([r.e, r.s, r.n].every(c => c['-1'] > 0 && c['0'] > 0 && c['1'] > 0) && r.n['0'] > 200, 'ครบสามแบบ ' + JSON.stringify(r.n)); assert(r.same);
+  assert.deepStrictEqual(r.dp, ['tw', 'night', 'night', 'tw', 'night', 'tw', 'tw', 'night', 'day', 'noon'], 'ช่วงของวัน ' + r.dp);
+  // บัตรโปรไฟล์แสดงนาฬิกาชีวิต
+  await p.evaluate(() => goProf()); await p.waitForTimeout(150);
+  const t = await p.locator('.idr', { hasText: 'นาฬิกาชีวิต' }).innerText(); assert(/ตื่นเช้า|ตามเวลาปกติ|นอนดึก/.test(t), 'แถวนาฬิกาชีวิต ' + t);
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('ฉากตามฤดู: ซากุระ เมเปิลเขียว เมเปิลแดง กิ่งโล่งหิมะ · ของตกตามฤดู · หิมะตกบางวัน · หน้าต่างคาเฟ่มีเมฆ', async (b, base) => {
   const p = await fresh(b, base);
   await p.waitForTimeout(200);
