@@ -1420,12 +1420,12 @@ test('แมวพิกเซล: ตื่นแล้วหาว/ยืด�
   // น้ำหนักตามสถานที่ (จำลองกลางวัน/เช้าเย็นที่ละ 1 ชม.): คาเฟ่/สถานีไม่วิ่งดีด สวนเดินไกลกว่าห้อง · ช่วงปรับตัวในคาเฟ่ แอบหลังของมากขึ้น เลียขนน้อยลง
   // ใช้ตัวสุ่มแบบกำหนด seed (mulberry32) ในช่วงจำลองนี้ ผลจึงเหมือนเดิมทุกรอบ ไม่สุ่มตก (จำลอง 1 ชม. แบบสุ่มจริง สวน/ห้องแกว่ง 0.9–1.4 เท่า) · seed 1–20: ครั้งที่ออกเดิน สวน/ห้อง 1.09–1.6 สถานี/ห้อง 0.57–0.9 เกณฑ์จึงตั้งที่ 1.05 และ 0.95 (ทุก seed ผ่าน)
   // นาฬิกาของฉากตรึงไว้ (setNow/setTod) ไม่ให้นก รถไฟ ผีเสื้อ แดด ตามเวลาจริงของเครื่องมาทำให้ผลจำลองเปลี่ยนไปตามเวลาที่รันชุดทดสอบ
-  const pw = await p.evaluate(seed => { const { step, cat, setPart, setFam, setTrait, XMAX, setNow, setTod } = PixelCat._t, out = {}, R0 = Math.random; let a = seed >>> 0; setNow(0); setTod('dawn');
+  const pw = await p.evaluate(seed => { const { step, cat, setPart, setFam, setTrait, XMAX, setNow, setTod, setSeason } = PixelCat._t, out = {}, R0 = Math.random; let a = seed >>> 0; setNow(0); setTod('dawn'); setSeason('summer'); // ปี 1970 = มกราคม (หน้าหนาว) ตรึงฤดูให้ผลเหมือนก่อนมีฤดู
     Math.random = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296 }; setTrait(-1); setPart('tw');
     for (const [id, fam] of [['room', 99], ['garden', 99], ['cafe', 99], ['station', 99], ['cafe', 1]]) { M.place = { at: id, got: PLACES.map(q => q.id), fam: {} }; render(); const o = out[id + fam] = { zoom: 0, walk: 0, hide: 0, groom: 0 }; let last = '';
       Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52, then: null, tol: 0, cool: 0, pend: null, str: 0 });
       for (let k = 0; k < 72000; k++) { setFam(fam, 0); step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') o.zoom++; if (cat.mode === 'groom') o.groom++; if (cat.mode === 'turnOut' && cat.then === 'sit' && cat.target !== Math.round(cat.x)) o.walk++; last = cat.mode } if (cat.mode === 'sit' && cat.x >= XMAX - 6) o.hide += 50 } }
-    Math.random = R0; setPart(null); setNow(null); setTod(null); setTrait(M.pet.trait); M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return out }, +(process.env.KN_SEED || 7));
+    Math.random = R0; setPart(null); setNow(null); setTod(null); setSeason(null); setTrait(M.pet.trait); M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return out }, +(process.env.KN_SEED || 7));
   const PW = JSON.stringify(pw);
   assert.strictEqual(pw.cafe99.zoom + pw.station99.zoom + pw.cafe1.zoom, 0, 'คาเฟ่/สถานีต้องไม่วิ่งดีด ' + PW); assert(pw.room99.zoom > 0, PW);
   assert(pw.garden99.walk > pw.room99.walk * 1.05, 'สวนต้องออกเดินบ่อยกว่าห้อง ' + PW); assert(pw.station99.walk < pw.room99.walk * .95, 'สถานีต้องออกเดินน้อยกว่าห้อง ' + PW);
@@ -1450,6 +1450,8 @@ test('แมวพิกเซล: ท่าที่ใช้ของในฉ
     return out });
   assert.deepStrictEqual(bad, []);
   // ตัวช่วย: ตรึงนาฬิกาของฉาก ตั้งสถานที่ แมวนั่งว่างที่ x แล้วเดินเวลาทีละ 50 ms เก็บลำดับโหมด · Math.random คงที่ให้ผลแน่นอน
+  // v109: นาฬิกาฉากในข้อนี้อยู่ปี 1970 (เดือนมกราคม = หน้าหนาว ไม่มีผีเสื้อ) จึงตรึงฤดูเป็นหน้าร้อนทั้งข้อ (ทุกอย่างในฉากมีครบ) · ข้อ "ฉากตามฤดู" ตรวจผลของฤดูแยก
+  await p.evaluate(() => PixelCat._t.setSeason('summer'));
   const run = (o) => p.evaluate(o => { const T = PixelCat._t, { step, cat } = T, R0 = Math.random; Math.random = () => o.rnd;
     try { T.setTod(o.tod); T.setNow(o.ms); M.place = { at: o.at, got: PLACES.map(q => q.id), fam: {} }; render(); T.setFam(o.fam || 99, 0); // render() ติดตั้งแมวใหม่และนับวันที่อยู่ที่นั้น จึงตั้งช่วงปรับตัวทีหลัง
       document.querySelector('.scn.px .scb').classList.remove('on'); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: o.x, dir: 1, then: null, after: null, pend: null, str: 0, wk: 0, hunt: 0, tol: 0, cool: 0, lv: 0, pose: null });
@@ -1492,7 +1494,37 @@ test('แมวพิกเซล: ท่าที่ใช้ของในฉ
   const k = await p.evaluate(() => { const T = PixelCat._t, a = T.cat.k; Object.assign(T.cat, { t: 0, dur: 100 }); T.step(150); return [a, T.cat.mode] });
   assert.strictEqual(k[0], 'bask'); assert(['yawn', 'turnOut', 'groom', 'sit', 'stretch'].includes(k[1]), 'ตื่นจากอาบแดด ' + k[1]);
   const heart = await p.evaluate(() => JSON.stringify(PixelCat._t.frame('bask', 1, 'light', 'cream', 'none')).includes('#ef7d92')); assert(!heart, 'นอนอาบแดดไม่มีหัวใจลอย');
-  await p.evaluate(() => { const T = PixelCat._t; T.setNow(null); T.setTod(null); T.setFam(99, 0); M.place = { at: 'room', got: [] }; render(); Object.assign(T.cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }) });
+  await p.evaluate(() => { const T = PixelCat._t; T.setNow(null); T.setTod(null); T.setSeason(null); T.setFam(99, 0); M.place = { at: 'room', got: [] }; render(); Object.assign(T.cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }) });
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ฉากตามฤดู: ซากุระ เมเปิลเขียว เมเปิลแดง กิ่งโล่งหิมะ · ของตกตามฤดู · หน้าต่างคาเฟ่มีเมฆ', async (b, base) => {
+  const p = await fresh(b, base);
+  await p.waitForTimeout(200);
+  const r = await p.evaluate(() => { const T = PixelCat._t, cv = document.createElement('canvas'), at = s => new Date(s).getTime(), out = {};
+    // ฤดูตามญี่ปุ่นจริง (เจ้าของเลือก 2026-11-20): มี.ค.–พ.ค. ใบไม้ผลิ · มิ.ย.–ส.ค. ร้อน · ก.ย.–พ.ย. ใบไม้ร่วง · ธ.ค.–ก.พ. หนาว
+    out.map = ['2026-03-01', '2026-05-31', '2026-06-01', '2026-08-31', '2026-09-01', '2026-11-30', '2026-12-01', '2027-02-28'].map(d => T.season(at(d + 'T12:00:00')));
+    const img = (pl, se, tm = 'light', fg) => { T.setSeason(se); PixelCat.mount(cv, { place: pl, coat: 'cream' }); return (fg ? T.sceneFg(tm) : T.sceneBg(tm)).toDataURL() };
+    T.setNow(at('2026-11-20T10:00:00'));
+    for (const pl of ['room', 'garden', 'cafe', 'station']) { const I = ['spring', 'summer', 'autumn', 'winter'].map(se => img(pl, se)); out[pl] = I; out[pl + 'N'] = img(pl, 'winter', 'dark') !== img(pl, 'summer', 'dark') }
+    out.gfg = img('garden', 'winter', 'light', 1) !== img('garden', 'summer', 'light', 1);
+    // ผีเสื้อไม่มีหน้าหนาว (จึงไม่มีซุ่ม) · มีในฤดูอื่นตอนกลางวัน
+    const A = (se, td = 'day') => ({ ms: { spring: at('2026-04-10T10:00:00'), summer: at('2026-07-10T10:00:00'), autumn: at('2026-10-10T10:00:00'), winter: at('2027-01-10T10:00:00') }[se], P: true, td, sk: td === 'night' ? 'dark' : 'light', t: 0 });
+    T.setSeason(null); out.bfly = ['spring', 'summer', 'autumn', 'winter'].map(se => !!T.bflyAt(A(se)));
+    // ของตก: นับพิกเซลที่วาด (ใบไม้ผลิ ใบไม้ร่วง หนาว มี · ร้อนไม่มี · ปิดแอนิเมชันไม่มี)
+    const n = (se, P = true) => { const c = document.createElement('canvas'); c.width = 160; c.height = 90; const x = c.getContext('2d'); T.fall(x, { ...A(se), P }, se, [0, 0, 160, 90], 20); const d = x.getImageData(0, 0, 160, 90).data; let k = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) k++; return k };
+    out.fall = ['spring', 'summer', 'autumn', 'winter'].map(se => n(se)); out.fallOff = n('winter', false);
+    // หน้าต่างคาเฟ่กลางวันมีเมฆ (v109 แก้บั๊ก v104: คอมเมนต์ทับ else ทำให้เมฆหาย)
+    T.setSeason('autumn'); PixelCat.mount(cv, { place: 'cafe', coat: 'cream' }); const k = T.palOf('cafe', 'light'), d = T.sceneBg('light').getContext('2d').getImageData(5, 8, 36, 18).data, h = parseInt(k.cloud.slice(1), 16);
+    out.cloud = 0; for (let i = 0; i < d.length; i += 4) if (((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]) === h) out.cloud++;
+    T.setSeason(null); T.setNow(null); M.place = { at: 'room', got: [] }; render(); return out });
+  assert.deepStrictEqual(r.map, ['spring', 'spring', 'summer', 'summer', 'autumn', 'autumn', 'winter', 'winter'], 'แบ่งฤดู');
+  for (const pl of ['room', 'garden', 'cafe', 'station']) { assert.notStrictEqual(r[pl][1], r[pl][3], 'หนาวต่างจากร้อน ' + pl); assert(r[pl + 'N'], 'กลางคืนหนาวต่างจากร้อน ' + pl) }
+  assert.strictEqual(new Set(r.garden).size, 4, 'สวนต่างกันทั้ง 4 ฤดู'); assert.notStrictEqual(r.room[0], r.room[1], 'ห้อง: ใบไม้ผลิมีต้นซากุระบนเนิน');
+  assert(r.gfg, 'พุ่มอาซาเลียตามฤดู');
+  assert.deepStrictEqual(r.bfly, [true, true, true, false], 'ผีเสื้อ ' + r.bfly);
+  assert(r.fall[0] > 0 && r.fall[1] === 0 && r.fall[2] > 0 && r.fall[3] > 0 && r.fallOff === 0, 'ของตก ' + JSON.stringify([r.fall, r.fallOff]));
+  assert(r.cloud > 10, 'หน้าต่างคาเฟ่มีเมฆ ' + r.cloud);
   assert.deepStrictEqual(p.errors, []);
 });
 
@@ -1526,7 +1558,7 @@ test('ฉากกลางคืน: พระจันทร์เฟสแล
     const scenes = { room: ['2026-11-24T23:00:00', '2026-12-17T19:30:00'], garden: ['2026-11-25T00:00:00', '2026-12-17T19:30:00'], cafe: ['2026-11-25T00:00:00', '2026-12-14T19:30:00'], station: ['2026-11-25T00:00:00', '2026-12-17T19:30:00'] };
     T.setTod('night');
     for (const [pl, [a, c]] of Object.entries(scenes)) { const none = img(pl, '2026-12-09T23:00:00'); out[pl] = [img(pl, a) !== none, img(pl, c) !== none, img(pl, a) !== img(pl, c)] }
-    T.setTod('day'); T.setNow(new Date('2026-11-24T23:00:00').getTime()); PixelCat.mount(cv, { place: 'garden', coat: 'cream' }); out.day = T.sceneBg('light').toDataURL() === (T.setNow(new Date('2026-12-09T23:00:00').getTime()), T.sceneBg('light').toDataURL());
+    T.setTod('day'); T.setSeason('autumn'); T.setNow(new Date('2026-11-24T23:00:00').getTime()); PixelCat.mount(cv, { place: 'garden', coat: 'cream' }); out.day = T.sceneBg('light').toDataURL() === (T.setNow(new Date('2026-12-09T23:00:00').getTime()), T.sceneBg('light').toDataURL()); T.setSeason(null); // คนละเดือน คนละฤดู จึงตรึงฤดูไว้
     T.setNow(null); T.setTod(null); M.place = { at: 'room', got: [] }; render(); return out });
   for (const pl of ['room', 'garden', 'cafe', 'station']) assert.deepStrictEqual(draw[pl], [true, true, true], 'พระจันทร์ในฉาก ' + pl);
   assert(draw.day, 'กลางวันไม่มีพระจันทร์');
