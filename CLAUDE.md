@@ -15,7 +15,7 @@
 - **ห้ามใส่เนื้อหาเสียเงินจริงใน repo นี้** (public) เนื้อหาอยู่ใน repo private `Tsuketee/kotoneko-content` ชุดทดสอบใช้แพ็กปลอม `FAKE_PACK` เท่านั้น
 
 ## กฎ
-- แก้ไฟล์ไหนก็ตาม ให้เพิ่มเลข `VERSION` ใน `sw.js` ด้วย
+- แก้ไฟล์ไหนก็ตาม ให้เพิ่มเลข `VERSION` ใน `sw.js` ด้วย · GitHub Actions (`.github/workflows/test.yml`) ตรวจทุก PR: VERSION ต้องมากกว่าของ branch ปลายทาง (`node tests/check-version.js origin/main`) และ `npm test` ต้องผ่าน
 - ห้ามคัดลอกเนื้อหาจาก Irodori หรือ Minna no Nihongo ลงในแอป (ห้ามใช้เชิงพาณิชย์) เนื้อหาใหม่ให้เขียนเอง หรือใช้ข้อมูลเปิดที่อนุญาตเชิงพาณิชย์และใส่เครดิตใน `NOTICE.md`
 - ทดสอบบน iPad Safari: รองรับนิ้วและ Apple Pencil, ระวังเรื่อง safe-area
 - งานถัดไปอยู่ใน `docs/ROADMAP.md` ทำทีละข้อ และติ๊กเมื่อเสร็จ

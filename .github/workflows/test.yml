@@ -1,0 +1,53 @@
+# ตรวจทุก PR ก่อน merge (main ขึ้น GitHub Pages ทันที จึงต้องกันโค้ดพังก่อนถึงผู้ใช้)
+# - version: VERSION ใน sw.js ต้องมากกว่าของ branch ปลายทาง (tests/check-version.js)
+# - test: npm test = tests/payment.mjs + tests/e2e.js (Playwright + Chromium)
+# รันเองในเครื่องได้: node tests/check-version.js origin/main · npm test
+name: ทดสอบ
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  version:
+    name: เพิ่มเลข VERSION แล้ว
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: ดึง branch ปลายทาง
+        env:
+          BASE: ${{ github.base_ref }}
+        run: git fetch --no-tags --depth=1 origin "+refs/heads/$BASE:refs/remotes/origin/$BASE"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: ตรวจ VERSION
+        env:
+          BASE: ${{ github.base_ref }}
+        run: node tests/check-version.js "origin/$BASE"
+
+  test:
+    name: npm test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22 # tests/payment.mjs ต้องใช้ Node 22.18 ขึ้นไป (อ่านไฟล์ .ts เอง)
+          cache: npm
+      - run: npm ci
+      - name: ติดตั้ง Chromium ของ Playwright
+        run: npx playwright install --with-deps chromium
+      - run: npm test

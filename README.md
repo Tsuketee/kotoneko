@@ -62,13 +62,19 @@ repo นี้เป็น public จึงใช้ GitHub Pages ได้ฟ�
 หรือเปิดระบบบัญชีและซิงก์คลาวด์ (ตั้งค่าครั้งเดียวตาม `docs/CLOUD.md`) แล้วเข้าสู่ระบบด้วยอีเมลเดียวกันทุกเครื่อง
 
 ## ปล่อยเวอร์ชันใหม่
-ทุกครั้งที่แก้ไฟล์ ให้เพิ่มเลข `VERSION` ใน `sw.js` ไม่งั้นเครื่องที่เคยเปิดแอปแล้วจะยังเห็นไฟล์เก่า
+ทุกครั้งที่แก้ไฟล์ ให้เพิ่มเลข `VERSION` ใน `sw.js` ไม่งั้นเครื่องที่เคยเปิดแอปแล้วจะยังเห็นไฟล์เก่า (ทุก PR ถูกตรวจอัตโนมัติ ดูหัวข้อ "ทดสอบ")
 
 ## ทดสอบ
-ชุดทดสอบอัตโนมัติ 2 ชุด: `tests/payment.mjs` 11 ข้อ (Edge Function ชำระเงิน กับ Stripe/Supabase จำลอง ต้องใช้ Node 22.18 ขึ้นไป) และ `tests/e2e.js` 36 ข้อ (ข้อมูล, การใช้งานหลัก, ส่งออก/นำเข้า, ซิงก์คลาวด์ด้วย Supabase จำลอง, แพ็กเสียเงินและการซื้อ, iPad แนวตั้ง/นอน, PWA ออฟไลน์) ใช้ Playwright เปิด Chromium จริง
+ชุดทดสอบอัตโนมัติ 2 ชุด: `tests/payment.mjs` 12 ข้อ (Edge Function ชำระเงิน กับ Stripe/Supabase จำลอง ต้องใช้ Node 22.18 ขึ้นไป) และ `tests/e2e.js` 58 ข้อ (ข้อมูล, การใช้งานหลัก, สัตว์เลี้ยงและแมวพิกเซล, สถานที่และแผนที่เมือง, ส่งออก/นำเข้า, ซิงก์คลาวด์ด้วย Supabase จำลอง, แพ็กเสียเงินและการซื้อ, iPad แนวตั้ง/นอน, PWA ออฟไลน์) ใช้ Playwright เปิด Chromium จริง
 ```
 npm install
 npx playwright install chromium   # ครั้งแรกครั้งเดียว
 npm test
 ```
 ควรรันก่อนปล่อยเวอร์ชันใหม่ทุกครั้ง ส่วนการทดสอบบน iPad Safari จริง (Apple Pencil, safe-area) ยังต้องลองด้วยมือ
+
+**GitHub Actions** (`.github/workflows/test.yml`) รันให้เองทุก PR และทุกครั้งที่ push เข้า `main`:
+- **เพิ่มเลข VERSION แล้ว** (เฉพาะ PR): `VERSION` ใน `sw.js` ต้องมากกว่าของ branch ปลายทาง · รันเองได้ด้วย `node tests/check-version.js origin/main`
+- **npm test**: ชุดทดสอบทั้งสองชุดด้านบน
+
+ให้ GitHub ห้าม merge เมื่อไม่ผ่าน: Settings → Branches → เพิ่มกฎของ `main` → Require status checks to pass → เลือก "เพิ่มเลข VERSION แล้ว" และ "npm test"
