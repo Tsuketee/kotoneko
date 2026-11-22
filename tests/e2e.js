@@ -187,7 +187,7 @@ test('แผนที่เมือง: ทุกที่มีตำแหน
     ['2027-01-02', '2026-05-02', '2026-08-10'].forEach(d => shot('winter', 'night', d + 'T21:00:00'));
     // ถนนทุกเส้นจบที่ขอบแผนที่หรือแตะเส้นอื่น/ที่หมาย (ไม่จบกลางหญ้า)
     const P = T.paths, all = [P.RIVER, P.RAIL, P.MAIN, P.ONS, P.SHOT, P.WEST, P.HILL, P.SCH, P.RES1, P.RES2, P.RES3, ...P.LANES], edge = ([x, y]) => x <= 1 || x >= T.W - 1 || y <= 1 || y >= T.H - 1;
-    const goal = [[29, 97], [57, 226], [146, 42], [68, 158], [52, 161], [62, 124], [126, 91]]; out.dead = []; // ที่หมาย: โทริอิ ประตูโรงเรียน ออนเซ็น ลานหน้าสถานี×2 ทางออกเหนือ ประตูสวน
+    const goal = [[29, 97], [90, 225], [146, 42], [68, 158], [52, 161], [62, 124], [126, 91]]; out.dead = []; // ที่หมาย: โทริอิ ประตูโรงเรียน ออนเซ็น ลานหน้าสถานี×2 ทางออกเหนือ ประตูสวน
     Object.entries(P).forEach(([k, v]) => (Array.isArray(v[0][0]) ? v : [v]).forEach((S, j) => { if (k === 'RIVER' || k === 'RAIL') return; [S[0], S[S.length - 1]].forEach(e => { const ok = edge(e) || goal.some(g => Math.hypot(e[0] - g[0], e[1] - g[1]) < 2) || all.some(o => o !== S && o.some(([x, y]) => Math.hypot(x - e[0], y - e[1]) < 3)); if (!ok) out.dead.push(k + j + ':' + e.map(Math.round)) }) }));
     out.xing = !!T.cross(P.RAIL, P.MAIN) && !!T.cross(P.RAIL, P.RIVER);
     return out });

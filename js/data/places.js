@@ -83,7 +83,7 @@ const PLACES = [
 <rect x="744" y="200" width="46" height="38" rx="4" class="f-c-reg"/><rect x="752" y="186" width="30" height="16" rx="2" class="f-c-scr"/>
 <rect y="360" width="820" height="60" class="f-c-floor"/><path d="M0 390 H820 M100 360 V420 M260 360 V420 M420 360 V420 M580 360 V420 M740 360 V420" class="s-c-tile"/>
 <g transform="translate(700 300)"><path d="M0 0 H100 L90 90 H10 Z" class="f-c-bask"/><path d="M20 20 V80 M40 20 V80 M60 20 V80 M80 20 V80" class="s-c-bask"/><path d="M30 0 Q50 -40 70 0" class="s-c-bask"/></g>`},
- {id:'classroom', n:'ห้องเรียน', jp:'きょうしつ', cats:['คำกริยา','คำคุณศัพท์','คำถามและคำชี้'], pet:[30,92], bub:'r', note:'คำกริยา คำคุณศัพท์ และคำถาม', map:{at:[55,253], lb:[50,270], cat:[82,262]},
+ {id:'classroom', n:'ห้องเรียน', jp:'きょうしつ', cats:['คำกริยา','คำคุณศัพท์','คำถามและคำชี้'], pet:[30,92], bub:'r', note:'คำกริยา คำคุณศัพท์ และคำถาม', map:{at:[69,253], lb:[60,270], cat:[96,266]},
   unlock:{cats:['คำกริยา'], n:10, t:'จำคำหมวดคำกริยาได้แม่น'},
   svg:`<rect width="820" height="420" class="f-e-wall"/><rect y="262" width="820" height="88" class="f-e-wains"/><rect y="256" width="820" height="8" class="f-e-wood"/>
 <g transform="translate(6 26)"><rect width="150" height="230" class="f-e-frame"/><rect x="10" y="10" width="130" height="210" class="f-e-sky"/>
