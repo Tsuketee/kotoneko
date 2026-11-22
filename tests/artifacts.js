@@ -1,7 +1,7 @@
 // เก็บหลักฐานของทุกข้อทดสอบไว้ใน test-results/<ชุด>/ (อยู่ใน .gitignore · CI อัปโหลดเป็น artifact)
 // - <ข้อ>-<ขั้น>.png  ภาพที่ข้อทดสอบสั่งถ่ายเอง (shot)
 // - <ข้อ>-end-p<หน้า>.png  ภาพสุดท้ายของทุกหน้าที่ข้อนั้นเปิด ถ่ายให้เองตอนจบข้อ ทั้งผ่านและไม่ผ่าน
-// - <ข้อ>.console.log  console ทุกระดับ + JavaScript error ของทุกหน้าในข้อนั้น
+// - <ข้อ>.console.log  console ทุกระดับ + JavaScript error ของทุกหน้าในข้อนั้น (console error ต่อท้ายด้วย " @ <URL ที่เกิด>")
 // - summary.md  ตารางสรุป ข้อ | ผล | ภาพ | console error
 // ถ่ายด้วย animations: 'disabled' ให้แอนิเมชันค่อยๆ ปรากฏของแอปจบก่อน ภาพจึงตรงกับที่ผู้ใช้เห็นเมื่อหน้านิ่งแล้ว
 // ใช้: const rec = recorder(browser, 'e2e') ก่อนรัน → rec.begin(id, name) → test → await rec.end(ok, err) → rec.finish()
@@ -23,7 +23,7 @@ function recorder(browser, suite) {
   };
   function watch(p, t) {
     const n = t.pages.push(p);
-    p.on('console', m => t.log.push({ n, type: m.type(), text: m.text() }));
+    p.on('console', m => t.log.push({ n, type: m.type(), text: m.text(), url: m.type() === 'error' ? (m.location() || {}).url : '' }));
     p.on('pageerror', e => t.log.push({ n, type: 'pageerror', text: e.message }));
   }
   const file = (t, s) => `${t.id}-${s}.png`;
@@ -49,7 +49,7 @@ function recorder(browser, suite) {
       }
       const head = [`# ${t.id} ${t.name}`, `ผล: ${ok ? 'ผ่าน' : 'ไม่ผ่าน'} · ${((Date.now() - t.t0) / 1000).toFixed(1)} วินาที`];
       if (!ok) head.push('ข้อผิดพลาด: ' + String((err && (err.stack || err.message)) || err).split('\n').slice(0, 6).join('\n  '));
-      fs.writeFileSync(path.join(dir, t.id + '.console.log'), head.concat('', t.log.map(l => `[p${l.n} ${l.type}] ${l.text}`)).join('\n') + '\n');
+      fs.writeFileSync(path.join(dir, t.id + '.console.log'), head.concat('', t.log.map(l => `[p${l.n} ${l.type}] ${l.text}${l.url ? ' @ ' + l.url : ''}`)).join('\n') + '\n');
       const errs = t.log.filter(l => l.type === 'error' || l.type === 'pageerror').length;
       rows.push({ id: t.id, name: t.name, ok, shots: t.shots, errs });
       await Promise.all(t.ctx.map(c => c.close().catch(() => {})));
