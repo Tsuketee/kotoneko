@@ -146,9 +146,14 @@ test('สถานที่: เริ่มที่ห้อง ไปสว�
   assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).place), undefined, 'แค่เปิดหน้าแรกต้องไม่เขียนค่าสถานที่ (ไม่ให้ซิงก์ส่งรุ่นใหม่เปล่าๆ)');
   await p.locator('.scgo').click();
   const dlg = await p.locator('.cdl').innerText();
-  assert(dlg.includes('สวนญี่ปุ่น') && dlg.includes('คาเฟ่') && dlg.includes('สถานีรถไฟ') && dlg.includes('0/10 คำ'), dlg);
-  assert(await p.locator('.plr[data-p="station"]').isDisabled(), 'สถานียังล็อก');
-  await p.locator('.plr[data-p="garden"]').click();
+  assert(dlg.includes('สวนญี่ปุ่น') && dlg.includes('คาเฟ่') && dlg.includes('สถานี'), dlg);
+  assert.strictEqual(await p.locator('.tmp[data-p="station"].tlk svg').count(), 1, 'ป้ายสถานีมีกุญแจ');
+  await p.locator('.tmp[data-p="station"]').click();
+  assert((await p.locator('.tmi').innerText()).includes('0/10 คำ'), 'กล่องข้อมูลบอกความคืบหน้าปลดล็อก');
+  assert(await p.locator('.tmi .go').isDisabled(), 'สถานียังล็อก ไปไม่ได้');
+  await p.locator('.tmp[data-p="garden"]').click();
+  assert.strictEqual(await p.locator('.tmi').count(), 1, 'แตะป้ายใหม่ กล่องข้อมูลเปลี่ยนเป็นที่ใหม่ (มีกล่องเดียว)');
+  await p.locator('.tmi .go').click();
   assert.strictEqual(await p.locator('.cov').count(), 0);
   assert.strictEqual(await p.locator('.scn[data-place="garden"]').count(), 1);
   assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).place.at), 'garden', 'จำที่ที่เลือก');
@@ -158,7 +163,7 @@ test('สถานที่: เริ่มที่ห้อง ไปสว�
   await home(p);
   await p.waitForSelector('.toast:has-text("ได้ตั๋วไปสถานีรถไฟแล้ว")');
   assert.deepStrictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).place.got), ['station']);
-  await p.locator('.scgo').click(); await p.locator('.plr[data-p="station"]').click();
+  await p.locator('.scgo').click(); await p.locator('.tmp[data-p="station"]').click(); await p.locator('.tmi .go').click();
   h = await home(p); assert(h.includes('สถานีรถไฟ') && h.includes('ทบทวนคำหมวดสถานที่'), h.slice(0, 400));
   // อยู่สถานี: ข้อที่ถึงเวลาทบทวนพร้อมกัน หมวดสถานที่ต้องขึ้นก่อน แม้ครบกำหนดทีหลัง
   const first = await p.evaluate(() => { const t = Date.now() - 1000, s = {}; const a = V.find(x => x.c === 'อาหารและของกิน'), b = V.find(x => x.c === 'สถานที่');
@@ -166,6 +171,39 @@ test('สถานที่: เริ่มที่ห้อง ไปสว�
   assert.strictEqual(first, 'สถานที่');
   await p.evaluate(() => { const st = JSON.parse(localStorage.getItem('kn_meta')); st.place.at = 'room'; localStorage.setItem('kn_meta', JSON.stringify(st)); M = st });
   assert.strictEqual(await p.evaluate(() => pick1().c), 'อาหารและของกิน', 'อยู่ห้อง: ทบทวนตามกำหนดเดิม');
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('แผนที่เมือง: ทุกที่มีตำแหน่ง/อาคาร/ฉาก วาดได้ทุกฤดูและเวลา ป้ายอยู่ในแผนที่ แปลงว่างขึ้น "เร็วๆ นี้" เลื่อนไปที่แมว ปิดแล้วหยุดวาด', async (b, base) => {
+  const p = await fresh(b, base, { viewport: { width: 390, height: 760 } });
+  await home(p);
+  const r = await p.evaluate(() => { const out = { bad: [] }, T = TownMap;
+    PLACES.forEach(q => { const m = q.map; if (!m || !T.SITE[q.id] || !PixelCat.places.includes(q.id)) out.bad.push(q.id); else [m.at, m.lb, m.cat].forEach(([x, y]) => { if (!(x >= 0 && x < T.W && y >= 0 && y < T.H)) out.bad.push(q.id + ':' + x + ',' + y) }) });
+    // วาดได้ทุกฤดู ทุกช่วงเวลา และทุกเทศกาล (ภาพต่างกันตามฤดู/เวลา)
+    const shot = (se, td, d) => { const c = document.createElement('canvas'); c.width = T.W; c.height = T.H; document.body.appendChild(c); const m = T.mount(c, { season: () => se, tod: () => td, date: () => new Date(d), here: 'room', locked: ['station'], places: PLACES, cat: { coat: 'cream' } }); m.stop(); m.redraw(); const u = c.toDataURL(); c.remove(); return u };
+    const S = ['spring', 'summer', 'autumn', 'winter'].map(se => shot(se, 'day', '2026-10-10T12:00:00')); out.seasons = new Set(S).size;
+    out.tods = new Set(['dawn', 'day', 'dusk', 'night'].map(td => shot('autumn', td, '2026-10-10T12:00:00'))).size;
+    out.fest = ['2027-01-02', '2026-05-02', '2026-08-10', '2026-10-10'].map(d => T.festOf(new Date(d + 'T12:00:00')));
+    ['2027-01-02', '2026-05-02', '2026-08-10'].forEach(d => shot('winter', 'night', d + 'T21:00:00'));
+    // ถนนทุกเส้นจบที่ขอบแผนที่หรือแตะเส้นอื่น/ที่หมาย (ไม่จบกลางหญ้า)
+    const P = T.paths, all = [P.RIVER, P.RAIL, P.MAIN, P.ONS, P.SHOT, P.WEST, P.HILL, P.SCH, P.RES1, P.RES2, P.RES3, ...P.LANES], edge = ([x, y]) => x <= 1 || x >= T.W - 1 || y <= 1 || y >= T.H - 1;
+    const goal = [[29, 97], [57, 226], [146, 42], [68, 158], [52, 161], [62, 124], [126, 91]]; out.dead = []; // ที่หมาย: โทริอิ ประตูโรงเรียน ออนเซ็น ลานหน้าสถานี×2 ทางออกเหนือ ประตูสวน
+    Object.entries(P).forEach(([k, v]) => (Array.isArray(v[0][0]) ? v : [v]).forEach((S, j) => { if (k === 'RIVER' || k === 'RAIL') return; [S[0], S[S.length - 1]].forEach(e => { const ok = edge(e) || goal.some(g => Math.hypot(e[0] - g[0], e[1] - g[1]) < 2) || all.some(o => o !== S && o.some(([x, y]) => Math.hypot(x - e[0], y - e[1]) < 3)); if (!ok) out.dead.push(k + j + ':' + e.map(Math.round)) }) }));
+    out.xing = !!T.cross(P.RAIL, P.MAIN) && !!T.cross(P.RAIL, P.RIVER);
+    return out });
+  assert.deepStrictEqual(r.bad, [], 'ทุกที่ใน PLACES มี map อาคาร และฉาก');
+  assert.strictEqual(r.seasons, 4); assert.strictEqual(r.tods, 4); assert.deepStrictEqual(r.fest, ['ny', 'koi', 'mat', '']);
+  assert.deepStrictEqual(r.dead, [], 'ถนนจบกลางหญ้า ' + r.dead.join(' ')); assert(r.xing, 'มีทางข้ามรถไฟและสะพานรถไฟ');
+  // หน้าต่างจริง: ป้ายครบทุกที่ + แปลงว่าง 5 ป้ายอยู่ในแผนที่ · เปิดมาเลื่อนไปที่แมว (อยู่บ้าน = ด้านล่าง)
+  await p.locator('.scgo').click(); await p.waitForSelector('.tmd canvas');
+  const g = await p.evaluate(() => { const w = document.querySelector('.tmw'), c = document.querySelector('.tmc').getBoundingClientRect(), B = [...document.querySelectorAll('.tmp')].map(e => e.getBoundingClientRect());
+    return { n: document.querySelectorAll('.tmp[data-p]').length, soon: document.querySelectorAll('.tmp.soon').length, inside: B.every(r => r.left >= c.left - .5 && r.right <= c.right + .5), hit: B.some((r, i) => B.some((q, j) => j > i && r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom)), top: w.scrollTop, max: w.scrollHeight - w.clientHeight, here: document.querySelector('.tmp.here').dataset.p } });
+  assert.strictEqual(g.n, await p.evaluate(() => PLACES.length)); assert.strictEqual(g.soon, 5); assert(g.inside, 'ป้ายล้นขอบแผนที่'); assert(!g.hit, 'ป้ายทับกัน'); assert.strictEqual(g.here, 'room');
+  assert(g.max > 0 && g.top > g.max * .6, 'เปิดมาแล้วเลื่อนไปที่บ้าน ' + g.top + '/' + g.max);
+  await p.locator('.tmp.soon').first().click({ timeout: 4000 }); assert((await p.locator('.tmi').innerText()).includes('เร็วๆ นี้'));
+  await p.locator('.tmi [data-c]').click({ timeout: 4000 }); assert.strictEqual(await p.locator('.tmi').count(), 0);
+  await p.locator('.tmp[data-p="room"]').click({ timeout: 4000 }); assert.strictEqual(await p.locator('.tmi .go').innerText(), 'อยู่ที่นี่แล้ว'); assert(await p.locator('.tmi .go').isDisabled());
+  await p.locator('.tmi [data-c]').click({ timeout: 4000 }); await p.locator('.cdl button[data-x]').click({ timeout: 4000 }); assert.strictEqual(await p.locator('.cov').count(), 0, 'ปิดหน้าต่าง');
   assert.deepStrictEqual(p.errors, []);
 });
 
@@ -1631,13 +1669,13 @@ test('สถานที่ใหม่ v120: ร้านสะดวกซื�
   const p = await fresh(b, base);
   await home(p); await p.locator('.scgo').click();
   const dlg = await p.locator('.cdl').innerText();
-  for (const [id, n] of [['konbini', 'ร้านสะดวกซื้อ'], ['classroom', 'ห้องเรียน'], ['shrine', 'ศาลเจ้า']]) { assert(dlg.includes(n), n); assert(await p.locator(`.plr[data-p="${id}"]`).isDisabled(), n + ' ยังล็อก') }
+  for (const [id, n] of [['konbini', 'ร้านสะดวกซื้อ'], ['classroom', 'ห้องเรียน'], ['shrine', 'ศาลเจ้า']]) { assert(dlg.includes(n), n); assert.strictEqual(await p.locator(`.tmp[data-p="${id}"].tlk`).count(), 1, n + ' ยังล็อก') }
   await p.locator('.cdl button[data-x]').click();
   // จำคำหมวดของใช้ได้แม่น 10 คำ → ได้ตั๋วร้านสะดวกซื้ออย่างเดียว
   await p.evaluate(() => { const L = [...W, ...V].filter(x => x.c === 'ของใช้').slice(0, 10), sw = {}, sv = {}; L.forEach(x => { (W.includes(x) ? sw : sv)[x.k] = { b: 5, w: 0, d: Date.now() + 864e5 } }); localStorage.setItem('kw1', JSON.stringify(sw)); localStorage.setItem('kv1', JSON.stringify(sv)) });
   await home(p); await p.waitForSelector('.toast:has-text("ได้ตั๋วไปร้านสะดวกซื้อแล้ว")');
   assert.deepStrictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).place.got), ['konbini']);
-  await p.locator('.scgo').click(); await p.locator('.plr[data-p="konbini"]').click();
+  await p.locator('.scgo').click(); await p.locator('.tmp[data-p="konbini"]').click(); await p.locator('.tmi .go').click();
   const h = await home(p); assert(h.includes('ร้านสะดวกซื้อ') && h.includes('ทบทวนคำหมวดของใช้'), h.slice(0, 300));
   assert.strictEqual(await p.locator('.scn.px[data-place="konbini"] > canvas#petcv').count(), 1);
   // ของขยับในฉาก (ไอโอเด้ง ป้ายแกว่ง · ม่านไหว นาฬิกา · เชือกกระดิ่ง แผ่นเอมะ) เปลี่ยนตามเวลา · ปิดแอนิเมชันแล้วนิ่ง · ช่วงปรับตัว: ร้าน/ห้องเรียนระวังตัว ศาลเจ้าไม่

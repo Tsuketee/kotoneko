@@ -49,15 +49,4 @@ ${px ? '' : `<div class="scp" style="left:${p.pet[0]}%;top:${p.pet[1]}%"><span c
 ${px ? '' : tk}</div>
 <div class="st scl${px ? ' px' : ''}"><span><span class="scj">${rb(p.jp)}</span> ${p.n}${p.cats.length ? ' · ทบทวนคำหมวด' + p.note + 'ก่อน' : ' · ' + p.note}</span>${px ? tk : ''}</div>`;
 }
-function placeAsk() {
-  if (document.querySelector('.cov')) return;
-  const st = plState(), o = document.createElement('div'); o.className = 'cov';
-  const rows = PLACES.map(p => {
-    const has = plHas(p), here = st.at === p.id, c = p.unlock && !has ? Math.min(plCount(p.unlock.cats), p.unlock.n) : 0;
-    const sub = has ? p.note : p.unlock.t + ' ' + c + '/' + p.unlock.n + ' คำ';
-    return `<button class="plr${here ? ' on' : ''}" data-p="${p.id}"${has ? '' : ' disabled'}><span class="plj">${rb(p.jp)}</span><span class="plt"><b>${p.n}</b><span class="st">${sub}</span>${has ? '' : `<span class="bar"><i style="width:${c / p.unlock.n * 100}%"></i></span>`}</span><span class="pls">${here ? 'อยู่ที่นี่' : has ? 'ไปเลย' : icx('lock', 16)}</span></button>`;
-  }).join('');
-  o.innerHTML = `<div class="cdl" role="dialog" aria-modal="true"><h2 style="margin-top:0">ไปเที่ยวที่ไหนดี</h2><div class="st" style="margin-bottom:10px">อยู่ที่ไหน ปุ่มทบทวนจะเอาคำในหมวดของที่นั้นขึ้นก่อน ที่ที่มีกุญแจ ปลดล็อกได้ด้วยการเรียน</div>${rows}<div class="btns" style="margin-top:12px"><button class="g" data-x="1">ปิด</button></div></div>`;
-  o.onclick = e => { const b = e.target.closest('button'); if (e.target === o || (b && b.dataset.x)) return o.remove(); if (b && b.dataset.p && !b.disabled) { st.at = b.dataset.p; if (!st.fam) st.fam = {}; plSave(st); o.remove(); render(); toast(icx('paw', 16) + ' ไปที่' + placeOf(st.at).n + 'กัน') } };
-  document.body.appendChild(o);
-}
+// หน้าต่างเลือกที่เที่ยว placeAsk() เป็นแผนที่เมืองพิกเซล อยู่ใน js/town.js
