@@ -360,16 +360,16 @@ const RUN=[{e:-1.6,by:-2.2,L:[[-3,3.2,.9],[-2.2,3.6,.8],[3.4,2.6,.4],[2.6,2.8,.5
  {e:-.4,by:-1.2,L:[[-1.6,0,0],[-.6,0,0],[0,3,.8],[.8,3.2,.7]]}],RUN_STEP=4.4;
 function sideCat(o){
  const dir=o.dir,f=o.f,mode=o.mode||'stand',run=mode==='run',walk=mode==='walk',N=dir>0?'L':'R',F=dir>0?'R':'L',nP=dir>0?'patchL':'patch';
- const cr=o.cr||0,wig=o.wig||0,rch=o.reach||0; // cr = หมอบซุ่ม 0–1 (ตัวต่ำ ขาพับ หัวต่ำยื่นไปหน้า) · wig = ก้นส่ายก่อนกระโจน · reach = ขาหน้าเหยียดไปตะปบ
+ const cr=o.cr||0,wig=o.wig||0,rch=o.reach||0,hs=o.hs||0,sn=o.sn||0; // hs = ยืดขาหลัง 0–1 (v117 · o.hl 0 ขาใกล้ 1 ขาไกล) · sn = ก้มดมพื้น 0–1 (v117) // cr = หมอบซุ่ม 0–1 (ตัวต่ำ ขาพับ หัวต่ำยื่นไปหน้า) · wig = ก้นส่ายก่อนกระโจน · reach = ขาหน้าเหยียดไปตะปบ
  const R=run?(o.R||RUN[f]):null,e=run?R.e:0,by=run?R.by:walk?[0,-.3,-.6,-.3,0,-.3,-.6,-.3][f]:cr*3.4;
  // bw = ยืดตัวโค้งคำนับ 0–1 (ท่ายืน): อกต่ำลงแนบพื้น ขาหน้าเหยียดไปข้างหน้า สะโพกยกขึ้น หัวต่ำลงเหนือขาหน้า หูเอนไปหลัง หางตั้ง · rb = สะโพกยก
- const bw=o.bow||0,rb=-bw*5-cr*1.4-wig*.9,hd=bw*8.4+cr*1.6+rch*.4; // v88 ตามภาพตัวอย่างของเจ้าของ: ก้นเป็นจุดสูงสุด ขาหลังยืดตรงยาว หลังลาดลงเป็นทางลาดถึงอก หัวต่ำระดับขาหน้า
+ const bw=o.bow||0,rb=-bw*5-cr*1.4-wig*.9+hs*.6-sn*1.4,hd=bw*8.4+cr*1.6+rch*.4+sn*(9.4+(o.nb||0)*.5)+hs*1.2,sc=sn*2.4; // ดม: สะโพกยกนิด อกต่ำลง (ศอกงอ) หัวก้มต่ำกว่าไหล่ เส้นหลังลาดลงหาหัว // v88 ตามภาพตัวอย่างของเจ้าของ: ก้นเป็นจุดสูงสุด ขาหลังยืดตรงยาว หลังลาดลงเป็นทางลาดถึงอก หัวต่ำระดับขาหน้า
  // หัวกลมโตเท่าท่าหันหน้า หูอยู่บนกลางหัว หูฝั่งไกลโผล่ด้านหน้าเล็กน้อย · ตอนเดินหัวนิ่ง (แมวจริงประคองหัวให้นิ่ง) ตอนวิ่งหูลู่ไปด้านหลัง
- const hx=33.4+e*.5-bw*.6+cr*2.4,hy=22.8+(run?by*.8:cr*3.4)+hd,hyF=23+Math.round((run?by*.8:cr*3.4)+hd),tw=IDLE==='twitch'+N?1:0,twF=IDLE==='twitch'+F?1:0,eb=run?.7:Math.max(tw,bw*1.1),back=SIDE_EAR==='back';
+ const hx=33.4+e*.5-bw*.6+cr*2.4+sn*2.4+hs*1,hy=22.8+(run?by*.8:cr*3.4)+hd,hyF=23+Math.round((run?by*.8:cr*3.4)+hd),tw=IDLE==='twitch'+N?1:0,twF=IDLE==='twitch'+F?1:0,eb=run?.7:Math.max(tw,bw*1.1,hs*.8),back=SIDE_EAR==='back';
  const NE=[[hx-7,hy-5.6],[hx-3.6-eb*1.4,hy-15+eb*1.6],[hx+1.4,hy-9]],NI=[[hx-3.8,hy-7.6],[hx-3.4-eb*1.2,hy-12.4+eb*1.4],[hx+.2,hy-8.8]];
  const FE=back?[[hx-10.4,hy-3.6],[hx-9.4-twF*1.2,hy-13+twF*1.4],[hx-4.6,hy-8.6]]:[[hx-.4,hy-8.8],[hx+3.6-(run?.8:0)-bw*2+twF*1.2,hy-14.2+(run?.8:0)+bw*1.8+twF*1.4],[hx+6.6,hy-6.2]]; // ยืดตัว: หูลู่ไปด้านหลัง (เจ้าของขอ 2026-11-20)
  const bx=22.6-bw*5,brx=12.4+e*.6-bw*4.4,bry=7.2-e*.3-bw,cx=30.6+e*.5+cr*.8,hip=-e*.5+wig*.5; // ยืดตัว: ตัวส่วนหลังหดเหลือแค่ก้น
- const ccx=cx+bw*.6,ccy=32.4+by+bw*4.6; // อก
+ const ccx=cx+bw*.6,ccy=32.4+by+bw*4.6+sc; // อก
  const bodyS=(x,y)=>Math.max(smin(smin(sdEll(x,y,bx,33.8+by+rb,brx,bry),sdEll(x,y,ccx,ccy,6.6,6.6-bw*1.4),3),sdCap(x,y,bx,33.8+by+rb,ccx,ccy,bw*5.6,bw*4.8),2),y-Math.min(42.6,41.6+by-Math.min(0,e)*.3)); // หมอบ: ท้องแตะพื้นแต่ไม่ล้นเส้นพื้น // ยืดตัว: แท่งเชื่อมก้นกับอกเป็นหลังลาด
  const flank=(x,y)=>sdEll(x,y,19+hip,30.4+by+rb,6,4.2)<0;
  const body={z:0,R:9,sdf:bodyS,mat:(x,y)=>{if(sdEll(x,y,24,40.6+by,10.5+e*.5,3.2)<0||sdEll(x,y,ccx+4.2,ccy+3,3.2,4.6-bw)<0)return P('under');
@@ -385,15 +385,18 @@ function sideCat(o){
  // ขา: หน้าใกล้ หน้าไกล หลังใกล้ หลังไกล (ฝั่งไกลอยู่หลังตัว เข้มลงหนึ่งขั้น)
  const ph=f/WALK_N,LG=run?R.L:walk?[walkLeg(ph-.25,2.2),walkLeg(ph-.75,2.2),walkLeg(ph,1.8),walkLeg(ph-.5,1.8)]:[[0,0,0],[0,0,0],[0,0,0],[0,0,0]];
  if(bw)LG.forEach((g,i)=>{if(i<2)g[0]=bw*(i?10.4:11.4)}); // ขาหน้าเหยียดไปข้างหน้าเกือบราบกับพื้น
- if(cr&&!run)LG.forEach((g,i)=>{g[0]=i<2?rch*(i?.85:1)+cr*.8:-cr*1.2}); // หมอบ: ขาหลังรวบใต้ตัว · ตะปบ: ขาหน้ายื่นไปข้างหน้า
+ if(cr&&!run)LG.forEach((g,i)=>{g[0]=i<2?rch*(i?.85:1)+cr*.8:-cr*1.2});
+ if(hs){const i=2+(o.hl||0);LG[i]=[-11*hs,4.6*hs,.4*hs];LG[5-i][0]+=.8*hs;LG[0][0]-=.5*hs;LG[1][0]-=.5*hs} // ยืดขาหลัง: ขาข้างหนึ่งเหยียดตรงไปด้านหลัง ปลายเท้าชี้ เห็นอุ้งเท้าชมพู ตัวโน้มไปหน้า // หมอบ: ขาหลังรวบใต้ตัว · ตะปบ: ขาหน้ายื่นไปข้างหน้า
  const legs=[[31.4+e*.5,1.5,0],[28.6+e*.5,-1,1],[16.4+hip+bw*.6,bw?.9:1.45,0],[13.6+hip-bw*.6,-1,1]].map( // ยืดตัว: ขาหลังกางออกนิดหน่อยให้เห็นทั้งสองข้าง และขาใกล้อยู่ใต้ต้นขา (z ต่ำกว่า haunch) โผล่ออกมาใต้สะโพกแบบขาแมวจริง ไม่เป็นแถบแปะทับสะโพก (เจ้าของบอก 2026-11-20 ขาดูแปลก/ไม่เท่ากัน)
- ([sx,z,dim],i)=>sideLeg(sx,LG[i][0],LG[i][1],LG[i][2],z,dim,by+(i<2?bw*3.4:rb),i<2?by+bw*3.4:by-bw*3.6,i<2?1-bw*.25:1,i<2?0:bw));
+ ([sx,z,dim],i)=>sideLeg(sx,LG[i][0],LG[i][1],LG[i][2],z,dim,by+(i<2?bw*3.4+sc:rb),i<2?by+bw*3.4+sc:by-bw*3.6,i<2?1-bw*.25:1,i<2?0:bw));
  // หาง: ยืน/เดินตั้งโค้งปลายแกว่งช้าๆ · วิ่งพองฟู (แมวตื่นเต้น) ชี้ไปด้านหลังเฉียงขึ้น
  const fl=IDLE==='flick'?1:0,tb=11.6+hip*1.2;let tl;const ty=by+rb; // หางยกตามสะโพก
  if(run){const s2=[0,.6,1,.6,0,-.4][f],lag=(RUN[(f+5)%6].by-by)*.9; // หางพองสะบัดตามหลังตัว: ตัวขึ้น ปลายหางยังค้างต่ำกว่าหนึ่งจังหวะ
   tl=tail([[tb,31.6+by],[tb-4.4,30+by+lag*.3],[tb-7.8,27.4+by+lag*.7],[tb-9.2+s2,23.6+by-s2+lag]],2.7,1.9,-.5,{tip:.8})}
  else if(cr){const t=o.tf||0; // หมอบซุ่ม: หางต่ำเหยียดไปด้านหลังเกือบติดพื้น ปลายหางกระตุก
   tl=tail([[tb,31.6+ty],[tb-4.4,33.4+ty],[tb-8.6,35+ty],[tb-11.8,35.6+ty-t*.8],[tb-13.6+t*.4,34.4+ty-t*2]],2.1,1.15,-.5,{tip:.8})}
+ else if(hs){const w=(A,l)=>A*Math.sin(2*Math.PI*(f/8-l)); // ยืดขาหลัง: หางยกเหยียดไปด้านหลังเฉียงขึ้น ปลายงอนิดๆ
+  tl=tail([[tb,31.6+ty],[tb-3.2,28.8+ty-hs*.4],[tb-5.8,25.4+ty-hs*.8],[tb-7.4+w(.2,0),21.6+ty-hs],[tb-7.6+w(.4,.15),18.4+ty-hs]],2.1,1.15,-.5,{tip:.8})}
  else if(o.up||bw){const w=(A,l)=>A*Math.sin(2*Math.PI*(ph-l)); // หางตั้ง (ทักทาย Cafazzo & Natoli 2009): ตั้งตรงเกือบดิ่ง ปลายงอไปทางหัว แกว่งเบาๆ
   tl=tail([[tb,31.6+ty],[tb-1.8,27.4+ty],[tb-2.4+w(.15,0),22+ty],[tb-1.8+w(.3,.12),16.6+ty],[tb+.4+w(.5,.22),13.2+ty],[tb+2.4+w(.6,.3),12.8+ty]],2.1,1.15,-.5,{tip:.8})}
  else{const q=walk?ph:f/8,k=walk?1.1:.85,w=(A,l)=>k*A*Math.sin(2*Math.PI*(q-l)); // คลื่นจากโคนไปปลาย ปลายหางตามหลัง
@@ -401,14 +404,16 @@ function sideCat(o){
  const parts=[body,haunch,head,farEar,...legs,tl];
  const acc=o.acc||ACC;
  if(acc==='scarf'){const fw=run?.6+[0,.4,.8,1.2,.8,.3][f]:walk?.5+.5*Math.sin(2*Math.PI*ph):0,fu=run?1:0; // ชายผ้าปลิวไปด้านหลังตอนวิ่ง
-  parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,hx-6.4,hy+6.6,hx+.4,hy+8.8,2.4,2.4),ramp:'scarf',contour:RAMP.scarf[4]},
-   {z:1.95,R:2,ground:false,skipUp:true,sdf:(x,y)=>sdCap(x,y,hx-5,hy+9,hx-8.4-fw-fu-bw*1.8,hy+13.4-fu-bw*2.6,1.9,1.5),ramp:'scarf',contour:RAMP.scarf[4]})}
+  const sy=hy-sn*5.4-hs*.6; // ดม: ผ้าพันคออยู่ที่คอระหว่างอกกับหัว ไม่ห้อยลงใต้พื้น
+  parts.push({z:1.9,R:2.4,ground:false,sdf:(x,y)=>sdCap(x,y,hx-6.4-sn*1.4,sy+6.6,hx+.4-sn*2,sy+8.8,2.4,2.4),ramp:'scarf',contour:RAMP.scarf[4]},
+   {z:1.95,R:2,ground:false,skipUp:true,sdf:(x,y)=>sdCap(x,y,hx-5-sn*1.6,sy+9,hx-8.4-fw-fu-bw*1.8-sn*1.6,sy+13.4-fu-bw*2.6-sn*2.4,1.9,1.5),ramp:'scarf',contour:RAMP.scarf[4]})}
  if(acc==='bow')parts.push(N==='R'?bowPart(hx-4.8-eb*.4,hy-6.6,-.39):back?bowPart(hx-7.4,hy-6.4,-.5,1.85,.85):bowPart(hx+4.6,hy-8,.55,1.85,.85)); // โบว์อยู่หูซ้ายของแมวเสมอ: หันซ้ายอยู่หูใกล้ หันขวาอยู่หูไกล
  const a=[];
  if(run||o.wide)put(a,hx+4.4,hyF-.4,[[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2],[1,3]],IRIS),a.push([hx+4.4,hyF-.4,'#ffffff']); // ตาโตตื่นเต้น (วิ่ง ซุ่ม กระโจน)
  else if(o.shut)put(a,hx+4,hyF+2,[[0,0],[1,1],[2,1],[3,0]],EYE); // หลับตาอิ่มใจ (ยืดตัวสุด)
  else if(IDLE==='blink')put(a,hx+4.4,hyF+2.6,[[0,0],[1,0],[2,0]],EYE);else bean(a,hx+5,hyF,4,true); // ตาเม็ดถั่วเดียวกับท่าหันหน้า ค่อนไปทางหน้า
- a.push([hx+10.6,hyF+2,NOSE]);put(a,hx+9.6,hyF+3.2,[[1,0],[0,1]],EYE);blush(a,hx+2.2,hyF+3.6);   // จมูกที่ปลายหน้า ปากเล็กอยู่ในหน้า ไม่ยื่นออกนอกเส้น
+ a.push([hx+10.6,hyF+2,NOSE]);put(a,hx+9.6,hyF+3.2,[[1,0],[0,1]],EYE);blush(a,hx+2.2,hyF+3.6);
+ if(sn)put(a,hx+11.4,hyF+4,o.nb?[[0,0],[0,2],[1,4]]:[[0,1],[1,3]],FX); // ดมฟุดฟิด: จุดเล็กใต้ปลายจมูกสลับตำแหน่ง   // จมูกที่ปลายหน้า ปากเล็กอยู่ในหน้า ไม่ยื่นออกนอกเส้น
  if(run&&R.lines&&!o.R)put(a,0,34,R.lines>1?[[0,0],[1,0],[2,0],[3,0],[1,3],[2,3],[3,3],[4,3],[5,3]]:[[1,0],[2,0],[3,0],[2,3],[3,3],[4,3]],FX); // เส้นความเร็ว
  if(run&&R.dust)put(a,R.dust>1?5:7,41,R.dust>1?[[1,0],[2,0],[0,1],[1,1],[2,1],[3,1],[5,1],[6,0]]:[[1,0],[0,1],[1,1],[2,1]],DUST); // ฝุ่นตอนเท้าหลังลงพื้น
  const pose={parts,decals:a,shadow:[24,44.4,16+by*1.3,2.4+by*.15],ground:by<-1?0:44};
@@ -530,6 +535,12 @@ POSES.doze=f=>{const D=DOZE[f],sw=[0,.2,.4,.6,.8,.6,0,-.2][f];return sitCat({hy:
 const STRETCH=[0,.55,1,1,.55,0];
 const stretchCat=(dir,f)=>{const b=STRETCH[f];return sideCat({dir,f:f+2,bow:b,shut:b>.9})}; // ส่ง dir ให้ sideCat เลือกช่องลายตามข้างจริง (หันซ้ายลายไม่สลับข้าง)
 Object.assign(POSES,{stretchR:f=>stretchCat(1,f),stretchL:f=>stretchCat(-1,f)});
+// ยืดขาหลัง (v117 · ต่อจากโค้งคำนับ · รายงานข้อ 6): ตัวโน้มไปหน้า เหยียดขาหลังทีละข้างตรงไปด้านหลัง ปลายเท้าชี้ เห็นอุ้งเท้าชมพู หลับตาตอนยืดสุด หางยกเหยียด · ขาใกล้ก่อนแล้วขาไกล
+const HIND=[[.4,0],[.8,0],[1,0],[1,0],[.3,0],[.6,1],[1,1],[.4,1]];
+const hindCat=(dir,f)=>{const[h,l]=HIND[f];return sideCat({dir,f,hs:h,hl:l,shut:h>.9})};
+// ดม (v117): ยืนหันข้าง ก้มหัวลงชิดพื้น จมูกฟุดฟิด (เดินไปดมของในฉาก · ดมเบาะก่อนนอน)
+const sniffCat=(dir,f)=>sideCat({dir,f:f*2,sn:1,nb:f%2});
+Object.assign(POSES,{hindR:f=>hindCat(1,f),hindL:f=>hindCat(-1,f),sniffR:f=>sniffCat(1,f),sniffL:f=>sniffCat(-1,f)});
 // ---------- ท่าที่ใช้ของในฉาก (v97) ----------
 // ซุ่มผีเสื้อ (สวน): หมอบต่ำ ตาโต ก้นส่ายซ้ายขวา ปลายหางกระตุก → กระโจน (ถีบขาหลัง ลอยยืดตัว) → ตะปบ ขาหน้าเหยียดกดพื้น หัวก้มดูใต้อุ้งเท้า
 const PNC=[{e:1.2,by:-2,L:[[3,5.6,.2],[2.2,5.8,.2],[-1.6,2.4,0],[-.8,2.8,.2]]},{e:2.2,by:-6.4,L:[[3.6,9.4,0],[2.8,9.6,0],[-3.4,8.6,.4],[-2.6,9,.3]]}]; // ขายกตามตัว ขาจึงสั้นเท่าเดิม แค่ยื่นไปหน้า/หลัง (เจ้าของขอ: ขาไม่ยืดยาว)
@@ -567,6 +578,10 @@ const INFO=[['sit','นั่งรอ','สะโพกกลม ขาหน�
  ['yawn','หาว','เงยหน้า หลับตาแน่น หูเอนไปหลัง อ้าปากเห็นลิ้น แล้วหุบปากเลียริมฝีปาก (ตื่นนอน งีบเสร็จ)',[280,760,400,460]],
  ['stretchR','ยืดตัว (ขวา)','จากท่ายืน ก้มอกแนบพื้น เหยียดขาหน้าไปข้างหน้า สะโพกยก หางตั้ง หลับตาตอนยืดสุด แล้วกลับมายืน (ตื่นนอนก่อนเดิน)',[240,300,900,820,300,240]],
  ['stretchL','ยืดตัว (ซ้าย)','เหมือนยืดตัวหันขวา กลับรูปทรง ลายไม่สลับ',[240,300,900,820,300,240]],
+ ['hindR','ยืดขาหลัง (ขวา)','ต่อจากยืดตัว ตัวโน้มไปหน้า เหยียดขาหลังทีละข้างไปด้านหลัง ปลายเท้าชี้ เห็นอุ้งเท้าชมพู หลับตาตอนยืดสุด',[200,240,620,480,200,240,520,220]],
+ ['hindL','ยืดขาหลัง (ซ้าย)','เหมือนยืดขาหลังหันขวา กลับรูปทรง ลายไม่สลับ',[200,240,620,480,200,240,520,220]],
+ ['sniffR','ดม (ขวา)','ยืนก้มหัวลงชิดพื้น จมูกฟุดฟิด (ดมของในฉาก ดมเบาะก่อนนอน)',[220,160,220,160]],
+ ['sniffL','ดม (ซ้าย)','เหมือนดมหันขวา กลับรูปทรง',[220,160,220,160]],
  ['knead','นวด ふみふみ','นั่งย่อตัว อุ้งเท้าหน้ายกกดสลับซ้ายขวา ตาหรี่อิ่มใจ คราง (ก่อนนอนบนเบาะ)',[260,200,260,200]],
  ['birdwatch','มองนก','เงยหน้ามองหน้าต่าง ตาโต หูตั้ง ปากสั่นแกะๆ ปลายหางกระตุก (นกชิมะเอนางะมาเกาะหน้าต่างห้อง)',[200,130,200,130]],
  ['startle','สะดุ้ง','กระโดดตัวลอย หูลู่ ตาโตกลม หางพองเป็นแปรง มี ! แล้วย่อตัวนิ่ง หูค่อยกลับ (รถไฟผ่านที่สถานี)',[180,260,900,600]],
@@ -606,11 +621,11 @@ const SW=160,SH=90,FLOOR=85,CY=FLOOR-44,XMIN=-2,XMAX=SW-46,CUSH=12,GAIT={walk:{v
 const SCOL={light:{paper:'#fbf1df',lit:null,trunk:'#9a7250',clk:'#fffaf0',hand:'#4f372b',bob:'#e8b04a',glass:'#f3e3cc',wall:'#fff3e3',wall2:'#fbe7cf',trim:'#e5c9a8',floor:'#efd6b5',floor2:'#e4c6a0',seam:'#d8b68e',sky:'#cfe9f7',sky2:'#e8f6fc',frame:'#c49a73',frame2:'#a97e58',cloud:'#ffffff',cloud2:'#d5e2ee',
   cush:'#f3a8a0',cush2:'#de8a83',cush3:'#fbc9c2',pot:'#dd9264',pot2:'#bf744b',pot3:'#efb08a',leaf:'#86b96f',leaf2:'#65985a',leaf3:'#a8d48f',line:'#7a5a43',shade:'rgba(90,58,38,.14)',moon:null,
   cork:'#dcb98f',cork2:'#c9a277',note:'#fffaf0',note2:'#fde9a6',note3:'#d6ebf6',ink:'#c7b196',shin:'#8a6446',b1:'#e58f7d',b2:'#7ea9cd',b3:'#ebc66b',b4:'#93bf8c',b5:'#b89acb',spine:'rgba(255,255,255,.38)',mk:'#fffaf2',
-  hill:'#b9d9c3',house:'#f2e3d0',roof:'#cf8f72',lwin:null,cur:'#f6cdbd',cur2:'#e6b09d',cur3:'#d98f7c',bird:'#ffffff',bird2:'#e1e6ec',bird4:'#2c2830',bird5:'#b3bdc9',bird6:'#d9a49c',eye:'#1b181e',glare:'rgba(255,255,255,.45)',fshd:'rgba(60,70,90,.10)',curH:'#fde4d9',trunk2:'#b88f6a',leaf4:'#4c7c45',soil:'#6b4a35',pilP:'#f6f1e8',pilP2:'#d8cfc1'},
+  hill:'#b9d9c3',house:'#f2e3d0',roof:'#cf8f72',lwin:null,cur:'#f6cdbd',cur2:'#e6b09d',cur3:'#d98f7c',bird:'#ffffff',bird2:'#e1e6ec',bird4:'#2c2830',bird5:'#b3bdc9',bird6:'#d9a49c',eye:'#1b181e',glare:'rgba(255,255,255,.45)',fshd:'rgba(60,70,90,.10)',curH:'#fde4d9',trunk2:'#b88f6a',leaf4:'#4c7c45',soil:'#6b4a35',pilP:'#f6f1e8',pilP2:'#d8cfc1',box:'#d6a868',box2:'#b4884f',box3:'#ebc98f',box4:'#7d5a35',tape:'#efe3c6'},
  dark:{paper:'#6a5a4a',lit:'#ffd98a',trunk:'#6b5040',clk:'#d9ccb4',hand:'#2e221c',bob:'#b88a3a',glass:'#3a2f27',wall:'#2c2520',wall2:'#27211c',trim:'#3d332b',floor:'#3a3029',floor2:'#342a23',seam:'#2a221c',sky:'#1e2b47',sky2:'#273860',frame:'#7d604a',frame2:'#634a37',cloud:null,
   cush:'#a6625c',cush2:'#864d48',cush3:'#bd7a73',pot:'#9a6544',pot2:'#7b4f34',pot3:'#b07a57',leaf:'#5f8c52',leaf2:'#4a7040',leaf3:'#79a868',line:'#b8987a',shade:'rgba(0,0,0,.3)',moon:'#f4e4a6',
   cork:'#5d4835',cork2:'#4f3d2d',note:'#7a6e60',note2:'#7f6f45',note3:'#5b6a74',ink:'#544638',shin:'#3f2f24',b1:'#8f5a4f',b2:'#4f6a82',b3:'#8f7a45',b4:'#5d7a58',b5:'#6e5d7c',spine:'rgba(255,255,255,.12)',mk:'#cfc6b8',
-  hill:'#18233a',house:'#262c3d',roof:'#352f44',lwin:'#f6d27a',cur:'#5c4340',cur2:'#4b3634',cur3:'#6e4d47',bird:'#ffffff',bird2:'#e1e6ec',bird4:'#2c2830',bird5:'#b3bdc9',bird6:'#d9a49c',eye:'#1b181e',glare:'rgba(255,255,255,.12)',fshd:'rgba(0,0,0,.15)',curH:'#6e5250',trunk2:'#86664e',leaf4:'#3a5a33',soil:'#3a2a20',pilP:'#8a8378',pilP2:'#6e685f'}};
+  hill:'#18233a',house:'#262c3d',roof:'#352f44',lwin:'#f6d27a',cur:'#5c4340',cur2:'#4b3634',cur3:'#6e4d47',bird:'#ffffff',bird2:'#e1e6ec',bird4:'#2c2830',bird5:'#b3bdc9',bird6:'#d9a49c',eye:'#1b181e',glare:'rgba(255,255,255,.12)',fshd:'rgba(0,0,0,.15)',curH:'#6e5250',trunk2:'#86664e',leaf4:'#3a5a33',soil:'#3a2a20',pilP:'#8a8378',pilP2:'#6e685f',box:'#806849',box2:'#64523c',box3:'#9a8062',box4:'#352a21',tape:'#958b74'}};
 const rect=(c,x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h)};
 const blob=(c,cx,cy,rx,ry,col)=>{c.fillStyle=col;for(let y=Math.floor(cy-ry);y<=cy+ry;y++)for(let x=Math.floor(cx-rx);x<=cx+rx;x++)if(((x+.5-cx)/rx)**2+((y+.5-cy)/ry)**2<=1)c.fillRect(x,y,1,1)};
 const canv=()=>{const v=document.createElement('canvas');v.width=SW;v.height=SH;return v};
@@ -630,10 +645,20 @@ const dot=(c,x,y,col)=>{c.fillStyle=col;c.fillRect(Math.floor(x),Math.floor(y),1
 // ใบไม้ผลิ มี.ค.–พ.ค. (เมเปิลในสวนเป็นซากุระ กลีบปลิว) · ร้อน มิ.ย.–ส.ค. (เมเปิลเขียว หิ่งห้อย) · ใบไม้ร่วง ก.ย.–พ.ย. (เมเปิลแดง ใบร่วง) · หนาว ธ.ค.–ก.พ. (กิ่งโล่ง หิมะ)
 // คิดจากเดือนของนาฬิกาฉาก (NOW หรือเวลาเครื่อง) · ชุดสีของฉากรวมสีตามฤดูจาก SCENES[ที่].sea · ภาพแคชแยกตามฤดู · _t.setSeason() ตรึงฤดูไว้ทดสอบ/พรีวิว
 let SEAS=null;const SEASONS=['spring','summer','autumn','winter'],season=(ms=NOW??Date.now())=>SEAS||SEASONS[((new Date(ms).getMonth()+10)%12)/3|0];
+// หิมะตกเฉพาะบางวัน (v114 · เดิมตกทุกวันของหน้าหนาว): สุ่มกำหนดตามวันที่ของเครื่อง ทั้งวันจึงตกหรือไม่ตกเหมือนกันทุกครั้งที่เปิด
+// โอกาส ธ.ค. 35% · ม.ค. 50% · ก.พ. 45% (ค่าของเกม · ต้นหนาวยังตกน้อย) · หิมะบนพื้นและหลังคายังอยู่ทั้งหน้าหนาว · _t.setSnow(true/false) ตรึงไว้ทดสอบ/พรีวิว
+let SNOWF=null;const SNOWP={11:.35,0:.5,1:.45},
+ snowDay=(ms=NOW??Date.now())=>{if(SNOWF!=null)return SNOWF;const d=new Date(ms),pr=SNOWP[d.getMonth()];if(!pr)return false;
+  let h=(d.getFullYear()*372+d.getMonth()*31+d.getDate())*2654435761>>>0;h^=h>>>15;h=Math.imul(h,2246822519)>>>0;h^=h>>>13;return(h>>>0)/4294967296<pr},
+ falling=(se,ms)=>se==='spring'||se==='autumn'||(se==='winter'&&snowDay(ms)); // วันนี้มีของตกไหม (กลีบ/ใบตกทุกวันของฤดู)
+// กล่องกระดาษในห้อง (v118 · รายงานข้อ 11 กล่องหลบ): โผล่มาบางวัน ราว 40% (ของใหม่ให้แมวไปดมแล้วมุดเข้าไปนั่ง) สุ่มกำหนดตามวันที่ · _t.setBox(true/false) ตรึงไว้ทดสอบ/พรีวิว
+let BOXF=null;const BOXP=.4,BOX={x0:58,x1:86,top:74,cx:48,dy:6},
+ boxDay=(ms=NOW??Date.now())=>{if(BOXF!=null)return BOXF;const d=new Date(ms);let h=(d.getFullYear()*389+d.getMonth()*37+d.getDate()*7+3)*2246822519>>>0;h^=h>>>13;h=Math.imul(h,3266489917)>>>0;h^=h>>>16;return(h>>>0)/4294967296<BOXP},
+ boxOn=()=>PLACE==='room'&&boxDay(),bkey=()=>boxOn()?'|box':''; // bkey ต่อท้ายรหัสแคชของฉาก
 // ของที่ตกลงมาตามฤดู: กลีบซากุระ ใบเมเปิล หิมะ · เส้นทางคิดจากนาฬิกาฉากล้วน (ไม่เก็บสถานะ เปิดกี่ครั้งก็ตรงกัน) · ปิดแอนิเมชัน = ไม่มี
 // R = [x, y, กว้าง, สูง] ช่วงที่ตก · ok(x,y) = วาดเฉพาะจุดที่ผ่าน (หน้าต่าง: เฉพาะพิกเซลที่เป็นฟ้า ไม่ทับกรอบ ม่าน เมฆ)
 const FALLC={spring:[['#f7c4d2','#ec9fb5'],['#b98399','#9c6a80']],autumn:[['#e8735a','#c9533f','#f0a05a'],['#93473a','#76382e','#a0663e']],winter:[['#ffffff','#eef3f8'],['#dde5f0','#b8c4d6']]};
-function fall(c,A,se,[x0,y0,w,h],n,ok){if(!A.P||!FALLC[se])return;const C=FALLC[se][A.sk==='dark'?1:0],wi=se==='winter';
+function fall(c,A,se,[x0,y0,w,h],n,ok){if(!A.P||!FALLC[se]||!falling(se,A.ms))return;const C=FALLC[se][A.sk==='dark'?1:0],wi=se==='winter';
  for(let i=0;i<n;i++){const T=(wi?11000:se==='spring'?13000:9000)+(i*7919)%6000,p=(A.ms/T+i*.618)%1,
   rx=(((i*37.7)%w+p*w*(wi?.1:.35)+Math.sin(A.ms/(650+i*53)+i)*(wi?1.3:2.6))%w+w)%w,x=Math.floor(x0+rx),y=Math.floor(y0+p*h),f=((A.ms/(wi?400:260))+i)|0;
   const P=wi?(i%5?[[0,0]]:[[0,0],[1,0],[0,1],[1,1]]):se==='spring'?(f%2?[[0,0],[1,0]]:[[0,0],[0,1]]):(f%2?[[0,0],[1,0],[0,1]]:[[1,0],[0,1],[1,1]]);
@@ -641,7 +666,7 @@ function fall(c,A,se,[x0,y0,w,h],n,ok){if(!A.P||!FALLC[se])return;const C=FALLC[
 // หน้ากากช่องฟ้าของภาพแคช: พิกเซลที่เป็นสี sky/sky2 พอดี (แคชต่อผืนผ้าใบ)
 const MASKS=new WeakMap();function skyMask(v,k){let m=MASKS.get(v);if(m)return m;const d=v.getContext('2d').getImageData(0,0,SW,SH).data,S=[k.sky,k.sky2].filter(x=>x&&x[0]==='#').map(x=>parseInt(x.slice(1,7),16));
  m=new Uint8Array(SW*SH);for(let i=0;i<SW*SH;i++)if(d[i*4+3]===255&&S.includes((d[i*4]<<16)|(d[i*4+1]<<8)|d[i*4+2]))m[i]=1;MASKS.set(v,m);return m}
-const fallIn=(c,k,A,se,R,n)=>{if(!A.P||!FALLC[se])return;const M=skyMask(layer('bg',A.sk),k);fall(c,A,se,R,n,(x,y)=>x>=0&&y>=0&&x<SW&&y<SH&&M[y*SW+x])};
+const fallIn=(c,k,A,se,R,n)=>{if(!A.P||!FALLC[se]||!falling(se,A.ms))return;const M=skyMask(layer('bg',A.sk),k);fall(c,A,se,R,n,(x,y)=>x>=0&&y>=0&&x<SW&&y<SH&&M[y*SW+x])};
 // ---------- พระจันทร์ตามโลกจริง (v104 เจ้าของขอ) ----------
 // เฟสคิดจากเดือนจันทรคติเฉลี่ย 29.53 วัน นับจากจันทร์ดับ 6 ม.ค. 2000 18:14 UTC (คลาดจากจริงไม่เกินราวครึ่งวัน)
 // p: 0 = ดับ · .25 = ข้างขึ้นครึ่งดวง · .5 = เต็มดวง · .75 = ข้างแรมครึ่งดวง · ซีกโลกเหนือ: ข้างขึ้นสว่างฝั่งขวา ข้างแรมสว่างฝั่งซ้าย
@@ -651,15 +676,24 @@ const SYN=29.530588853,NM0=Date.UTC(2000,0,6,18,14),TAU=Math.PI*2;
 function moonAt(ms){const p=(((ms-NM0)/864e5/SYN)%1+1)%1,d=new Date(ms),h=d.getHours()+d.getMinutes()/60,ha=((h-12-24*p)%24+36)%24-12;
  return{p,lit:(1-Math.cos(TAU*p))/2,ha,up:Math.abs(ha)<6.2,k:moonTilt(ms,p,h)}}
 // ทิศด้านสว่าง (v105 เจ้าของขอ "เสี้ยวนอนเป็นเรือแบบที่เห็นจากเมืองไทย"): ด้านสว่างหันหาดวงอาทิตย์เสมอ คิดตำแหน่งดวงอาทิตย์กับดวงจันทร์บนฟ้าจริง
-// ที่ละติจูด 14°N (กรุงเทพฯ) ตามวันในปี (ระนาบสุริยวิถีเอียง 23.44°) แล้วหาทิศจากดวงจันทร์ไปดวงอาทิตย์บนจอ (มองไปทางใต้: ตะวันออกซ้าย ตะวันตกขวา)
+// ที่ละติจูดตามเขตเวลาเครื่อง (LAT · ค่าเริ่มต้น 14°N กรุงเทพฯ) ตามวันในปี (ระนาบสุริยวิถีเอียง 23.44°) แล้วหาทิศจากดวงจันทร์ไปดวงอาทิตย์บนจอ (มองไปทางใต้: ตะวันออกซ้าย ตะวันตกขวา)
 // ปัดเป็น 8 ทิศ k: 0 ขวา 1 ขวาล่าง 2 ล่าง (เสี้ยวหงายเป็นเรือ) 3 ซ้ายล่าง 4 ซ้าย 5 ซ้ายบน 6 บน 7 ขวาบน · ถือว่าเวลาเครื่อง ≈ เวลาสุริยะท้องถิ่น
-const LAT=14*Math.PI/180,OBL=23.44*Math.PI/180,RAD=Math.PI/180;
+// v115 ละติจูดตามเขตเวลาของเครื่อง (เดิมกรุงเทพฯ ทุกเครื่อง): ผู้ใช้ญี่ปุ่นเห็นเสี้ยวเอียงแบบญี่ปุ่น · ไม่รู้จักเขตเวลา = 14°N
+// ซีกโลกใต้มองไปทางเหนือ (ตะวันออกอยู่ขวา) แต่ฉากวาดพระจันทร์ขึ้นซ้ายตกขวาเสมอ จึงใช้ภาพสะท้อนของท้องฟ้าจริงทั้งภาพ (moonTilt กลับ dx) · _t.setLat(องศา) ตรึงไว้ทดสอบ/พรีวิว
+const TZLAT={Bangkok:13.75,Vientiane:18,Phnom_Penh:11.6,Ho_Chi_Minh:10.8,Saigon:10.8,Yangon:16.8,Rangoon:16.8,Tokyo:35.7,Seoul:37.6,Shanghai:31.2,Chongqing:29.6,Hong_Kong:22.3,Macau:22.2,Taipei:25,
+ Singapore:1.35,Kuala_Lumpur:3.1,Jakarta:-6.2,Makassar:-5.1,Manila:14.6,Kolkata:22.6,Calcutta:22.6,Dhaka:23.8,Kathmandu:27.7,Dubai:25.2,Riyadh:24.7,Karachi:24.9,
+ London:51.5,Paris:48.9,Berlin:52.5,Madrid:40.4,Rome:41.9,Moscow:55.8,New_York:40.7,Chicago:41.9,Denver:39.7,Los_Angeles:34.1,Toronto:43.7,Vancouver:49.3,Mexico_City:19.4,Honolulu:21.3,
+ Sao_Paulo:-23.5,Buenos_Aires:-34.6,Santiago:-33.4,Lima:-12,Bogota:4.6,Johannesburg:-26.2,Cairo:30,Lagos:6.5,Nairobi:-1.3,
+ Sydney:-33.9,Melbourne:-37.8,Brisbane:-27.5,Perth:-31.95,Adelaide:-34.9,Darwin:-12.5,Hobart:-42.9,Auckland:-36.85},
+ TZREG={Asia:25,Europe:50,America:35,Africa:5,Australia:-30,Pacific:-15,Atlantic:35,Indian:-10},
+ latOf=tz=>{if(!tz)return 14;const P=tz.split('/'),c=TZLAT[P[P.length-1]];return c!=null?c:TZREG[P[0]]!=null?TZREG[P[0]]:14};
+let LAT=(()=>{try{return latOf(Intl.DateTimeFormat().resolvedOptions().timeZone)}catch(e){return 14}})()*Math.PI/180;const OBL=23.44*Math.PI/180,RAD=Math.PI/180;
 function moonTilt(ms,p,h){const dd=(ms-Date.UTC(2000,0,1,12))/864e5,ls=(280.46+.9856474*dd)*RAD,lm=ls+p*TAU,
  eq=l=>[Math.atan2(Math.cos(OBL)*Math.sin(l),Math.cos(l)),Math.asin(Math.sin(OBL)*Math.sin(l))],[ras,des]=eq(ls),[ram,dem]=eq(lm),
  hs=(h-12)*15*RAD,hm=hs-(ram-ras),
  aa=(H,de)=>{const al=Math.asin(Math.sin(LAT)*Math.sin(de)+Math.cos(LAT)*Math.cos(de)*Math.cos(H)),az=Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(LAT)-Math.tan(de)*Math.cos(LAT));return[al,az]}, // az วัดจากทิศใต้ไปทางตะวันตก
  [a1,z1]=aa(hm,dem),[a2,z2]=aa(hs,des),dz=z2-z1,dx=Math.cos(a2)*Math.sin(dz),dy=Math.cos(a1)*Math.sin(a2)-Math.sin(a1)*Math.cos(a2)*Math.cos(dz);
- return((Math.round(Math.atan2(-dy,dx)/(Math.PI/4))%8)+8)%8}
+ return((Math.round(Math.atan2(-dy,LAT<0?-dx:dx)/(Math.PI/4))%8)+8)%8}
 let MOON=moonAt(Date.now());
 // ตำแหน่งบนฟ้าเป็นเส้นโค้ง: (xz,yz) = จุดสูงสุดตอนผ่านกลางฟ้า (ha=0) · xe/xw = x ที่ขอบฟ้าฝั่งขึ้น (ซ้าย) / ฝั่งตก (ขวา) · h = ระยะลงถึงขอบฟ้า
 // แต่ละฉากวางจุดสูงสุดไว้กลางช่องกระจก/ช่องฟ้าที่เห็นชัด ไม่ให้ค้างหลังกรอบหน้าต่างหรือป้าย (ขึ้น-ตกแล้วหายหลังภูเขา ตึก หรือกรอบ)
@@ -782,7 +816,7 @@ function roomBg(c,k){
  dot(c,124,40,k.hand);dot(c,126,40,k.hand);rect(c,124,42,4,1,k.b1);dot(c,125,43,k.bob);dot(c,123,39,k.b1);dot(c,127,39,k.b1);
  roomLamp(c,k);
  blob(c,38,84.4,24,4.6,k.cush2);blob(c,38,83.4,23.4,4,k.cush);blob(c,33,81.8,12,1.3,k.cush3);[[14,83],[61,83]].forEach(([x,y])=>rect(c,x,y,1,2,k.cush2)); // เบาะนอน (ซาบุตง) กว้างพอให้ท่าขดนอนอยู่บนเบาะ
- blob(c,111,71.6,24,1.2,k.shade);blob(c,147,88.6,10,1.6,k.shade)}
+ blob(c,111,71.6,24,1.2,k.shade);blob(c,147,88.6,10,1.6,k.shade);if(boxOn())boxBack(c,k)}
 // โคมกระดาษตั้งพื้น (อันด้ง) ข้างเบาะ (เจ้าของขอ 2026-11-19 · ของตกแต่งชิ้นแรก) ไฟติดตอนรุ่งเช้า พลบค่ำ และกลางคืน (k.lit)
 // แสงบนผนัง/พื้นวาดในฉากหลัง ส่วนแสงที่ตกบนตัวแมววาดทับทีหลังใน roomLight()
 function roomLamp(c,k){const L=k.lit;if(L){blob(c,72,62,30,22,'rgba(255,200,120,.10)');blob(c,72,62,19,14,'rgba(255,205,130,.12)');blob(c,72,79,26,4,'rgba(255,200,120,.16)')}
@@ -801,7 +835,14 @@ function roomFg(c,k){
  [[143.5,43,-2.3,5,3.2],[150.5,43,-.8,5,3.2],[141,51,-1.9,4.6,3],[153,49.5,-1.2,4.6,3],[146,47,-2.8,4.6,2.8],[149,47.5,-.3,4.6,2.8],[144.5,63,2.7,4,2.6]].forEach(([x,y,a,L,W])=>figLeaf(c,x,y,a,L,W,BK));
  [[147,40.5,-1.57,5.4,3.4],[139.5,54,-2.6,5.2,3.2],[155,52,-.4,5.2,3.2],[138.5,58.5,2.9,4.4,2.8],[156,56.5,.5,4.4,2.8],[147.5,45.5,-1.65,4.4,3],[142,57.5,2.4,4,2.6],[151.5,55.5,.9,4,2.6],[150,65,.4,4,2.6]].forEach(([x,y,a,L,W])=>figLeaf(c,x,y,a,L,W,FR));
  for(let y=72;y<=88;y++){const h=y<75?8:7-(y-75)*.2;rect(c,Math.round(147-h),y,Math.round(h*2),1,y<75?k.pot3:k.pot)}rect(c,141,76,1,10,k.pot3);rect(c,152,77,2,10,k.pot2);rect(c,141,72,12,1,k.soil);rect(c,139,74,16,1,k.pot2); // กระถาง ดิน ขอบปาก
+ if(boxOn())boxFront(c,k);
 }
+// กล่องกระดาษ (v118): ฝาหลังกับด้านในอยู่ฉากหลัง (หลังแมว) · ด้านหน้า ฝาข้าง เทปกาว อยู่ฉากหน้า (บังตัวแมวตอนนั่งในกล่อง เห็นแค่หัว)
+function boxBack(c,k){const{x0,x1,top}=BOX;rect(c,x0-1,86,x1-x0+3,1,k.shade);poly(c,[[x0+1,top-1],[x0+3,top-7],[x1-3,top-7],[x1-1,top-1]],k.box3);rect(c,x0+3,top-7,x1-x0-6,1,k.box);
+ rect(c,x0+1,top-2,x1-x0-2,2,k.box4);rect(c,x0+1,top-2,1,2,k.box2)}
+function boxFront(c,k){const{x0,x1,top}=BOX;rect(c,x0,top,x1-x0,86-top,k.box);rect(c,x0,top,x1-x0,1,k.box3);rect(c,x1-2,top+1,2,85-top,k.box2);rect(c,x0,85,x1-x0,1,k.box2);
+ rect(c,Math.round((x0+x1)/2)-1,top,3,5,k.tape);rect(c,x0+3,top+7,5,1,k.box2);rect(c,x0+3,top+9,3,1,k.box2); // เทปกาว · ลายพิมพ์ข้างกล่อง (เส้น ไม่มีตัวอักษร)
+ poly(c,[[x0,top],[x0-6,top-3],[x0-6,top-1],[x0,top+3]],k.box2);poly(c,[[x1,top],[x1+6,top-3],[x1+6,top-1],[x1,top+3]],k.box3)} // ฝาข้างพับออก
 // นาฬิกาลูกตุ้มติดผนังในห้อง: เข็มชั่วโมง/นาทีตามเวลาจริงของเครื่อง ลูกตุ้มแกว่งรอบละ 2 วินาที (ปิดแอนิเมชัน = ลูกตุ้มนิ่ง)
 // วาดทับฉากหลังทุกครั้งที่วาดใหม่ (ฉากหลังแคชไว้ จึงวาดนาฬิกาแยก) หน้าปัดกลางพิกเซล (39,17)
 const handAt=(c,cx,cy,a,len,col,w=0)=>{c.fillStyle=col;for(let t=0;t<=len;t+=.25)for(const o of w?[-.45,.45]:[0])c.fillRect(Math.floor(cx+Math.sin(a)*t+Math.cos(a)*o),Math.floor(cy-Math.cos(a)*t+Math.sin(a)*o),1,1)}; // w = เข็มหนา (ชั่วโมง)
@@ -832,7 +873,7 @@ function roomBird(c,k,A){const o=birdAt(A);if(o==null)return;const B=birdPose(o)
  else{const sd=td>0?1:-1;rect(c,cx+sd*4,cy+1,1,2,k.bird4);dot(c,cx+sd*3,cy+2,k.bird6);dot(c,cx+sd*3,cy+3,k.bird6);dot(c,cx-1,cy+Math.ceil(ry)+.3,k.bird4);dot(c,cx+1,cy+Math.ceil(ry)+.3,k.bird4)} // ปีกดำกับขนชมพูด้านหลัง ขาเกาะ
  const fx=cx+(B.tilt||0);dot(c,fx-2,cy-1,k.eye);dot(c,fx+2,cy-1,k.eye);dot(c,fx,cy,k.eye);c.restore()}                                            // ตาเม็ดเล็กห่างกัน ปากจิ๋วตรงกลาง
 const roomLive=(c,k,A)=>{const se=season(A.ms);if(se==='winter'||se==='spring')fallIn(c,k,A,se,[95,8,34,30],se==='winter'?13:4);roomSun(c,k,A);roomBird(c,k,A);roomClock(c,k,A.d,A.P?Math.round(Math.sin(A.t/1000*Math.PI)*3)/3:0)};
-const roomTick=A=>{const o=birdAt(A),se=season(A.ms);return(A.P&&(se==='winter'||se==='spring')?(A.ms/120|0)+'|':'')+A.d.getHours()*60+A.d.getMinutes()+'|'+(A.P?Math.round(Math.sin(A.t/1000*Math.PI)*3)/3:0)+'|'+(o==null?'':(B=>B.fly?'f'+(o/35|0):B.x+'|'+B.tilt+'|'+B.puff)(birdPose(o)))};
+const roomTick=A=>{const o=birdAt(A),se=season(A.ms);return(A.P&&(se==='winter'||se==='spring')&&falling(se,A.ms)?(A.ms/120|0)+'|':'')+A.d.getHours()*60+A.d.getMinutes()+'|'+(A.P?Math.round(Math.sin(A.t/1000*Math.PI)*3)/3:0)+'|'+(o==null?'':(B=>B.fly?'f'+(o/35|0):B.x+'|'+B.tilt+'|'+B.puff)(birdPose(o)))};
 
 // ===== สวนญี่ปุ่น (庭): ภูเขาไกลยอดหิมะ แนวไม้หลังรั้ว เมเปิลแดง รั้วไม้ไผ่ผูกเชือก สนาม ทางกรวดคราด หินกลางวงคราด โคมหิน ต้นสน กระบอกไม้ไผ่ตอกหิน (ชิชิโอโดชิ) · ฉากหน้า: พุ่มอาซาเลีย
 // ขยับ: เมฆลอย กระบอกไม้ไผ่รับน้ำแล้วกระดกเทน้ำ ตีหินดังป๊อก ทุก 7 วินาที ผีเสื้อบินตอนกลางวัน หิ่งห้อยกะพริบตอนกลางคืน
@@ -1101,7 +1142,7 @@ function stationFg(c,k){rect(c,146,9,8,81,k.pil);rect(c,146,9,2,81,k.pil3);rect(
  rect(c,146,38,8,8,k.ink);rect(c,147,39,6,6,k.sign);rect(c,150,40,1,4,k.ink);dot(c,149,41,k.ink);rect(c,149,44,3,1,k.ink);                                 // ป้ายชานชาลาเลข 1
  rect(c,145,49,10,6,k.ink);rect(c,146,50,8,4,k.edge);rect(c,147,52,5,1,k.ink);dot(c,151,51,k.ink);dot(c,151,53,k.ink);dot(c,152,52,k.ink)}                   // ป้ายทางออกสีเหลืองลูกศรขวา
 function stationFront(c,k,A){const d=A.d,m=d.getMinutes(),h=d.getHours()%12+m/60;handAt(c,150,30,h/12*2*Math.PI,2,k.ink);handAt(c,150,30,m/60*2*Math.PI,3.2,k.ink);dot(c,150,30,k.ink)}
-const stationTick=A=>{const x=trainX(A);return(A.P&&season(A.ms)==='winter'?(A.ms/120|0)+'|':'')+A.d.getHours()*60+A.d.getMinutes()+'|'+cloudKey(A)+'|'+(x==null?'':x)};
+const stationTick=A=>{const x=trainX(A);return(A.P&&season(A.ms)==='winter'&&snowDay(A.ms)?(A.ms/120|0)+'|':'')+A.d.getHours()*60+A.d.getMinutes()+'|'+cloudKey(A)+'|'+(x==null?'':x)};
 
 // สีตามฤดูของแต่ละฉาก (ทับชุดสีหลัก · รุ่งเช้า/พลบค่ำใช้ชุดสว่างของฤดูแล้วทับด้วย TWI) · sn/sn2 = หิมะ/เงาหิมะ (มีเฉพาะหน้าหนาว)
 const SNOW={light:{sn:'#fbfcfe',sn2:'#dbe4ee'},dark:{sn:'#c3cddc',sn2:'#8f9db2'}},
@@ -1113,10 +1154,199 @@ const SNOW={light:{sn:'#fbfcfe',sn2:'#dbe4ee'},dark:{sn:'#c3cddc',sn2:'#8f9db2'}
   winter:{light:{hill:'#eef3f7',roof:'#f7f9fc',...SNOW.light},dark:{hill:'#2f3a50',roof:'#535d72',...SNOW.dark}}},
  KSEA={winter:{light:{...SNOW.light},dark:{...SNOW.dark}}},
  TSEA={winter:{light:{btop:'#f7f9fc',...SNOW.light},dark:{btop:'#8d99ad',...SNOW.dark}}};
-const SCENES={room:{pal:SCOL,sea:RSEA,bg:roomBg,fg:roomFg,bed:CUSH,live:roomLive,tick:roomTick,over:roomLight},
- garden:{pal:GCOL,sea:GSEA,far:gardenFar,air:clouds,mid:gardenMid,bg:gardenBg,live:gardenLive,fg:gardenFg,front:gardenFront,tick:gardenTick,bed:null},
- cafe:{pal:KCOL,sea:KSEA,bg:cafeBg,live:cafeLive,fg:cafeFg,front:cafeFront,tick:cafeTick,bed:null},
- station:{pal:TCOL,sea:TSEA,far:stationFar,air:clouds,mid:stationMid,back:stationBack,bg:stationBg,fg:stationFg,front:stationFront,tick:stationTick,bed:null}};
+// ===== ร้านสะดวกซื้อ (コンビニ · v120): ผนังขาวแถบสีหัวร้าน (สีของร้านสมมติ ไม่ใช่แบรนด์จริง) · ประตูกระจกซ้ายเห็นถนนกับฟ้า ชั้นนิตยสารใต้หน้าต่าง
+// ตู้แช่เครื่องดื่มสามบาน (กลางคืนไฟในตู้สว่าง) · เคาน์เตอร์: หม้อโอเด้ง ตู้ของทอดอุ่น เครื่องคิดเงิน เครื่องชงกาแฟ · ฉากหน้า: ตะกร้าซ้อนกัน
+// ขยับ: ไอโอเด้ง ป้ายโปรโมชันห้อยแกว่ง (สีตามฤดู) · ห้ามมีตัวหนังสือ (ป้าย/ฉลากเป็นแถบสี)
+const KBCOL={light:{wall:'#f6f4ef',wall2:'#ebe7de',band:'#3fa7a0',band2:'#f2c14e',band3:'#2f7f7a',floor:'#e9e7e1',floor2:'#dcd9d1',frame:'#b9bec4',frame2:'#8f959c',
+  sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',cloud2:'#d5e2ee',moon:null,bldg:'#e3d5c3',bldg2:'#cdbca6',bwin:'#a9cde3',road:'#b9b5ae',road2:'#a5a19a',walk:'#ddd6ca',
+  fr:'#e3e7ea',fr2:'#aab2b9',frIn:'#eef6fa',frSh:'#c3ccd3',glare:'rgba(255,255,255,.55)',frGlow:null,b1:'#e86b5a',b2:'#5aa0d6',b3:'#f2c14e',b4:'#7bc47f',b5:'#ffffff',b6:'#b58ad6',cap:'#5b6168',
+  mag:'#cfd3d8',mag2:'#a9afb6',m1:'#f08a5d',m2:'#6fb7e0',m3:'#e26a8d',m4:'#8fcf7a',m5:'#f7d35c',
+  ctop:'#d8d3ca',ctop2:'#f1ede6',cfront:'#b8c3c9',cfront2:'#9aa6ad',reg:'#5b6168',reg2:'#868d93',scr:'#9fd7c9',pot:'#c9ccd0',pot2:'#9aa0a6',broth:'#d9a75a',daikon:'#f4ead0',kon:'#8a7a70',egg:'#f3d79a',
+  case:'#f7ecd0',case2:'#e8c98a',chick:'#d99a45',chick2:'#b8782c',cof:'#4f565e',cof2:'#7a838b',cup:'#ffffff',steam:'#ffffff',post:'#5fb3e0',post2:'#7bc4c0',post3:'#f7d35c',
+  bask:'#e5534b',bask2:'#b83a33',bask3:'#f2837b',pop:'#5fb3e0',pop2:'#ffffff',str:'#8f959c',line:'#5b5f66',shade:'rgba(60,60,70,.12)'},
+ dark:{wall:'#6c6f76',wall2:'#62656c',band:'#2b6f6b',band2:'#a8873a',band3:'#215552',floor:'#5a5d63',floor2:'#505359',frame:'#7d838a',frame2:'#61676e',
+  sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',bldg:'#303a50',bldg2:'#283146',bwin:'#f6d27a',road:'#2c3140',road2:'#252937',walk:'#3a4050',
+  fr:'#8a9097',fr2:'#6a7077',frIn:'#e4f1f7',frSh:'#b7c3cb',glare:'rgba(255,255,255,.35)',frGlow:'rgba(220,240,250,.10)',b1:'#e86b5a',b2:'#5aa0d6',b3:'#f2c14e',b4:'#7bc47f',b5:'#ffffff',b6:'#b58ad6',cap:'#4a4f56',
+  mag:'#7d828a',mag2:'#646970',m1:'#a8654a',m2:'#4f7f9c',m3:'#9c4f68',m4:'#64905a',m5:'#a89448',
+  ctop:'#8f8a82',ctop2:'#a5a098',cfront:'#646c73',cfront2:'#555c63',reg:'#3a3e44',reg2:'#565b61',scr:'#7fd7c4',pot:'#8f9398',pot2:'#6c7076',broth:'#b88a48',daikon:'#d9cfb4',kon:'#5e544d',egg:'#d4b97c',
+  case:'#f2dca8',case2:'#c9a462',chick:'#c98a3a',chick2:'#9c6826',cof:'#33383e',cof2:'#545b62',cup:'#d9d6cf',steam:'#e8e6e1',post:'#3f7fa6',post2:'#4f8c89',post3:'#a8944a',
+  bask:'#a8403a',bask2:'#7f2c27',bask3:'#bd5f57',pop:'#3f7fa6',pop2:'#d9d6cf',str:'#61676e',line:'#c9c6bf',shade:'rgba(0,0,0,.25)'}};
+// สีป้ายโปรโมชันกับโปสเตอร์ตามฤดู (ใบไม้ผลิชมพูซากุระ · ร้อนฟ้า · ใบไม้ร่วงส้ม · หนาวแดง) · หนาว: หิมะบนถนนและหลังคาตึกฝั่งตรงข้าม
+const KBSEA={spring:{light:{pop:'#f4a6bf',post:'#f4a6bf'},dark:{pop:'#a86a80',post:'#a86a80'}},autumn:{light:{pop:'#e8873a',post:'#e8873a'},dark:{pop:'#a86230',post:'#a86230'}},
+ winter:{light:{pop:'#d9534f',post:'#d9534f',...SNOW.light},dark:{pop:'#9c3d3a',post:'#9c3d3a',...SNOW.dark}}}; // โปสเตอร์โปรโมชันบนกระจกสีเดียวกับป้ายห้อย
+function kbBg(c,k){const wi=k.season==='winter';
+ rect(c,0,0,SW,71,k.wall);for(let x=7;x<SW;x+=14)rect(c,x,8,1,63,k.wall2);rect(c,0,0,SW,5,k.band);rect(c,0,5,SW,1,k.band2);rect(c,0,6,SW,2,k.band3);   // ผนัง + แถบสีหัวร้าน
+ // ประตูกระจกเลื่อน: ฟ้า ตึกฝั่งตรงข้าม ทางเท้า ถนน (พระจันทร์สูงสุดกลางบานซ้ายบน ขึ้นตกหลังตึก)
+ rect(c,2,10,40,48,k.frame);rect(c,4,12,36,44,k.sky);rect(c,4,30,36,14,k.sky2);
+ if(k.moon)moonSky(c,[[8,15],[16,20],[30,14],[35,22],[25,25]],moonXY(13,16,3,40,18),k.moon);else{c.drawImage(cloudImg(k,14,5,11),6,15);c.drawImage(cloudImg(k,9,4,13),28,19)}
+ rect(c,4,30,15,14,k.bldg);rect(c,21,26,19,18,k.bldg2);[[6,32],[11,32],[6,37],[11,37],[23,29],[28,29],[33,29],[23,35],[28,35],[33,35]].forEach(([x,y],i)=>rect(c,x,y,3,3,k.moon?(i%3?k.bwin:k.bldg2):k.bwin));
+ if(wi){rect(c,4,30,15,1,k.sn);rect(c,21,26,19,1,k.sn)}
+ rect(c,4,44,36,4,k.walk);rect(c,4,48,36,8,k.road);for(let x=6;x<40;x+=8)rect(c,x,51,4,1,k.road2);if(wi){[[6,44,8],[20,45,10],[30,44,6]].forEach(([x,y,w])=>rect(c,x,y,w,1,k.sn));rect(c,4,48,36,1,k.sn2)}
+ rect(c,21,12,2,44,k.frame);rect(c,4,40,36,1,k.frame2);rect(c,18,34,2,6,k.frame2);rect(c,24,34,2,6,k.frame2);rect(c,2,10,40,1,k.frame2);  // กรอบกลางบานเลื่อน มือจับ
+ [[6,23,5,6,k.post],[33,41,6,7,k.post2],[9,41,4,5,k.post3]].forEach(([x,y,w,h,col])=>{rect(c,x,y,w,h,col);rect(c,x+1,y+1,w-2,1,k.pop2);rect(c,x+1,y+3,w-3,1,k.pop2+'aa')}); // โปสเตอร์ติดกระจก (แถบ ไม่มีตัวหนังสือ)
+ // ชั้นนิตยสารใต้หน้าต่าง: นิตยสารเรียงเอียง ปกสีต่างๆ
+ rect(c,2,58,40,13,k.mag);rect(c,2,58,40,1,k.ctop2);rect(c,2,64,40,1,k.mag2);rect(c,2,70,40,1,k.mag2);
+ [k.m1,k.m2,k.m3,k.m4,k.m5,k.m2,k.m1,k.m4,k.m3,k.m5].forEach((col,i)=>{const x=3+i*4;rect(c,x,59,3,5,col);dot(c,x,59,k.pop2);rect(c,x+1,65,3,5,[k.m5,k.m3,k.m2,k.m1,k.m4][i%5]);dot(c,x+1,66,k.pop2)});
+ // ตู้แช่เครื่องดื่มสามบาน: ไฟในตู้ ชั้นวางขวด ฝาขวด มือจับ ประกายกระจกเฉียง
+ rect(c,45,9,61,3,k.band);rect(c,45,11,61,1,k.band3);[[47,6],[60,8],[75,5],[88,7]].forEach(([x,w])=>rect(c,x,10,w,1,k.pop2));                          // แถบหมวดบนตู้ (แถบสี)
+ if(k.frGlow)blob(c,75,40,38,30,k.frGlow);
+ rect(c,45,12,61,59,k.fr2);rect(c,46,13,59,57,k.fr);
+ [47,66,85].forEach((x,d)=>{rect(c,x,14,18,52,k.frIn);[24,36,48,60].forEach(y=>rect(c,x,y,18,1,k.frSh));
+  [16,28,40,52].forEach((y,r)=>{const C=[[k.b1,k.b2,k.b3],[k.b4,k.b5,k.b2],[k.b3,k.b6,k.b1],[k.b5,k.b4,k.b3]][(r+d)%4];for(let i=0;i<6;i++){const bx=x+1+i*3,col=C[i%3];rect(c,bx,y+2,2,6,col);dot(c,bx,y+1,k.cap);if(r%2)dot(c,bx+1,y+4,k.pop2)}});
+  rect(c,x+15,30,1,12,k.fr2);rect(c,x+16,30,1,12,k.frame);for(let i=0;i<8;i++)dot(c,x+2+i,22-i,k.glare);for(let i=0;i<5;i++)dot(c,x+4+i,46-i,k.glare)});
+ rect(c,45,66,61,5,k.fr2);rect(c,46,67,59,1,k.frame);
+ // ผนังหลังเคาน์เตอร์: บอร์ดเมนูของทอด (ภาพ ไม่มีตัวหนังสือ) ชั้นวางของเล็ก
+ rect(c,112,14,30,18,k.frame2);rect(c,113,15,28,16,k.ctop2);[[115,17],[124,17],[133,17]].forEach(([x,y],i)=>{blob(c,x+3,y+5,3,2.4,[k.chick,k.broth,k.egg][i]);rect(c,x,y+9,7,1,k.post2);rect(c,x+2,y+11,3,1,k.band)});
+ rect(c,146,16,12,1,k.frame2);[[147,k.m1],[150,k.m2],[153,k.m5]].forEach(([x,col])=>{rect(c,x,11,2,5,col);dot(c,x,11,k.pop2)});rect(c,146,26,12,1,k.frame2);[[147,k.b4],[151,k.b6],[155,k.b3]].forEach(([x,col])=>rect(c,x,22,3,4,col));
+ // เคาน์เตอร์
+ rect(c,108,50,52,3,k.ctop);rect(c,108,50,52,1,k.ctop2);rect(c,109,53,51,18,k.cfront);for(let x=121;x<SW;x+=13)rect(c,x,54,1,15,k.cfront2);rect(c,109,53,51,1,k.cfront2);rect(c,109,68,51,3,k.cfront2);
+ // หม้อโอเด้ง: ช่องแบ่ง น้ำซุป หัวไชเท้า ไข่ คอนเนียคุสามเหลี่ยม
+ rect(c,110,45,16,5,k.pot2);rect(c,111,45,14,4,k.broth);rect(c,110,44,16,1,k.pot);[115,120].forEach(x=>rect(c,x,45,1,4,k.pot));
+ blob(c,112.6,46.4,1.6,1.2,k.daikon);blob(c,117.6,46.4,1.4,1.4,k.egg);poly(c,[[121.5,48],[124.5,48],[123,45.2]],k.kon);dot(c,112,46,k.cup);
+ // ตู้ของทอดอุ่น (ไฟอุ่นในตู้)
+ rect(c,128,38,12,12,k.frame2);rect(c,129,39,10,10,k.case);rect(c,129,44,10,1,k.case2);[[131,42],[135,42],[133,47],[136,47]].forEach(([x,y])=>{blob(c,x,y,1.6,1.2,k.chick);dot(c,x,y+1,k.chick2)});dot(c,130,40,k.cup);
+ // เครื่องคิดเงิน + เครื่องชงกาแฟ
+ rect(c,143,44,9,6,k.reg);rect(c,144,41,7,3,k.reg2);rect(c,145,42,5,1,k.scr);[[144,46],[146,46],[148,46],[144,48],[146,48],[148,48]].forEach(([x,y])=>dot(c,x,y,k.reg2));
+ rect(c,153,34,7,16,k.cof);rect(c,153,34,7,2,k.cof2);rect(c,154,37,5,3,k.scr);rect(c,155,44,3,1,k.cof2);rect(c,155,47,3,3,k.cup);
+ for(let y=71;y<SH;y+=5)for(let x=0;x<SW;x+=10)rect(c,x,y,10,5,((x/10+(y-71)/5)&1)?k.floor2:k.floor);rect(c,0,71,SW,1,k.floor2); // พื้นกระเบื้อง
+ blob(c,75,72,30,1.2,k.shade);blob(c,150,88.6,10,1.4,k.shade)}
+// ตะกร้าซ้อนกัน (ฉากหน้า แมวแอบได้)
+function kbFg(c,k){for(let i=0;i<3;i++){const y=74-i*3;poly(c,[[142,y],[159,y],[157,86],[144,86]],i?k.bask2:k.bask);rect(c,142,y,17,1,k.bask3);if(!i)for(let x=145;x<157;x+=3)rect(c,x,y+3,1,8,k.bask2)}
+ rect(c,148,64,5,1,k.bask2);rect(c,147,65,1,3,k.bask2);rect(c,153,65,1,3,k.bask2)}
+// ขยับ: ไอโอเด้งสามสาย ป้ายโปรโมชันห้อยแกว่งเบาๆ · หิมะ/กลีบ/ใบตกนอกประตูกระจก
+function kbLive(c,k,A){const se=season(A.ms);if(se!=='summer')fallIn(c,k,A,se,[4,12,36,36],se==='winter'?11:4);
+ const sw=A.P?Math.round(Math.sin(A.ms/900)*1.2):0;rect(c,70,0,1,6+sw,k.str);rect(c,82,0,1,6-sw,k.str);poly(c,[[66,6+sw],[86,6-sw],[86,12-sw],[66,12+sw]],k.pop);
+ rect(c,69,8+(sw>0?1:0),14,1,k.pop2);rect(c,71,10,9,1,k.pop2+'aa');
+ if(!A.P)return;for(let i=0;i<3;i++){const p=(A.ms/1900+i/3)%1,y=43-p*10,x=114+i*4+Math.sin(p*6+i*2)*1.2;c.globalAlpha=(1-p)*.7;rect(c,Math.round(x),Math.round(y),1,2,k.steam)}c.globalAlpha=1}
+const kbTick=A=>A.P?''+(A.ms/120|0):'';
+// ===== ห้องเรียน (きょうしつ · v120): หน้าต่างซ้ายเห็นสนามโรงเรียนกับต้นไม้ตามฤดู ม่านขาวไหวตามลม · กระดานดำ (เส้นชอล์กแทนตัวหนังสือ + รูปแมวชอล์ก)
+// โต๊ะครู · นาฬิกาเหนือกระดาน (เวลาจริง) · บอร์ดประกาศ ช่องเก็บของมีกระเป๋า · ฉากหน้า: โต๊ะนักเรียนกับเก้าอี้ (แมวแอบได้)
+const CLCOL={light:{wall:'#f3ead9',wall2:'#e8dcc6',trim:'#b98c5e',wains:'#d9c3a0',wains2:'#c9b08a',board:'#3f6b55',board2:'#355c49',boardF:'#9c7650',boardF2:'#7d5b3a',
+  chalk:'#f3efe4',chalkY:'#f2d36b',chalkP:'#f2a0b4',tray:'#8a6a4a',er:'#5b6aa0',er2:'#ece6da',floor:'#d9b48a',floor2:'#c89f73',seam:'#b88d62',
+  desk:'#c99a62',desk2:'#a87a44',desk3:'#e2ba82',metal:'#9aa3ab',metal2:'#737b83',seat:'#b98c5e',frame:'#c6cbd0',frame2:'#9aa1a8',
+  sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',cloud2:'#d5e2ee',moon:null,yard:'#e3cfa8',yard2:'#d4bd92',fence:'#9aa1a8',bldg:'#efe6d6',bldg2:'#d9cdb8',bwin:'#a9cde3',
+  bark:'#7a5a40',bark2:'#9b7a5a',bark3:'#57402e',mp0:'#4f8a45',mp1:'#86b96f',mp2:'#65985a',mp3:'#a8d48f',
+  cur:'#f4f7f8',cur2:'#dce4e8',clk:'#fffaf0',hand:'#3a3634',notice:'#dcbf8f',notice2:'#c4a473',n1:'#fffaf0',n2:'#fde9a6',n3:'#d6ebf6',n4:'#f7c9cf',pin:'#e05a5a',
+  cub:'#c99a62',cub2:'#a87a44',cub3:'#8a6040',g1:'#e86b5a',g2:'#5aa0d6',g3:'#f2c14e',g4:'#7bc47f',g5:'#b58ad6',line:'#6b4f3a',shade:'rgba(90,58,38,.14)'},
+ dark:{wall:'#4a4250',wall2:'#433b49',trim:'#6e5844',wains:'#55493f',wains2:'#4a3f36',board:'#24392f',board2:'#1e3128',boardF:'#5e4836',boardF2:'#4a3829',
+  chalk:'#c9c6bc',chalkY:'#b8a35a',chalkP:'#b8778a',tray:'#4f3d2e',er:'#3e4870',er2:'#a9a49a',floor:'#5a4a3c',floor2:'#4f4134',seam:'#463a2e',
+  desk:'#7d6448',desk2:'#62503b',desk3:'#94785a',metal:'#6a7178',metal2:'#53595f',seat:'#6e5844',frame:'#6f747a',frame2:'#575c62',
+  sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',yard:'#3a3a44',yard2:'#33333c',fence:'#565c66',bldg:'#3a3f52',bldg2:'#323647',bwin:'#f6d27a',
+  bark:'#4a3a2c',bark2:'#5e4a38',bark3:'#30251c',mp0:'#253b25',mp1:'#466c3e',mp2:'#34512f',mp3:'#5f8c54',
+  cur:'#8f949c',cur2:'#747a82',clk:'#d9ccb4',hand:'#2e221c',notice:'#7a6448',notice2:'#62503b',n1:'#b9b4a8',n2:'#b5a978',n3:'#8aa0ad',n4:'#a8838a',pin:'#a8403a',
+  cub:'#7d6448',cub2:'#62503b',cub3:'#4f3f2e',g1:'#a8504a',g2:'#4a789c',g3:'#a8904a',g4:'#5a8c5c',g5:'#7f6a9c',line:'#c9b9a5',shade:'rgba(0,0,0,.28)'}};
+// ต้นไม้นอกหน้าต่างตามฤดู: ใบไม้ผลิซากุระ · ร้อนเขียว (ชุดหลัก) · ใบไม้ร่วงแปะก๊วยเหลือง · หนาวกิ่งโล่งหิมะ
+const CLSEA={spring:{light:{mp0:'#d97b93',mp1:'#f2a0b4',mp2:'#e88aa3',mp3:'#fcd3de'},dark:{mp0:'#7a4656',mp1:'#a86a80',mp2:'#91566a',mp3:'#c48ea0'}},
+ autumn:{light:{mp0:'#c99a2e',mp1:'#f2c94e',mp2:'#e0b23a',mp3:'#f8e08a'},dark:{mp0:'#6e5420',mp1:'#a8903a',mp2:'#8c742c',mp3:'#c4ac5a'}},
+ winter:{light:{yard:'#eef2f6',yard2:'#dbe4ee',...SNOW.light},dark:{yard:'#59627a',yard2:'#4d556b',...SNOW.dark}}};
+function clBg(c,k){const se=k.season,wi=se==='winter';
+ rect(c,0,0,SW,52,k.wall);for(let y=4;y<50;y+=8)for(let x=y%16===4?2:6;x<SW;x+=8)dot(c,x,y,k.wall2);rect(c,0,52,SW,17,k.wains);for(let x=15;x<SW;x+=16)rect(c,x,53,1,16,k.wains2);
+ rect(c,0,51,SW,1,k.trim);rect(c,0,69,SW,2,k.trim);
+ // หน้าต่าง: ฟ้า ตึกเรียนฝั่งตรงข้าม รั้ว สนามดิน ต้นไม้ตามฤดู (พระจันทร์สูงสุดกลางบานบน)
+ rect(c,1,5,30,46,k.frame);rect(c,3,7,26,42,k.sky);rect(c,3,26,26,12,k.sky2);
+ if(k.moon)moonSky(c,[[6,10],[12,16],[24,11],[27,19]],moonXY(15,13,2,30,16),k.moon);else c.drawImage(cloudImg(k,13,5,15),5,11);
+ rect(c,16,28,13,10,k.bldg);rect(c,16,28,13,1,k.bldg2);[[18,30],[22,30],[26,30],[18,34],[22,34]].forEach(([x,y])=>rect(c,x,y,2,2,k.bwin));if(wi)rect(c,16,27,13,1,k.sn);
+ rect(c,3,38,26,11,k.yard);for(let x=4;x<29;x+=5)dot(c,x,43+(x%3),k.yard2);rect(c,3,37,26,1,k.fence);for(let x=4;x<29;x+=3)rect(c,x,34,1,4,k.fence);
+ const TB=[k.bark,k.bark2,k.bark3];wood(c,[[[[9,47],[9,38],[10,30],[9,24]],2.6,1.4],[[[9,36],[5,31],[4,27]],1.5,1],[[[10,32],[14,28],[16,24]],1.5,1],[[[9,28],[7,23]],1.2,.9]],TB,5);
+ if(wi)[[3,26],[6,22],[13,27],[15,23],[8,23]].forEach(([x,y])=>rect(c,x,y,2,1,k.sn));else[[9,22,6,3,3],[4,27,4,2.4,5],[15,24,4,2.4,7],[11,28,5,2.6,9]].forEach(([x,y,w,h,sd])=>clumpPad(c,x,y,w,h,[k.mp0,k.mp2,k.mp1,k.mp3],sd));
+ if(se==='autumn'||se==='spring'){const R=rng(se==='autumn'?91:93);for(let i=0;i<14;i++)dot(c,3+((R()*20)|0),44+((R()*5)|0),i%2?k.mp1:k.mp3)}
+ rect(c,15,7,2,42,k.frame);rect(c,3,26,26,1,k.frame2);rect(c,0,49,32,3,k.frame2);rect(c,0,49,32,1,k.frame);
+ // กระดานดำ: กรอบไม้ เส้นชอล์กแทนประโยค วงกลมทำเครื่องหมาย รูปแมวชอล์ก มุมเวรประจำวัน · รางชอล์กมีแปรงลบกระดานและชอล์กสามสี
+ const B0=40,B1=120;rect(c,B0,8,B1-B0,33,k.boardF);rect(c,B0+2,10,B1-B0-4,29,k.board);rect(c,B0+2,10,B1-B0-4,1,k.board2);rect(c,B0,40,B1-B0,1,k.boardF2);
+ [[45,14,22],[45,18,30],[48,22,26],[45,27,18],[66,27,10],[45,32,24]].forEach(([x,y,w])=>{for(let i=0;i<w;i++)if((i*7+y)%9<7)dot(c,x+i,y,k.chalk)});
+ ring(c,59,32,7,2.4,k.chalkY);rect(c,80,14,1,22,k.chalk+'66');
+ [[84,16,14],[84,21,10],[84,26,13]].forEach(([x,y,w])=>{for(let i=0;i<w;i++)if((i*5+y)%7<5)dot(c,x+i,y,k.chalk)});rect(c,84,31,6,1,k.chalkP);
+ ring(c,108,26,6,5,k.chalk);poly(c,[[102,23],[103,17],[106,21]],k.board);[[102,22],[102,21],[103,20],[103,19],[103,18],[104,19],[105,20],[106,21]].forEach(([x,y])=>dot(c,x,y,k.chalk));
+ [[114,22],[113,21],[113,20],[113,19],[113,18],[112,19],[111,20],[110,21]].forEach(([x,y])=>dot(c,x,y,k.chalk));dot(c,106,25,k.chalk);dot(c,110,25,k.chalk);dot(c,108,27,k.chalkP);[[104,28],[112,28]].forEach(([x,y])=>{dot(c,x,y,k.chalk);dot(c,x+(x<108?-1:1),y,k.chalk)}); // รูปแมวชอล์ก
+ rect(c,112,12,6,1,k.chalk);rect(c,112,14,4,1,k.chalk);
+ rect(c,B0+4,41,B1-B0-8,2,k.tray);rect(c,52,39,6,2,k.er);rect(c,52,39,6,1,k.er2);[[64,k.chalk],[67,k.chalkY],[70,k.chalkP]].forEach(([x,col])=>rect(c,x,40,2,1,col));
+ // บอร์ดประกาศ + ช่องเก็บของ (กระเป๋าสีต่างๆ)
+ rect(c,126,14,32,22,k.notice2);rect(c,127,15,30,20,k.notice);[[129,17,8,7,k.n1],[139,16,7,9,k.n3],[148,18,7,6,k.n2],[131,26,9,7,k.n4],[143,27,10,6,k.n1]].forEach(([x,y,w,h,col])=>{rect(c,x,y,w,h,col);dot(c,x+Math.floor(w/2),y,k.pin);rect(c,x+1,y+2,w-2,1,k.notice2+'88');rect(c,x+1,y+4,w-3,1,k.notice2+'66')});
+ rect(c,124,44,36,25,k.cub3);for(let r=0;r<2;r++)for(let i=0;i<4;i++){const x=125+i*9,y=45+r*12;rect(c,x,y,8,11,k.cub2);rect(c,x,y,8,1,k.cub3);const col=[k.g1,k.g2,k.g3,k.g4,k.g5][(i+r*2)%5];
+  if((i+r)%3!==2){rect(c,x+1,y+4,6,7,col);rect(c,x+2,y+3,4,1,col);dot(c,x+3,y+6,k.n1)}else{rect(c,x+1,y+8,6,3,col);rect(c,x+1,y+8,6,1,k.n1)}}
+ // โต๊ะครู (หน้ากระดาน): ท็อปไม้ แผงหน้า มีสมุดกับกล่องชอล์ก
+ rect(c,64,51,34,3,k.desk3);rect(c,64,53,34,1,k.desk2);rect(c,66,54,30,16,k.desk);rect(c,66,54,30,1,k.desk2);rect(c,68,57,26,10,k.desk2);rect(c,69,58,24,8,k.desk);
+ rect(c,70,48,9,3,k.g2);rect(c,71,47,8,1,k.n1);rect(c,86,49,6,2,k.n1);rect(c,86,49,6,1,k.chalkP);
+ for(let y=71;y<SH;y+=4){rect(c,0,y,SW,4,k.floor);rect(c,0,y,SW,1,k.floor2);for(let x=(y*7)%26;x<SW;x+=26)rect(c,x,y+1,1,3,k.seam)} // พื้นไม้เป็นแผ่น
+ blob(c,81,71.4,18,1,k.shade);blob(c,142,70.8,18,1,k.shade);blob(c,146,88.6,12,1.4,k.shade)}
+// โต๊ะนักเรียนกับเก้าอี้ (ฉากหน้า): ท็อปไม้ ขาเหล็ก ช่องใต้โต๊ะมีหนังสือ · เก้าอี้พนักพิงไม้
+function clFg(c,k){rect(c,130,61,30,3,k.desk3);rect(c,130,63,30,1,k.desk2);rect(c,132,64,26,5,k.metal2);rect(c,133,65,24,3,k.desk2);rect(c,134,65,4,3,k.g3);rect(c,139,65,3,3,k.g2);
+ [[132,69],[156,69]].forEach(([x,y])=>{rect(c,x,y,2,17,k.metal);rect(c,x+1,y,1,17,k.metal2)});rect(c,131,85,5,1,k.metal2);rect(c,155,85,5,1,k.metal2);
+ rect(c,144,52,13,8,k.seat);rect(c,144,52,13,1,k.desk3);rect(c,145,60,1,14,k.metal);rect(c,155,60,1,14,k.metal);rect(c,143,72,15,2,k.seat);rect(c,143,72,15,1,k.desk3);rect(c,144,74,1,12,k.metal);rect(c,156,74,1,12,k.metal)}
+// ขยับ: ม่านขาวไหวตามลม (หน้าต่างเปิดแง้ม) · นาฬิกาเหนือกระดานตามเวลาจริง · กลีบ/ใบ/หิมะตกนอกหน้าต่าง
+function clLive(c,k,A){const se=season(A.ms);if(se!=='summer')fallIn(c,k,A,se,[3,7,26,40],se==='winter'?9:3);
+ const w=A.P?Math.sin(A.ms/1300)*1.4+Math.sin(A.ms/530)*.5:0;for(let y=5;y<51;y++){const t=(y-5)/46,o=Math.round(w*t*t),wd=y<30?4+Math.round((30-y)/12):y<33?3:4+Math.round((y-33)/6),x=31+o-(y>=33?Math.round((y-33)/9):0);
+  for(let i=0;i<wd;i++)dot(c,x+i,y,(i+(y>>2))%3?k.cur:k.cur2);dot(c,x+wd,y,k.cur2)}rect(c,30,4,8,2,k.frame2);rect(c,31,30,5,2,k.n4); // ม่านรวบข้างหน้าต่าง (ผูกตรงกลาง) ชายม่านไหวตามลม
+ const d=A.d,cx=124,cy=7;blob(c,cx+.5,cy+.5,4.6,4.6,k.boardF2);blob(c,cx+.5,cy+.5,3.8,3.8,k.clk);[[cx,cy-3],[cx+3,cy],[cx,cy+3],[cx-3,cy]].forEach(([x,y])=>dot(c,x,y,k.boardF2));
+ handAt(c,cx+.5,cy+.5,(d.getHours()%12+d.getMinutes()/60)/12*Math.PI*2,2,k.hand,1);handAt(c,cx+.5,cy+.5,d.getMinutes()/60*Math.PI*2,3.2,k.hand)}
+const clTick=A=>A.d.getHours()*60+A.d.getMinutes()+'|'+(A.P?(A.ms/120|0):'');
+// ===== ศาลเจ้า (じんじゃ · v120): ฟ้า เมฆลอย ป่าไม้ด้านหลังตามฤดู · โทริอิสีชาด · โคมหิน · แผงเอมะ · หอสักการะ (หลังคาโค้ง เชือกชิเมนาวะกับกระดาษชิเดะ กระดิ่ง กล่องรับเงินทำบุญ บันได)
+// ทางเดินหิน + กรวด · ฉากหน้า: สิงโตหิน (โคมะอินุ) บนแท่น แมวแอบได้ · ขยับ: เชือกกระดิ่งแกว่ง แผ่นเอมะไหว · กลีบ/ใบ/หิมะตกทั้งฉาก
+const JNCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',cloud2:'#d5e2ee',moon:null,for0:'#4f7f47',for1:'#64995a',for2:'#82b86c',for3:'#a9d48c',far:'#97bc9f',
+  tor:'#d9503c',tor2:'#a8382a',tor3:'#ef7a62',torK:'#3a3434',torK2:'#575050',roof:'#5f6a70',roof2:'#4a545a',roof3:'#7d898f',eave:'#3c4449',wood:'#c79b6b',wood2:'#a37a50',wood3:'#dcb688',dark:'#5e4630',wall:'#f3eee4',
+  rope:'#d9c08a',rope2:'#b89c62',shide:'#ffffff',shide2:'#dfe3e6',bell:'#d6b25e',bell2:'#a8873a',bellR:'#e05a5a',box:'#8a6040',box2:'#6e4a2e',box3:'#a87a50',
+  stone:'#c9c3b8',stone2:'#aaa294',stone3:'#e2ddd4',moss:'#9cbf72',path:'#ddd6ca',path2:'#c9c1b2',gravel:'#efe8da',gravel2:'#dcd1bc',lwin:'#f6e7c0',glow:null,
+  ema:'#e7cfa0',ema2:'#c9a774',emaR:'#d9503c',rack:'#8a6a4a',bark:'#7a5a40',bark2:'#9b7a5a',bark3:'#57402e',kom:'#c2bcb0',kom2:'#a19a8c',kom3:'#ddd8ce',line:'#5f5a50',shade:'rgba(70,70,60,.16)'},
+ dark:{sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',for0:'#1d2f22',for1:'#253b25',for2:'#34512f',for3:'#466c3e',far:'#24352f',
+  tor:'#8a3428',tor2:'#6a2a20',tor3:'#a8483a',torK:'#1f1c1c',torK2:'#332f2f',roof:'#353c44',roof2:'#2b3138',roof3:'#454d55',eave:'#22272c',wood:'#6e5640',wood2:'#594532',wood3:'#806650',dark:'#2e2219',wall:'#9c978c',
+  rope:'#8f7f5a',rope2:'#74663f',shide:'#c9c6bc',shide2:'#a9a69c',bell:'#a8904a',bell2:'#7f6a33',bellR:'#a8403a',box:'#4f3d2e',box2:'#3e2f23',box3:'#62503b',
+  stone:'#625d57',stone2:'#4c4843',stone3:'#736e67',moss:'#4f6a40',path:'#57524b',path2:'#4a4640',gravel:'#4c4741',gravel2:'#403b36',lwin:'#f6d27a',glow:'rgba(246,210,122,.18)',
+  ema:'#9c8a68',ema2:'#7f6e50',emaR:'#8a3428',rack:'#4f3d2e',bark:'#4a3a2c',bark2:'#5e4a38',bark3:'#30251c',kom:'#6e6a62',kom2:'#57534c',kom3:'#837f76',line:'#b9b3a5',shade:'rgba(0,0,0,.3)'}};
+// ป่ารอบศาลเจ้าตามฤดู: ใบไม้ผลิมีซากุระแซม · ร้อนเขียวเข้ม (ชุดหลัก) · ใบไม้ร่วงแปะก๊วยเหลืองกับเมเปิลแดงแซม · หนาวสนเขียวเข้มมีหิมะ
+const JNSEA={spring:{light:{for3:'#f2b8c8',for2:'#e899b0'},dark:{for3:'#a86a80',for2:'#7a4656'}},
+ autumn:{light:{for2:'#e8b83a',for3:'#f2d36b',for1:'#d9703c'},dark:{for2:'#8c742c',for3:'#a8903a',for1:'#7a3f24'}},
+ winter:{light:{for2:'#5f8a5a',for3:'#7aa070',...SNOW.light},dark:{for2:'#2f4a31',for3:'#3e5c40',...SNOW.dark}}};
+function jnFar(c,k){sky(c,k,50,[66,9,18,112,30])} // พระจันทร์สูงสุดกลางฟ้าระหว่างโทริอิกับหลังคาหอ ขึ้นตกหลังป่า
+// ป่าด้านหลังอยู่หน้าเมฆ: กอไม้ทรงกลมซ้อนกันหลายชั้น สีตามฤดู · หนาวมีหิมะบนยอดกอ
+function jnMid(c,k){const wi=k.season==='winter',F=[[-4,30,14],[12,26,13],[28,32,12],[44,35,11],[58,33,12],[74,30,13],[90,27,12],[104,31,11],[118,26,14],[136,29,13],[152,27,14],[4,40,12],[36,42,11],[66,41,12],[98,40,12],[128,41,11]];
+ rect(c,0,42,SW,12,k.for0);F.forEach(([x,y,r],i)=>{clumpPad(c,x+r/2,y+r*.5,r,r*.9,[k.for0,k.for1,k.for2,k.for3],51+i*7);if(wi)blob(c,x+r/2,y,r*.6,1.2,k.sn)})} // ป่าศักดิ์สิทธิ์รอบศาลเจ้า สองแถว
+function jnBg(c,k){const wi=k.season==='winter';
+ // ทางเดินหิน (ซันโด) + กรวด
+ rect(c,0,54,SW,36,k.gravel);for(let y=57;y<90;y+=4)for(let x=0;x<SW;x++)if((x*3+y)%17<4)dot(c,x,y+(x%2),k.gravel2);
+ for(let y=72;y<90;y+=5)for(let x=(y%10?-6:0);x<SW;x+=12){rect(c,x,y,11,4,k.path);rect(c,x,y,11,1,k.stone3);rect(c,x+11,y,1,4,k.path2)}
+ if(wi)[[24,62,9,1.8],[60,66,7,1.6],[86,60,8,1.6],[30,70,6,1.4]].forEach(([x,y,a,b])=>{blob(c,x,y+.3,a,b,k.sn2);blob(c,x,y,a-.8,b-.5,k.sn)});
+ // หอสักการะ (ไฮเด็น): ฐานหิน บันได เสาไม้ ผนังด้านในมืด ลูกกรง คานหน้า หลังคาโค้งชายงอน
+ rect(c,92,64,68,8,k.stone2);rect(c,92,64,68,1,k.stone3);[[112,66],[112,69]].forEach(([x,y],i)=>{rect(c,x-i*2,y,28+i*4,3,k.stone);rect(c,x-i*2,y,28+i*4,1,k.stone3)});
+ rect(c,98,40,62,24,k.dark);rect(c,98,40,62,2,k.wood2);for(let x=104;x<SW;x+=5)rect(c,x,46,1,12,k.wood2);rect(c,98,58,62,2,k.wood);rect(c,98,46,62,1,k.wood);
+ [[98,40],[150,40]].forEach(([x,y])=>{rect(c,x,y,4,24,k.wood);rect(c,x,y,1,24,k.wood3);rect(c,x+3,y,1,24,k.wood2)});rect(c,98,36,62,4,k.wood);rect(c,98,36,62,1,k.wood3);rect(c,98,39,62,1,k.wood2);
+ poly(c,[[84,30],[92,26],[110,16],[160,16],[160,30],[150,33],[96,33]],k.roof);poly(c,[[84,30],[96,33],[160,33],[160,35],[94,35],[86,32]],k.eave);
+ for(let x=114;x<SW;x+=4)rect(c,x,17,1,13,k.roof2);rect(c,110,15,50,2,k.roof3);rect(c,84,29,4,2,k.roof3);dot(c,83,28,k.roof3);
+ if(wi){poly(c,[[85,29],[93,25],[110,15],[160,15],[160,18],[111,18],[94,27]],k.sn);rect(c,96,33,64,1,k.sn2)}
+ // เชือกชิเมนาวะกับกระดาษชิเดะซิกแซก · กระดิ่งกับกล่องรับเงินทำบุญ (เชือกกระดิ่งแกว่งใน jnLive)
+ for(let x=100;x<158;x++){const y=Math.round(41+Math.sin((x-100)/58*Math.PI)*2.4);rect(c,x,y,1,2,k.rope);if(x%3===0)dot(c,x,y+1,k.rope2)}
+ [108,120,136,148].forEach(x=>{const y=Math.round(43+Math.sin((x-100)/58*Math.PI)*2.4);[[0,0],[1,0],[1,1],[0,2],[0,3],[1,3],[1,4],[0,5]].forEach(([u,v])=>dot(c,x+u,y+v,v%2?k.shide2:k.shide))});
+ blob(c,128.5,46.6,3.2,3,k.bell2);blob(c,128.5,46,2.8,2.6,k.bell);dot(c,127,45,k.shide);rect(c,127,49,3,1,k.bell2);
+ rect(c,116,57,26,9,k.box);rect(c,116,57,26,2,k.box3);for(let x=118;x<141;x+=3)rect(c,x,59,1,2,k.box2);rect(c,116,61,26,1,k.box2);rect(c,117,62,24,1,k.box3+'88');
+ // โทริอิ: เสาเรียวสองต้น ฐานดำ คานบนสุดสีดำปลายงอน (คาสะงิ) คานรอง (ชิมะกิ) คานผูก (นุกิ) แผ่นป้ายกลาง (ไม่มีตัวหนังสือ)
+ [[14,1],[45,-1]].forEach(([x])=>{rect(c,x,22,4,50,k.tor);rect(c,x,22,1,50,k.tor3);rect(c,x+3,22,1,50,k.tor2);rect(c,x-1,68,6,4,k.torK);rect(c,x-1,68,6,1,k.torK2)});
+ rect(c,7,24,52,3,k.tor);rect(c,7,24,52,1,k.tor3);rect(c,7,26,52,1,k.tor2);poly(c,[[3,18],[8,20],[58,20],[63,18],[63,21],[58,23],[8,23],[3,21]],k.torK);rect(c,8,20,50,1,k.torK2);
+ rect(c,10,33,46,3,k.tor);rect(c,10,33,46,1,k.tor3);rect(c,10,35,46,1,k.tor2);rect(c,29,26,7,8,k.torK);rect(c,30,27,5,6,k.tor2);rect(c,31,28,3,4,k.torK2);
+ if(wi){rect(c,4,17,59,1,k.sn);rect(c,8,23,50,1,k.sn2);rect(c,10,32,46,1,k.sn)}
+ // แผงแขวนเอมะ (แผ่นไม้ห้าเหลี่ยม · แผ่นขยับใน jnLive) + โคมหิน
+ rect(c,64,50,2,20,k.rack);rect(c,86,50,2,20,k.rack);rect(c,62,48,28,2,k.rack);rect(c,64,58,24,1,k.rack);poly(c,[[61,48],[76,44],[91,48]],k.roof2);if(wi)poly(c,[[62,47.5],[76,43.6],[90,47.5],[76,45.4]],k.sn);
+ if(k.glow)blob(c,72,48,9,8,k.glow);
+ rect(c,66,69,12,3,k.stone2);rect(c,70,60,4,9,k.stone);rect(c,67,58,10,2,k.stone2);rect(c,68,52,8,6,k.stone);rect(c,70,54,4,3,k.lwin);poly(c,[[65,53],[72,48],[79,53]],k.stone2);rect(c,71,46,2,2,k.stone2);rect(c,68,52,1,6,k.stone3);
+ if(wi){poly(c,[[66,52.6],[72,47.6],[78,52.6],[72,50]],k.sn);rect(c,67,57,10,1,k.sn)}
+ blob(c,72,72.2,8,1,k.shade);blob(c,126,72.4,34,1.2,k.shade);blob(c,31,72.2,22,1,k.shade);blob(c,150,88.6,11,1.6,k.shade)}
+// สิงโตหิน (โคมะอินุ) นั่งบนแท่นหิน หันซ้าย: หัวกลมแผงคอหยิก อกยื่น ขาหน้าตรง หางพุ่มขึ้น (ฉากหน้า)
+function jnFg(c,k){const wi=k.season==='winter';rect(c,140,74,20,12,k.stone2);rect(c,140,74,20,1,k.stone3);rect(c,138,84,24,2,k.stone2);for(let x=142;x<158;x+=5)rect(c,x,77,1,6,k.stone);
+ blob(c,151,68,6.4,5.6,k.kom);blob(c,156.5,62,3.6,5,k.kom);blob(c,145.6,60,5,4.8,k.kom);blob(c,144.6,58.6,3.6,3,k.kom3);[[143,57],[146,56],[148,59],[145,62]].forEach(([x,y])=>dot(c,x,y,k.kom2));
+ rect(c,143,64,3,9,k.kom);rect(c,147,65,3,8,k.kom2);rect(c,142,72,5,2,k.kom3);dot(c,141,60,k.line);rect(c,141,62,3,1,k.kom2);dot(c,144,59,k.line);
+ blob(c,158,58,2.4,3.4,k.kom3);[[157,56],[159,59],[156,61]].forEach(([x,y])=>dot(c,x,y,k.kom2));blob(c,152,73,5,1.2,k.kom2);
+ if(wi){blob(c,145.4,55.4,4,1,k.sn);blob(c,151,62.8,4.4,1,k.sn);rect(c,140,73,20,1,k.sn)}}
+// ขยับ: เชือกกระดิ่งลายแดงขาวแกว่ง · แผ่นเอมะไหวเบาๆ ทีละแผ่น · ของตกตามฤดูทั้งฉาก (ชั้น front)
+function jnLive(c,k,A){const sw=A.P?Math.sin(A.ms/1700)*1.6+Math.sin(A.ms/610)*.4:0;for(let y=49;y<62;y++){const x=Math.round(128.5+sw*(y-49)/13);rect(c,x,y,2,1,(y>>1)%2?k.bellR:k.shide)}
+ for(let i=0;i<6;i++){const x=65+(i%3)*7,y=i<3?50:59,r=A.P?Math.round(Math.sin(A.ms/(900+i*170)+i*1.7)*.6):0;rect(c,x+r+2,y,1,1,k.rope2);poly(c,[[x+r,y+2],[x+r+2.5,y+1],[x+r+5,y+2],[x+r+5,y+6],[x+r,y+6]],k.ema);rect(c,x+r,y+5,5,1,k.ema2);dot(c,x+r+2,y+3,i%2?k.emaR:k.ema2)}}
+function jnFront(c,k,A){const se=season(A.ms);if(se!=='summer')fall(c,A,se,se==='winter'?[0,-3,SW,93]:[0,10,SW,80],se==='winter'?28:10)}
+const jnTick=A=>A.P?cloudKey(A)+'|'+(A.ms/120|0):'';
+// poi = จุดของในฉากระดับพื้นที่แมวเดินไปดม (x ของขอบของ จมูกจะแตะตรงนั้น · v117)
+const SCENES={room:{pal:SCOL,sea:RSEA,bg:roomBg,fg:roomFg,bed:CUSH,live:roomLive,tick:roomTick,over:roomLight,poi:[66,79,100,120,138]},
+ garden:{pal:GCOL,sea:GSEA,far:gardenFar,air:clouds,mid:gardenMid,bg:gardenBg,live:gardenLive,fg:gardenFg,front:gardenFront,tick:gardenTick,bed:null,poi:[18,30,72,88,98,122,128]},
+ cafe:{pal:KCOL,sea:KSEA,bg:cafeBg,live:cafeLive,fg:cafeFg,front:cafeFront,tick:cafeTick,bed:null,poi:[24,98,118,138]},
+ station:{pal:TCOL,sea:TSEA,far:stationFar,air:clouds,mid:stationMid,back:stationBack,bg:stationBg,fg:stationFg,front:stationFront,tick:stationTick,bed:null,poi:[21,31,96,128,145]},
+ konbini:{pal:KBCOL,sea:KBSEA,bg:kbBg,live:kbLive,fg:kbFg,tick:kbTick,bed:null,poi:[42,47,104,108,142]},
+ classroom:{pal:CLCOL,sea:CLSEA,bg:clBg,live:clLive,fg:clFg,tick:clTick,bed:null,poi:[33,64,98,124,130]},
+ shrine:{pal:JNCOL,sea:JNSEA,far:jnFar,air:clouds,mid:jnMid,bg:jnBg,live:jnLive,fg:jnFg,front:jnFront,tick:jnTick,bed:null,poi:[13,49,62,90,116,140]}};
 let PLACE='room';const SCN=()=>SCENES[PLACE]||SCENES.room;
 // รุ่งเช้า (05–07) / พลบค่ำ (17–19): ใช้ชุดสีกลางวัน เปลี่ยนฟ้าเป็นชมพูอมพีช/ส้ม พระอาทิตย์ลอยต่ำ แล้วย้อมทั้งภาพด้วยสีอุ่น (WARM, multiply) ให้แมวอมแสงเดียวกัน
 // ฟ้าห้อง: sky = ฟ้าในหน้าต่าง sky2 = แถบบนสุด · ฉากกลางแจ้ง (sky()): sky = ฟ้าด้านบน sky2 = แถบใกล้ขอบฟ้า
@@ -1128,19 +1358,19 @@ function palOf(s,sk){const se=season(),id=sk+'|'+se;if(s.pal[id])return s.pal[id
 const bgC={},fgC={};
 // ชั้นภาพที่ไม่ขยับ (far mid bg) แคชตามสถานที่และชุดสี
 // กลางคืนมีพระจันทร์ (เฟสและตำแหน่งตามเวลาจริง) จึงต่อ moonKey ท้ายรหัสแคช และลบภาพเก่าของชั้นเดียวกันทิ้ง
-const LAST={};function layer(n,tm){const ms=NOW??Date.now(),base=PLACE+'|'+n+'|'+tm+'|'+season(ms),id=tm==='dark'?base+'|'+moonKey(ms):base;if(bgC[id])return bgC[id];
+const LAST={};function layer(n,tm){const ms=NOW??Date.now(),base=PLACE+'|'+n+'|'+tm+'|'+season(ms)+bkey(),id=tm==='dark'?base+'|'+moonKey(ms):base;if(bgC[id])return bgC[id];
  if(LAST[base]&&LAST[base]!==id)delete bgC[LAST[base]];LAST[base]=id;MOON=moonAt(ms);const s=SCN(),v=canv();s[n](v.getContext('2d'),palOf(s,tm));return bgC[id]=v}
 // ฉากหลังรวมทุกชั้นแบบนิ่ง (เมฆตำแหน่งเริ่ม ไม่มีรถไฟ) ใช้ในชุดทดสอบและภาพ Design System
-function sceneBg(tm){const id=PLACE+'|all|'+tm+'|'+season()+(tm==='dark'?'|'+moonKey(NOW??Date.now()):'');if(bgC[id])return bgC[id];const s=SCN(),v=canv(),c=v.getContext('2d'),A={t:0,ms:0,d:new Date(2026,0,1,12),P:false,td:'day',sk:tm};
+function sceneBg(tm){const id=PLACE+'|all|'+tm+'|'+season()+bkey()+(tm==='dark'?'|'+moonKey(NOW??Date.now()):'');if(bgC[id])return bgC[id];const s=SCN(),v=canv(),c=v.getContext('2d'),A={t:0,ms:0,d:new Date(2026,0,1,12),P:false,td:'day',sk:tm};
  if(s.far)c.drawImage(layer('far',tm),0,0);if(s.air)s.air(c,palOf(s,tm),A);if(s.mid)c.drawImage(layer('mid',tm),0,0);c.drawImage(layer('bg',tm),0,0);return bgC[id]=v}
-function sceneFg(tm){const id=PLACE+'|'+tm+'|'+season();if(fgC[id])return fgC[id];const s=SCN(),k=palOf(s,tm),v=canv(),c=v.getContext('2d');s.fg(c,k);
+function sceneFg(tm){const id=PLACE+'|'+tm+'|'+season()+bkey();if(fgC[id])return fgC[id];const s=SCN(),k=palOf(s,tm),v=canv(),c=v.getContext('2d');s.fg(c,k);
  // เส้นขอบรอบฉากหน้า ให้เข้าชุดกับแมว
  const d=c.getImageData(0,0,SW,SH),A=(x,y)=>x>=0&&y>=0&&x<SW&&y<SH&&d.data[(y*SW+x)*4+3]>0,o=[];
  for(let y=0;y<SH;y++)for(let x=0;x<SW;x++)if(!A(x,y)&&(A(x+1,y)||A(x-1,y)||A(x,y+1)||A(x,y-1)))o.push([x,y]);o.forEach(([x,y])=>rect(c,x,y,1,1,k.line));return fgC[id]=v}
 const cat={x:52,dir:1,mode:'sit',t:0,dur:2500,dist:0,target:52,then:null,k:'sit'};
 const rr=(a,b)=>a+Math.random()*(b-a),DUR=Object.fromEntries(INFO.map(i=>[i[0],i[3]]));
 function setMode(m,dur=0){if(m==='sit')dur*=pk('sit');else if(m==='nap'||m==='curl')dur*=pk('nap');cat.mode=m;cat.t=0;cat.dur=dur;cat.ev=null} // นิสัยยืด/ย่อเวลานั่งและงีบ
-function goTo(tx,then,run=false){cat.target=Math.round(clamp(tx,XMIN,XMAX));cat.then=then;cat.run=run;if(cat.target===Math.round(cat.x)){cat.x=cat.target;cat.str=0;arrive();return}cat.dir=cat.target>cat.x?1:-1;setMode('turnOut',run?120:260)}
+function goTo(tx,then,run=false){cat.bs=0;cat.target=Math.round(clamp(tx,XMIN,XMAX));cat.then=then;cat.run=run;if(cat.target===Math.round(cat.x)){cat.x=cat.target;cat.str=0;arrive();return}cat.dir=cat.target>cat.x?1:-1;setMode('turnOut',run?120:260)}
 // วิ่งดีด: วิ่งไปเกือบสุดอีกฝั่งของห้อง แล้ววิ่งกลับมาครึ่งทาง
 function zoom(){const far=cat.x<(XMIN+XMAX)/2?XMAX-rr(0,8):XMIN+rr(0,8);goTo(far,'zoom2',true)}
 function arrive(){if(cat.then==='zoom2'){cat.then='sit';const tx=(XMIN+XMAX)/2+rr(-20,20);cat.target=Math.round(tx);cat.dir=cat.target>cat.x?1:-1;setMode('skid',220);return}
@@ -1149,10 +1379,14 @@ function arrive(){if(cat.then==='zoom2'){cat.then='sit';const tx=(XMIN+XMAX)/2+r
  if(cat.then==='come'){cat.then='sit';return setMode('sit',rr(5000,9000))} // มานั่งใกล้ๆ แล้วอยู่นานหน่อย
  if(cat.then==='bird'){cat.then='sit';const o=birdAt(env());if(o==null){cat.pose='curious';return setMode('pose',1500)}act('birdwatch',Math.max(1500,BIRD_ON-o-300));if(!talking())say([['カカカッ',1300]]);return} // ใต้หน้าต่างแล้ว: มองนก
  if(cat.then==='bask'){cat.then='sit';setMode('bask',rr(20000,32000));if(!talking()&&Math.random()<.5)say([['ぽかぽか…',1500]]);return} // นอนในแดด
+ if(cat.then==='box'||cat.then==='boxhide'){const hide=cat.then==='boxhide';cat.then='sit';if(hide)cat.cool=rr(15000,20000)*pk('cool');cat.bt=(hide?rr(14000,20000):rr(8000,18000))*pk('boxT');cat.bz=!hide&&(dayPart()==='noon'||dayPart()==='night')&&Math.random()<.5;return setMode('boxin',360)} // มุดลงกล่อง
+ if(cat.then==='sniff'){cat.then='sniffed';cat.dir=cat.sd||cat.dir;cat.sniff=1;return setMode('turnOut',260)} // ถึงจุดแล้วตั้งแต่ต้น: หันข้างเข้าหาของแล้วดม
+ if(cat.then==='sniffed'){cat.then='sit';if(cat.sbx){cat.sbx=0;BOX_SEEN=boxKey();if(Math.random()<.6)return goTo(BOX.cx,'box')} // ดมกล่องใหม่แล้วมักมุดเข้าไปเลย
+if(Math.random()<.35){cat.pose='curious';return setMode('pose',rr(1200,2200))}return setMode('sit',rr(2500,5000))}
  if(cat.then==='hunted'){cat.then='sit';cat.pose='curious';setMode('pose',1800);cat.gA=Math.random()<.5;return} // ผีเสื้อบินหนี: เงยมองตาม แล้วบางทีเลียขนกลบเกลื่อน
  if(cat.then==='leave'){cat.then='sit';cat.cool=rr(15000,20000)*pk('cool');return groom()} // เดินหนีแล้วเลียขน พักราว 15–20 วิ
  if(cat.then==='groom'){cat.then='sit';return groom()} // ยืดตัวเสร็จแล้วเลียขน
- if(cat.then==='sleep'){if(Math.random()<(KNP[S.stage]||0)*pk('knead')){setMode('knead',rr(2400,3600));if(!talking())say([['ふみふみ…',1400],['ゴロゴロ…',1400]]);return}return setMode('loaf',rr(3000,4500))}
+ if(cat.then==='sleep'){cat.bs=0;if(Math.random()<(KNP[S.stage]||0)*pk('knead')){setMode('knead',rr(2400,3600));if(!talking())say([['ふみふみ…',1400],['ゴロゴロ…',1400]]);return}return setMode('loaf',rr(3000,4500))}
  setMode('sit',rr(3000,7000))}
 // ---------- ตื่นนอน / ก่อนนอน (รายงานพฤติกรรมข้อ 6–7 · v83 · ตาราง "ทางแยกหลังเหตุการณ์") ----------
 // ตื่น: หาว 50% → ยืดตัวโค้งคำนับ 60% → แยกเป็น เลียขน 35% / วิ่งดีด 10% / เดินมาหาผู้ใช้ 15% / นั่งต่อ 40%
@@ -1189,39 +1423,41 @@ function act(k,ms){cat.pose=k;cat.beg=0;setMode('pose',ms)}
 // น้ำหนักการตัดสินใจตามช่วงเวลาจริงของเครื่อง (รายงาน reports/พฤติกรรมแมวบ้าน… 2026-11-19): แมวจริงคึกช่วงเช้า/เย็น ง่วงช่วงเที่ยงและกลางคืน
 // วิ่งดีดเป็นเหตุการณ์นานๆ ครั้ง · งีบอยู่กับที่ (nap = ท่าหมอบ 8–14 วิ) เพิ่มเวลาพักโดยไม่ต้องเดินไปเบาะบ่อย · นั่งมอง (watch = ท่าสงสัย)
 // ทิศทางมีหลักฐานระดับปานกลาง ส่วนตัวเลขเป็นค่าของเกม (บีบเวลา: งีบจริง ~79 นาที → curl 24–36 วิ)
-const DAYW={day:{bed:9,nap:14,zoom:2,groom:14,walk:31,watch:8,come:3,sit:19},tw:{bed:5,nap:9,zoom:6,groom:12,walk:37,watch:9,come:4,sit:18},
- noon:{bed:14,nap:20,zoom:1,groom:14,walk:22,watch:8,come:2,sit:19},night:{bed:25,nap:20,zoom:1,groom:13,walk:16,watch:5,come:1,sit:19}}; // come = เดินมานั่งใกล้ๆ ผู้ใช้เอง
+const DAYW={day:{bed:9,nap:14,zoom:2,groom:14,walk:31,watch:8,come:3,sit:19,sniff:4},tw:{bed:5,nap:9,zoom:6,groom:12,walk:37,watch:9,come:4,sit:18,sniff:5},
+ noon:{bed:14,nap:20,zoom:1,groom:14,walk:22,watch:8,come:2,sit:19,sniff:2},night:{bed:25,nap:20,zoom:1,groom:13,walk:16,watch:5,come:1,sit:19,sniff:2}}; // sniff = เดินไปดมของในฉาก (v117 · ที่ใหม่ดมบ่อยขึ้น) // come = เดินมานั่งใกล้ๆ ผู้ใช้เอง
 // ---------- นิสัย → พฤติกรรม (v63 · รายงาน "บทพูดสัตว์เลี้ยงตามนิสัย 10 แบบ" หัวข้อ Feline Five) ----------
 // บุคลิกแมวจริงมีแกนซ้ำกันข้ามงานวิจัย: กระตือรือร้น ความกลัว ความเป็นมิตรกับคน ความหุนหัน (Litchfield 2017 แมว 2,802 ตัว · Salonen 2019) ความกระตือรือร้นต่างกันมากที่สุด
 // ลำดับตรงกับ TR ใน js/data/pet-lines.js · ตัวคูณทุกตัวเป็นค่าของเกม (แมวกลาง = 1) · ผูกกับมิติจริงได้มั่นใจ: พลังล้น ขี้เซา ขี้สงสัย (สูง) เงียบสงบ ขี้อาย ตัวน้อย (กลาง) ที่เหลือเป็นกรอบทางสังคม
 // w = น้ำหนัก decide() · knead = โอกาสนวดก่อนนอน · sit/nap = เวลานั่ง/งีบ · tol = ความทนลูบ (ขี้อายโตตามร่าง) · shy = โอกาสเขินตอนลูบหัว · sb = กะพริบตาช้าเอง · cool = เวลาพักหลังเดินหนี · voc = ร้องเอง · hide = ไปแอบหลังของ
 const PERS=[
- {w:{zoom:2,nap:.6,bed:.7,walk:1.2,watch:.6,hunt:1.8,bask:.6},startle:.8,sit:.8,voc:1.2,sb:.8,mw:'ニャッ！'},                         // 0 พลังล้น: E สูง วิ่งพล่าน นั่งไม่ติด
+ {w:{zoom:2,nap:.6,bed:.7,walk:1.2,watch:.6,hunt:1.8,bask:.6,box:.6},boxT:.7,startle:.8,sit:.8,voc:1.2,sb:.8,mw:'ニャッ！'},                         // 0 พลังล้น: E สูง วิ่งพล่าน นั่งไม่ติด
  {w:{zoom:.4,nap:1.5,walk:.8,hunt:.5,bask:1.4},startle:.7,sit:1.3,tol:1.2,shy:.5,sb:1.3,voc:.5,knead:1.3,mw:'…ニャ'},                 // 1 เงียบสงบ: N ต่ำ I ต่ำ หมอบนาน กะพริบตาช้าบ่อย พูดน้อย
- {w:{come:.4,zoom:.6,hunt:.8},startle:1.6,tol:[.6,.8,1],shy:2,sb:.7,cool:1.3,hide:.35,mw:'にゃ…'},                  // 2 ขี้อาย: N สูง แอบหลังของ ทนลูบน้อยแล้วโตตามร่าง เขินบ่อย
+ {w:{come:.4,zoom:.6,hunt:.8,sniff:.7,box:2.5},boxT:1.5,startle:1.6,tol:[.6,.8,1],shy:2,sb:.7,cool:1.3,hide:.35,mw:'にゃ…'},                  // 2 ขี้อาย: N สูง แอบหลังของ ทนลูบน้อยแล้วโตตามร่าง เขินบ่อย
  {w:{come:2.2},tol:.7,shy:1.5,voc:.7,mw:'ニャ'},                                                // 3 ปากแข็งแต่ใจดี: เดินมานั่งข้างๆ เอง แต่ทนการลูบที่ผู้ใช้เริ่มสั้นกว่า (ให้แมวเลือก Haywood 2021)
- {w:{nap:2,bed:1.6,zoom:.3,walk:.7,hunt:.4,bask:1.8},bird:.6,nap:1.4,sit:1.2,tol:1.4,sb:1.2,voc:.6,knead:1.4,mw:'ふにゃ…'},          // 4 ชิลๆ ขี้เซา: E ต่ำ งีบบ่อยและนาน ทนลูบ
+ {w:{nap:2,bed:1.6,zoom:.3,walk:.7,hunt:.4,bask:1.8,box:1.5},boxT:1.3,bird:.6,nap:1.4,sit:1.2,tol:1.4,sb:1.2,voc:.6,knead:1.4,mw:'ふにゃ…'},          // 4 ชิลๆ ขี้เซา: E ต่ำ งีบบ่อยและนาน ทนลูบ
  {w:{zoom:1.6,walk:1.1,nap:.7,hunt:2},bird:1.2,sit:.7,tol:.9,voc:1.1,mw:'ニャ〜'},                                      // 5 ขี้เล่นจอมแซว: E สูง I สูง พุ่งกะทันหัน เปลี่ยนท่าไว
- {w:{watch:2.8,walk:1.3,nap:.8,hunt:1.3},bird:1.2,voc:1,mw:'ンニャ？'},                                             // 6 ขี้สงสัย: E สูง N ต่ำ นั่งจ้องสงสัยบ่อย เดินสำรวจ
+ {w:{watch:2.8,walk:1.3,nap:.8,hunt:1.3,sniff:2.6},bird:1.2,voc:1,mw:'ンニャ？'},                                             // 6 ขี้สงสัย: E สูง N ต่ำ นั่งจ้องสงสัยบ่อย เดินสำรวจ
  {w:{come:1.6,groom:1.3,zoom:.5,hunt:.8},tol:1.1,sb:1.2,voc:.6,mw:'ニャン'},                            // 7 สุภาพเรียบร้อย: A สูง I ต่ำ เดินหางตั้งมาทัก เลียขนเรียบร้อย ไม่เรียกร้อง
  {w:{watch:2,zoom:.5},sit:1.2,voc:.8,mw:'ニャ。'},                                              // 8 นักวิชาการ: นั่งเฝ้ามอง (แมวจริงไม่มีมิติวิชาการ ความมั่นใจต่ำ)
- {w:{walk:1.3,zoom:1.2,hunt:1.4},startle:.6,cool:.6,voc:1.1,mw:'ニャッ'}];                                          // 9 ตัวน้อยขยันสู้: N ต่ำ กล้า เดินสำรวจ ฟื้นไวหลังเดินหนี
+ {w:{walk:1.3,zoom:1.2,hunt:1.4,sniff:1.3},startle:.6,cool:.6,voc:1.1,mw:'ニャッ'}];                                          // 9 ตัวน้อยขยันสู้: N ต่ำ กล้า เดินสำรวจ ฟื้นไวหลังเดินหนี
 let PS={};const pk=(k,d=1)=>PS[k]??d;
 // ---------- น้ำหนักตามสถานที่ (รายงานพฤติกรรมข้อ 10 · v83) ----------
 // สวน: ที่โล่ง เดินสำรวจ วิ่งดีด นั่งมองบ่อยขึ้น · คาเฟ่/สถานี: ที่แคบและคนเยอะ ไม่วิ่งดีด เดินน้อย นั่ง/หมอบ/มานั่งใกล้ผู้ใช้มากขึ้น
 // งานวิจัยเฉพาะคาเฟ่/สถานีไม่มี ใช้หลักทั่วไปว่าที่ใหม่ทำให้แมวเครียดแล้วค่อยๆ ผ่อนคลาย (Vinke 2014 คะแนนเครียดลดลงตลอดราว 2 สัปดาห์) ตัวเลขทั้งหมดเป็นค่าของเกม
-const PLW={garden:{walk:1.3,zoom:1.5,watch:1.2},cafe:{zoom:0,walk:.5,sit:1.5,nap:1.5,come:1.5},station:{zoom:0,walk:.4,sit:1.3,watch:1.3,nap:1.2}};
+const PLW={garden:{walk:1.3,zoom:1.5,watch:1.2},cafe:{zoom:0,walk:.5,sit:1.5,nap:1.5,come:1.5},station:{zoom:0,walk:.4,sit:1.3,watch:1.3,nap:1.2},
+ konbini:{zoom:0,walk:.6,sit:1.3,watch:1.4,come:1.4},classroom:{zoom:.6,walk:1.1,watch:1.2},shrine:{walk:1.2,zoom:1.2,watch:1.3,sniff:1.3}}; // v120 ร้านสะดวกซื้อแคบคนเข้าออก (เหมือนคาเฟ่) · ห้องเรียนโล่งเงียบ · ศาลเจ้ากลางแจ้งร่มรื่น (คล้ายสวน)
 // ช่วงปรับตัว (คาเฟ่/สถานี): วันแรกที่ไประวังตัวเต็มที่ แล้วลดลงวันละหนึ่งในสาม หายเป็นปกติวันที่ 4 (FAM = จำนวนวันที่เคยอยู่ที่นั้น จาก plVisit() ใน js/place.js)
 // อยู่บนจอที่นั้นนานขึ้นในรอบเดียวกันก็ค่อยๆ ผ่อนคลาย (10 นาทีเหลือ 30%) · ระวังตัว = นั่งมองรอบตัว แอบหลังของ มานั่งใกล้ผู้ใช้ (เจ้าของเป็นที่พึ่ง) งีบ/เลียขน/เดินเล่นน้อยลง ไม่วิ่งดีด กะพริบตาช้าน้อยลง
 // ห้ามทำเป็นความกลัวที่ดูทรมาน (ไม่ขู่ ไม่หูแบนค้าง) เพราะผู้ใช้ไม่ได้ทำอะไรผิด แค่พาไปเที่ยว
-const WARYW={walk:.5,groom:.4,nap:.3,bed:.3,zoom:0,watch:2.2,come:1.6},WARY_AT={cafe:1,station:1};
+const WARYW={walk:.5,groom:.4,nap:.3,bed:.3,zoom:0,watch:2.2,come:1.6,sniff:1.5},WARY_AT={cafe:1,station:1,konbini:1,classroom:1};
 let FAM=99,AT_MS=0;
 const wary=()=>WARY_AT[PLACE]?clamp(1-(FAM-1)/3,0,1)*Math.max(.3,1-AT_MS/6e5*.7):0;
 // อารมณ์รายวัน ±15% ต่อพฤติกรรม (คงที่ทั้งวัน) ให้แต่ละวันไม่เหมือนกันเป๊ะ
 const jit=k=>{const d=new Date();let x=0;for(const c of d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()+k)x=(x*31+c.charCodeAt(0))>>>0;return .85+(x%1000)/1000*.3};
 // ร้องเองนานๆ ครั้งตอนจบช่วงนั่ง เสียงตามนิสัย (Fe-BARQ วัดการส่งเสียงแยกจากความกระตือรือร้น) ไม่ทับฟองที่กำลังพูดอยู่
 function meow(){if(!talking()&&cv&&cv.isConnected)say([[pk('mw','ニャ'),1100]])}
-let PART=null;const dayPart=(h=new Date().getHours())=>PART||(h>=21||h<5?'night':h<9||h>=17?'tw':h>=11&&h<15?'noon':'day'); // tw = เช้า 05–09 / เย็น 17–21
+// CHR = นาฬิกาชีวิตประจำตัว (v119 · petMount ส่งมา): -1 ตื่นเช้า เลื่อนทุกช่วงเร็วขึ้น 2 ชม. · 1 นอนดึก เลื่อนช้าลง 2 ชม. · แมวบ้านปรับจังหวะตามเจ้าของได้ ตัวเลขเป็นค่าของเกม
+let PART=null,CHR=0;const dayPart=(h0=new Date().getHours(),h=(h0-2*CHR+24)%24)=>PART||(h>=21||h<5?'night':h<9||h>=17?'tw':h>=11&&h<15?'noon':'day'); // tw = เช้า 05–09 / เย็น 17–21 (แมวปกติ)
 // ---------- ท่าที่ใช้ของในฉาก (v97 · เจ้าของสั่ง 2026-11-20 · รายงานพฤติกรรมข้อ 8, 9, 10) ----------
 // ห้อง: นกชิมะเอนางะมาเกาะหน้าต่าง → แมวที่ตื่นอยู่และว่าง (นั่ง เลียขน นั่งมอง งีบ) เดินไปใต้หน้าต่าง เงยมอง ปากสั่น「カカカッ」(chattering) จนนกบินไป
 //   แมวจริงทำเสียงแกะๆ ตอนเห็นเหยื่อที่เอื้อมไม่ถึง (ยังไม่รู้หน้าที่แน่ชัด) · หลับลึก/กำลังเดิน/ทำท่าตามเหตุการณ์ในแอป ไม่ขัด · ขี้เซาสนใจน้อย ขี้เล่น/ขี้สงสัยสนใจมาก
@@ -1242,42 +1478,61 @@ function trainSeen(){if(SLEEPM[cat.mode]){if(cat.mode!=='wake'&&Math.random()<.3
 const baskX=()=>clamp(Math.round(84+sunSkew(tod(),new Date())*.6),XMIN,XMAX);
 // ตัวเลือกเพิ่มตามฉาก: ซุ่มผีเสื้อ (สวน กลางวันและผีเสื้ออยู่ในจอ) · อาบแดด (ห้อง ไม่ใช่กลางคืน เที่ยงบ่อยสุด)
 function sceneW(){const E=env(),o={};if(PLACE==='garden'){const b=bflyAt(E);if(b&&b.x<SW-6&&b.x>10)o.hunt=7}
- if(PLACE==='room'&&E.P&&E.td!=='night')o.bask=E.td==='day'?(dayPart()==='noon'?16:10):5;return o}
+ if(PLACE==='room'&&E.P&&E.td!=='night')o.bask=E.td==='day'?(dayPart()==='noon'?16:10):5;
+ if(boxOn()){if(BOX_SEEN!==boxKey())o.boxsniff=14;else o.box=dayPart()==='noon'||dayPart()==='night'?8:6}return o} // กล่องใหม่วันนี้: ไปดมก่อน แล้วค่อยมุด
 function hunt(){const b=bflyAt(env());if(!b||b.x>SW-6){return setMode('sit',rr(2500,4000))}const c=cat.x+24,d=b.x>c?1:-1;
  let T=clamp(d>0?b.x-62:b.x+14,XMIN,XMAX); // จุดซุ่ม: หัวห่างผีเสื้อราว 18 px (หันขวาหัวอยู่ที่ x+44 หันซ้ายที่ x+4)
  if(Math.abs(T-cat.x)<6){cat.dir=d;cat.hunt=1;cat.run=false;cat.str=0;return setMode('turnOut',220)} // อยู่ที่จุดซุ่มแล้ว: หันข้างแล้วหมอบเลย
  cat.str=0;goTo(T,'stalk')} // ใกล้เกินก็ถอยไปจุดซุ่มก่อน แล้วค่อยหันเข้าหาผีเสื้อตอนหยุด (halt)
+// ---------- ดมของ + ดม/หมุนตัวก่อนนอน (v117 · รายงานข้อ 7 · ท่าใหม่ sniff) ----------
+// เดินไปดมของในฉาก (SCENES[ที่].poi): แมวสำรวจที่ใหม่ด้วยจมูกก่อน ที่ที่เพิ่งมา (FAM 1–3 วัน) ดมบ่อยขึ้นสูงสุด 2.5 เท่า · ขี้สงสัยดมบ่อยสุด · ดมแล้วบางทีนั่งเอียงคอสงสัย
+// ก่อนนอนบนเบาะ: ดมเบาะ แล้วหมุนตัวกลับไปมา 1–2 รอบ (ย่ำที่นอน) ก่อนนวด/หมอบ · รายงานบอกว่ายังไม่มีหลักฐานในแมว (มีในสุนัข) จึงให้เกิดแค่บางครั้ง ค่าทั้งหมดเป็นค่าของเกม
+const novel=()=>PLACE==='room'?0:clamp((4-FAM)/3,0,1),SNP=.4;let SNIFF_LAST=-1,BOX_SEEN='';const boxKey=()=>{const d=new Date(NOW??Date.now());return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()};
+function sniffGo(L){const P=(L||SCN().poi||[]).filter(x=>x!==SNIFF_LAST);if(!P.length)return setMode('sit',rr(2500,5000));const px=P[Math.floor(Math.random()*P.length)];SNIFF_LAST=px;
+ const O=[[1,px-46.5],[-1,px-1.5]].filter(([,t])=>t>=XMIN&&t<=XMAX),M=O.filter(([d,t])=>d>0?t>=cat.x-2:t<=cat.x+2),C=(M.length?M:O).sort((a,b)=>Math.abs(a[1]-cat.x)-Math.abs(b[1]-cat.x))[0]; // จมูกหันขวาอยู่ที่ x+46.5 หันซ้ายที่ x+1.5 · เลือกฝั่งที่เดินไปแล้วหันหน้าเข้าหาของพอดี
+ if(!C)return setMode('sit',rr(2500,5000));cat.sd=C[0];cat.str=0;goTo(C[1],'sniff')}
+// หมุนตัวก่อนนอน: ยืน → หันสามส่วนสี่ → หันอีกฝั่ง → ยืนอีกฝั่ง (1 หรือ 2 รอบ) ใช้ท่าที่มีอยู่ ไม่ต้องวาดใหม่
+function circleSteps(d,n){const S=[];for(let i=0;i<n;i++){S.push(['turn',d,200],['turn',-d,200],['stand',-d,320]);d=-d}return S}
 function decide(){const wy=wary(),pw=PLW[PLACE]||{};if(Math.random()<(SBP[S.stage]||0)*pk('sb')*(1-wy*.6))return slowBlink();if(Math.random()<.03*pk('voc'))meow();
- const W=Object.entries({...DAYW[dayPart()],...sceneW()}).map(([k,v])=>[k,v*((PS.w||{})[k]??1)*(pw[k]??1)*(1+((WARYW[k]??1)-1)*wy)*jit(k)]);let r=Math.random()*W.reduce((a,b)=>a+b[1],0); // น้ำหนักตามช่วงเวลา × นิสัย × สถานที่ × ช่วงปรับตัว × อารมณ์รายวัน
+ const W=Object.entries({...DAYW[dayPart()],...sceneW()}).map(([k,v])=>[k,v*((PS.w||{})[k]??1)*(pw[k]??1)*(1+((WARYW[k]??1)-1)*wy)*jit(k)*(k==='sniff'?1+1.5*novel():1)]);let r=Math.random()*W.reduce((a,b)=>a+b[1],0); // น้ำหนักตามช่วงเวลา × นิสัย × สถานที่ × ช่วงปรับตัว × อารมณ์รายวัน
  for(const[k,v]of W){if((r-=v)>=0)continue;
   if(k==='come')return goTo((XMIN+XMAX)/2+rr(-10,10),'come');
   if(k==='bed'&&SCN().bed!=null)return goTo(SCN().bed,'sleep');if(k==='nap'||k==='bed')return setMode('nap',rr(8000,14000));if(k==='zoom')return zoom();if(k==='groom')return groom();
   if(k==='watch'){cat.pose='curious';return setMode('pose',rr(3000,6000))}
-  if(k==='hunt')return hunt();if(k==='bask')return goTo(baskX(),'bask');
+  if(k==='hunt')return hunt();if(k==='bask')return goTo(baskX(),'bask');if(k==='sniff')return sniffGo();
+  if(k==='boxsniff'){cat.sbx=1;return sniffGo([BOX.x0,BOX.x1])}if(k==='box')return goTo(BOX.cx,'box');
   if(k==='walk'){if(Math.random()<Math.max(pk('hide',0),.35*wy))return goTo(XMAX-rr(0,6),'sit'); // ขี้อาย/ที่ไม่คุ้น: ไปแอบหลังของฉากหน้าฝั่งขวา (กระถาง พุ่มไม้ โต๊ะ เสา) โผล่แค่หัว
    let tx,n=0;do tx=rr(XMIN,XMAX);while(Math.abs(tx-cat.x)<24&&++n<20);return goTo(tx,'sit')}break}
  setMode('sit',rr(2500,5000))}
 function step(dt){if(playing)sceneEvents();const m=cat.mode;if(playing)AT_MS+=dt;if(cat.tol>0)cat.tol=Math.max(0,cat.tol-TOL_DECAY*dt/1000);if(cat.cool>0&&(cat.cool-=dt)<=0){cat.cool=0;cat.tol=0} // มาตรวัดความทนค่อยๆ ลด · พักครบแล้วกลับมาเล่นได้ตามปกติ
  if(!playing&&!TAPM[m])return;cat.t+=dt;
+ cat.dy=m==='boxin'?BOX.dy*Math.min(1,cat.t/360):m==='box'?BOX.dy:m==='boxout'?BOX.dy*Math.max(0,1-cat.t/300):0; // มุดลง/โผล่ขึ้นจากกล่อง
  if(m==='pounce')cat.x=clamp(cat.x+cat.dir*.04*dt,XMIN,XMAX); // กระโจนไปข้างหน้าราว 17 px
  if(m==='walk'||m==='run'){const d=GAIT[m].v*dt/1000,left=cat.target-cat.x;if(Math.abs(left)<=d){cat.x=cat.target;if(m==='run'&&cat.then==='zoom2')arrive();else setMode('halt',m==='run'?240:300)}else{cat.x+=Math.sign(left)*d;cat.dist+=d}return}
  if(!cat.dur||cat.t<cat.dur)return;
- ({sit:decide,turnOut:()=>{if(cat.hunt===1){cat.hunt=2;return setMode('crouch',rr(1800,3000))}if(cat.str){cat.str=0;return setMode('stretch',GT('stretchR'))}cat.run?setMode('run'):setMode('rise',260)},
+ ({sit:decide,turnOut:()=>{if(cat.hunt===1){cat.hunt=2;return setMode('crouch',rr(1800,3000))}if(cat.sniff){cat.sniff=0;return setMode('sniff',rr(1600,2600))}if(cat.str){cat.str=0;return setMode('stretch',GT('stretchR'))}cat.run?setMode('run'):setMode('rise',260)},
   crouch:()=>{setMode('pounce',GT('pounceR'));if(!talking()&&Math.random()<.4)say([['ニャッ',800]])},pounce:()=>setMode('pin',GT('pinR')*1.4),pin:()=>{cat.hunt=0;cat.then='hunted';setMode('turnIn',260)}, // ซุ่ม → กระโจน → ตะปบ → หันกลับมามอง
   bask:()=>{cat.wk=1;rouse()},
-  stretch:()=>cat.target===Math.round(cat.x)?setMode('turnIn',260):setMode(cat.run?'run':'walk'), // ยืดตัวจบที่ท่ายืน เดินต่อได้เลย
-  yawn:()=>cat.wk?rouse2():setMode('sit',rr(2500,5000)),knead:()=>setMode('loaf',rr(3000,4500)),skid:()=>setMode('run'),rise:()=>setMode('walk'),halt:()=>{if(cat.then==='stalk'){cat.then='sit';cat.hunt=2;const b=bflyAt(env());if(b)cat.dir=b.x>cat.x+24?1:-1;return setMode('crouch',rr(1800,3000))}setMode('turnIn',260)},turnIn:arrive,loaf:()=>setMode('curl',rr(24000,36000)),curl:()=>setMode('wake',1500),nap:()=>{cat.wk=0;Math.random()<.3?yawn():setMode('sit',rr(2500,5000))}, // งีบเสร็จบางทีหาว
+  stretch:()=>Math.random()<.5?setMode('hind',GT('hindR')):cat.target===Math.round(cat.x)?setMode('turnIn',260):setMode(cat.run?'run':'walk'), // ยืดตัวจบที่ท่ายืน เดินต่อได้เลย · ครึ่งหนึ่งยืดขาหลังต่อ (v117)
+  hind:()=>cat.target===Math.round(cat.x)?setMode('turnIn',260):setMode(cat.run?'run':'walk'),
+  boxin:()=>{setMode('box',cat.bt||10000);if(!talking()&&Math.random()<.4)say([[cat.bz?'…ぬくぬく':'ニャ♪',1300]])},box:()=>setMode('boxout',300),boxout:()=>{cat.dy=0;setMode('sit',rr(2500,5000))}, // นั่งในกล่อง: โผล่หัว (ง่วงก็สัปหงก) แล้วกระโดดออก
+  sniff:()=>{if(cat.bs===1){cat.bs=2;cat.cs=circleSteps(cat.dir,Math.random()<.5?1:2);return setMode('circle',cat.cs.reduce((a,b)=>a+b[2],0))}setMode('turnIn',260)},
+  circle:()=>{const L=cat.cs[cat.cs.length-1];cat.dir=L[1];cat.cs=null;setMode('turnIn',260)},
+  yawn:()=>cat.wk?rouse2():setMode('sit',rr(2500,5000)),knead:()=>setMode('loaf',rr(3000,4500)),skid:()=>setMode('run'),rise:()=>setMode('walk'),halt:()=>{if(cat.then==='sniff'){cat.then='sniffed';cat.dir=cat.sd||cat.dir;return setMode('sniff',rr(1600,2600))}
+   if(cat.then==='sleep'&&!cat.bs&&Math.random()<SNP){cat.bs=1;return setMode('sniff',rr(1100,1700))} // ก่อนนอน: ดมเบาะ → หมุนตัว
+   if(cat.then==='stalk'){cat.then='sit';cat.hunt=2;const b=bflyAt(env());if(b)cat.dir=b.x>cat.x+24?1:-1;return setMode('crouch',rr(1800,3000))}setMode('turnIn',260)},turnIn:arrive,loaf:()=>setMode('curl',rr(24000,36000)),curl:()=>setMode('wake',1500),nap:()=>{cat.wk=0;Math.random()<.3?yawn():setMode('sit',rr(2500,5000))}, // งีบเสร็จบางทีหาว
   wake:()=>{if(cat.after==='greet'){cat.after=null;cat.str=1;return greetGo()}if(cat.after==='beg'){cat.after=null;return beg(true)}rouse()}, // หายไปนาน: ตื่นแล้วยืดตัวก่อนเดินมาทัก (Eriksson 2017)
   groom:()=>cat.gk==='groom'&&Math.random()<.6?groom('groomLeg'):setMode('sit',rr(2500,5000)),
   pose:()=>{if(cat.beg){cat.beg=0;return setMode('pet',2000)}if(cat.hideA){cat.hideA=0;return goTo(XMAX-rr(0,4),'sit')}if(cat.gA){cat.gA=0;return groom()}cat.pose==='eat'&&Math.random()<.6?groom():setMode('sit',rr(2500,5000))}, // หลังกินมักเลียขน · ขออาหาร: มองเสร็จแล้วถูหัว
   shy:()=>setMode('sit',rr(2000,4000)),pet:()=>setMode('sit',rr(2500,5000)),notice:()=>setMode('sit',rr(2000,4000)),annoy:()=>{cat.lv=0;setMode('sit',rr(2500,4500))},sblink:()=>setMode('sit',rr(2500,5000))})[m]()}
 function catPose(){const m=cat.mode,D=cat.dir>0?'R':'L';if(m==='walk'||m==='run')return[(m==='walk'&&(cat.then==='greet'||cat.then==='come'||cat.then==='beg')?'walkUp':m)+D,Math.floor(cat.dist/GAIT[m].step)%GAIT[m].n];if(m==='skid')return['stand'+(cat.dir>0?'L':'R'),0]; // หยุดกึกยังหันทางเดิมก่อนกลับตัว
  if(m==='crouch'||m==='pounce'||m==='pin'){const k=m+D;return[k,playing?frameAt(DUR[k],cat.t):0]}
- const k=m==='rise'||m==='halt'?'stand'+D:m==='turnOut'||m==='turnIn'?'turn'+D:m==='stretch'?'stretch'+D:(m==='pose'?cat.pose:{sit:'sit',loaf:'doze',nap:'doze',wake:'doze',curl:'curl',shy:'shy',groom:cat.gk||'groom',pet:'pet',notice:'curious',annoy:cat.lv>1?'lash':'annoyed',sblink:'slowBlink',yawn:'yawn',knead:'knead',bask:'bask'}[m]);return[k,playing?frameAt(DUR[k],cat.t):0]}
+ if(m==='circle'&&cat.cs){let t=cat.t,i=0;while(i<cat.cs.length-1&&t>=cat.cs[i][2])t-=cat.cs[i++][2];const[q,d]=cat.cs[i],k=q+(d>0?'R':'L');return[k,playing?frameAt(DUR[k],t):0]} // หมุนตัวก่อนนอน
+ const k=m==='rise'||m==='halt'?'stand'+D:m==='turnOut'||m==='turnIn'?'turn'+D:m==='stretch'||m==='hind'||m==='sniff'?m+D:(m==='pose'?cat.pose:{sit:'sit',boxin:'sit',box:cat.bz?'doze':'sit',boxout:'sit',loaf:'doze',nap:'doze',wake:'doze',curl:'curl',shy:'shy',groom:cat.gk||'groom',pet:'pet',notice:'curious',annoy:cat.lv>1?'lash':'annoyed',sblink:'slowBlink',yawn:'yawn',knead:'knead',bask:'bask'}[m]);return[k,playing?frameAt(DUR[k],cat.t):0]}
 const sprC={};function sprite(k,f,tm,coat,acc,idle){const key=[k,f,tm,coat,acc,idle].join('|');let v=sprC[key];if(!v){v=document.createElement('canvas');v.width=W;v.height=H;draw(v.getContext('2d'),frame(k,f,tm,coat,acc,idle));sprC[key]=v}return v}
 // ---------- ผูกกับแอป ----------
 // ท่าอารมณ์ตามเหตุการณ์: ถ้าแมวกำลังเดิน/หันตัวอยู่ให้รอจบก่อน (ไม่ให้ท่าสะดุด) แล้วค่อยเล่นตอนนั่งพัก
-const CALM={sit:1,pose:1,shy:1,groom:1,wake:1,loaf:1,curl:1,nap:1,pet:1,notice:1,annoy:1,sblink:1,yawn:1,knead:1,bask:1},SLEEPM={curl:1,loaf:1,nap:1,wake:1},TAPM={shy:1,wake:1,pet:1,notice:1,annoy:1,sblink:1}; // TAPM = ท่าตอบการแตะ เดินต่อได้แม้ปิดแอนิเมชัน
+const CALM={sit:1,pose:1,shy:1,groom:1,wake:1,loaf:1,curl:1,nap:1,pet:1,notice:1,annoy:1,sblink:1,yawn:1,knead:1,bask:1,box:1},SLEEPM={curl:1,loaf:1,nap:1,wake:1},TAPM={shy:1,wake:1,pet:1,notice:1,annoy:1,sblink:1}; // TAPM = ท่าตอบการแตะ เดินต่อได้แม้ปิดแอนิเมชัน
 // ---------- แตะแมว: แยกโซน + มาตรวัดความทน (รายงานพฤติกรรมข้อ 4 · v60) ----------
 // แมวชอบให้ลูบหัว/ขมับที่สุด ไม่ชอบโคนหางที่สุด (Soennichsen & Chamove 2002, Ellis 2015) · ให้แมวได้เลือกเอง แตะถี่เกินไปแมวเตือนเป็นขั้นแล้วเดินหนี (Haywood 2021)
 // ไม่มีงานวิจัยบอกว่าลูบได้กี่ครั้ง ตัวเลขทั้งหมดเป็นค่าของเกม: มาตรวัดเพิ่มตามน้ำหนักของโซน ลดลง 0.2 ต่อวิ
@@ -1290,10 +1545,11 @@ function zoneAt(x,y){const sx=x-Math.round(cat.x),sy=y-CY,m=cat.mode;if(SLEEPM[m
  if(cat.k==='belly'||cat.k==='bask')return sx<20?'head':'belly';if(sy<31&&Math.abs(sx-24)<15)return'head';return sx>=37?'tail':'body'}
 const tolLv=()=>{const t=pk('tol'),k=(TOLK[S.stage]||1)*(Array.isArray(t)?t[S.stage-1]:t);return cat.tol>=TOL[2]*k?3:cat.tol>=TOL[1]*k?2:cat.tol>=TOL[0]*k?1:0};
 // ตำแหน่งหัวในฉาก (ขอบบนของภาพเฟรมปัจจุบัน) ไว้วางเอฟเฟกต์
-function headAt(){const c=cur||{k:'sit',f:0,tm:'light',idle:null},b=bbox(c.k,c.f,c.tm,c.idle);return{x:Math.round(cat.x)+b.cx,y:CY+b.t}}
+function headAt(){const c=cur||{k:'sit',f:0,tm:'light',idle:null},b=bbox(c.k,c.f,c.tm,c.idle);return{x:Math.round(cat.x)+b.cx,y:CY+Math.round(cat.dy||0)+b.t}}
 const forceIdle=(n,side)=>{cat.ev=cat.ev||{};cat.ev[n]=performance.now();if(side)cat.side=side}; // หูกระดิก/หางสะบัดทันที (ผ่าน idleAt)
 // แตะแมว: z = โซน (head body tail belly sleep move) · x,y = จุดที่แตะในฉาก (ไม่ส่ง = กลางหัว เช่น กด Enter)
 function poke(z,x,y){const m=cat.mode,h=headAt();cat.beg=0; // แตะระหว่างขออาหาร: ตอบการแตะแทน ไม่ถูหัวต่อ
+ if(m==='box'||m==='boxin'||m==='boxout'){if(x==null){x=h.x;y=h.y+6}fx('tap',x,y);forceIdle('twitch',x<h.x?'L':'R');if(cat.bz&&m==='box'){cat.bz=false}if(!talking())say([['ニャ？',900]]);return} // อยู่ในกล่อง: หูกระดิก ลืมตา ไม่ออกมา (ที่หลบของแมว ไม่บังคับออก)
  z=z||(SLEEPM[m]?'sleep':CALM[m]?'head':'move');if(x==null){x=h.x;y=h.y+8}const side=x<h.x?'L':'R';
  if(cat.cool>0||cat.then==='leave'){fx('tap',x,y,{c:FX});if(!FXS.some(e=>e.type==='dots'))fx('dots',h.x>SW-34?h.x-22:h.x+13,h.y+6);return forceIdle('twitch',side)} // เพิ่งหนีไป: ยังไม่อยากเล่น แค่หูกระดิก …
  cat.tol+=TAPW[z]||1;const lv=tolLv();
@@ -1311,6 +1567,7 @@ function poke(z,x,y){const m=cat.mode,h=headAt();cat.beg=0; // แตะระ�
 // ขั้นที่ 3: ぷいっ แล้วเดินหนีไปอีกฝั่ง เลียขน (เลียขนหลังเครียด) พักราว 15–20 วิ · ปิดแอนิเมชัน: ไม่เดิน แค่ทำหน้ารำคาญแล้วพัก
 function leave(h){say([['ぷいっ',1300]]);cat.lv=0;cat.pend=null;
  if(!playing){cat.cool=rr(15000,20000)*pk('cool');return setMode('annoy',1300)}
+ if(boxOn()&&Math.abs(cat.x-BOX.cx)>8)return goTo(BOX.cx,'boxhide'); // วันที่มีกล่อง: หนีไปมุดกล่องแทน (ที่หลบช่วยให้แมวฟื้นจากความเครียดเร็วขึ้น Vinke 2014)
  goTo(cat.x<(XMIN+XMAX)/2?XMAX-rr(0,10):XMIN+rr(0,10),'leave')}
 // ---------- กะพริบตาช้า (รายงานพฤติกรรมข้อ 5 · v61) ----------
 // แมวกะพริบตาช้าตอบเมื่อคนกะพริบตาช้าใส่ และเดินเข้าหาคนแปลกหน้าที่ทำแบบนี้มากขึ้น (Humphrey et al. 2020 หลักฐานแข็ง)
@@ -1349,11 +1606,12 @@ const thm=()=>tod()==='night'?'dark':'light'; // ชุดสีของภา�
 const skey=t=>t==='day'?'light':t==='night'?'dark':t; // ชุดสีฉาก
 let NOW=null; // เวลาของสิ่งที่ขยับในฉาก (null = นาฬิกาจริง) ตั้งได้จาก _t.setNow() ไว้ทดสอบ/ทำภาพพรีวิว
 function paint(){if(FXS.length)sLast='';const td=tod(),tm=thm(),sk=skey(td),[k,f]=catPose();cat.k=k;const now=performance.now(),idle=idleAt(cat,now),X=Math.round(cat.x),s=SCN(),
-  A={t:now,ms:NOW??Date.now(),d:new Date(),P:playing,td,sk},key=[k,f,idle,X,sk,S.coat,S.acc,PLACE,s.tick?s.tick(A):'',sk==='dark'?moonKey(A.ms):'',season(A.ms)].join('|');
+  A={t:now,ms:NOW??Date.now(),d:new Date(),P:playing,td,sk},key=[k,f,idle,X,sk,S.coat,S.acc,PLACE,s.tick?s.tick(A):'',sk==='dark'?moonKey(A.ms):'',season(A.ms)+bkey(),cat.dy||0].join('|');
  cur={k,f,idle,X,tm};if(key===sLast)return;sLast=key;const sx=cv.getContext('2d'),pal=palOf(s,sk);sx.clearRect(0,0,SW,SH);
  if(s.far)sx.drawImage(layer('far',sk),0,0);if(s.air)s.air(sx,pal,A);if(s.mid)sx.drawImage(layer('mid',sk),0,0);if(s.back)s.back(sx,pal,A); // ไกล → เมฆ → ราง → รถไฟ
  sx.drawImage(layer('bg',sk),0,0);if(s.live)s.live(sx,pal,A);
- sx.drawImage(sprite(k,f,tm,S.coat,S.acc,idle),X,CY);sx.drawImage(sceneFg(sk),0,0);if(s.front)s.front(sx,pal,A);if(FXS.length)fxDraw(sx,tm);
+ const dy=Math.round(cat.dy||0);if(dy){sx.save();sx.beginPath();sx.rect(0,0,SW,BOX.top+1);sx.clip()} // ในกล่อง: ตัดส่วนที่ต่ำกว่าขอบปากกล่อง (ขา หางที่ห้อยลง) ไม่ให้โผล่ใต้/ข้างกล่อง
+ sx.drawImage(sprite(k,f,tm,S.coat,S.acc,idle),X,CY+dy);if(dy)sx.restore();sx.drawImage(sceneFg(sk),0,0);if(s.front)s.front(sx,pal,A);if(FXS.length)fxDraw(sx,tm);
  if(WARM[td]){sx.save();sx.globalCompositeOperation='multiply';sx.fillStyle=WARM[td];sx.fillRect(0,0,SW,SH);sx.restore()} // แสงอุ่นทั้งภาพ
  if(s.over)s.over(sx,pal)}
 // กล่องคำพูดลอยเหนือหัวสัตว์เลี้ยงและเลื่อนตามเวลาเดิน (เจ้าของขอ 2026-11-18): หาขอบบนของภาพเฟรมปัจจุบัน แล้วค่อยๆ ไล่ตาม ไม่ให้กระตุก
@@ -1372,7 +1630,7 @@ function talk(h,ms){if(!bub||!h)return;clearTimeout(sayT);bub.innerHTML=h;bw=0;b
 function say(seq,after){if(!bub)return;clearTimeout(sayT);clearTimeout(hideT);bub.classList.add('on');
  const next=i=>{if(!bub)return;if(i>=seq.length){if(after)return talk(after);bub.innerHTML=MAIN;bw=0;const left=mainUntil-Date.now();return bhide(left>500?Math.max(left,2500):0)}
   bub.textContent=seq[i][0];bw=0;sayT=setTimeout(()=>next(i+1),seq[i][1])};next(0)}
-function bubble(dt){if(!bub||!cur)return;const b=bbox(cur.k,cur.f,cur.tm,cur.idle),tx=cur.X+b.cx,ty=CY+b.t-2;
+function bubble(dt){if(!bub||!cur)return;const b=bbox(cur.k,cur.f,cur.tm,cur.idle),tx=cur.X+b.cx,ty=CY+Math.round(cat.dy||0)+b.t-2;
  if(bx==null){bx=tx;by=ty}else{const a=Math.min(1,dt/140);bx+=(tx-bx)*a;by+=(ty-by)*a}
  const W2=cv.clientWidth,H2=cv.clientHeight;if(!W2)return;if(!bw){bw=bub.offsetWidth;bh=bub.offsetHeight;bLast=''}
  const px=bx/SW*W2,L=clamp(px,bw/2+6,W2-bw/2-6),T=Math.max(by/SH*H2-8,bh+6),tl=clamp(px-L+bw/2,16,bw-16),key=Math.round(L)+'|'+Math.round(T)+'|'+Math.round(tl);
@@ -1386,7 +1644,7 @@ function stop(){endHold(false);clearTimeout(sayT);clearTimeout(hideT);cancelAnim
 function fit(){if(!cv||!cv.parentElement||cv.closest('.scn'))return; // อยู่ในฉากสถานที่: CSS ขยายเต็มการ์ดเอง
  const w=cv.parentElement.clientWidth||SW*2,s=w>=SW*2?Math.min(5,Math.floor(w/SW)):w/SW;cv.style.width=SW*s+'px';cv.style.height=SH*s+'px'}
 // ใส่แมวลงผืนผ้าใบ (เรียกทุกครั้งที่วาดหน้าหลักใหม่ สถานะแมวต่อเนื่องจากครั้งก่อน)
-function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream';S.acc=o.acc||'none';S.stage=o.stage||1;PS=PERS[o.trait]||{};FXS=[];TIP=o.onTip||null;pets=0;hold=null;{const np=SCENES[o.place]?o.place:'room';if(np!==PLACE)AT_MS=0;PLACE=np}FAM=o.fam||99;sLast='';vis=true;clearTimeout(sayT);clearTimeout(hideT);bub=o.bubble||null;MAIN=bub?bub.innerHTML:'';LINE=o.line||null;mainUntil=0;bx=by=null;bw=0;cur=null;
+function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream';S.acc=o.acc||'none';S.stage=o.stage||1;PS=PERS[o.trait]||{};FXS=[];TIP=o.onTip||null;pets=0;hold=null;{const np=SCENES[o.place]?o.place:'room';if(np!==PLACE)AT_MS=0;PLACE=np}FAM=o.fam||99;CHR=o.chrono||0;sLast='';vis=true;clearTimeout(sayT);clearTimeout(hideT);bub=o.bubble||null;MAIN=bub?bub.innerHTML:'';LINE=o.line||null;mainUntil=0;bx=by=null;bw=0;cur=null;
  if(bub&&'ResizeObserver'in window){ro=new ResizeObserver(()=>{bw=0});ro.observe(bub);ro.observe(cv)} // ขนาดกล่อง/ฉากเปลี่ยน (ฟอนต์โหลดเสร็จ หมุนจอ) วัดใหม่
  cv.width=SW;cv.height=SH;cv.tabIndex=0;cv.setAttribute('role','button');cv.setAttribute('aria-label',(o.label||'แมว')+' แตะหัวเพื่อลูบ กดค้างที่หัวเพื่อกะพริบตาช้าใส่');
  // นิ้ว เมาส์ Apple Pencil ใช้ pointer event เดียวกัน · โซนอื่นตอบทันทีตอนแตะลง · หัวรอดูว่าแตะ (ลูบหัวตอนยกนิ้ว) หรือกดค้าง (กะพริบตาช้า) มีวงแหวนชมพูค่อยๆ เต็มให้รู้ว่ากำลังกดค้าง
@@ -1410,8 +1668,8 @@ function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream'
 function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:Date.now()}}
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
-window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
- _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},setSeason:v=>{SEAS=v;sLast=''},season,fall,moonAt,moonKey,moonIdx,moonBmp,moonGlow,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
+window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,season:()=>season(),coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
+ _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},setSeason:v=>{SEAS=v;sLast=''},sniffGo,novel,circleSteps,setBox:v=>{BOXF=v;sLast=''},setChrono:v=>{CHR=v},boxDay,BOX,setBoxSeen:v=>{BOX_SEEN=v?boxKey():''},leave,poke,decide,catPose,setSnow:v=>{SNOWF=v;sLast=''},setLat:d=>{LAT=d*Math.PI/180;MOON=moonAt(NOW??Date.now());for(const k in bgC)delete bgC[k];sLast=''},latOf,lat:()=>LAT*180/Math.PI,snowDay,season,fall,moonAt,moonKey,moonIdx,moonBmp,moonGlow,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
   // ตัวช่วยวาดสำหรับร่างท่าในหน้าพรีวิว/ไฟล์ร่างใน docs/ (เพิ่มท่าร่างลง POSES แล้วเรียก frame ได้) แอปไม่ได้ใช้
   POSES,lib:{sitCat,sdBox,sdEll,sdCap,smin,ear,earPts,headMat,tail,P,put,bean,eyeClosed,eyeSleepy,eyeHappy,mouth,blush,zz,bowPart,RAMP,EYE,IRIS,NOSE,FX,fr,get ACC(){return ACC},get IDLE(){return IDLE}}}};
 })();

@@ -60,6 +60,10 @@ function psay(p,dn){const k=dstr(new Date()),hr=new Date().getHours();ptr(p);psa
  p.lastTs=Date.now();saveM();
  if(dn>=3)return pline(p,'done');if(dn===0){if(p.rv===k)return pline(p,'first');if(p.back===k)return pline(p,'back')}
  if(dn>0)return pline(p,'partial');
+ return pgen(p,hr)}
+// ประโยคทั่วไป (ไม่มีเหตุการณ์): ตามช่วงเวลา · ชั่วโมง 05 09 13 17 21 ใช้ประโยคตามฤดูแบบญี่ปุ่นแทน (v116 · ROADMAP เฟส 3) ไม่ชนกับประโยคประจำสถานที่ที่ใช้ชั่วโมงคู่ (plSay)
+const pseason=()=>window.PixelCat&&PixelCat.season?PixelCat.season():['spring','summer','autumn','winter'][((new Date().getMonth()+10)%12)/3|0];
+function pgen(p,hr){if(hr>=5&&hr%4===1){const l=pline(p,pseason());if(l){psayG=false;return l}}
  psayG=true;return pline(p,hr<5?'late':hr<11?'morning':hr<15?'noon':hr<21?'evening':'night')}
 function petHtml(cta=''){pens();if(pAway==null)pAway=M.pet.lastTs?Date.now()-M.pet.lastTs:0;const p=M.pet,st=pstage(p.bond),dn=Object.keys(p.d.done).length,sp=SPC[p.sp||0],md=dn>=3?'ดีใจมาก':dn?'อารมณ์ดี':'ง่วงๆ รอเรียนด้วยกันอยู่นะ',say=psay(p,dn),g=M.goal,tot=pmast(),bd=tot>=250?icx('medal',18,'m3'):tot>=100?icx('medal',18,'m2'):tot>=25?icx('medal',18,'m1'):'';
  const wk=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return `<div class="${i==6?'on':''}">${['อา','จ','อ','พ','พฤ','ศ','ส'][d.getDay()]}<br><b>${d.getDate()}</b><br>${(M.days[dstr(d)]||0)>=g?icx('flame',14,'hl-i'):'·'}</div>`}).join('');
@@ -81,4 +85,8 @@ let pAway=null,pHid=0;
 document.addEventListener('visibilitychange',()=>{if(document.hidden){pHid=Date.now();return}if(!pHid)return;const g=Date.now()-pHid;pHid=0;if(window.PixelCat&&M.pet&&(M.pet.sp||0)===0)PixelCat.greet(g)});
 // คำแนะนำครั้งเดียว (เก็บใน M.pet.tip): ลูบหัวครบ 3 ครั้งแล้วบอกว่ากดค้างที่หัวได้ (แมวกะพริบตาช้าตอบ)
 function ptip(k){const p=M.pet;if(!p||(p.tip&&p.tip[k]))return;p.tip={...(p.tip||{}),[k]:1};saveM();if(k==='blink')toast(IC.paw+' ลองกดค้างที่หัว'+p.name+'ดูสิ แมวจะกะพริบตาช้าๆ ตอบ แปลว่าไว้ใจเธอนะ')}
-function petMount(){const c=document.getElementById('petcv');if(!c||!window.PixelCat)return;const h=new Date().getHours();PixelCat.mount(c,{coat:M.pet.coat,acc:M.pet.acc,label:M.pet.name,place:plState().at,fam:plVisit(),sleepy:h>=22||h<5,stage:pstage(M.pet.bond||0),trait:ptr(M.pet)&&M.pet.trait,onTip:ptip,line:k=>pline(M.pet,k,false),bubble:c.parentElement.querySelector('.scb')});if(pAway){PixelCat.greet(pAway);pAway=0}}
+// นาฬิกาชีวิตประจำตัว (v119 · รายงานพฤติกรรมข้อ 13 นิสัยประจำตัว): -1 ตื่นเช้า · 0 ตามปกติ · 1 นอนดึก คิดจากวันเกิด (rv) กับนิสัย จึงคงที่ ไม่ต้องเก็บข้อมูลเพิ่ม
+// แมวพิกเซลเลื่อนช่วงคึก/ง่วงของวันไป 2 ชม. (ตื่นเช้า: คึกตอนตี 3–7 ง่วงตั้งแต่ 1 ทุ่ม · นอนดึก: คึกถึง 5 ทุ่ม ง่วงถึง 7 โมง) · โอกาส (ตื่นเช้า, นอนดึก) ตามนิสัย ค่าของเกม
+const PCT={0:[.4,.15],4:[.1,.45],8:[.15,.4],9:[.35,.15]},PCTN=['ตื่นเช้า','ตามเวลาปกติ','นอนดึก'],PCTS=['คึกตอนเช้ามืด ง่วงเร็วตั้งแต่หัวค่ำ','คึกตอนเช้ากับตอนเย็น งีบตอนเที่ยง','ตื่นสาย คึกยาวถึงสี่ห้าทุ่ม'];
+function pchrono(p){const[e,l]=PCT[p.trait]||[.25,.25];let x=7;for(const c of String(p.rv||'')+'|'+p.trait)x=(x*31+c.charCodeAt(0))>>>0;const r=(x%1000)/1000;return r<e?-1:r<e+l?1:0}
+function petMount(){const c=document.getElementById('petcv');if(!c||!window.PixelCat)return;ptr(M.pet);const ct=pchrono(M.pet),h=(new Date().getHours()-2*ct+24)%24;PixelCat.mount(c,{coat:M.pet.coat,acc:M.pet.acc,label:M.pet.name,place:plState().at,fam:plVisit(),sleepy:h>=22||h<5,chrono:ct,stage:pstage(M.pet.bond||0),trait:ptr(M.pet)&&M.pet.trait,onTip:ptip,line:k=>pline(M.pet,k,false),bubble:c.parentElement.querySelector('.scb')});if(pAway){PixelCat.greet(pAway);pAway=0}}
