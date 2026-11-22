@@ -44,6 +44,8 @@ const DRAFT = (() => {
 
 export default tseslint.config(
   { ignores: ['node_modules/**', 'test-results/**', 'docs/**', 'icons/**', 'fonts/**', 'img/**'] },
+  // ปิดกฎในโค้ดไม่ได้: comment แบบ eslint-disable / eslint <กฎ>: off / global ไม่มีผล ต้องแก้ที่ต้นเหตุ หรือแก้ไฟล์นี้ให้เห็นใน diff
+  { linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' } },
 
   // ---------- แอป (ship ให้ผู้ใช้) ----------
   ...APP.map(f => ({

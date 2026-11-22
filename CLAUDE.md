@@ -21,7 +21,7 @@
 | ตรวจทั้งหมด | `npm run check` (type → lint → determinism → featuremap → unit → hooks → e2e → flows · ทุก push/PR บน CI ต้องผ่าน) |
 | lint / type check | `npm run lint` · `npm run typecheck` (โค้ดเดิมยังไม่ผ่าน: แผนใน `docs/LINT_PLAN.md` · `docs/TYPESCRIPT_PLAN.md`) |
 
-Hook (`.claude/settings.json`) รัน lint/type ของไฟล์ที่เพิ่งแก้ให้ทันที ถ้าขึ้น error ให้แก้ก่อนทำต่อ ห้ามปิดกฎหรือใส่ `eslint-disable`
+Hook (`.claude/settings.json`) รัน lint/type ของไฟล์ที่เพิ่งแก้ให้ทันที ถ้าขึ้น error ให้แก้ก่อนทำต่อ
 Hook Stop ไม่ให้จบ turn ถ้าโค้ดเปลี่ยนหลัง `npm run check` ครั้งล่าสุด (`tools/hooks/stop-check.js` · ทดสอบ `node tests/hooks.js`)
 
 ## Definition of Done

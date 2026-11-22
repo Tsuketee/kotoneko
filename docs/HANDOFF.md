@@ -47,7 +47,7 @@
 | 2ค | ✅ v147 (แก้ข้อเดิม 3 ข้อ v148) · `tests/check-determinism.js` ในขั้น check: ข้อทดสอบที่จำลองพฤติกรรมแมวต้องมี `setJit(false)` และ `setNow(` |
 | 3ก | ✅ v149 · FEATURE_MAP อ้าง e2e ด้วยคำในชื่อข้อแทนเลขบรรทัด + ขั้นตรวจว่าคำค้นเจอข้อจริง · SKILL ขั้น 2.4 ตาม |
 | 3ข–3ฉ | ✅ v150 · SKILL verify-app: ภาพจาง/ว่าง = ยังไม่มีหลักฐาน · แยก 404/403 ที่ตั้งใจของ Supabase จำลอง (`pageerror` ต้องเป็น 0) · "KillShell" → `pkill -f "http.server 8000"` · ไม่รัน flows ซ้ำในขั้น 5 ถ้าไม่ได้แก้โค้ดหลังขั้น 3 · สถานะ "ไม่ผ่าน · ปัญหาเดิม" |
-| 4ก | ESLint `linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: "error" }` แล้วลบ CLAUDE.md L24 |
+| 4ก | ✅ v151 · ESLint `linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: "error" }` แล้วลบ CLAUDE.md L24 |
 | 4ข | ขั้น `version` ใน `check.js` แล้วลบแถว "เลข VERSION" (L20) |
 | 4ค | ถ้าทำ 2ก ลบ DoD ข้อ 1 (L28–29) · ถ้าไม่ทำ อย่างน้อยแก้ `npm test` → `npm run check` (ตอนนี้ L29 ตกหล่น lint/type) |
 | 4ง | ขั้น `test-count` (จำนวนข้อต้องไม่น้อยกว่า main) แล้วตัด "ข้าม ปิด" ออกจาก L32 |
