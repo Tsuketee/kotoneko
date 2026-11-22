@@ -36,8 +36,8 @@ const dirAt = (S, i) => { const a = S[Math.max(0, i - 2)], b = S[Math.min(S.leng
 // จุดตัดของสองเส้น (ใกล้กันน้อยกว่า 1.5 พิกเซล) → [x, y, ดัชนีบนเส้นแรก]
 const cross = (A, B) => { let best = null; A.forEach((p, i) => { const [d] = near(B, p[0], p[1]); if (d < 1.5 && (!best || d < best[3])) best = [p[0], p[1], i, d] }); return best };
 // ---------- เส้นหลักของเมือง ----------
-const RIVER = spline([[122, 34], [127, 52], [122, 70], [114, 90], [106, 114], [100, 136], [94, 156], [84, 172], [68, 188], [48, 206], [33, 228], [25, 254], [29, 282], [40, 308], [48, 344]]);
-const RW = i => 3 + 2.2 * i / RIVER.length; // แม่น้ำกว้างขึ้นทางปลายน้ำ (ใต้)
+const RIVER = spline([[125, 50], [127, 60], [122, 72], [114, 90], [106, 114], [100, 136], [94, 156], [84, 172], [68, 188], [48, 206], [33, 228], [25, 254], [29, 282], [40, 308], [48, 344]]);
+const RW = i => Math.min(1, .3 + i / 40) * (3 + 2.2 * i / RIVER.length); // แม่น้ำกว้างขึ้นทางปลายน้ำ (ใต้) · ต้นน้ำค่อยๆ บานออกจากชายป่า
 const RAIL = spline([[-4, 152], [18, 148], [40, 145], [64, 145], [90, 145], [106, 145], [124, 150], [144, 159], [164, 165]]);
 const MAIN = spline([[164, 92], [148, 104], [135, 120], [126, 140], [122, 160], [119, 180], [115, 200], [113, 222], [117, 250], [126, 278], [138, 308], [146, 340], [148, 346]]); // ถนนสายเก่าเลียบแม่น้ำฝั่งตะวันออก
 const ONS = spline([[162, 93], [158, 80], [152, 64], [148, 52], [146, 42]]);                                                       // ทางขึ้นออนเซ็นบนเขา
@@ -120,9 +120,13 @@ function fuji(c, se) { const sh = PAL[se].snow, lit = hex('#9cb4cf'), shd = hex(
       const tv = (y - FT) / (FB - FT); c.fillStyle = dcol(x, y, mix(mix(lit, shd, ts), haze, tv ** 1.7 * .6)); c.fillRect(x, y, 1, 1) } }
   rect(c, FX - 2, FT, 5, 1, sh ? '#e6edf5' : '#6a7f9c') }
 // เนินเขาซ้อน 2 ชั้นก่อนถึงป่า: ไกลจางอมฟ้า ใกล้เขียวขึ้นมีพุ่มไม้บนสัน (ต่อภูเขามุมข้างเข้ากับเมืองมุมบน)
+// ลำธารต้นน้ำบนเขา (v133 เจ้าของบอกว่าแม่น้ำเหมือนไหลขึ้นเขา): เนินวาดแบบมองข้าง ต้นน้ำจึงเป็นเส้นน้ำเล็กไหลลงร่องเขา หายเข้าแนวป่า แล้วแม่น้ำค่อยโผล่จากชายป่า (RIVER เริ่มใต้แนวป่า)
+const BROOK = spline([[118, 30], [119, 34], [121, 38], [122, 42], [124, 47]]);
+const brook = (c, se, y0) => BROOK.forEach(([x, y], i) => { if (y < y0) return; const wi = se === 'winter'; dot(c, x, y, wi ? (i % 4 ? '#9fc6dd' : '#e3eef4') : i % 4 ? '#7fbadb' : '#d9f0fa'); if (y > 36) dot(c, x + 1, y, wi ? '#c4dceb' : '#8fcbe6') });
 function hills(c, se) { const P = PAL[se];
   for (let x = 0; x < W; x++) { const y = Math.round(31 + 3.5 * Math.sin(x / 21 + .6) + 1.6 * Math.sin(x / 8.5 + 2)); rect(c, x, y, 1, 56 - y, P.h1); dot(c, x, y, P.h1b); for (let yy = y + 2; yy < 46; yy++) if (bay(x, yy) < .16 && (x + yy) % 3) dot(c, x, yy, se === 'winter' ? '#b9c8d4' : P.h2) }
-  for (let x = 0; x < W; x++) { const y = Math.round(39 + 2.6 * Math.sin(x / 15 + 2.2) + 1.2 * Math.sin(x / 6 + .4)); rect(c, x, y, 1, 58 - y, P.h2); dot(c, x, y, P.h2b); if (x % 4 === 1) { dot(c, x, y - 1, P.h2); dot(c, x + 1, y - 1, P.h2) } if ((x * 13) % 7 < 2) dot(c, x, y + 3 + (x % 3), se === 'winter' ? '#9fb09f' : P.fo[1]) } }
+  for (let x = 0; x < W; x++) { const y = Math.round(39 + 2.6 * Math.sin(x / 15 + 2.2) + 1.2 * Math.sin(x / 6 + .4)); rect(c, x, y, 1, 58 - y, P.h2); dot(c, x, y, P.h2b); if (x % 4 === 1) { dot(c, x, y - 1, P.h2); dot(c, x + 1, y - 1, P.h2) } if ((x * 13) % 7 < 2) dot(c, x, y + 3 + (x % 3), se === 'winter' ? '#9fb09f' : P.fo[1]) }
+  brook(c, se, 0) }
 function paddy(c, se, x0, y0, w, h, sd) { const P = PAL[se], r = rng(sd), wi = se === 'winter';
   for (let y = y0; y < y0 + h; y += 7) for (let x = x0; x < x0 + w; x += 9 + ((y >> 3) % 3)) { const ww = Math.min(8 + ((x + y) % 3), x0 + w - x - 1), hh = Math.min(6, y0 + h - y - 1); if (ww < 3 || hh < 3) continue; const k = r() < .2 ? 2 : r() < .5 ? 1 : 0; rect(c, x, y, ww, hh, P.pad[k]);
     if (se === 'spring' && r() < .4) rect(c, x + 1, y + 1, 2, 1, C.water2); if (se === 'summer') for (let i = 0; i < ww; i += 2) rect(c, x + i, y + 1, 1, hh - 2, P.pad[2]); if (se === 'autumn') for (let i = 1; i < ww; i += 3) dot(c, x + i, y + 2, '#b8922e'); if (wi) for (let i = 0; i < ww; i += 3) dot(c, x + i, y + 2 + (i % 2), '#c9b89a') } }
@@ -173,7 +177,7 @@ function base(se, locked, fest) { const key = se + '|' + locked.join(',') + '|' 
   blob(c, 5, 300, 6, 4.2, '#9fae8f'); blob(c, 5, 300, 5, 3.4, wi ? C.water2 : C.water3); blob(c, 5, 299.6, 4, 2.6, wi ? '#e3edf3' : C.water); bamboo(c, 0, 318, 9, 22, se); bamboo(c, 22, 102, 6, 8, se);
   [[10, 212, 10, 6], [104, 71, 7, 5], [144, 134, 10, 6], [70, 296, 9, 6], [96, 334, 9, 5]].forEach(([x, y, w, h]) => { rect(c, x, y, w, h, P.veg[0]); for (let yy = y + 1; yy < y + h; yy += 2) for (let xx = x + 1; xx < x + w - 1; xx += 2) dot(c, xx, yy, P.veg[1]) });
   [[18, 286], [124, 188]].forEach(([x, y]) => { rect(c, x, y, 3, 1, C.roof2); rect(c, x, y + 1, 3, 2, '#e8dcc6'); dot(c, x + 1, y + 2, '#8a6040'); rect(c, x - 1, y + 3, 5, 1, C.stone) });
-  river(c, se);
+  river(c, se); forest(c, 125, 52, 9, 4.5, se, 31, .1);
   // ถนน (ทุกเส้นถึงที่หมายหรือออกขอบแผนที่) · สะพานตรงที่ข้ามแม่น้ำ
   road(c, HILL, 1, 0); road(c, ONS, 1, 0); road(c, WEST, 2, 0); road(c, SCH, 1, 0); [RES1, RES2, RES3].forEach(S => road(c, S, 1, 0)); road(c, MAIN, 2, 1); road(c, SHOT, 2, 0);
   [SHOT, LANES[2]].forEach((S, k) => { const b = cross(S, RIVER); if (b) bridge(c, S, b[2], k ? 6 : 8, k ? 1.5 : 3.5, k ? C.bridge : '#e2ddd3', k ? C.bridge2 : '#7d766c') });
