@@ -104,7 +104,7 @@
 - **data-testid**: `write-prompt` คำอ่าน/ความหมาย · `write-sheet` แผ่นเขียน · `write-canvas` ช่องเขียน 16 ช่อง · `write-pen` `write-eraser` เครื่องมือ · `write-guide` ซ่อน/แสดงเส้นนำ · `write-next` ตัวต่อไป
 - **selector (e2e เดิม)**: `.sheet` · `canvas[data-c]` ช่องเขียน · `#app .wi .d` คำอ่าน
 - **flow ที่ต้องไม่พัง**: วาดด้วยนิ้ว/Apple Pencil ตามเส้นจาง · ซ่อนเส้นนำได้ · ยางลบ · เครดิต KanjiVG ต้องอยู่ในหน้าเครดิต
-- **test**: `flows.js` 05-write-pen (เมาส์ · Apple Pencil · ยางลบ) · 06-write-finger (นิ้ว: ❌ ไม่ผ่านตอนนี้ `js/write.js:27` ข้าม pointer ชนิด touch ทั้งที่คำแนะนำบนจอบอกว่าเขียนด้วยนิ้วได้) · `e2e.js:877` (ข้อความคำอ่าน) · `:268` (เครดิต)
+- **test**: `flows.js` 05-write-pen (เมาส์ · Apple Pencil · ยางลบ) · 06-write-finger (นิ้ว) · 06b-write-palm (กันฝ่ามือ: ใช้ปากกาอยู่นิ้วไม่วาด `PALM_MS` ใน `js/write.js`) · `e2e.js:877` (ข้อความคำอ่าน) · `:268` (เครดิต)
 
 ## 11. ทบทวนแบบเว้นระยะ
 - **หน้า**: ทำงานเบื้องหลังการ์ด/ควิซ

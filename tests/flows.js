@@ -253,6 +253,37 @@ test('06-write-finger', 'ฝึกเขียน: ลากเส้นด้�
   assert.deepStrictEqual(rec.errors(), []);
 });
 
+test('06b-write-palm', 'ฝึกเขียน: ระหว่างใช้ Apple Pencil ฝ่ามือ/นิ้วที่แตะจอไม่วาด · ปากกาแตะลงระหว่างนิ้วลากจะลบเส้นของนิ้ว · วางปากกาเกิน 1 วินาทีนิ้วกลับมาเขียนได้', async (b) => {
+  const p = await open(b, { hasTouch: true });
+  await onboard(p);
+  await openKanji(p);
+  await p.getByTestId('mode-write').click();
+  await p.getByTestId('write-sheet').waitFor();
+  const cdp = await p.context().newCDPSession(p);
+  const pen = (type, [x, y], buttons) => cdp.send('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons, clickCount: 1, pointerType: 'pen' });
+  const touch = (type, pt) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pt ? [{ x: pt[0], y: pt[1] }] : [] });
+  const penStroke = async a => { await pen('mousePressed', a[0], 1); for (const pt of a.slice(1)) await pen('mouseMoved', pt, 1); await pen('mouseReleased', a[a.length - 1], 0) };
+  const touchStroke = async a => { await touch('touchStart', a[0]); for (const pt of a.slice(1)) await touch('touchMove', pt); await touch('touchEnd') };
+  // ปากกาเพิ่งยก แล้วฝ่ามือแตะ
+  await penStroke(await strokePath(p, 1));
+  assert(await inkAfter(p, 1, n => n > 200) > 200, 'ปากกาต้องวาดได้');
+  await touchStroke(await strokePath(p, 2));
+  await p.waitForTimeout(300);
+  assert.strictEqual(await ink(p, 2), 0, 'แตะด้วยนิ้วทันทีหลังยกปากกาต้องไม่วาด');
+  // นิ้วลากอยู่ แล้วปากกาแตะลง
+  await p.waitForTimeout(1200);
+  const f = await strokePath(p, 3), q = await strokePath(p, 4);
+  await touch('touchStart', f[0]);
+  for (const pt of f.slice(1)) await touch('touchMove', pt);
+  assert(await inkAfter(p, 3, n => n > 200) > 200, 'นิ้วต้องวาดได้เมื่อไม่ได้ใช้ปากกาเกิน 1 วินาที');
+  await penStroke(q);
+  await touch('touchEnd');
+  assert(await inkAfter(p, 4, n => n > 200) > 200, 'ปากกาที่แตะลงระหว่างนิ้วลากต้องวาดได้');
+  assert.strictEqual(await inkAfter(p, 3, n => n === 0), 0, 'เส้นของนิ้วต้องถูกลบเมื่อปากกาแตะลง');
+  await rec.shot(p, 'palm');
+  assert.deepStrictEqual(rec.errors(), []);
+});
+
 // ---------- 6. ควิซผ่าน → รางวัล → สัตว์เลี้ยง ----------
 test('07-reward', 'รางวัล: ตอบควิซถูกครบเป้า → ภารกิจสำเร็จ → กดรับ → Energy และความสนิทของสัตว์เลี้ยงเพิ่ม', async (b) => {
   const p = await open(b);
