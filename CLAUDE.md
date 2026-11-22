@@ -14,14 +14,15 @@
 | dev | `npm start` (= `python3 -m http.server 8000`) แล้วเปิด http://localhost:8000 |
 | build | ไม่มี (HTML/CSS/JS ล้วน) |
 | ติดตั้งครั้งแรก | `npm ci` แล้ว `npx playwright install chromium` |
-| test ทั้งหมด | `npm test` (= `node tests/payment.mjs && node tests/e2e.js && node tests/flows.js` ราว 3 นาที · หลักฐานใน `test-results/`) |
+| test ทั้งหมด | `npm test` (= `node tests/payment.mjs && node tests/hooks.js && node tests/e2e.js && node tests/flows.js` ราว 3 นาที · หลักฐานใน `test-results/`) |
 | test เฉพาะข้อ | `node tests/e2e.js <คำในชื่อข้อ>` หรือ `node tests/flows.js <คำในชื่อข้อ>` |
 | ภาพแมวพิกเซล | `node tests/pet-grid.js <โฟลเดอร์ผลลัพธ์>` |
 | เลข VERSION | `node tests/check-version.js origin/main` |
-| ตรวจทั้งหมด | `npm run check` (type → lint → unit → e2e · ทุก push/PR บน CI ต้องผ่าน) |
+| ตรวจทั้งหมด | `npm run check` (type → lint → unit → hooks → e2e → flows · ทุก push/PR บน CI ต้องผ่าน) |
 | lint / type check | `npm run lint` · `npm run typecheck` (โค้ดเดิมยังไม่ผ่าน: แผนใน `docs/LINT_PLAN.md` · `docs/TYPESCRIPT_PLAN.md`) |
 
 Hook (`.claude/settings.json`) รัน lint/type ของไฟล์ที่เพิ่งแก้ให้ทันที ถ้าขึ้น error ให้แก้ก่อนทำต่อ ห้ามปิดกฎหรือใส่ `eslint-disable`
+Hook Stop ไม่ให้จบ turn ถ้าโค้ดเปลี่ยนหลัง `npm run check` ครั้งล่าสุด (`tools/hooks/stop-check.js` · ทดสอบ `node tests/hooks.js`)
 
 ## Definition of Done
 ก่อนบอกว่าเสร็จ ใช้ skill verify-app

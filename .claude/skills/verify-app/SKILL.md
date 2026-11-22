@@ -20,7 +20,7 @@ description: ตรวจแอป Kotoneko เหมือนผู้ใช้
    `BASE_URL=http://localhost:8000/ node tests/flows.js`
 4. รันข้อ e2e ของฟีเจอร์ที่เกี่ยวข้อง โดยใช้คำในชื่อข้อตามบรรทัด **test** ของ FEATURE_MAP เช่น
    `node tests/e2e.js "ไวยากรณ์"` (ชุดนี้เปิด server ของตัวเอง)
-5. ก่อนบอกว่าเสร็จ รันทั้งชุด: `npm run check` (type → lint → unit → e2e ราว 3 นาที) และ `node tests/check-version.js origin/main`
+5. ก่อนบอกว่าเสร็จ รันทั้งชุด: `npm run check` (type → lint → unit → hooks → e2e → flows ราว 3–4 นาที) และ `node tests/check-version.js origin/main`
 6. ถ้าแก้แมวพิกเซลหรือฉาก ให้รัน `node tests/pet-grid.js test-results/pet-grid` เพิ่มด้วย
 
 ## 3. เปิดดูภาพหน้าจอ

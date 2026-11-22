@@ -67,7 +67,7 @@ repo นี้เป็น public จึงใช้ GitHub Pages ได้ฟ�
 ทุกครั้งที่แก้ไฟล์ ให้เพิ่มเลข `VERSION` ใน `sw.js` ไม่งั้นเครื่องที่เคยเปิดแอปแล้วจะยังเห็นไฟล์เก่า (ทุก PR ถูกตรวจอัตโนมัติ ดูหัวข้อ "ทดสอบ")
 
 ## ทดสอบ
-ชุดทดสอบอัตโนมัติ 3 ชุด: `tests/flows.js` 7 ข้อ (flow หลักแบบผู้ใช้จริง: กดปุ่มและอ่านจอผ่าน `data-testid` ไม่เรียกโค้ดภายใน · ดู FEATURE_MAP.md), `tests/payment.mjs` 12 ข้อ (Edge Function ชำระเงิน กับ Stripe/Supabase จำลอง ต้องใช้ Node 22.18 ขึ้นไป) และ `tests/e2e.js` 58 ข้อ (ข้อมูล, การใช้งานหลัก, สัตว์เลี้ยงและแมวพิกเซล, สถานที่และแผนที่เมือง, ส่งออก/นำเข้า, ซิงก์คลาวด์ด้วย Supabase จำลอง, แพ็กเสียเงินและการซื้อ, iPad แนวตั้ง/นอน, PWA ออฟไลน์) ใช้ Playwright เปิด Chromium จริง
+ชุดทดสอบอัตโนมัติ 4 ชุด: `tests/hooks.js` 10 ข้อ (hook ของ Claude Code ที่ไม่ให้จบงานถ้าโค้ดเปลี่ยนหลัง `npm run check`), `tests/flows.js` 8 ข้อ (flow หลักแบบผู้ใช้จริง: กดปุ่มและอ่านจอผ่าน `data-testid` ไม่เรียกโค้ดภายใน · ดู FEATURE_MAP.md), `tests/payment.mjs` 12 ข้อ (Edge Function ชำระเงิน กับ Stripe/Supabase จำลอง ต้องใช้ Node 22.18 ขึ้นไป) และ `tests/e2e.js` 58 ข้อ (ข้อมูล, การใช้งานหลัก, สัตว์เลี้ยงและแมวพิกเซล, สถานที่และแผนที่เมือง, ส่งออก/นำเข้า, ซิงก์คลาวด์ด้วย Supabase จำลอง, แพ็กเสียเงินและการซื้อ, iPad แนวตั้ง/นอน, PWA ออฟไลน์) ใช้ Playwright เปิด Chromium จริง
 ```
 npm install
 npx playwright install chromium   # ครั้งแรกครั้งเดียว
@@ -77,7 +77,7 @@ npm test
 
 ควรรันก่อนปล่อยเวอร์ชันใหม่ทุกครั้ง ส่วนการทดสอบบน iPad Safari จริง (Apple Pencil, safe-area) ยังต้องลองด้วยมือ
 
-**ตรวจทั้งหมดด้วยคำสั่งเดียว**: `npm run check` = type check (`tsc` strict) → lint (ESLint) → unit (`tests/payment.mjs`) → e2e (`tests/e2e.js` + `tests/flows.js`) แล้วสรุปเป็นตาราง · แผนแก้โค้ดเดิมที่ยังไม่ผ่าน lint อยู่ใน `docs/LINT_PLAN.md` และแผนย้ายไป TypeScript ใน `docs/TYPESCRIPT_PLAN.md`
+**ตรวจทั้งหมดด้วยคำสั่งเดียว**: `npm run check` = type check (`tsc` strict) → lint (ESLint) → unit (`tests/payment.mjs`) → hooks (`tests/hooks.js`) → e2e (`tests/e2e.js`) → flows (`tests/flows.js`) แล้วสรุปเป็นตาราง และบันทึกผลใน `test-results/check-stamp.json` · แผนแก้โค้ดเดิมที่ยังไม่ผ่าน lint อยู่ใน `docs/LINT_PLAN.md` และแผนย้ายไป TypeScript ใน `docs/TYPESCRIPT_PLAN.md`
 
 **GitHub Actions** (`.github/workflows/test.yml`) รันให้เองทุก push และทุก PR:
 - **npm run check**: ผิดกฎข้อไหนก็แดง

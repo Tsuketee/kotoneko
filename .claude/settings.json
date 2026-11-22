@@ -1,5 +1,17 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/tools/hooks/session-base.js\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit",
@@ -9,6 +21,18 @@
             "command": "node \"$CLAUDE_PROJECT_DIR/tools/hooks/check-file.js\"",
             "timeout": 60,
             "statusMessage": "ตรวจ lint/type ของไฟล์ที่เพิ่งแก้"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/tools/hooks/stop-check.js\"",
+            "timeout": 30,
+            "statusMessage": "ตรวจว่ารัน npm run check กับโค้ดล่าสุดแล้ว"
           }
         ]
       }
