@@ -34,8 +34,11 @@
       <li>ทางข้ามรถไฟ (ไม้กั้นลงตอนรถไฟใกล้) สะพานเหล็กสีแดง ชานชาลาสองฝั่งกับสะพานลอย รถไฟจอดที่สถานี</li>
       <li>คันดินมีทางจักรยานกับซากุระริมน้ำ หาดทราย บ่อ ดงไผ่ แปลงผัก ต้นพลับ ศาลเจ้าเล็กริมทาง เสาไฟ</li>
       <li>ไฟกลางคืน แสงอุ่นตอนเช้าและเย็น ธงปลาคาร์ป โคมงานวัด ประดับปีใหม่ เข็มทิศ 北 · เปิดมาเลื่อนไปที่แมว ที่ล็อกจาง</li></ul></div>
+    <div class="pv-box"><h2>ใหม่ v131: เดินทางไปจริง</h2><ul>
+      <li>กด "ไปเที่ยวที่นี่" แล้วแมวเดินตามถนนไปที่ใหม่ กล้องซูมเข้าตามแมว มีเส้นประบอกทาง รอยเท้า และธงที่หมาย</li>
+      <li>กล่องด้านล่างบอกระยะทางกับเวลาเดิน แตะที่ไหนก็ได้เพื่อข้าม ถึงแล้วมีประกาย "ถึง…แล้ว!"</li></ul></div>
     <div class="pv-box"><h2>ฝากดู</h2><ul>
-      <li>ลองแตะป้ายแต่ละที่ แล้วสลับฤดู เวลา และเทศกาลด้านบน</li>
+      <li>ลองแตะป้ายแต่ละที่ แล้วสลับฤดู เวลา และเทศกาลด้านบน · เลือก "ปลดล็อกครบ" เพื่อลองเดินไปได้ทุกที่</li>
       <li>ขนาดป้ายกับเส้นชี้อ่านง่ายไหมบนมือถือ (ยังไม่ได้ลองบน iPad จริง)</li></ul></div>
   </div>
 </div>
@@ -46,12 +49,12 @@
 (() => {
   const V = { se: '', td: '', fe: '', all: '0', sp: '0' }; let at = 'room', dlg = null;
   const rb = s => s.replace(/\{([^|}]*)\|([^}]*)\}/g, '<ruby>$1<rt>$2</rt></ruby>');
-  const icon = () => '<svg class="ic2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  const icon = k => k === 'paw' ? '🐾' : k === 'sparkle' ? '✨' : '<svg class="ic2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const toast = t => { const e = document.createElement('div'); e.className = 'pv-toast'; e.textContent = t; document.body.appendChild(e); setTimeout(() => e.remove(), 1600) };
   const date = () => { const n = new Date(); if (!V.fe) return n; const [m, d] = V.fe.split('-').map(Number); return new Date(n.getFullYear(), m - 1, d, n.getHours(), n.getMinutes(), n.getSeconds(), n.getMilliseconds()) };
   const open = () => { if (dlg) dlg.close(); const all = V.all === '1', has = p => !!p.free || all; if (!has(PLACES.find(p => p.id === at))) at = 'room';
     dlg = TownMap.ask({ places: PLACES, at, has, count: p => all ? p.unlock.n : 3, rb, icon, cat: V.sp === '0' ? { coat: 'cream', acc: 'none' } : null, emoji: '🐰',
-      season: () => V.se || PixelCat.season(), tod: () => V.td || PixelCat.tod(), date, go: id => { at = id; toast('ไปที่' + PLACES.find(p => p.id === id).n + 'กัน'); open() } }, document.getElementById('host')) };
+      season: () => V.se || PixelCat.season(), tod: () => V.td || PixelCat.tod(), date, go: id => { at = id; toast('ถึง' + PLACES.find(p => p.id === id).n + 'แล้ว'); open() } }, document.getElementById('host')) };
   document.querySelectorAll('.pv-seg').forEach(g => g.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); V[g.dataset.k] = b.dataset.v; if (g.dataset.k === 'all' || g.dataset.k === 'sp') open() }));
   document.querySelectorAll('.pv-seg button:not([aria-pressed])').forEach(b => b.setAttribute('aria-pressed', 'false'));
   open();

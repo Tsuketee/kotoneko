@@ -209,6 +209,29 @@ function crossing(c, span, ms) { if (!span) return; const [a, b] = span, i = LX[
   [[-5, -6], [4, -6], [-5, 1], [4, 1]].forEach(([dx, dy], k) => dot(c, lx + dx, ly + dy, (k + on) % 2 ? '#ff4a3a' : '#5a1f1a'));
   for (let dx = -4; dx <= 3; dx++) { dot(c, lx + dx, ly - 5, dx % 2 ? '#2f2a2a' : '#f2c84a'); dot(c, lx + dx + 1, ly + 4, dx % 2 ? '#2f2a2a' : '#f2c84a') } }
 function koi(c, ms, P) { KOI.forEach(([x, y], k) => [['#3a3a46', 0], ['#e8503c', 3], ['#4f8fd6', 6]].forEach(([col, dy], j) => { for (let i = 0; i < 6 - j; i++) { const w = P ? Math.round(Math.sin(ms / 260 - i * .9 + k) * .6) : 0; dot(c, x + 1 + i, y - 10 + dy + w, col); if (i === 0) dot(c, x + 1, y - 9 + dy + w, '#fff') } })) }
+// ---------- เดินทาง (v131): แมวเดินตามถนนจริงจากที่เดิมไปที่ใหม่ ----------
+// กราฟทางเดิน: จุดของถนน ซอย คันนา เชื่อมจุดติดกันในเส้นเดียวกัน และจุดต่างเส้นที่ห่างกันไม่ถึง 2.5 px (ทางแยก) · ข้ามรางที่สถานีทางสะพานลอย (ทางออกเหนือ ↔ ลานหน้าสถานี) · ทางเดินในสวนต่อประตูตะวันตก (คันนาข้ามสะพานไม้) กับประตูใต้
+const WALK = [MAIN, ONS, SHOT, WEST, HILL, SCH, RES1, RES2, RES3, ...LANES, spline([[62, 124], [70, 131], [78, 137], [79, 150], [72, 156], [68, 158]]), spline([[126, 91], [132, 96], [140, 101], [146, 105]]), spline([[90, 225], [102, 228], [105, 238], [104, 252], [98, 262]])]; // สองเส้นท้าย = ทางเดินในสวน (ประตูตะวันตก ↔ ประตูใต้) · ทางเดินข้างสระ/โรงยิมจากประตูโรงเรียน
+let GR = null;
+function graph() { if (GR) return GR; const N = [], E = [], add = p => (N.push(p), E.push([]), N.length - 1), link = (a, b) => { const w = Math.hypot(N[a][0] - N[b][0], N[a][1] - N[b][1]); E[a].push([b, w]); E[b].push([a, w]) };
+  const ids = WALK.map(S => { const k = S.filter((q, i) => i % 2 === 0 || i === S.length - 1).map(add); k.forEach((v, i) => { if (i) link(k[i - 1], v) }); return k });
+  ids.forEach((A, a) => ids.forEach((B, b) => { if (b > a) A.forEach(i => B.forEach(j => { if (Math.abs(N[i][0] - N[j][0]) < 2.5 && Math.hypot(N[i][0] - N[j][0], N[i][1] - N[j][1]) < 2.5) link(i, j) })) }));
+  return GR = { N, E } }
+const nearN = (x, y) => { let b = 0, bd = 1e9; graph().N.forEach(([a, c], i) => { const d = (a - x) ** 2 + (c - y) ** 2; if (d < bd) { bd = d; b = i } }); return b };
+// เส้นทางสั้นสุด (Dijkstra): จุดแมวของที่เดิม → ถนนหน้าที่เดิม (map.door หรือ map.at) → … → ถนนหน้าที่ใหม่ → จุดแมวของที่ใหม่ · คืนจุดห่างกันทีละ 1 px (ไม่มีทาง = null)
+function trip(from, to) { const { N, E } = graph(), door = q => q.map.door || q.map.at, a = nearN(...door(from)), z = nearN(...door(to)), n = N.length, D = new Float64Array(n).fill(Infinity), P = new Int32Array(n).fill(-1), done = new Uint8Array(n); D[a] = 0;
+  for (;;) { let u = -1, m = Infinity; for (let i = 0; i < n; i++) if (!done[i] && D[i] < m) { m = D[i]; u = i } if (u < 0 || u === z) break; done[u] = 1; for (const [v, w] of E[u]) if (D[u] + w < D[v]) { D[v] = D[u] + w; P[v] = u } }
+  if (!isFinite(D[z])) return null; const R = [to.map.cat]; for (let u = z; u >= 0; u = P[u]) R.unshift(N[u]); R.unshift(from.map.cat);
+  const o = [R[0].slice()]; let rem = 0; for (let i = 1; i < R.length; i++) { const [ax, ay] = R[i - 1], [bx, by] = R[i], d = Math.hypot(bx - ax, by - ay); if (!d) continue; let t = 1 - rem; for (; t <= d; t += 1) o.push([ax + (bx - ax) * t / d, ay + (by - ay) * t / d]); rem = d - (t - 1) } o.push(R[R.length - 1].slice()); return o }
+const sprite = (c, g, x, y, bob = 0) => { for (let yy = 0; yy < g.length; yy += 2) for (let xx = 0; xx < g[yy].length; xx += 2) if (g[yy][xx]) dot(c, x - 12 + xx / 2, y - 21 + bob + yy / 2, g[yy][xx]) };
+// ระหว่างเดินทาง: เส้นทางข้างหน้าเป็นจุดจาง รอยเท้าข้างหลัง ธงปักที่หมาย · ตำแหน่งเดินเร็วช้าตามเส้นโค้ง smoothstep (ออกตัวช้า เร่ง แล้วชะลอตอนถึง)
+function tripDraw(c, T, now) { const k = Math.min(1, Math.max(0, (now - T.t0) / T.dur)), e = k * k * (3 - 2 * k), n = T.pts.length - 1, s = e * n, i = Math.floor(s), A = T.pts[i], B = T.pts[Math.min(n, i + 1)], f = s - i;
+  T.k = k; T.pos = [A[0] + (B[0] - A[0]) * f, A[1] + (B[1] - A[1]) * f]; const ah = T.pts[Math.min(n, i + 4)], bk = T.pts[Math.max(0, i - 4)]; if (Math.abs(ah[0] - bk[0]) > .6) T.face = ah[0] > bk[0] ? 1 : -1;
+  for (let j = Math.ceil(s) + 4; j < n - 2; j++) if (j % 4 < 2) dot(c, T.pts[j][0], T.pts[j][1], j % 4 ? '#ff8a5c' : '#e8603c');
+  for (let j = 3; j < s - 4; j += 4) { const [x, y] = T.pts[j], [dx, dy] = dirAt(T.pts, j), sd = (j / 4 | 0) % 2 ? 1 : -1; dot(c, x - dy * sd, y + dx * sd, '#7a4e30') }
+  if (k < 1) { const [fx, fy] = T.dest, w = Math.round(Math.sin(now / 140)); rect(c, fx + 5, fy - 11, 1, 9, '#5a4636'); rect(c, fx + 6, fy - 11, 4, 3 + (w > 0), '#e8503c'); dot(c, fx + 9, fy - 11 + w, '#ff7a5c') } }
+function tripCat(c, T, cat, now) { const walk = T.k < 1, g = PixelCat.frame(walk ? (T.face > 0 ? 'walkR' : 'walkL') : 'sit', walk ? Math.floor((now - T.t0) / 85) % 8 : 0, 'light', cat.coat, cat.acc || 'none'); sprite(c, g, T.pos[0], T.pos[1]);
+  if (T.arr) { const t = (now - T.arr) / 900; if (t < 1) [[-9, -18], [8, -20], [-4, -24], [5, -15]].forEach(([dx, dy], i) => { const up = Math.round(t * 6), on = ((now / 120 | 0) + i) % 2; if (on) { dot(c, T.pos[0] + dx, T.pos[1] + dy - up, '#ffd34a'); dot(c, T.pos[0] + dx + 1, T.pos[1] + dy - up, '#fff3b0') } }) } }
 // แสงตามเวลา: ย้อมทั้งภาพตาม PixelCat.tod() (รุ่งเช้า/พลบค่ำอุ่น กลางคืนน้ำเงินเข้ม) แล้วเปิดไฟหน้าต่าง ตู้แช่ร้าน สถานี โคม
 const TINT = { dawn: ['rgba(255,196,160,.42)', .5], dusk: ['rgba(255,160,110,.5)', .8], night: ['rgba(52,62,120,.7)', 1] };
 function light(c, td, L, ms) { const T = TINT[td]; if (!T) return; c.save(); c.globalCompositeOperation = 'multiply'; c.fillStyle = T[0]; c.fillRect(0, 0, W, H); c.restore();
@@ -217,11 +240,12 @@ function light(c, td, L, ms) { const T = TINT[td]; if (!T) return; c.save(); c.g
 const RMQ = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 function paint(cv, o, now) { const c = cv.getContext('2d'), se = o.season(), d = o.date(), P = !RMQ.matches, ms = d.getTime(), fest = festOf(d), B = base(se, o.locked, fest), td = o.tod();
   c.drawImage(B.v, 0, 0); const span = P ? train(c, ms) : null; c.drawImage(B.o, 0, 0); if (P) crossing(c, span, ms); if (fest === 'koi') koi(c, ms, P);
+  if (o.trip) tripDraw(c, o.trip, now);
   light(c, td, B.L, ms);
-  const q = o.places.find(p => p.id === o.here); if (q && o.cat && window.PixelCat && PixelCat.frame) { const g = PixelCat.frame('sit', 0, 'light', o.cat.coat, o.cat.acc || 'none'), bob = P ? Math.round(Math.sin(now / 300)) : 0, [cx0, cy0] = q.map.cat;
-    for (let yy = 0; yy < g.length; yy += 2) for (let xx = 0; xx < g[yy].length; xx += 2) if (g[yy][xx]) dot(c, cx0 - 12 + xx / 2, cy0 - 21 + bob + yy / 2, g[yy][xx]) }
+  const q = o.places.find(p => p.id === o.here), PC = o.cat && window.PixelCat && PixelCat.frame;
+  if (PC && o.trip) tripCat(c, o.trip, o.cat, now); else if (PC && q) sprite(c, PixelCat.frame('sit', 0, 'light', o.cat.coat, o.cat.acc || 'none'), q.map.cat[0], q.map.cat[1], P ? Math.round(Math.sin(now / 300)) : 0);
   if (P && window.PixelCat && PixelCat.fall) PixelCat.fall(c, se, [0, 36, W, H - 36], se === 'winter' ? 50 : 20, ms) }
-function mount(cv, o) { let raf = 0; const loop = now => { if (!cv.isConnected) return; paint(cv, o, now || 0); if (!RMQ.matches) raf = requestAnimationFrame(loop) }; loop(performance.now()); return { stop: () => cancelAnimationFrame(raf), redraw: () => paint(cv, o, performance.now()) } }
+function mount(cv, o) { let raf = 0; const loop = now => { if (!cv.isConnected) return; paint(cv, o, now || 0); if (o.onFrame) o.onFrame(now || 0); if (!RMQ.matches) raf = requestAnimationFrame(loop) }; loop(performance.now()); return { stop: () => cancelAnimationFrame(raf), redraw: () => paint(cv, o, performance.now()) } }
 // ---------- หน้าต่าง "ไปเที่ยวที่ไหนดี": แผนที่ + ป้ายเป็นปุ่ม HTML (ตัวหนังสือจริง) + เส้นชี้ + กล่องข้อมูล ----------
 // a: {places, at, has(p), count(p), go(id), rb(s), icon(k, s), cat: {coat, acc} | null, emoji, season(), tod(), date()} · host = ใส่ในกล่องที่ให้ (พรีวิว) แทนหน้าต่างลอย
 const MARKS = [['ふじさん', 56, 22], ['ねこがわ', 116, 131], ['たんぼ', 11, 238]];
@@ -245,25 +269,39 @@ ${pl.map(p => `<button type="button" class="tmp" data-p="${p.id}"></button>`).jo
     svg.innerHTML = pl.map(p => ln(p, 'h')).join('') + pl.map(p => ln(p, 'l') + `<circle cx="${p.map.at[0]}" cy="${p.map.at[1]}" r="1.2"/>`).join('') };
   // วางตามพิกัดแผนที่ · ป้ายที่กว้างเกินขอบถูกดันเข้ามาในแผนที่ (เส้นชี้ยังชี้อาคารเดิม)
   const place = (el, x, y) => { const h = el.offsetWidth / 2 + 3; el.style.left = Math.max(h, Math.min(W * Z - h, x * Z)) + 'px'; el.style.top = y * Z + 'px' };
-  const layout = () => { const w = wrap.clientWidth || 320; Z = Math.max(1.5, Math.min(3, Math.floor(w / W * 2) / 2)); box.style.width = W * Z + 'px'; box.style.height = H * Z + 'px'; box.style.setProperty('--z', Z);
+  const fit = () => Math.max(1.5, Math.min(3, Math.floor((wrap.clientWidth || 320) / W * 2) / 2));
+  const layout = z => { Z = typeof z === 'number' ? z : fit(); box.style.width = W * Z + 'px'; box.style.height = H * Z + 'px'; box.style.setProperty('--z', Z);
     box.querySelectorAll('.tmp[data-p]').forEach(b => { const p = pl.find(q => q.id === b.dataset.p); place(b, ...p.map.lb) }); box.querySelectorAll('.tmp[data-s]').forEach(b => { const q = LOTS.find(l => l.id === b.dataset.s); place(b, ...q.at) });
     box.querySelectorAll('.tmk').forEach((e, i) => place(e, MARKS[i][1], MARKS[i][2])); place(box.querySelector('.tmn'), 9, 9); const e = box.querySelector('.tme'), q = pl.find(p => p.id === o.here); if (e && q) place(e, q.map.cat[0], q.map.cat[1] - 6) };
-  const close = () => { m.stop(); removeEventListener('resize', layout); if (ov) ov.remove(); else d.remove() };
+  const onResize = () => layout(); const close = () => { m.stop(); removeEventListener('resize', onResize); if (ov) ov.remove(); else d.remove() };
   const info = p => { const old = d.querySelector('.tmi'); if (old) old.remove(); const s = document.createElement('div'); s.className = 'tmi';
     if (!p) s.innerHTML = `<div class="tmh"><b>แปลงว่าง</b></div><div class="st">สถานที่ใหม่กำลังจะมาที่นี่ เร็วๆ นี้นะ</div><div class="btns"><button type="button" class="g" data-c="1">ปิด</button></div>`;
     else { const ok = a.has(p), hr = p.id === o.here, n = p.unlock ? Math.min(a.count(p), p.unlock.n) : 0;
       s.innerHTML = `<div class="tmh"><b>${esc(p.n)}</b><span class="j" lang="ja">${a.rb(p.jp)}</span></div><div class="st">${p.cats.length ? 'ทบทวนคำหมวด' + esc(p.note) + 'ก่อน' : esc(p.note)}</div>${ok ? '' : `<div class="st">${lk} ${esc(p.unlock.t)} ${n}/${p.unlock.n} คำ</div><div class="bar"><i style="width:${n / p.unlock.n * 100}%"></i></div>`}
 <div class="btns"><button type="button" class="go"${ok && !hr ? '' : ' disabled'}>${hr ? 'อยู่ที่นี่แล้ว' : ok ? 'ไปเที่ยวที่นี่' : 'ยังล็อกอยู่'}</button><button type="button" class="g" data-c="1">ปิด</button></div>` }
     s.setAttribute('role', 'group'); s.setAttribute('aria-label', p ? p.n : 'แปลงว่าง'); d.appendChild(s); const f = s.querySelector('.go:not(:disabled)') || s.querySelector('[data-c]'); if (f) f.focus({ preventScroll: true });
-    s.onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.c) return s.remove(); if (b.classList.contains('go') && p) { o.here = p.id; s.remove(); pins(); layout(); m.redraw(); a.go(p.id, close) } } };
-  d.addEventListener('click', e => { const b = e.target.closest('button'); if (b && b.dataset.x) return close(); if (b && b.dataset.p) return info(pl.find(p => p.id === b.dataset.p)); if (b && b.dataset.s) return info(null);
+    s.onclick = e => { const b = e.target.closest('button'); if (!b) return; e.stopPropagation(); if (b.dataset.c) return s.remove(); if (b.classList.contains('go') && p) { s.remove(); go(p) } } };
+  // เดินทาง: แมว (หรืออิโมจิของกระต่าย/หมา) เดินตามถนนไปที่ใหม่ แผนที่เลื่อนตาม กล่องบอกระยะทางกับเวลาเดิน (1 px ≈ 8 ม. · เดิน 80 ม./นาที)
+  // ยาวสุด 5.2 วินาที (ไกลก็เดินเร็วขึ้น) · แตะที่ไหนก็ได้เพื่อข้ามไปตอนถึง · ถึงแล้วมีประกายแล้วค่อยปิดหน้าต่าง · ปิดแอนิเมชันในระบบ = ไปทันที
+  const go = p => { const from = pl.find(q => q.id === o.here), nm = p.map.n || p.n, pts = RMQ.matches || !from ? null : trip(from, p), fin = () => { o.trip = null; o.onFrame = null; o.here = p.id; a.go(p.id, close) };
+    if (!pts) return fin();
+    const L = pts.length - 1, km = Math.max(50, Math.round(L * 8 / 50) * 50), min = Math.max(1, Math.round(L * 8 / 80)), e = box.querySelector('.tme'), dl = box.querySelector(`.tmp[data-p="${p.id}"]`), ic = k => a.icon ? a.icon(k, 18) : '';
+    o.trip = { pts, t0: performance.now(), dur: Math.max(1800, Math.min(5200, L / 40 * 1000)), face: 1, dest: p.map.cat, k: 0 }; d.classList.add('trip'); if (dl) dl.classList.add('dest');
+    const s = document.createElement('div'); s.className = 'tmi tmv'; s.setAttribute('role', 'status');
+    s.innerHTML = `<div class="tmh"><b>${ic('paw')} <span>กำลังเดินไป${esc(nm)}</span></b></div><div class="st">ระยะทางราว ${km.toLocaleString('th-TH')} ม. · เดินราว ${min} นาที</div><div class="bar"><i></i></div><div class="st tmk2">แตะที่ไหนก็ได้เพื่อข้าม</div>`; d.appendChild(s);
+    // กล้อง: ค่อยๆ ซูมเข้า 1 เท่า (สูงสุด 4) แล้วตามแมวไปทั้งแนวตั้งแนวนอน ให้แมวอยู่กลางส่วนที่ไม่ถูกกล่องบัง
+    const bar = s.querySelector('.bar i'), ZT = Math.min(4, fit() + 1); o.onFrame = () => { const T = o.trip; if (!T || !T.pos) return; bar.style.width = T.k * 100 + '%'; if (Z < ZT - .01) layout(Z + (ZT - Z) * .12);
+      const vh = wrap.clientHeight - s.offsetHeight - 10; wrap.scrollLeft = T.pos[0] * Z - wrap.clientWidth / 2; wrap.scrollTop = T.pos[1] * Z - Math.max(80, vh) / 2; if (e) place(e, T.pos[0], T.pos[1] - 6);
+      if (T.k >= 1 && !T.arr) { T.arr = performance.now(); s.querySelector('b').innerHTML = `${ic('sparkle')} <span>ถึง${esc(nm)}แล้ว!</span>`; s.querySelector('.tmk2').textContent = ''; setTimeout(fin, 900) } } };
+  d.addEventListener('click', e => { const b = e.target.closest('button'); if (o.trip) { if (b && b.dataset.x) return close(); if (!o.trip.arr) o.trip.t0 = performance.now() - o.trip.dur; return }
+    if (b && b.dataset.x) return close(); if (b && b.dataset.p) return info(pl.find(p => p.id === b.dataset.p)); if (b && b.dataset.s) return info(null);
     if (!e.target.closest('.tmi')) { const i = d.querySelector('.tmi'); if (i) i.remove() } });
-  if (ov) { ov.addEventListener('click', e => { if (e.target === ov) close() }); ov.appendChild(d); document.body.appendChild(ov) } else host.appendChild(d);
-  m = mount(cv, o); addEventListener('resize', layout); pins(); layout();
+  if (ov) { ov.addEventListener('click', e => { if (e.target !== ov) return; if (o.trip) { if (!o.trip.arr) o.trip.t0 = performance.now() - o.trip.dur } else close() }); ov.appendChild(d); document.body.appendChild(ov) } else host.appendChild(d);
+  m = mount(cv, o); addEventListener('resize', onResize); pins(); layout();
   // เปิดมาแล้วเลื่อนไปตรงที่แมวอยู่ (แผนที่สูงราว 1,000 พิกเซลที่ 3 เท่า)
   const q = pl.find(p => p.id === o.here); if (q) wrap.scrollTop = Math.max(0, q.map.cat[1] * Z - wrap.clientHeight / 2);
   return { close, info: id => info(pl.find(p => p.id === id) || null) } }
-window.TownMap = { W, H, LOTS, SITE, PAL, mount, ask, festOf, trainHead, base, paths: { RIVER, RAIL, MAIN, ONS, SHOT, WEST, HILL, SCH, RES1, RES2, RES3, LANES }, cross };
+window.TownMap = { W, H, LOTS, SITE, PAL, mount, ask, festOf, trainHead, base, trip, paths: { RIVER, RAIL, MAIN, ONS, SHOT, WEST, HILL, SCH, RES1, RES2, RES3, LANES }, cross };
 })();
 // ---------- ต่อเข้ากับแอป (แทนรายการสถานที่แบบเดิม) ----------
 function placeAsk() {
@@ -271,5 +309,5 @@ function placeAsk() {
   TownMap.ask({ places: PLACES, at: st.at, has: plHas, count: p => plCount(p.unlock.cats), rb, icon: icx,
     cat: sp === 0 && window.PixelCat ? { coat: M.pet.coat, acc: M.pet.acc } : null, emoji: SPC[sp][0],
     season: () => window.PixelCat ? PixelCat.season() : ['spring', 'summer', 'autumn', 'winter'][((new Date().getMonth() + 10) % 12) / 3 | 0], tod: plTod, date: () => new Date(),
-    go: (id, close) => { st.at = id; if (!st.fam) st.fam = {}; plSave(st); close(); render(); toast(icx('paw', 16) + ' ไปที่' + placeOf(id).n + 'กัน') } });
+    go: (id, close) => { st.at = id; if (!st.fam) st.fam = {}; plSave(st); close(); render(); toast(icx('paw', 16) + ' ถึง' + placeOf(id).n + 'แล้ว') } }); // เรียกตอนแมวเดินไปถึงแล้ว
 }

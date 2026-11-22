@@ -218,6 +218,8 @@ h2{font-size:16px;margin:20px 0 10px}
 .tmn{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:1px;font-family:"Hiragino Mincho ProN","Noto Serif JP",serif;font-size:13px;font-weight:700;line-height:1;color:#4f372b;background:rgba(255,250,240,.85);border-radius:9px;padding:3px 5px 4px}.tmn i{width:0;height:0;border:4px solid transparent;border-bottom:7px solid #c9533f;border-top:0}
 .tme{position:absolute;transform:translate(-50%,-50%);font-size:22px;line-height:1;pointer-events:none}
 .tmi{position:absolute;left:10px;right:10px;bottom:10px;z-index:2;display:flex;flex-direction:column;gap:2px;background:var(--card);color:var(--fg);border:1px solid var(--bd);border-radius:16px;padding:14px 16px;box-shadow:0 6px 22px rgba(0,0,0,.24)}
+.tmd.trip .tmp{pointer-events:none}.tmd.trip .tmp:not(.dest):not(.here){opacity:.55}.tmp.dest{box-shadow:0 0 0 2px #e8503c,0 1px 3px rgba(60,40,20,.35);animation:tmd 1s ease-in-out infinite alternate}@keyframes tmd{to{box-shadow:0 0 0 4px rgba(232,80,60,.35),0 1px 3px rgba(60,40,20,.35)}}
+.tmv .tmh b{display:flex;align-items:center;gap:6px}.tmv .bar i{width:0}.tmv .tmk2{font-size:12px}
 .tmh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.tmh b{font-family:var(--fd);font-size:18px}.tmh .j{font-family:"Hiragino Mincho ProN","Noto Serif JP",serif;font-size:16px;color:var(--ac)}.tmi .bar{margin:6px 0 0}.tmi .btns{margin-top:10px}.tmi .st .ic2{vertical-align:-2px}
 
 /* ---------- ยกระดับภาพ (2026-11-18 · design critique) ---------- */
