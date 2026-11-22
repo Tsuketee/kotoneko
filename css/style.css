@@ -2,6 +2,8 @@
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1f1a16;--fg:#f4ece3;--mut:#b6a696;--card:#2b241f;--ac:#ef9a6e;--onac:#231a14;--ok:#86c49b;--err:#ee8f84;--hl:#f0bb55;--hlt:#f0bb55;--bd:#40372f;--grid:#6b5646;--m1:#d79a68;--m2:#b5bcc2;--m3:#efc45a;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#1f1a16;--fg:#f4ece3;--mut:#b6a696;--card:#2b241f;--ac:#ef9a6e;--onac:#231a14;--ok:#86c49b;--err:#ee8f84;--hl:#f0bb55;--hlt:#f0bb55;--bd:#40372f;--grid:#6b5646;--m1:#d79a68;--m2:#b5bcc2;--m3:#efc45a;color-scheme:dark}
 *{box-sizing:border-box}
+/* เลื่อนได้แค่ขึ้นลง (v134 เจ้าของขอ): ไม่หยิกซูม ไม่แตะสองทีแล้วซูม ไม่เลื่อน/เด้งไปด้านข้าง · ช่องวาดตัวอักษรกับฉากแมวใช้ touch-action:none ของตัวเองอยู่แล้ว · สคริปต์กันซูมของ Safari อยู่ต้น js/main.js */
+html{touch-action:pan-y;overflow-x:hidden;overscroll-behavior-x:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}body{overflow-x:clip;overscroll-behavior-x:none}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Noto Sans Thai","Noto Sans JP",sans-serif}
 main{max-width:480px;margin:0 auto;padding:16px}
 h1{font-size:20px;margin:0 0 4px}
