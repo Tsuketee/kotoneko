@@ -14,8 +14,8 @@
 | dev | `npm start` (= `python3 -m http.server 8000`) แล้วเปิด http://localhost:8000 |
 | build | ไม่มี (HTML/CSS/JS ล้วน) |
 | ติดตั้งครั้งแรก | `npm ci` แล้ว `npx playwright install chromium` |
-| test ทั้งหมด | `npm test` (= `node tests/payment.mjs && node tests/e2e.js` ราว 3 นาที) |
-| test เฉพาะข้อ | `node tests/e2e.js <คำในชื่อข้อ>` |
+| test ทั้งหมด | `npm test` (= `node tests/payment.mjs && node tests/e2e.js && node tests/flows.js` ราว 3 นาที · หลักฐานใน `test-results/`) |
+| test เฉพาะข้อ | `node tests/e2e.js <คำในชื่อข้อ>` หรือ `node tests/flows.js <คำในชื่อข้อ>` |
 | ภาพแมวพิกเซล | `node tests/pet-grid.js <โฟลเดอร์ผลลัพธ์>` |
 | เลข VERSION | `node tests/check-version.js origin/main` |
 | lint / type check | ยังไม่มี |
@@ -23,6 +23,7 @@
 GitHub Actions (`.github/workflows/test.yml`) รัน `npm test` และตรวจ VERSION ทุก PR
 
 ## Definition of Done
+ก่อนบอกว่าเสร็จ ใช้ skill verify-app
 ห้ามบอกว่าเสร็จ จนกว่าจะ:
 1. รัน test ที่เกี่ยวข้องผ่าน และ `npm test` ผ่านทั้งชุด
 2. แนบหลักฐานในคำตอบ: บรรทัดสรุปผล test (เช่น `ผ่านทั้งหมด 58 ข้อ`) และ screenshot หรือ log ของสิ่งที่เปลี่ยนถ้าเป็นงานหน้าจอ

@@ -1,6 +1,6 @@
 # ตรวจทุก PR ก่อน merge (main ขึ้น GitHub Pages ทันที จึงต้องกันโค้ดพังก่อนถึงผู้ใช้)
 # - version: VERSION ใน sw.js ต้องมากกว่าของ branch ปลายทาง (tests/check-version.js)
-# - test: npm test = tests/payment.mjs + tests/e2e.js (Playwright + Chromium)
+# - test: npm test = tests/payment.mjs + tests/e2e.js + tests/flows.js (Playwright + Chromium) · ภาพหน้าจอและ console log อัปโหลดเป็น artifact "test-results"
 # รันเองในเครื่องได้: node tests/check-version.js origin/main · npm test
 name: ทดสอบ
 
@@ -51,3 +51,11 @@ jobs:
       - name: ติดตั้ง Chromium ของ Playwright
         run: npx playwright install --with-deps chromium
       - run: npm test
+      - name: เก็บภาพหน้าจอและ console log (test-results/)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

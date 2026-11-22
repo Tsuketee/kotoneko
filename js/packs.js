@@ -16,10 +16,10 @@ function lvGo(l, msg) { try { localStorage.setItem(LVK, l); if (msg) sessionStor
 // ---------- การ์ดระดับในหน้าเรียน (เรียกจาก pathHtml ในหน้ารวมของแท็บเรียน) ----------
 function lvCard(l) {
   const L = LEVELS[l];
-  if (l === 'n5') return `<div class="pc" onclick="lvSwitch('n5')"><div class="pb"><b>N5</b><div class="st">แตะเพื่อกลับไปเรียน N5 · ความคืบหน้าแต่ละระดับเก็บแยกกัน</div></div><div class="pg2">${L.g}</div></div>`;
-  if (PAID.includes(l) && packReady(l)) return `<div class="pc" onclick="lvSwitch('${l}')"><div class="pb"><b>${L.n}</b><span class="bd b3">ปลดล็อกแล้ว</span><div class="st">แตะเพื่อเปลี่ยนไปเรียน ${L.n}</div></div><div class="pg2">${L.g}</div></div>`;
+  if (l === 'n5') return `<div class="pc" data-testid="path-n5" onclick="lvSwitch('n5')"><div class="pb"><b>N5</b><div class="st">แตะเพื่อกลับไปเรียน N5 · ความคืบหน้าแต่ละระดับเก็บแยกกัน</div></div><div class="pg2">${L.g}</div></div>`;
+  if (PAID.includes(l) && packReady(l)) return `<div class="pc" data-testid="path-${l}" onclick="lvSwitch('${l}')"><div class="pb"><b>${L.n}</b><span class="bd b3">ปลดล็อกแล้ว</span><div class="st">แตะเพื่อเปลี่ยนไปเรียน ${L.n}</div></div><div class="pg2">${L.g}</div></div>`;
   const s = !PAID.includes(l) || !cloudOn() ? 'เนื้อหากำลังมา' : !cloudIn() ? 'เนื้อหาเสียเงิน · เข้าสู่ระบบเพื่อตรวจสิทธิ์' : packWait(l) ? 'ปลดล็อกแล้ว · เนื้อหายังไม่พร้อม รออัปเดตสักครู่นะคะ' : buyPrice(l) ? 'แตะเพื่อปลดล็อก · ' + buyPrice(l) + ' ซื้อครั้งเดียว' : 'เนื้อหาเสียเงิน · เปิดขายเร็วๆ นี้';
-  return `<div class="pc lk0" onclick="lvLocked('${l}')"><div class="pn">${icx('lock', 16)}</div><div class="pb"><b>${L.n}</b><div class="st">${s}</div></div><div class="pg2">${L.g}</div></div>`;
+  return `<div class="pc lk0" data-testid="path-${l}" onclick="lvLocked('${l}')"><div class="pn">${icx('lock', 16)}</div><div class="pb"><b>${L.n}</b><div class="st">${s}</div></div><div class="pg2">${L.g}</div></div>`;
 }
 function lvLocked(l) {
   const n = LEVELS[l].n;

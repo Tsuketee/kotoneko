@@ -43,7 +43,7 @@ const plTod = () => window.PixelCat ? PixelCat.tod() : (h => h >= 5 && h < 7 ? '
 function placeHero(say, pet, size, px) {
   const p = placeOf(plState().at), tk = `<button class="scgo" onclick="placeAsk()" title="เลือกสถานที่">${icx('ticket', 18)}<span>ไปเที่ยว</span></button>`;
   // ฉากพิกเซล: ตั๋วอยู่แถวชื่อสถานที่ใต้ฉาก เพราะกล่องคำพูดลอยตามแมวไปทั่วฉาก
-  return `<div class="scn${px ? ' px' : ''}" data-place="${p.id}" data-tod="${plTod()}">${px ? '<canvas id="petcv"></canvas>' : `<svg viewBox="0 0 820 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${p.svg}</svg>`}
+  return `<div class="scn${px ? ' px' : ''}" data-place="${p.id}" data-tod="${plTod()}">${px ? '<canvas id="petcv" data-testid="pet-canvas"></canvas>' : `<svg viewBox="0 0 820 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${p.svg}</svg>`}
 <div class="pzb scb ${p.bub === 'r' && !px ? 'r' : ''}">${say}</div>
 ${px ? '' : `<div class="scp" style="left:${p.pet[0]}%;top:${p.pet[1]}%"><span class="pet" style="font-size:${size}px">${pet}</span></div>`}
 ${px ? '' : tk}</div>

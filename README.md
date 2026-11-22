@@ -67,12 +67,14 @@ repo นี้เป็น public จึงใช้ GitHub Pages ได้ฟ�
 ทุกครั้งที่แก้ไฟล์ ให้เพิ่มเลข `VERSION` ใน `sw.js` ไม่งั้นเครื่องที่เคยเปิดแอปแล้วจะยังเห็นไฟล์เก่า (ทุก PR ถูกตรวจอัตโนมัติ ดูหัวข้อ "ทดสอบ")
 
 ## ทดสอบ
-ชุดทดสอบอัตโนมัติ 2 ชุด: `tests/payment.mjs` 12 ข้อ (Edge Function ชำระเงิน กับ Stripe/Supabase จำลอง ต้องใช้ Node 22.18 ขึ้นไป) และ `tests/e2e.js` 58 ข้อ (ข้อมูล, การใช้งานหลัก, สัตว์เลี้ยงและแมวพิกเซล, สถานที่และแผนที่เมือง, ส่งออก/นำเข้า, ซิงก์คลาวด์ด้วย Supabase จำลอง, แพ็กเสียเงินและการซื้อ, iPad แนวตั้ง/นอน, PWA ออฟไลน์) ใช้ Playwright เปิด Chromium จริง
+ชุดทดสอบอัตโนมัติ 3 ชุด: `tests/flows.js` 7 ข้อ (flow หลักแบบผู้ใช้จริง: กดปุ่มและอ่านจอผ่าน `data-testid` ไม่เรียกโค้ดภายใน · ดู FEATURE_MAP.md), `tests/payment.mjs` 12 ข้อ (Edge Function ชำระเงิน กับ Stripe/Supabase จำลอง ต้องใช้ Node 22.18 ขึ้นไป) และ `tests/e2e.js` 58 ข้อ (ข้อมูล, การใช้งานหลัก, สัตว์เลี้ยงและแมวพิกเซล, สถานที่และแผนที่เมือง, ส่งออก/นำเข้า, ซิงก์คลาวด์ด้วย Supabase จำลอง, แพ็กเสียเงินและการซื้อ, iPad แนวตั้ง/นอน, PWA ออฟไลน์) ใช้ Playwright เปิด Chromium จริง
 ```
 npm install
 npx playwright install chromium   # ครั้งแรกครั้งเดียว
 npm test
 ```
+ทุกข้อเก็บภาพหน้าจอและ console log ไว้ใน `test-results/` (ไม่ commit · สรุปใน `test-results/<ชุด>/summary.md`) · ใน Claude Code ใช้ skill `verify-app` ตรวจและสรุปผลก่อนบอกว่าเสร็จ
+
 ควรรันก่อนปล่อยเวอร์ชันใหม่ทุกครั้ง ส่วนการทดสอบบน iPad Safari จริง (Apple Pencil, safe-area) ยังต้องลองด้วยมือ
 
 **GitHub Actions** (`.github/workflows/test.yml`) รันให้เองทุก PR และทุกครั้งที่ push เข้า `main`:
