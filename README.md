@@ -42,6 +42,8 @@ js/main.js              จุดเริ่มต้นแอป (ต้อง
 sw.js, manifest.webmanifest, icons/   ส่วนของ PWA (ใช้ออฟไลน์ และเพิ่มลงหน้าจอโฮม)
 docs/ROADMAP.md         รายการงานที่จะทำต่อ
 CLAUDE.md               คำสั่งสำหรับ Claude Code
+FEATURE_MAP.md          แผนที่ฟีเจอร์: หน้า วิธีเข้า ไฟล์ selector flow ที่ห้ามพัง
+docs/corrections-log.md เรื่องที่ต้องบอก AI ซ้ำ และสถานะการทำเป็นกฎอัตโนมัติ
 ```
 
 ## ลองเปิดในเครื่อง

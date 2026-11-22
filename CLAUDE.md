@@ -1,21 +1,34 @@
 # kotoneko
 
-เว็บแอป PWA ทบทวนภาษาญี่ปุ่น N5 (คานะ คันจิ คำศัพท์ บทสนทนา) พร้อมระบบสัตว์เลี้ยง 2D ของพอ ใช้เองและวางแผนขายแบบ freemium
-- ตอบเป็นภาษาไทย น้ำเสียงน่ารัก เป็นกันเอง
-- ข้อความใน UI เป็นภาษาไทย
+เว็บแอป PWA ทบทวนภาษาญี่ปุ่นระดับ JLPT N5: คันจิ คำศัพท์ บทสนทนาแบบสุภาพ/กันเอง ฮิระงะนะ/คะตะคะนะ และฝึกเขียนตามลำดับขีด
+เรียนแล้วได้รางวัลไปเลี้ยงสัตว์เลี้ยง 2D ที่มีนิสัยต่างกัน · N4–N3 ล็อกไว้ก่อน (ปลดล็อกด้วยการซื้อ)
+ใช้งานหลักบน iPad Safari (นิ้วและ Apple Pencil)
 
-## โครงสร้าง
-- ไม่มีขั้นตอน build: HTML/CSS/JS ล้วน เปิด `index.html` ผ่าน http server ได้เลย (`python3 -m http.server`)
-- `js/data/*.js` เก็บข้อมูล, `js/core.js` เป็นแกนกลาง, ตรรกะแยกตามหน้าที่ใน `js/learn.js` `dialogue.js` `write.js` `pet.js` `place.js` (สถานที่/ฉากหลังของการ์ดสัตว์เลี้ยง สถานะใน `kn_meta.place`) `town.js` (หน้าต่างไปเที่ยวเป็นแผนที่เมืองพิกเซล `placeAsk()` · ตำแหน่งของแต่ละที่อยู่ในช่อง `map` ของ `js/data/places.js` · พรีวิว `docs/town-map.html`) `profile.js` (แท็บโปรไฟล์: บัตรสัตว์เลี้ยง + เมนูและหน้าย่อย `meHtml()`) `shop.js` (ร้านค้า) `stats.js` (ความคืบหน้า สำรองข้อมูล เครดิต) (แมวพิกเซลอยู่ใน `js/pixelcat.js` ห่อใน IIFE ส่งออกแค่ `window.PixelCat` ร่างต้นฉบับ `docs/pixel-cat10.html` ฉากพิกเซลของแต่ละสถานที่อยู่ใน `SCENES` ของไฟล์นั้น), `js/main.js` เป็นจุดเริ่มต้น ทุกไฟล์เป็น classic script ใช้ตัวแปร global ร่วมกัน ดังนั้นลำดับ `<script>` ใน `index.html` ต้องคงไว้: data → `js/level.js` → core → ไฟล์ตรรกะ → main (main ท้ายสุดเสมอ) ไฟล์ใหม่ต้องเพิ่มใน `index.html` และรายการ `FILES` ของ `sw.js` ด้วย
-- ไอคอนแอป (`icons/` ทุกไฟล์รวม maskable) สร้างจากต้นฉบับพิกเซล `drawIcon()` ใน `tools/icon.html` ด้วย `node tools/make-icons.js` ห้ามแก้ไฟล์ใน `icons/` มือ · เปลี่ยนหน้าตาไอคอนต้องเปลี่ยนชื่อไฟล์ `apple-touch-icon-vN.png` ด้วย (Safari แคชไอคอนหน้าจอโฮมตามชื่อไฟล์)
-- ฟอนต์อยู่ใน `fonts/` (Mali หัวข้อ · Anuphan เนื้อหา · OFL เครดิตใน `NOTICE.md`) ประกาศใน `css/style.css` หัวข้อ "ฟอนต์" และอยู่ใน `FILES` ของ `sw.js` เพื่อใช้ออฟไลน์ ญี่ปุ่นใช้ฟอนต์ของเครื่อง
-- ความคืบหน้าเก็บใน `localStorage` (key: `ka1`, `kn5`, `kw1`, `kv1`, `kg1`, `kn_meta` และระดับ N4: `kn4`, `kw4`, `kv4`, `kg4` · N3: `kn3`, `kw3`, `kv3`, `kg3`) ห้ามเปลี่ยนชื่อ key โดยไม่มีโค้ดย้ายข้อมูล key ใหม่ที่เป็นความคืบหน้าต้องเพิ่มใน `PK` (js/stats.js) หรือ `LKEY` (js/level.js) ด้วย จึงจะถูกส่งออกและซิงก์
-- ซิงก์คลาวด์ (Supabase) อยู่ใน `js/cloud.js` สถานะการเข้าสู่ระบบเก็บใน key `kn_cloud` วิธีตั้งค่าใน `docs/CLOUD.md` · เข้าสู่ระบบด้วย Google (OAuth PKCE) หรือรหัสทางอีเมล · ชื่อเจ้าของเก็บใน `kn_meta.me.name`
-- ระดับเสียเงิน (N4 …): `js/level.js` สลับข้อมูลเป็นแพ็กของระดับที่เลือกก่อน core.js (เปลี่ยนระดับ = โหลดหน้าใหม่) `js/packs.js` ตรวจสิทธิ์/ดาวน์โหลด/อัปโหลดของผู้ดูแล ความคืบหน้า N4 ใช้ key `kn4` `kw4` `kv4` `kg4` และ N3 ใช้ `kn3` `kw3` `kv3` `kg3` (อยู่ใน `LKEY` และ PK) · คันจิบางตัวไม่มีอ่านแบบออน (ช่อง o เป็น `-` เช่น 込 畑) ให้แสดงคำอ่านผ่าน `rd()`/`rds()` ใน js/learn.js ส่วน `kn_level` `kn_pack_<ระดับ>` `kn_packs` `kn_auth` (ผู้ให้บริการเข้าสู่ระบบที่เปิดอยู่) `kn_pkce` (ค้างระหว่างไปหน้า Google) `kn_theme` (ธีมที่เลือกในเมนูโปรไฟล์ ตามเครื่อง/สว่าง/มืด) ไม่ใช่ความคืบหน้า
-- **ห้ามใส่เนื้อหาเสียเงินจริงใน repo นี้** (public) เนื้อหาอยู่ใน repo private `Tsuketee/kotoneko-content` ชุดทดสอบใช้แพ็กปลอม `FAKE_PACK` เท่านั้น
+**อ่าน `FEATURE_MAP.md` ก่อนแก้ฟีเจอร์ใดๆ** (หน้าไหน เข้ายังไง ไฟล์ไหน selector ไหน flow ไหนห้ามพัง)
 
-## กฎ
-- แก้ไฟล์ไหนก็ตาม ให้เพิ่มเลข `VERSION` ใน `sw.js` ด้วย · GitHub Actions (`.github/workflows/test.yml`) ตรวจทุก PR: VERSION ต้องมากกว่าของ branch ปลายทาง (`node tests/check-version.js origin/main`) และ `npm test` ต้องผ่าน
-- ห้ามคัดลอกเนื้อหาจาก Irodori หรือ Minna no Nihongo ลงในแอป (ห้ามใช้เชิงพาณิชย์) เนื้อหาใหม่ให้เขียนเอง หรือใช้ข้อมูลเปิดที่อนุญาตเชิงพาณิชย์และใส่เครดิตใน `NOTICE.md`
-- ทดสอบบน iPad Safari: รองรับนิ้วและ Apple Pencil, ระวังเรื่อง safe-area
-- งานถัดไปอยู่ใน `docs/ROADMAP.md` ทำทีละข้อ และติ๊กเมื่อเสร็จ
+ตอบเป็นภาษาไทย
+
+## คำสั่ง
+| งาน | คำสั่ง |
+|---|---|
+| dev | `npm start` (= `python3 -m http.server 8000`) แล้วเปิด http://localhost:8000 |
+| build | ไม่มี (HTML/CSS/JS ล้วน) |
+| ติดตั้งครั้งแรก | `npm ci` แล้ว `npx playwright install chromium` |
+| test ทั้งหมด | `npm test` (= `node tests/payment.mjs && node tests/e2e.js` ราว 3 นาที) |
+| test เฉพาะข้อ | `node tests/e2e.js <คำในชื่อข้อ>` |
+| ภาพแมวพิกเซล | `node tests/pet-grid.js <โฟลเดอร์ผลลัพธ์>` |
+| เลข VERSION | `node tests/check-version.js origin/main` |
+| lint / type check | ยังไม่มี |
+
+GitHub Actions (`.github/workflows/test.yml`) รัน `npm test` และตรวจ VERSION ทุก PR
+
+## Definition of Done
+ห้ามบอกว่าเสร็จ จนกว่าจะ:
+1. รัน test ที่เกี่ยวข้องผ่าน และ `npm test` ผ่านทั้งชุด
+2. แนบหลักฐานในคำตอบ: บรรทัดสรุปผล test (เช่น `ผ่านทั้งหมด 58 ข้อ`) และ screenshot หรือ log ของสิ่งที่เปลี่ยนถ้าเป็นงานหน้าจอ
+3. บอกตรงๆ ว่าอะไรยังไม่ได้ทดสอบ (เช่น iPad จริง)
+ถ้า test ไม่ผ่าน ให้รายงานว่าไม่ผ่านพร้อม output ห้ามข้าม ปิด หรือผ่อนเงื่อนไข test เพื่อให้ผ่าน
+
+## Comment
+ห้ามเขียน comment แก้ตัว หรือ comment อธิบาย workaround
+ถ้ามีข้อจำกัด ให้ทำเป็น test ที่ล้มเมื่อข้อจำกัดถูกละเมิด หรือเป็น error message ที่ผู้ใช้/นักพัฒนาเห็นตอนเกิดปัญหา
