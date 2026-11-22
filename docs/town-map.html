@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- ร่างแผนที่เมืองเนโกะมาจิ รอบสอง (เจ้าของโอเคผังแล้ว 2026-11-22) · สำเนาของหน้าพรีวิว https://claude.ai/artifact/Bts6Y1jztQMqysLLv64smQ · เปิดผ่าน http server จากรากโปรเจกต์ (python3 -m http.server) แล้วเข้า /docs/town-map.html · ยังไม่ได้ย้ายเข้าแอป -->
+</head><body>
+<title>เมืองเนโกะมาจิ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mali:wght@600;700&display=swap">
+<style>
+/* เลย์เอาต์: ซ้าย = หน้าต่าง "ไปเที่ยวที่ไหนดี" จำลอง (แผนที่เมืองพิกเซล แตะป้ายได้) · ขวา = ปุ่มลอง ผังเมืองจริงที่อ้างอิง ความสอดคล้องกับฉากหลัง และที่ว่างสำหรับอนาคต */
+:root{
+  --bg:#fff8ef;--fg:#3b2e27;--mut:#806f61;--card:#ffffff;--ac:#b45428;--onac:#ffffff;--ok:#497c5d;--bd:#f0e0cc;--chip:#fdebd9;--scrim:rgba(40,28,20,.38);
+  --f-head:"Mali","Anuphan",system-ui,sans-serif;--f-body:"Anuphan",system-ui,-apple-system,"Noto Sans Thai",sans-serif;--f-jp:"Hiragino Mincho ProN","Noto Serif JP","Hiragino Sans",serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1f1a16;--fg:#f4ece3;--mut:#b6a696;--card:#2b241f;--ac:#ef9a6e;--onac:#231a14;--ok:#86c49b;--bd:#40372f;--chip:#3a2d24;--scrim:rgba(0,0,0,.5);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1f1a16;--fg:#f4ece3;--mut:#b6a696;--card:#2b241f;--ac:#ef9a6e;--onac:#231a14;--ok:#86c49b;--bd:#40372f;--chip:#3a2d24;--scrim:rgba(0,0,0,.5);color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:1100px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:24px}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;margin:0}
+h1{font-size:28px;line-height:1.25}h2{font-size:19px}h3{font-size:16px}
+.sub{color:var(--mut);margin:6px 0 0;max-width:66ch}
+.st{font-size:13px;color:var(--mut)}
+.cols{display:grid;grid-template-columns:minmax(0,540px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:920px){.cols{grid-template-columns:minmax(0,1fr)}}
+.dlg{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:22px;padding:18px 16px 16px;display:flex;flex-direction:column;gap:10px;min-width:0;overflow:hidden}
+.mapc{position:relative;align-self:center;border-radius:16px;overflow:hidden;line-height:0;max-width:100%;touch-action:manipulation}
+.mapc canvas{display:block;image-rendering:pixelated}
+.pin{position:absolute;transform:translate(-50%,-50%);border:0;padding:3px 8px 3px 6px;border-radius:999px;background:rgba(255,250,240,.95);color:#3b2e27;font-family:var(--f-body);font-weight:600;font-size:12px;line-height:1.2;white-space:nowrap;cursor:pointer;box-shadow:0 1px 3px rgba(60,40,20,.35);display:flex;align-items:center;gap:4px}
+.pin .j{font-family:var(--f-jp);font-size:11px;color:#9a6b4a;font-weight:600}
+.pin.lk{background:rgba(236,230,220,.95);color:#6f6a63}
+.pin.here{background:#b45428;color:#fff}.pin.here .j{color:#ffe2cf}
+.pin.soon{background:rgba(255,255,255,.78);color:#7d746a;font-weight:500;border:1px dashed #b9ad97;box-shadow:none;font-size:11px}
+.pin svg{width:12px;height:12px}
+.pin:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.mk{position:absolute;transform:translate(-50%,-50%);font-family:var(--f-jp);font-size:10px;line-height:1;color:rgba(60,46,36,.72);pointer-events:none;white-space:nowrap;letter-spacing:.1em}
+.close{font:inherit;font-family:var(--f-head);font-weight:700;font-size:17px;min-height:50px;border:0;border-radius:16px;background:var(--ok);color:var(--onac);cursor:pointer}
+.sheet{position:absolute;inset:0;background:var(--scrim);display:flex;align-items:flex-end;z-index:3}
+.sheet>div{background:var(--card);border-radius:18px 18px 0 0;padding:16px 18px 18px;width:100%;display:flex;flex-direction:column;gap:6px;box-shadow:0 -4px 16px rgba(0,0,0,.15)}
+.sheet .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sheet .hd b{font-family:var(--f-head);font-size:18px}
+.sheet .hd .j{font-family:var(--f-jp);font-size:16px;color:var(--ac)}
+.bar{height:8px;border-radius:999px;background:var(--chip);overflow:hidden}.bar i{display:block;height:100%;background:var(--ok);border-radius:999px}
+.btns{display:flex;gap:8px;margin-top:6px}
+.btns button{font:inherit;font-size:15px;border-radius:12px;min-height:44px;padding:0 16px;cursor:pointer}
+.btns .go{flex:1;border:0;background:var(--ac);color:var(--onac);font-family:var(--f-head);font-weight:600}
+.btns .go:disabled{opacity:.45;cursor:default}
+.btns .x{border:1px solid var(--bd);background:var(--bg);color:var(--fg)}
+.toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--fg);color:var(--bg);border-radius:12px;padding:6px 14px;font-size:14px;z-index:4;white-space:nowrap}
+.side{display:flex;flex-direction:column;gap:18px;min-width:0}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld>span{font-size:12px;color:var(--mut);letter-spacing:.02em}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--bd);border-radius:10px;overflow:hidden;width:max-content;max-width:100%}
+.seg button{font:inherit;font-size:14px;border:0;background:var(--card);color:var(--fg);padding:8px 12px;cursor:pointer;min-height:40px}
+.seg button+button{border-left:1px solid var(--bd)}
+.seg button[aria-pressed="true"]{background:var(--ac);color:var(--onac)}
+button:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.panel ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.match{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:14px;align-items:baseline}
+.match b{font-family:var(--f-head);font-weight:600;white-space:nowrap}
+.src{font-size:13px;color:var(--mut)}
+.src a{color:var(--ac)}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>เมืองเนโกะมาจิ</h1>
+    <p class="sub">ร่างรอบสอง: ผังเมืองชนบทญี่ปุ่นแบบจริงที่สอดคล้องกับฉากหลังของทุกสถานที่ ภูเขาฟูจิด้านหลัง ป่ารอบศาลเจ้าบนเนิน แม่น้ำกับถนนคดตามภูมิประเทศ ทุ่งนาบนที่ราบ และย่านหน้าสถานี ยังไม่ได้ใส่ในแอป แตะป้ายบนแผนที่เพื่อดูข้อมูลได้</p>
+  </header>
+
+  <div class="cols">
+    <section class="dlg" id="dlg" aria-label="หน้าต่างไปเที่ยวจำลอง">
+      <h2 style="font-size:22px">ไปเที่ยวที่ไหนดี</h2>
+      <div class="st">แตะสถานที่บนแผนที่ อยู่ที่ไหน ปุ่มทบทวนจะเอาคำในหมวดของที่นั้นขึ้นก่อน ที่ที่มีกุญแจปลดล็อกได้ด้วยการเรียน</div>
+      <div class="mapc" id="mapc"><canvas id="map" width="160" height="340" role="img" aria-label="แผนที่เมืองเนโกะมาจิแบบพิกเซล"></canvas></div>
+      <button type="button" class="close">ปิด</button>
+    </section>
+
+    <aside class="side">
+      <div class="fld"><span>ฤดู (ชุดเดียวกับฉากสัตว์เลี้ยง)</span><div class="seg" id="sea" role="group" aria-label="ฤดู">
+        <button type="button" data-v="" aria-pressed="true">ตามวันที่จริง</button><button type="button" data-v="spring" aria-pressed="false">ใบไม้ผลิ</button><button type="button" data-v="summer" aria-pressed="false">ร้อน</button><button type="button" data-v="autumn" aria-pressed="false">ใบไม้ร่วง</button><button type="button" data-v="winter" aria-pressed="false">หนาว</button></div></div>
+      <div class="fld"><span>ความคืบหน้าตัวอย่าง</span><div class="seg" id="prog" role="group" aria-label="ความคืบหน้าตัวอย่าง">
+        <button type="button" data-v="0" aria-pressed="true">เพิ่งเริ่ม (ฟรี 3 ที่)</button><button type="button" data-v="1" aria-pressed="false">ปลดล็อกครบ</button></div></div>
+
+      <div class="panel">
+        <h2>ผังเมืองจริงที่ใช้อ้างอิง</h2>
+        <ul>
+          <li><b>หมู่บ้านแบบซาโตยามะ:</b> ป่าบนเนินเขา บ้านเรือนอยู่ช่วงรอยต่อเชิงเขากับที่ราบ ทุ่งนาอยู่บนที่ราบริมแม่น้ำ มีบ่อและลำคลองส่งน้ำ</li>
+          <li><b>ป่าศาลเจ้า (ชินจุโนะโมริ):</b> ศาลเจ้าประจำหมู่บ้านอยู่ในดงไม้หนาทึบบนเนิน ขึ้นบันไดหินผ่านโทริอิ</li>
+          <li><b>เมืองที่เกิดรอบสถานี:</b> หน้าสถานีมีลาน ถนนช้อปปิ้ง (โชเท็งไก) ทอดออกไป ตึกแน่นที่สุดอยู่รอบสถานี แล้วค่อยๆ เบาบางเป็นบ้านกับทุ่งนา</li>
+          <li>ถนนสายเก่าคดเลียบแม่น้ำ ทางรถไฟโค้งข้ามแม่น้ำด้วยสะพานเหล็ก ทางเดินในทุ่งนาเป็นคันนาแคบๆ</li>
+        </ul>
+        <p class="src">ที่มา: <a href="https://Www.Wikipedia.org/wiki/Satoyama" target="_blank" rel="noopener">Satoyama</a> · <a href="https://www.mlit.go.jp/tagengo-db/common/001564333.pdf" target="_blank" rel="noopener">MLIT (ซาโตยามะ)</a> · <a href="https://www.wikipedia.org/wiki/Shotengai" target="_blank" rel="noopener">Shotengai</a> · <a href="https://www.env.go.jp/nature/satoyama/syuhourei/pdf/cje_11.pdf" target="_blank" rel="noopener">กระทรวงสิ่งแวดล้อมญี่ปุ่น</a></p>
+      </div>
+      <div class="panel">
+        <h2>แผนที่กับฉากหลังตรงกันยังไง</h2>
+        <div class="match">
+          <b>สวนญี่ปุ่น</b><span>อยู่ริมแม่น้ำฝั่งเหนือของเมือง หันหน้าไปทางภูเขาฟูจิ ในฉากจึงเห็นภูเขายอดหิมะหลังรั้ว (หิมะบนฟูจิในแผนที่ก็มากน้อยตามฤดูแบบเดียวกัน)</span>
+          <b>สถานีรถไฟ</b><span>อยู่กลางเมือง ฝั่งตรงข้ามรางเป็นตึกแมนชันกับออฟฟิศ ตรงกับวิวในฉากที่มองข้ามรางไปเห็นเมือง</span>
+          <b>คาเฟ่</b><span>อยู่บนถนนช้อปปิ้งหน้าสถานี ตรงข้ามเป็นร้านมีกันสาดลายทาง เหมือนที่เห็นจากหน้าต่างคาเฟ่</span>
+          <b>ร้านสะดวกซื้อ</b><span>หัวมุมถนนสายหลัก ประตูกระจกหันออกถนน</span>
+          <b>ห้องเรียน</b><span>โรงเรียนมีสนามกว้าง ติดทุ่งนา หน้าต่างเห็นสนามกับต้นไม้</span>
+          <b>ศาลเจ้า</b><span>บนเนินในป่าศาลเจ้า มีบันไดหินกับโทริอิ</span>
+          <b>บ้าน</b><span>ย่านบ้านบนเนินลาด หน้าต่างห้องจึงเห็นเนินเขากับหลังคาบ้าน</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>เผื่อที่ไว้สำหรับวันข้างหน้า</h2>
+        <ul>
+          <li><b>แปลงว่าง 5 แปลง</b>วางตามที่ที่เมืองจริงจะมี: ตลาดเช้าหน้าสถานี · ริมแม่น้ำ · ออนเซ็นบนเขา · วัดในย่านบ้าน · ท่าเรือปลายแม่น้ำ (ชื่อจริงตั้งตอนมีสถานที่)</li>
+          <li>เมืองขยายได้สองทาง: เติมแปลงว่าง หรือต่อแผนที่ลงล่างตามแม่น้ำไปถึงทะเล</li>
+          <li>ถ้าเพิ่มสถานที่ใหม่ ให้วาดฉากหลังที่เห็นสิ่งรอบๆ ตามแผนที่นี้ด้วย ทั้งสองอย่างจะได้ตรงกันเสมอ</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h2>ฝากดู</h2>
+        <ul>
+          <li>บรรยากาศเมืองและตำแหน่งแต่ละที่โอเคไหม</li>
+          <li>ถ้าผังนี้ใช้ได้ ดิฉันจะเก็บรายละเอียดในฉากหลังให้ตรงกับแผนที่มากขึ้นด้วย เช่น ทุ่งนาหลังห้องเรียน ภูเขาฟูจิไกลๆ จากศาลเจ้า</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="../js/pixelcat.js"></script>
+<script>
+(() => {
+  const T = window.PixelCat && PixelCat._t, $ = id => document.getElementById(id), RM = matchMedia('(prefers-reduced-motion: reduce)');
+  const W = 160, H = 340, cv = $('map'), cx = cv.getContext('2d');
+  let SE = '', all = 0, here = 'room';
+  const season = () => SE || (T && T.season ? T.season(Date.now()) : 'autumn');
+  // ---------- สีตามฤดู (ชุดเดียวกับสวนในฉากสัตว์เลี้ยง) ----------
+  const PAL = {
+    spring: { gr: '#b9dc95', gr2: '#a3cd7f', tr: ['#c9849b', '#e9a8bd', '#f5c4d3', '#fde3ec'], fo: ['#3f6b45', '#56895a', '#78a968'], pad: ['#a9cfd6', '#c8e3e6', '#8fb98a'], snow: 1 },
+    summer: { gr: '#a8d27f', gr2: '#8fbf6a', tr: ['#4b7b43', '#62964d', '#82b55f', '#acd585'], fo: ['#355e3c', '#4b7b43', '#62964d'], pad: ['#7fbf5e', '#99d273', '#6aa84f'], snow: 0 },
+    autumn: { gr: '#c2cf8c', gr2: '#a9b974', tr: ['#9c3a2e', '#c9533f', '#e8735a', '#f8ae80'], fo: ['#3f6b45', '#8a6a2c', '#c9533f'], pad: ['#e2c46a', '#efd88a', '#c9a64a'], snow: .5 },
+    winter: { gr: '#e9eef2', gr2: '#d3dbe3', tr: null, fo: ['#3a5a3f', '#4a6b4b', '#5f7f5c'], pad: ['#eef2f6', '#dbe4ee', '#c9b89a'], snow: 2 } };
+  const C = { road: '#c9c4bb', road2: '#a8a298', line: '#f4efe4', lane: '#d9c9a6', water: '#8fcbe6', water2: '#d9f0fa', water3: '#5f9fc4', bank: '#b9c4a8', bridge: '#b98a63', bridge2: '#8f6646',
+    rail: '#6f6a73', sleeper: '#9b7a5a', ballast: '#b3aca0', train: '#f4f1ea', train2: '#4f8fd6', glass: '#bfe0ef', bark: '#7a5a40', mtn: '#9fb7c0', mtn2: '#b7cdd3', mtn3: '#8aa2ad', fuji: '#7f97b0', fuji2: '#97adc4', snow: '#fbfcfe', snow2: '#dbe4ee',
+    wall: '#f3e8d6', wall2: '#ddd0bb', tile: '#6f7b86', tile2: '#57626c', roof: '#c96a4a', roof2: '#a4513a', roof3: '#8f8a7a', tor: '#d9503c', stone: '#c9c3b8', stone2: '#aaa294', teal: '#3fa7a0', must: '#f2c14e', awn: '#d96e5a',
+    dirt: '#d9c4a0', dirt2: '#c4ab84', fence: '#b98a63', ink: '#3b2e27', field: '#c9a675', field2: '#f4efe4', plaza: '#e4ddd0', plaza2: '#d3cabb', win: '#9fcde3', win2: '#f6e7c0', apt: '#e8e2d6', apt2: '#cfc6b6', off: '#b8c6d4', off2: '#9fb0c2' };
+  const rect = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), w, h) };
+  const blob = (c, cx, cy, rx, ry, col) => { c.fillStyle = col; for (let y = Math.floor(cy - ry); y <= cy + ry; y++) for (let x = Math.floor(cx - rx); x <= cx + rx; x++) if (((x + .5 - cx) / rx) ** 2 + ((y + .5 - cy) / ry) ** 2 <= 1) c.fillRect(x, y, 1, 1) };
+  const rng = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
+  // เส้นโค้ง Catmull-Rom ผ่านจุด · คืนจุดถี่ๆ ตามความยาว
+  const spline = P => { const o = []; for (let i = 0; i < P.length - 1; i++) { const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2, n = Math.ceil(Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) * 1.5); for (let k = 0; k < n; k++) { const t = k / n, t2 = t * t, t3 = t2 * t, f = (a, b, c, d) => .5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3); o.push([f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1])]) } } o.push(P[P.length - 1]); return o };
+  const stroke = (c, S, r, col) => { c.fillStyle = col; S.forEach(([x, y]) => { for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (dx * dx + dy * dy <= r * r + r * .6) c.fillRect(Math.round(x + dx), Math.round(y + dy), 1, 1) }) };
+  // ---------- เส้นหลักของเมือง ----------
+  const RIVER = spline([[150, 40], [140, 58], [124, 74], [112, 94], [104, 118], [96, 142], [84, 166], [66, 186], [46, 204], [30, 226], [22, 252], [26, 282], [40, 310], [46, 340]]);
+  const RAIL = spline([[-4, 146], [30, 142], [62, 146], [96, 156], [128, 168], [164, 174]]);
+  const MAIN = spline([[164, 96], [146, 108], [130, 124], [122, 146], [118, 170], [112, 196], [110, 222], [116, 252], [126, 280], [138, 310], [146, 344]]); // ถนนสายเก่าเลียบแม่น้ำฝั่งตะวันออก
+  const SHOT = spline([[70, 160], [76, 176], [86, 192], [100, 204], [112, 212]]);                       // ถนนช้อปปิ้งหน้าสถานี
+  const WEST = spline([[-4, 172], [20, 170], [44, 164], [62, 158]]);                                     // ถนนจากทุ่งนาฝั่งตะวันตกเข้าหน้าสถานี
+  const HILL = spline([[62, 146], [56, 128], [46, 114], [38, 104]]);                                     // ทางขึ้นศาลเจ้า
+  const RES1 = spline([[116, 252], [132, 258], [148, 270], [164, 276]]), RES2 = spline([[126, 280], [112, 296], [104, 316], [100, 344]]), RES3 = spline([[138, 310], [154, 318], [164, 322]]); // ซอยในย่านบ้าน
+  const SCH = spline([[86, 192], [74, 212], [66, 232], [62, 262]]);                                       // ถนนไปโรงเรียน
+  const LANES = [spline([[0, 196], [24, 190], [44, 176]]), spline([[8, 262], [14, 238], [26, 218]]), spline([[60, 70], [76, 88], [92, 104], [104, 118]]), spline([[0, 92], [20, 98], [34, 104]]), spline([[132, 196], [150, 200], [164, 206]])]; // คันนา/ทางเกวียน
+  // ---------- สถานที่ (ตรงกับ js/data/places.js) · จุดวางป้าย · แปลงว่างตามที่เมืองจริงจะมี ----------
+  const PL = [
+    { id: 'shrine', n: 'ศาลเจ้า', j: 'じんじゃ', note: 'คำทักทาย มารยาท วันและเวลา', lock: 'จำคำหมวดทักทายและมารยาทได้แม่น', at: [27, 80], lb: [30, 101], cat: [28, 72] },
+    { id: 'garden', n: 'สวนญี่ปุ่น', j: '庭', note: 'ธรรมชาติ อากาศ และฤดูกาล', free: 1, at: [136, 92], lb: [138, 110], cat: [138, 94] },
+    { id: 'station', n: 'สถานีรถไฟ', j: '駅', note: 'สถานที่ ทิศทาง และการเดินทาง', lock: 'จำคำหมวดสถานที่และการเดินทางได้แม่น', at: [66, 130], lb: [66, 116], cat: [66, 134] },
+    { id: 'cafe', n: 'คาเฟ่', j: '喫茶店', note: 'อาหารและของกิน', free: 1, at: [94, 182], lb: [118, 170], cat: [101, 178] },
+    { id: 'konbini', n: 'ร้านสะดวกซื้อ', j: 'コンビニ', note: 'ของใช้ ของกิน และตัวเลข', lock: 'จำคำหมวดของใช้ได้แม่น', at: [136, 220], lb: [135, 230], cat: [135, 210] },
+    { id: 'classroom', n: 'ห้องเรียน', j: 'きょうしつ', note: 'คำกริยา คำคุณศัพท์ และคำถาม', lock: 'จำคำหมวดคำกริยาได้แม่น', at: [56, 244], lb: [55, 268], cat: [54, 232] },
+    { id: 'room', n: 'บ้าน · ห้องอ่านหนังสือ', j: '部屋', note: 'ทบทวนทุกหมวด', free: 1, at: [140, 296], lb: [138, 306], cat: [137, 290] },
+    { id: 's1', soon: 1, at: [26, 160], lot: [12, 150, 26, 12] },   // ตลาดเช้าหน้าสถานี
+    { id: 's2', soon: 1, at: [126, 40], lot: [116, 30, 22, 13] },   // ออนเซ็นบนเขา
+    { id: 's3', soon: 1, at: [72, 288], lot: [60, 280, 24, 14] },   // ริมแม่น้ำ
+    { id: 's4', soon: 1, at: [96, 254], lot: [86, 246, 20, 13] },   // วัดในย่านบ้าน
+    { id: 's5', soon: 1, at: [26, 322], lot: [10, 314, 26, 14] }];  // ปลายแม่น้ำ
+  const has = q => q.free || all;
+  // ---------- อาคาร (มุมมองเฉียงจากบน: เห็นหลังคา + ผนังด้านหน้า) ----------
+  const house = (c, x, y, w, roof, roof2, wall = C.wall) => { rect(c, x, y + 3, w, 3, wall); rect(c, x, y + 5, w, 1, C.wall2); rect(c, x, y, w, 3, roof); rect(c, x, y + 2, w, 1, roof2); if (w > 5) rect(c, x + 1, y + 4, 2, 1, C.win); rect(c, x + w - 2, y + 4, 1, 2, '#8a6040') };
+  const tall = (c, x, y, w, h, col, col2, lit) => { rect(c, x, y, w, h, col); rect(c, x, y, w, 2, col2); for (let yy = y + 3; yy < y + h - 1; yy += 2) for (let xx = x + 1; xx < x + w - 1; xx += 2) rect(c, xx, yy, 1, 1, lit ? C.win2 : C.win) };
+  function tree(c, x, y, se, s = 1) { const P = PAL[se]; rect(c, x, y - 2, 1, 2, C.bark); if (!P.tr) { rect(c, x - 1, y - 4, 3, 1, C.bark); rect(c, x - 1, y - 5, 3, 1, C.snow); return } blob(c, x + .5, y - 3.4 * s, 2.6 * s, 2.2 * s, P.tr[0]); blob(c, x, y - 3.8 * s, 2 * s, 1.7 * s, P.tr[1]); rect(c, x - 1, y - 5 * s, 1, 1, P.tr[2]) }
+  function forest(c, cx0, cy0, rx, ry, se, seed, mix = .25) { const P = PAL[se], R = rng(seed); for (let i = 0; i < rx * ry * .5; i++) { const a = R() * Math.PI * 2, d = Math.sqrt(R()), x = cx0 + Math.cos(a) * d * rx, y = cy0 + Math.sin(a) * d * ry, alt = R() < mix && P.tr;
+      blob(c, x, y + .6, 2.6, 2.1, P.fo[0]); blob(c, x - .3, y, 2.1, 1.7, alt ? P.tr[1] : P.fo[1]); rect(c, x - 1, y - 1, 1, 1, alt ? P.tr[2] : P.fo[2]); if (P.snow > 1) rect(c, x - 1, y - 1.6, 2, 1, C.snow) } }
+  // ---------- ภาพนิ่ง (แคชต่อฤดู + ความคืบหน้า) ----------
+  const cache = {};
+  function base(se) { const key = se + all; if (cache[key]) return cache[key]; const v = document.createElement('canvas'); v.width = W; v.height = H; const c = v.getContext('2d'), P = PAL[se], R = rng(9), wi = se === 'winter';
+    // ฟ้ากับภูเขาฟูจิ (ด้านเหนือของเมือง) · หิมะบนยอดตามฤดูแบบเดียวกับฉากสวน: ร้อนไม่มี ใบไม้ร่วงแค่ยอด ใบไม้ผลิปกติ หนาวลงถึงไหล่เขา
+    for (let y = 0; y < 30; y++) rect(c, 0, y, W, 1, y < 14 ? '#cfe9f7' : '#e2f2fa');
+    for (let y = 2; y < 40; y++) { const hw = (y - 2) * 1.55 + Math.max(0, y - 22) * .9; rect(c, 54 - hw, y, hw * 2, 1, y < 8 ? C.fuji2 : C.fuji); if (y > 8) rect(c, 54 - hw, y, Math.max(1, hw * .55), 1, C.fuji2) }
+    const sh = { 0: 0, .5: 6, 1: 13, 2: 21 }[P.snow];
+    for (let y = 2; y < 2 + sh; y++) { const hw = (y - 2) * 1.55; let w2 = hw * 2; if (y > sh - 2) { for (let i = 0; i < w2; i++) if ((i * 3 + y) % 7 < 4) rect(c, 54 - hw + i, y, 1, 1, C.snow) } else rect(c, 54 - hw, y, w2, 1, y % 5 === 4 ? C.snow2 : C.snow) }
+    // ภูเขาเตี้ยหน้าฟูจิ + ป่าซาโตยามะเชิงเขา
+    for (let x = 0; x < W; x++) { const y = 24 + Math.round(Math.sin(x / 17) * 4 + Math.sin(x / 7) * 1.5); rect(c, x, y, 1, 44 - y, C.mtn3); if (P.snow > 1) rect(c, x, y, 1, 1, C.snow) }
+    rect(c, 0, 40, W, H - 40, P.gr); for (let i = 0; i < 300; i++) { const x = R() * W, y = 40 + R() * (H - 40); rect(c, x, y, 1, 2, P.gr2) }
+    forest(c, 80, 46, 90, 10, se, 3, .15);
+    // ทุ่งนา: แปลงสี่เหลี่ยมไม่เท่ากันมีคันนา บนที่ราบริมแม่น้ำ (ใบไม้ผลิมีน้ำขังเห็นฟ้า · ร้อนเขียว · ใบไม้ร่วงรวงทอง · หนาวตอซังมีหิมะ)
+    const paddy = (x0, y0, w, h, sd) => { const r = rng(sd); for (let y = y0; y < y0 + h; y += 7) for (let x = x0; x < x0 + w; x += 9 + ((y >> 3) % 3)) { const ww = Math.min(8 + ((x + y) % 3), x0 + w - x - 1), hh = Math.min(6, y0 + h - y - 1); if (ww < 3 || hh < 3) continue; const k = r() < .2 ? 2 : r() < .5 ? 1 : 0; rect(c, x, y, ww, hh, P.pad[k]);
+      if (se === 'spring' && r() < .4) rect(c, x + 1, y + 1, 2, 1, C.water2); if (se === 'summer') for (let i = 0; i < ww; i += 2) rect(c, x + i, y + 1, 1, hh - 2, P.pad[2]); if (se === 'autumn') for (let i = 1; i < ww; i += 3) rect(c, x + i, y + 2, 1, 1, '#b8922e'); if (wi) for (let i = 0; i < ww; i += 3) rect(c, x + i, y + 2 + (i % 2), 1, 1, '#c9b89a') } };
+    paddy(0, 178, 30, 40, 1); paddy(0, 230, 18, 60, 2); paddy(64, 60, 44, 40, 3); paddy(124, 120, 36, 40, 4); paddy(0, 108, 22, 30, 5); paddy(30, 264, 26, 16, 6);
+    LANES.forEach(L => stroke(c, L, 0, C.lane));
+    // แม่น้ำ: ตลิ่งหญ้า → น้ำ → ประกาย (หนาวมีน้ำแข็งเกาะริม)
+    stroke(c, RIVER, 6, C.bank); stroke(c, RIVER, 4, C.water3); stroke(c, RIVER, 3, C.water); RIVER.forEach(([x, y], i) => { if (i % 5 === 0) rect(c, x - 1 + (i % 3), y, 2, 1, wi ? C.snow : C.water2) });
+    // เนินศาลเจ้า: ป่าทึบ (ชินจุโนะโมริ) + หอสักการะ + บันไดหิน + โทริอิ
+    forest(c, 30, 74, 30, 22, se, 7, .2); rect(c, 20, 62, 16, 7, '#5e4630'); rect(c, 18, 59, 20, 4, C.tile); rect(c, 18, 62, 20, 1, C.tile2); rect(c, 26, 69, 4, 18, C.stone); for (let y = 70; y < 87; y += 2) rect(c, 26, y, 4, 1, C.stone2);
+    rect(c, 24, 88, 1, 6, C.tor); rect(c, 31, 88, 1, 6, C.tor); rect(c, 22, 87, 12, 1, '#3a3434'); rect(c, 23, 89, 10, 1, C.tor); if (wi) rect(c, 18, 58, 20, 1, C.snow);
+    // ถนน
+    const road = (S, r = 2, line = 1) => { stroke(c, S, r + 1, C.road2); stroke(c, S, r, C.road); if (line) S.forEach(([x, y], i) => { if (i % 6 < 3) rect(c, x, y, 1, 1, C.line) }) };
+    road(HILL, 1, 0); road(WEST, 2, 0); road(SCH, 1, 0); [RES1, RES2, RES3].forEach(S => road(S, 1, 0)); road(MAIN, 2, 1); road(SHOT, 2, 0);
+    // สะพาน: ถนนสายหลักไม่ข้ามแม่น้ำ · ถนนโรงเรียนกับทางรถไฟข้าม
+    const xing = S => { let best = null; S.forEach(p => RIVER.forEach(q => { const d = Math.hypot(p[0] - q[0], p[1] - q[1]); if (d < 2 && (!best || d < best[2])) best = [p[0], p[1], d] })); return best };
+    [SCH, WEST, RES2].forEach(S => { const b = xing(S); if (b) { rect(c, b[0] - 5, b[1] - 3, 10, 6, C.bridge); rect(c, b[0] - 5, b[1] - 3, 10, 1, C.bridge2); rect(c, b[0] - 5, b[1] + 2, 10, 1, C.bridge2) } });
+    // ทางรถไฟ: หินโรยทาง หมอนไม้ ราง · สะพานเหล็กข้ามแม่น้ำ · ทางข้ามรถไฟ
+    stroke(c, RAIL, 2, C.ballast); RAIL.forEach(([x, y], i) => { if (i % 3 === 0) rect(c, x, y - 2, 1, 5, C.sleeper) }); RAIL.forEach(([x, y]) => { rect(c, x, y - 1, 1, 1, C.rail); rect(c, x, y + 1, 1, 1, C.rail) });
+    const rb = xing(RAIL); if (rb) for (let i = -6; i <= 6; i += 3) { rect(c, rb[0] + i, rb[1] - 3, 1, 7, '#8f959c'); rect(c, rb[0] - 6, rb[1] - 3, 13, 1, '#8f959c'); rect(c, rb[0] - 6, rb[1] + 3, 13, 1, '#8f959c') }
+    // ย่านหน้าสถานี: อาคารสถานี + ชานชาลา + ลานหน้าสถานี · ฝั่งตรงข้ามรางเป็นแมนชันกับออฟฟิศ (ตรงกับวิวในฉากสถานี)
+    rect(c, 52, 136, 30, 6, C.stone); rect(c, 52, 136, 30, 1, '#e2ddd4'); rect(c, 56, 128, 20, 8, C.wall); rect(c, 54, 125, 24, 4, C.tile); rect(c, 54, 128, 24, 1, C.tile2); rect(c, 64, 130, 4, 6, C.glass); blob(c, 66, 126.5, 1.4, 1.4, '#fff');
+    rect(c, 58, 152, 18, 8, C.plaza); for (let i = 0; i < 18; i += 3) rect(c, 58 + i, 152, 1, 8, C.plaza2); blob(c, 67, 156, 2, 2, PAL[se].tr ? PAL[se].tr[1] : C.bark);
+    tall(c, 36, 122, 8, 14, C.apt, C.apt2, 0); tall(c, 84, 124, 8, 18, C.off, C.off2, 0); tall(c, 94, 132, 7, 12, C.apt, C.apt2, 0); tall(c, 40, 152, 9, 10, C.off, C.off2, 0);
+    // ถนนช้อปปิ้ง: ร้านสองฝั่ง กันสาดหลากสี (คาเฟ่อยู่ฝั่งตะวันออก ตรงข้ามร้านกันสาดลายทาง)
+    [[74, 166, C.awn], [80, 176, C.must], [88, 186, '#5aa0d6'], [64, 172, '#7bc47f'], [70, 182, C.awn], [78, 192, '#b58ad6'], [92, 198, C.must]].forEach(([x, y, a], i) => { house(c, x, y, 7, C.roof3, C.tile2); for (let k = 0; k < 7; k++) rect(c, x + k, y + 3, 1, 1, k % 2 ? a : '#fff7ee') });
+    // คาเฟ่ (ร้านกันสาดแดงขาว ป้ายถ้วยกาแฟ)
+    house(c, 96, 176, 10, '#8a5a3a', '#6e4a2e', '#e8c9a0'); for (let k = 0; k < 10; k++) rect(c, 96 + k, 179, 1, 1, k % 2 ? C.awn : '#fff7ee'); blob(c, 103, 174, 1.6, 1.4, '#fff7ee');
+    // ร้านสะดวกซื้อ หัวมุมถนนสายหลัก (แถบสีร้านสมมติ) ลานจอดรถหน้าร้าน
+    rect(c, 126, 214, 18, 9, C.plaza); for (let i = 0; i < 18; i += 4) rect(c, 126 + i, 218, 1, 5, '#fff'); rect(c, 128, 206, 15, 4, '#f6f4ef'); rect(c, 128, 206, 15, 1, C.teal); rect(c, 128, 207, 15, 1, C.must); rect(c, 128, 210, 15, 4, '#f6f4ef'); rect(c, 130, 211, 9, 2, C.glass); rect(c, 128, 213, 15, 1, C.wall2);
+    // โรงเรียน: อาคารเรียนยาว + สนามดิน (ลู่วิ่ง) ติดทุ่งนา ต้นซากุระริมรั้ว
+    rect(c, 38, 236, 34, 22, C.field); for (let x = 38; x < 72; x++) { rect(c, x, 236, 1, 1, '#fff'); rect(c, x, 257, 1, 1, '#fff') } rect(c, 38, 236, 1, 22, '#fff'); rect(c, 71, 236, 1, 22, '#fff'); blob(c, 55, 247, 9, 5, '#d6b98a');
+    rect(c, 36, 226, 36, 4, C.wall); rect(c, 36, 223, 36, 3, C.tile); rect(c, 36, 226, 36, 1, C.tile2); for (let x = 38; x < 70; x += 3) rect(c, x, 227, 2, 2, C.win); rect(c, 52, 219, 4, 4, C.wall); blob(c, 54, 220, 1.2, 1.2, '#fff'); [[36, 262], [44, 262], [66, 262], [74, 250], [76, 240]].forEach(([x, y]) => tree(c, x, y, se));
+    if (wi) { rect(c, 36, 222, 36, 1, C.snow); for (let i = 0; i < 40; i++) rect(c, 38 + (i * 7) % 34, 236 + (i * 5) % 22, 2, 1, C.snow) }
+    // ย่านบ้านบนเนินลาด: บ้านหลังคากระเบื้องสลับสีตามซอย · บ้านเรา (ห้องอ่านหนังสือ) หลังคาส้ม สวนเล็ก
+    const HS = [[120, 262], [134, 266], [148, 276], [104, 274], [112, 302], [104, 326], [150, 292], [146, 322], [132, 326], [118, 318], [154, 304]];
+    HS.forEach(([x, y], i) => house(c, x, y, 7 + (i % 2), i % 3 ? C.tile : C.roof3, C.tile2)); house(c, 132, 286, 11, C.roof, C.roof2); rect(c, 131, 293, 13, 1, C.fence); tree(c, 129, 293, se); tree(c, 146, 292, se);
+    // สวนญี่ปุ่นริมแม่น้ำฝั่งเหนือ (มองเห็นฟูจิ): กำแพงดิน บ่อ สะพานแดง สนตัดแต่ง โคมหิน
+    rect(c, 124, 80, 28, 22, '#c9b99a'); rect(c, 125, 81, 26, 20, P.gr); rect(c, 124, 80, 28, 1, C.tile); blob(c, 140, 92, 7, 4, C.water3); blob(c, 140, 91.6, 6, 3.4, wi ? C.water2 : C.water); for (let i = 0; i < 6; i++) rect(c, 137 + i, 91 - (i === 0 || i === 5 ? 0 : 1), 1, 1, C.tor);
+    rect(c, 128, 86, 2, 3, C.stone); rect(c, 127, 85, 4, 1, C.stone2); tree(c, 148, 88, se); blob(c, 130, 97, 2.4, 1.4, '#3d6b4a'); blob(c, 147, 98, 2.4, 1.4, '#3d6b4a'); rect(c, 136, 101, 5, 1, '#8a6040');
+    // บ้านไร่ประปรายในทุ่งนา + ต้นไม้ริมทาง
+    [[10, 122], [110, 66], [150, 132], [6, 200], [140, 196]].forEach(([x, y], i) => house(c, x, y, 7, i % 2 ? C.roof3 : C.tile, C.tile2));
+    [[60, 112], [100, 112], [116, 132], [46, 200], [108, 236], [96, 270], [154, 246], [6, 300], [60, 300], [92, 330]].forEach(([x, y]) => tree(c, x, y, se, 1.1));
+    // แปลงว่าง: รั้วไม้ ป้ายว่าง กรวยส้ม
+    PL.filter(q => q.soon).forEach(q => { const [x, y, w, h] = q.lot; rect(c, x, y, w, h, C.dirt); for (let i = 0; i < w; i += 4) { rect(c, x + i, y, 1, 2, C.fence); rect(c, x + i, y + h - 2, 1, 2, C.fence) } rect(c, x, y, w, 1, C.fence); rect(c, x, y + h - 1, w, 1, C.fence); rect(c, x + w - 5, y + 3, 2, 3, '#f08a3c') });
+    // ยังล็อก: ทำให้อาคารจางลงเล็กน้อย (ป้ายมีกุญแจ)
+    return cache[key] = v }
+  // ---------- ของขยับ: รถไฟวิ่งตามราง · แมวนั่งตรงที่อยู่ · ของตกตามฤดู ----------
+  function draw(now) { const se = season(), t = RM.matches ? 0 : now || 0; cx.drawImage(base(se), 0, 0);
+    if (!RM.matches) { const L = RAIL.length, head = Math.floor((t / 22) % (L + 400)) ; for (let k = 0; k < 26; k++) { const i = L - 1 - (head - k); if (i < 0 || i >= L) continue; const [x, y] = RAIL[i]; rect(cx, x, y - 2, 1, 4, k % 9 === 8 ? '#8f959c' : C.train); rect(cx, x, y, 1, 1, C.train2) } }
+    const q = PL.find(p => p.id === here); if (T) { const g = T.frame('sit', 0, 'light', 'cream', 'none'), bob = RM.matches ? 0 : Math.round(Math.sin(t / 300)); for (let yy = 0; yy < 44; yy += 2) for (let xx = 0; xx < 48; xx += 2) if (g[yy][xx]) rect(cx, q.cat[0] - 12 + xx / 2, q.cat[1] - 21 + bob + yy / 2, 1, 1, g[yy][xx]) }
+    if (T && T.fall && !RM.matches) T.fall(cx, { ms: Date.now(), P: true, sk: 'light' }, se, [0, 30, W, H - 30], se === 'winter' ? 50 : 20);
+    requestAnimationFrame(draw) }
+  // ---------- ป้ายบนแผนที่ (ข้อความจริงจากฟอนต์) · ชื่อภูมิประเทศจางๆ ----------
+  const LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  const MARKS = [['ふじさん', 54, 20], ['ねこがわ', 114, 128], ['たんぼ', 12, 222]];
+  let Z = 3; const pins = [], marks = MARKS.map(([t]) => { const e = document.createElement('span'); e.className = 'mk'; e.lang = 'ja'; e.textContent = t; $('mapc').appendChild(e); return e });
+  function layout() { const w = $('mapc').parentElement.clientWidth - 32; Z = Math.max(1.5, Math.min(3, Math.floor(w / W * 2) / 2)); cv.style.width = W * Z + 'px'; cv.style.height = H * Z + 'px';
+    pins.forEach(({ el, q }) => { const p = q.lb || q.at; el.style.left = p[0] * Z + 'px'; el.style.top = p[1] * Z + 'px' }); marks.forEach((e, i) => { e.style.left = MARKS[i][1] * Z + 'px'; e.style.top = MARKS[i][2] * Z + 'px'; e.style.fontSize = (Z * 3.6) + 'px' }) }
+  function refresh() { pins.forEach(({ el, q }) => { el.className = 'pin' + (q.soon ? ' soon' : !has(q) ? ' lk' : q.id === here ? ' here' : ''); el.innerHTML = q.soon ? 'เร็วๆ นี้' : `${!has(q) ? LOCK : ''}<span>${q.n.split(' · ')[0]}</span><span class="j" lang="ja">${q.j}</span>`; el.setAttribute('aria-label', q.soon ? 'แปลงว่าง เร็วๆ นี้' : q.n + (q.id === here ? ' อยู่ที่นี่' : has(q) ? '' : ' ยังล็อก')) }) }
+  PL.forEach(q => { const el = document.createElement('button'); el.type = 'button'; el.onclick = () => sheet(q); $('mapc').appendChild(el); pins.push({ el, q }) });
+  function sheet(q) { const old = document.querySelector('.sheet'); if (old) old.remove(); const s = document.createElement('div'); s.className = 'sheet';
+    if (q.soon) s.innerHTML = `<div role="dialog" aria-label="แปลงว่าง"><div class="hd"><b>แปลงว่าง</b></div><span class="st">สถานที่ใหม่กำลังจะมาที่นี่ เร็วๆ นี้นะ</span><div class="btns"><button type="button" class="x">ปิด</button></div></div>`;
+    else { const ok = has(q), c = ok ? 10 : 3; s.innerHTML = `<div role="dialog" aria-label="${q.n}"><div class="hd"><b>${q.n}</b><span class="j" lang="ja">${q.j}</span></div><span class="st">${q.id === 'room' ? 'ทบทวนทุกหมวด' : 'ทบทวนคำหมวด' + q.note + 'ก่อน'}</span>${ok ? '' : `<span class="st">${q.lock} ${c}/10 คำ</span><div class="bar"><i style="width:${c * 10}%"></i></div>`}<div class="btns"><button type="button" class="go"${!ok || q.id === here ? ' disabled' : ''}>${q.id === here ? 'อยู่ที่นี่แล้ว' : ok ? 'ไปเที่ยวที่นี่ →' : 'ยังล็อกอยู่'}</button><button type="button" class="x">ปิด</button></div></div>` }
+    s.onclick = e => { if (e.target === s || e.target.closest('.x')) return s.remove(); if (e.target.closest('.go')) { here = q.id; s.remove(); refresh(); const t = document.createElement('div'); t.className = 'toast'; t.textContent = 'ไปที่' + q.n.split(' · ')[0] + 'กัน'; $('dlg').appendChild(t); setTimeout(() => t.remove(), 1600) } };
+    $('dlg').appendChild(s); const f = s.querySelector('.go:not(:disabled)') || s.querySelector('.x'); if (f) f.focus() }
+  const seg = (id, fn) => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); fn(b.dataset.v) });
+  seg('sea', v => { SE = v }); seg('prog', v => { all = +v; if (!all && !PL.find(p => p.id === here).free) here = 'room'; refresh() });
+  addEventListener('resize', layout); layout(); refresh(); requestAnimationFrame(draw);
+})();
+</script>
+
+</body></html>
