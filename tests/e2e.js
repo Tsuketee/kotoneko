@@ -1269,6 +1269,7 @@ test('สัตว์เลี้ยงปลอบหลังตอบผิ�
 
 test('แมวพิกเซล: หน้าหลักวาดฉากห้อง, เหตุการณ์เรียกท่าอารมณ์, แตะแยกโซนและมาตรวัดความทน, เปลี่ยนท่าไม่ค้าง, กระต่ายยังเป็นอิโมจิ', async (b, base) => {
   const p = await fresh(b, base);
+  await p.evaluate(() => { PixelCat._t.setJit(false); PixelCat._t.setNow(new Date('2026-11-22T12:00:00').getTime()); });
   await p.waitForTimeout(300);
   const info = await p.evaluate(() => { const c = document.getElementById('petcv'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return [c.width, c.height, n, getComputedStyle(c).imageRendering]; });
   assert.deepStrictEqual(info.slice(0, 2), [160, 90]); assert(info[2] > 160 * 90 * .9, 'ฉากต้องถูกวาด'); assert.strictEqual(info[3], 'pixelated');
@@ -1517,7 +1518,7 @@ test('แมวพิกเซล: ท่าที่ใช้ของในฉ
   assert.deepStrictEqual(bad, []);
   // ตัวช่วย: ตรึงนาฬิกาของฉาก ตั้งสถานที่ แมวนั่งว่างที่ x แล้วเดินเวลาทีละ 50 ms เก็บลำดับโหมด · Math.random คงที่ให้ผลแน่นอน
   // v109: นาฬิกาฉากในข้อนี้อยู่ปี 1970 (เดือนมกราคม = หน้าหนาว ไม่มีผีเสื้อ) จึงตรึงฤดูเป็นหน้าร้อนทั้งข้อ (ทุกอย่างในฉากมีครบ) · ข้อ "ฉากตามฤดู" ตรวจผลของฤดูแยก
-  await p.evaluate(() => PixelCat._t.setSeason('summer'));
+  await p.evaluate(() => { PixelCat._t.setSeason('summer'); PixelCat._t.setJit(false); });
   const run = (o) => p.evaluate(o => { const T = PixelCat._t, { step, cat } = T, R0 = Math.random; Math.random = () => o.rnd;
     try { T.setTod(o.tod); T.setNow(o.ms); M.place = { at: o.at, got: PLACES.map(q => q.id), fam: {} }; render(); T.setFam(o.fam || 99, 0); // render() ติดตั้งแมวใหม่และนับวันที่อยู่ที่นั้น จึงตั้งช่วงปรับตัวทีหลัง
       document.querySelector('.scn.px .scb').classList.remove('on'); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: o.x, dir: 1, then: null, after: null, pend: null, str: 0, wk: 0, hunt: 0, tol: 0, cool: 0, lv: 0, pose: null });
@@ -1630,9 +1631,9 @@ test('แมวพิกเซล: กล่องกระดาษในห้
     out.garden = img('garden', true) === img('garden', false);
     // วันที่มีกล่อง (ห้อง): ตัดสินใจครั้งแรกๆ มักไปดมกล่องใหม่ · ดมแล้วมุดกล่อง → โผล่หัว (เลื่อนลง BOX.dy) → ออกมานั่ง
     Math.random = () => (a = (a * 1103515245 + 12345) % 2147483648) / 2147483648;
-    T.setBox(true); T.setBoxSeen(false); M.place = { at: 'room', got: [] }; PixelCat.mount(cv, { place: 'room', coat: 'cream' }); T.setPart('day');
+    T.setJit(false); T.setNow(at('2026-11-22T12:00:00')); T.setBox(true); T.setBoxSeen(false); M.place = { at: 'room', got: [] }; PixelCat.mount(cv, { place: 'room', coat: 'cream' }); T.setPart('day');
     const seq = []; let inBox = null; Object.assign(cat, { mode: 'sit', t: 0, dur: 1, x: 110, then: null, str: 0, bs: 0 });
-    for (let i = 0; i < 40000 && !/boxin box boxout sit/.test(seq.join(' ')); i++) { step(50); if (seq[seq.length - 1] !== cat.mode) seq.push(cat.mode); if (cat.mode === 'box' && !inBox) inBox = { x: cat.x, dy: cat.dy } } // อารมณ์รายวัน (jit) ตามวันที่จริง จึงจำลองจนกว่าจะมุดกล่องครบรอบ
+    for (let i = 0; i < 40000 && !/boxin box boxout sit/.test(seq.join(' ')); i++) { step(50); if (seq[seq.length - 1] !== cat.mode) seq.push(cat.mode); if (cat.mode === 'box' && !inBox) inBox = { x: cat.x, dy: cat.dy } }
     const j = seq.join(' '); out.j = j.slice(0, 600); out.firstSniff = j.indexOf('sniff') >= 0 && j.indexOf('sniff') < j.indexOf('boxin'); out.inBox = inBox; out.chain = /boxin box boxout sit/.test(j);
     // แตะตอนอยู่ในกล่อง: ไม่ออกมา
     Object.assign(cat, { mode: 'box', t: 0, dur: 1e9, x: BOX.cx, dy: BOX.dy, bz: true, then: 'sit' }); T.poke('head'); out.tapStay = cat.mode === 'box' && cat.bz === false;
