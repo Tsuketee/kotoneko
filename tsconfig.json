@@ -1,0 +1,19 @@
+{
+  // ตรวจ type ด้วย npm run typecheck · ตอนนี้ครอบเฉพาะไฟล์ TypeScript (Edge Function ชำระเงิน)
+  // แอปเป็น JavaScript: แผนย้ายทีละไฟล์อยู่ใน docs/TYPESCRIPT_PLAN.md
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM"],
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["supabase/functions/**/*.ts"]
+}

@@ -1,23 +1,47 @@
-# ตรวจทุก PR ก่อน merge (main ขึ้น GitHub Pages ทันที จึงต้องกันโค้ดพังก่อนถึงผู้ใช้)
-# - version: VERSION ใน sw.js ต้องมากกว่าของ branch ปลายทาง (tests/check-version.js)
-# - test: npm test = tests/payment.mjs + tests/e2e.js + tests/flows.js (Playwright + Chromium) · ภาพหน้าจอและ console log อัปโหลดเป็น artifact "test-results"
-# รันเองในเครื่องได้: node tests/check-version.js origin/main · npm test
-name: ทดสอบ
+# ตรวจทุก push และทุก PR (main ขึ้น GitHub Pages ทันที จึงต้องกันโค้ดพังก่อนถึงผู้ใช้)
+# - check: npm run check = type (tsc strict) → lint (ESLint) → unit (tests/payment.mjs) → e2e (tests/e2e.js + tests/flows.js)
+#          ผิดกฎข้อไหน ขั้นนั้นไม่ผ่าน และ job นี้แดง · ภาพหน้าจอและ console log อัปโหลดเป็น artifact "test-results"
+# - version (เฉพาะ PR): VERSION ใน sw.js ต้องมากกว่าของ branch ปลายทาง (tests/check-version.js)
+# รันเองในเครื่องได้: npm run check · node tests/check-version.js origin/main
+name: ตรวจโค้ด
 
 on:
-  pull_request:
   push:
-    branches: [main]
+    branches: ['**']
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: test-${{ github.event.pull_request.number || github.ref }}
+  group: check-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  check:
+    name: npm run check
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22 # tests/payment.mjs ต้องใช้ Node 22.18 ขึ้นไป (อ่านไฟล์ .ts เอง)
+          cache: npm
+      - run: npm ci
+      - name: ติดตั้ง Chromium ของ Playwright
+        run: npx playwright install --with-deps chromium
+      - run: npm run check
+      - name: เก็บภาพหน้าจอและ console log (test-results/)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
   version:
     name: เพิ่มเลข VERSION แล้ว
     if: github.event_name == 'pull_request'
@@ -36,26 +60,3 @@ jobs:
         env:
           BASE: ${{ github.base_ref }}
         run: node tests/check-version.js "origin/$BASE"
-
-  test:
-    name: npm test
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22 # tests/payment.mjs ต้องใช้ Node 22.18 ขึ้นไป (อ่านไฟล์ .ts เอง)
-          cache: npm
-      - run: npm ci
-      - name: ติดตั้ง Chromium ของ Playwright
-        run: npx playwright install --with-deps chromium
-      - run: npm test
-      - name: เก็บภาพหน้าจอและ console log (test-results/)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: test-results/
-          if-no-files-found: ignore
-          retention-days: 14

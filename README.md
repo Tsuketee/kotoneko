@@ -77,8 +77,10 @@ npm test
 
 ควรรันก่อนปล่อยเวอร์ชันใหม่ทุกครั้ง ส่วนการทดสอบบน iPad Safari จริง (Apple Pencil, safe-area) ยังต้องลองด้วยมือ
 
-**GitHub Actions** (`.github/workflows/test.yml`) รันให้เองทุก PR และทุกครั้งที่ push เข้า `main`:
-- **เพิ่มเลข VERSION แล้ว** (เฉพาะ PR): `VERSION` ใน `sw.js` ต้องมากกว่าของ branch ปลายทาง · รันเองได้ด้วย `node tests/check-version.js origin/main`
-- **npm test**: ชุดทดสอบทั้งสองชุดด้านบน
+**ตรวจทั้งหมดด้วยคำสั่งเดียว**: `npm run check` = type check (`tsc` strict) → lint (ESLint) → unit (`tests/payment.mjs`) → e2e (`tests/e2e.js` + `tests/flows.js`) แล้วสรุปเป็นตาราง · แผนแก้โค้ดเดิมที่ยังไม่ผ่าน lint อยู่ใน `docs/LINT_PLAN.md` และแผนย้ายไป TypeScript ใน `docs/TYPESCRIPT_PLAN.md`
 
-ให้ GitHub ห้าม merge เมื่อไม่ผ่าน: Settings → Branches → เพิ่มกฎของ `main` → Require status checks to pass → เลือก "เพิ่มเลข VERSION แล้ว" และ "npm test"
+**GitHub Actions** (`.github/workflows/test.yml`) รันให้เองทุก push และทุก PR:
+- **npm run check**: ผิดกฎข้อไหนก็แดง
+- **เพิ่มเลข VERSION แล้ว** (เฉพาะ PR): `VERSION` ใน `sw.js` ต้องมากกว่าของ branch ปลายทาง · รันเองได้ด้วย `node tests/check-version.js origin/main`
+
+ให้ GitHub ห้าม merge เมื่อไม่ผ่าน: Settings → Branches → เพิ่มกฎของ `main` → Require status checks to pass → เลือก "เพิ่มเลข VERSION แล้ว" และ "npm run check"

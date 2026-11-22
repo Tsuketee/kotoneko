@@ -18,9 +18,10 @@
 | test เฉพาะข้อ | `node tests/e2e.js <คำในชื่อข้อ>` หรือ `node tests/flows.js <คำในชื่อข้อ>` |
 | ภาพแมวพิกเซล | `node tests/pet-grid.js <โฟลเดอร์ผลลัพธ์>` |
 | เลข VERSION | `node tests/check-version.js origin/main` |
-| lint / type check | ยังไม่มี |
+| ตรวจทั้งหมด | `npm run check` (type → lint → unit → e2e · ทุก push/PR บน CI ต้องผ่าน) |
+| lint / type check | `npm run lint` · `npm run typecheck` (โค้ดเดิมยังไม่ผ่าน: แผนใน `docs/LINT_PLAN.md` · `docs/TYPESCRIPT_PLAN.md`) |
 
-GitHub Actions (`.github/workflows/test.yml`) รัน `npm test` และตรวจ VERSION ทุก PR
+Hook (`.claude/settings.json`) รัน lint/type ของไฟล์ที่เพิ่งแก้ให้ทันที ถ้าขึ้น error ให้แก้ก่อนทำต่อ ห้ามปิดกฎหรือใส่ `eslint-disable`
 
 ## Definition of Done
 ก่อนบอกว่าเสร็จ ใช้ skill verify-app
