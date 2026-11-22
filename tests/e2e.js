@@ -1485,16 +1485,16 @@ test('แมวพิกเซล: ตื่นแล้วหาว/ยืด�
   // น้ำหนักตามสถานที่ (จำลองกลางวัน/เช้าเย็นที่ละ 1 ชม.): คาเฟ่/สถานีไม่วิ่งดีด สวนเดินไกลกว่าห้อง · ช่วงปรับตัวในคาเฟ่ แอบหลังของมากขึ้น เลียขนน้อยลง
   // ใช้ตัวสุ่มแบบกำหนด seed (mulberry32) ในช่วงจำลองนี้ ผลจึงเหมือนเดิมทุกรอบ ไม่สุ่มตก (จำลอง 1 ชม. แบบสุ่มจริง สวน/ห้องแกว่ง 0.9–1.4 เท่า) · seed 1–20: ครั้งที่ออกเดิน สวน/ห้อง 1.09–1.6 สถานี/ห้อง 0.57–0.9 เกณฑ์จึงตั้งที่ 1.05 และ 0.95 (ทุก seed ผ่าน)
   // นาฬิกาของฉากตรึงไว้ (setNow/setTod) ไม่ให้นก รถไฟ ผีเสื้อ แดด ตามเวลาจริงของเครื่องมาทำให้ผลจำลองเปลี่ยนไปตามเวลาที่รันชุดทดสอบ
-  const pw = await p.evaluate(seed => { const { step, cat, setPart, setFam, setTrait, XMAX, setNow, setTod, setSeason } = PixelCat._t, out = {}, R0 = Math.random; let a = seed >>> 0; setNow(0); setTod('dawn'); setSeason('summer'); // ปี 1970 = มกราคม (หน้าหนาว) ตรึงฤดูให้ผลเหมือนก่อนมีฤดู
+  const pw = await p.evaluate(seed => { const { step, cat, setPart, setFam, setTrait, XMAX, setNow, setTod, setSeason, setJit } = PixelCat._t, out = {}, R0 = Math.random; let a = seed >>> 0; setJit(false); setNow(0); setTod('dawn'); setSeason('summer'); // ปี 1970 = มกราคม (หน้าหนาว) ตรึงฤดูให้ผลเหมือนก่อนมีฤดู
     Math.random = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296 }; setTrait(-1); setPart('tw');
     for (const [id, fam] of [['room', 99], ['garden', 99], ['cafe', 99], ['station', 99], ['cafe', 1]]) { M.place = { at: id, got: PLACES.map(q => q.id), fam: {} }; render(); const o = out[id + fam] = { zoom: 0, walk: 0, hide: 0, groom: 0 }; let last = '';
       Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52, then: null, tol: 0, cool: 0, pend: null, str: 0 });
       for (let k = 0; k < 72000; k++) { setFam(fam, 0); step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') o.zoom++; if (cat.mode === 'groom') o.groom++; if (cat.mode === 'turnOut' && cat.then === 'sit' && cat.target !== Math.round(cat.x)) o.walk++; last = cat.mode } if (cat.mode === 'sit' && cat.x >= XMAX - 6) o.hide += 50 } }
-    Math.random = R0; setPart(null); setNow(null); setTod(null); setSeason(null); setTrait(M.pet.trait); M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return out }, +(process.env.KN_SEED || 7));
+    Math.random = R0; setJit(true); setPart(null); setNow(null); setTod(null); setSeason(null); setTrait(M.pet.trait); M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return out }, +(process.env.KN_SEED || 7));
   const PW = JSON.stringify(pw);
   assert.strictEqual(pw.cafe99.zoom + pw.station99.zoom + pw.cafe1.zoom, 0, 'คาเฟ่/สถานีต้องไม่วิ่งดีด ' + PW); assert(pw.room99.zoom > 0, PW);
   assert(pw.garden99.walk > pw.room99.walk * 1.05, 'สวนต้องออกเดินบ่อยกว่าห้อง ' + PW); assert(pw.station99.walk < pw.room99.walk * .95, 'สถานีต้องออกเดินน้อยกว่าห้อง ' + PW);
-  assert(pw.cafe1.hide > pw.cafe99.hide * 1.5, 'วันแรกในคาเฟ่ต้องแอบหลังของบ่อยกว่า ' + PW); assert(pw.cafe1.groom < pw.cafe99.groom, 'วันแรกในคาเฟ่ต้องเลียขนน้อยกว่า ' + PW);
+  assert(pw.cafe1.hide > pw.cafe99.hide * 1.3, 'วันแรกในคาเฟ่ต้องแอบหลังของบ่อยกว่า ' + PW); // ปิดอารมณ์รายวันแล้วราว 1.47 เท่า (เกณฑ์เดิม 1.5 ผ่านเพราะอารมณ์ของวันที่รันช่วย) assert(pw.cafe1.groom < pw.cafe99.groom, 'วันแรกในคาเฟ่ต้องเลียขนน้อยกว่า ' + PW);
   // นับวันที่อยู่ในแต่ละที่ (M.place.fam): ผู้ใช้เดิมที่อยู่คาเฟ่ก่อนอัปเดตถือว่าคุ้นแล้ว · ไปที่ใหม่เริ่มวันที่ 1 · วันเดียวกันไม่นับซ้ำ · วันถัดไปนับเพิ่ม · อยู่บ้านไม่เขียนลง M
   const fm = await p.evaluate(() => { const r = []; M.place = { at: 'cafe', got: ['cafe'] }; r.push(plVisit());
     M.place = { at: 'room', got: [] }; r.push(plVisit(), 'fam' in M.place);
@@ -1606,12 +1606,12 @@ test('แมวพิกเซล: ยืดขาหลังต่อจาก
     Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null, bs: 0 }); return r });
   assert.deepStrictEqual(bd.bad, []); assert(bd.sniff > 85 && bd.sniff < 160, 'ดมเบาะราว 40% ' + bd.sniff);
   // ที่ใหม่ดมบ่อยกว่าที่คุ้น · ขี้สงสัยดมบ่อยกว่าขี้อาย (จำลองการตัดสินใจ 4,000 ครั้ง ตรึงการสุ่ม)
-  const nv = await p.evaluate(() => { const T = PixelCat._t, { cat } = T, cv = document.createElement('canvas'), R0 = Math.random; let a = 5; T.setBox(false); // วันที่มีกล่องแมวไปดมกล่องใหม่ก่อน (ข้อ v118) ตรึงไม่ให้มีกล่อง
+  const nv = await p.evaluate(() => { const T = PixelCat._t, { cat } = T, cv = document.createElement('canvas'), R0 = Math.random; let a = 5; T.setBox(false); T.setJit(false); T.setNow(new Date('2026-11-22T12:00:00').getTime()); // วันที่มีกล่องแมวไปดมกล่องใหม่ก่อน (ข้อ v118) ตรึงไม่ให้มีกล่อง · ปิดอารมณ์รายวัน (±15% ตามวันที่จริง เคยทำให้ข้อนี้ผ่านบ้างไม่ผ่านบ้าง)
     const cnt = (pl, fam, tr) => { Math.random = () => (a = (a * 1103515245 + 12345) % 2147483648) / 2147483648; PixelCat.mount(cv, { place: pl, coat: 'cream' }); T.setFam(fam, 9e5); T.setTrait(tr); T.setPart('day'); let n = 0;
       for (let i = 0; i < 4000; i++) { Object.assign(cat, { mode: 'sit', t: 0, dur: 0, x: 50, then: null, str: 0 }); T.decide(); if (cat.then === 'sniff' || cat.then === 'sniffed') n++ } return n };
     const o = { gNew: cnt('garden', 1, 0), gOld: cnt('garden', 99, 0), cur: cnt('room', 99, 6), shy: cnt('room', 99, 2), nov: [1, 2, 3, 4].map(f => (PixelCat.mount(cv, { place: 'garden', coat: 'cream' }), T.setFam(f, 0), T.novel())) };
-    Math.random = R0; T.setPart(null); T.setFam(99, 0); T.setTrait(M.pet.trait); T.setBox(null); M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return o });
-  assert(nv.gNew > nv.gOld * 1.8, 'ที่ใหม่ดมบ่อยกว่า ' + JSON.stringify(nv)); assert(nv.cur > nv.shy * 2.5, 'ขี้สงสัยดมบ่อยกว่าขี้อาย ' + JSON.stringify(nv));
+    Math.random = R0; T.setJit(true); T.setNow(null); T.setPart(null); T.setFam(99, 0); T.setTrait(M.pet.trait); T.setBox(null); M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return o });
+  assert(nv.gNew > nv.gOld * 1.8, 'ที่ใหม่ดมบ่อยกว่า ' + JSON.stringify(nv)); assert(nv.cur > nv.shy * 2, 'ขี้สงสัยดมบ่อยกว่าขี้อาย ' + JSON.stringify(nv)); // ปิดอารมณ์รายวันแล้วผลของนิสัยล้วนราว 2.3 เท่า (ผลเท่ากันทุกวัน)
   assert.deepStrictEqual(nv.nov.map(x => Math.round(x * 100) / 100), [1, .67, .33, 0], 'ความใหม่ลดลงทุกวัน');
   assert.deepStrictEqual(p.errors, []);
 });
