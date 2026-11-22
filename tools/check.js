@@ -1,4 +1,4 @@
-// npm run check: รันทุกการตรวจตามลำดับ type → lint → determinism → unit → hooks → e2e → flows แล้วสรุปเป็นตาราง
+// npm run check: รันทุกการตรวจตามลำดับ type → lint → determinism → featuremap → unit → hooks → e2e → flows แล้วสรุปเป็นตาราง
 // รันครบทุกขั้นแม้ขั้นก่อนหน้าไม่ผ่าน จะได้เห็นปัญหาทั้งหมดในรอบเดียว · มีขั้นไหนไม่ผ่าน → exit 1 (CI แดง)
 // รันเฉพาะบางขั้น: node tools/check.js lint unit
 // รันครบทุกขั้นแล้วบันทึกลายนิ้วมือของโค้ดที่ตรวจและผลไว้ใน test-results/check-stamp.json ให้ hook Stop (tools/hooks/stop-check.js) เทียบ
@@ -8,6 +8,7 @@ const STEPS = [
   ['type', 'npx', ['tsc', '-p', 'tsconfig.json']],
   ['lint', 'npx', ['eslint', '.']],
   ['determinism', 'node', ['tests/check-determinism.js']],
+  ['featuremap', 'node', ['tests/check-feature-map.js']],
   ['unit', 'node', ['tests/payment.mjs']],
   ['hooks', 'node', ['tests/hooks.js']],
   ['e2e', 'node', ['tests/e2e.js']],

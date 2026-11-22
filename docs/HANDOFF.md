@@ -45,7 +45,7 @@
 | 2ก | ✅ v145 · Stop hook: บล็อกการจบ turn ถ้าโค้ดเปลี่ยนหลัง `npm run check` ครั้งล่าสุด (`check.js` เขียน `test-results/check-stamp.json`) |
 | 2ข | ✅ v146 · งานที่ต้องอนุมัติก่อนแก้ → เจ้าของใช้ plan mode (Shift+Tab) แทนการเขียนกำกับในข้อความ |
 | 2ค | ✅ v147 (แก้ข้อเดิม 3 ข้อ v148) · `tests/check-determinism.js` ในขั้น check: ข้อทดสอบที่จำลองพฤติกรรมแมวต้องมี `setJit(false)` และ `setNow(` |
-| 3ก | FEATURE_MAP อ้าง e2e ด้วยคำในชื่อข้อแทนเลขบรรทัด + ขั้นตรวจว่าคำค้นเจอข้อจริง · SKILL ขั้น 2.4 ตาม |
+| 3ก | ✅ v149 · FEATURE_MAP อ้าง e2e ด้วยคำในชื่อข้อแทนเลขบรรทัด + ขั้นตรวจว่าคำค้นเจอข้อจริง · SKILL ขั้น 2.4 ตาม |
 | 3ข–3ฉ | SKILL verify-app: ภาพจาง/ว่าง = ยังไม่มีหลักฐาน · แยก 404/403 ที่ตั้งใจของ Supabase จำลอง (`pageerror` ต้องเป็น 0) · "KillShell" → `pkill -f "http.server 8000"` · ไม่รัน flows ซ้ำในขั้น 5 ถ้าไม่ได้แก้โค้ดหลังขั้น 3 · สถานะ "ไม่ผ่าน · ปัญหาเดิม" |
 | 4ก | ESLint `linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: "error" }` แล้วลบ CLAUDE.md L24 |
 | 4ข | ขั้น `version` ใน `check.js` แล้วลบแถว "เลข VERSION" (L20) |
@@ -62,7 +62,7 @@
 
 ## ข้อควรระวังที่เจอใน session นี้
 - typescript-eslint 8.73 รองรับ TypeScript ถึง 6.0 จึงใช้ 6.0.3 (อย่าอัปเป็น 7.x จนกว่า typescript-eslint จะรองรับ)
-- `tests/e2e.js` เพิ่มบรรทัดแล้วเลขบรรทัดที่ FEATURE_MAP อ้างจะเลื่อน (ดูข้อ 3ก)
+- FEATURE_MAP อ้าง e2e ด้วยคำในชื่อข้อแล้ว (v149) · เปลี่ยนชื่อข้อ e2e ต้องแก้ FEATURE_MAP ด้วย ไม่งั้นขั้น featuremap ไม่ผ่าน
 - ภาพหน้าจอต้องถ่ายด้วย `animations: 'disabled'` (`tests/artifacts.js`) ไม่งั้นได้ภาพจางระหว่างแอนิเมชัน
 - skill หรือ hook ที่สร้างระหว่าง session จะยังใช้ไม่ได้จนกว่าจะเริ่ม session ใหม่ (หรือเปิด `/hooks`)
 - 404/403 ใน console ของ e2e ข้อซิงก์/ซื้อ/แพ็ก มาจาก Supabase จำลองที่ตั้งใจตอบแบบนั้น

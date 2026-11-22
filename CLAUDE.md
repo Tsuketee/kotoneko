@@ -18,7 +18,7 @@
 | test เฉพาะข้อ | `node tests/e2e.js <คำในชื่อข้อ>` หรือ `node tests/flows.js <คำในชื่อข้อ>` |
 | ภาพแมวพิกเซล | `node tests/pet-grid.js <โฟลเดอร์ผลลัพธ์>` |
 | เลข VERSION | `node tests/check-version.js origin/main` |
-| ตรวจทั้งหมด | `npm run check` (type → lint → determinism → unit → hooks → e2e → flows · ทุก push/PR บน CI ต้องผ่าน) |
+| ตรวจทั้งหมด | `npm run check` (type → lint → determinism → featuremap → unit → hooks → e2e → flows · ทุก push/PR บน CI ต้องผ่าน) |
 | lint / type check | `npm run lint` · `npm run typecheck` (โค้ดเดิมยังไม่ผ่าน: แผนใน `docs/LINT_PLAN.md` · `docs/TYPESCRIPT_PLAN.md`) |
 
 Hook (`.claude/settings.json`) รัน lint/type ของไฟล์ที่เพิ่งแก้ให้ทันที ถ้าขึ้น error ให้แก้ก่อนทำต่อ ห้ามปิดกฎหรือใส่ `eslint-disable`
