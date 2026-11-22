@@ -121,7 +121,7 @@ test('เปิดแอปครั้งแรก: ข้ามชื่อเ
   await p.evaluate(() => { obn('N5'); obn('เพื่อไปสอบวัดระดับ JLPT'); obn('10'); });
   assert.deepStrictEqual(await p.evaluate(() => [M.me.name, M.pet.name]), ['', 'มะลิ']);
   assert.strictEqual((await p.locator('.hi').innerText()).trim(), 'สวัสดีค่ะ');
-  await p.evaluate(() => goMe());
+  await p.evaluate(() => goProf());
   await p.locator('.idr .mnl:text-is("ตั้งชื่อของเธอ")').click();
   await p.fill('#pfow', 'พอ'); await p.locator('.cov button:text-is("บันทึก")').click();
   assert.deepStrictEqual(await p.evaluate(() => [M.me.name, M.pet.name, JSON.parse(localStorage.getItem('kn_meta')).me.name]), ['พอ', 'มะลิ', 'พอ']);
@@ -1032,7 +1032,7 @@ test('แท็บโปรไฟล์ = บัตรสัตว์เลี�
   await p.evaluate(() => { const ds = i => { const d = new Date(); d.setDate(d.getDate() - i); return dstr(d) };
     M.pet.rv = ds(9); M.pet.bond = 57; M.pet.trait = 3; M.pet.goal = 'เพื่อไปสอบวัดระดับ JLPT'; M.days = {}; [0, 1, 2, 6, 7, 8, 9].forEach(i => M.days[ds(i)] = M.goal); saveM(); render() });
   await p.locator('.ppf').click();
-  assert.deepStrictEqual(await p.evaluate(() => [tab, meView]), ['me', 'card']);
+  assert.deepStrictEqual(await p.evaluate(() => [tab, meView]), ['me', 'card'], 'ปุ่มโปรไฟล์บนการ์ดหน้าแรกเปิดบัตรตรงๆ');
   assert.strictEqual(await p.locator('#nav .on').innerText(), 'โปรไฟล์');
   const rows = await p.locator('.idr').allInnerTexts();
   const R = Object.fromEntries(rows.map(r => { const [k, ...v] = r.split('\n').map(x => x.trim()).filter(Boolean); return [k, v.join(' ')] }));
@@ -1157,10 +1157,12 @@ test('แถบล่าง 5 หมวด: หน้าแรก เรีย�
   await p.locator('#nav button:has-text("ร้านค้า")').click();
   t = await p.locator('#app').innerText();
   assert(t.includes('เร็วๆ นี้') && t.includes('ตู้สุ่ม') && t.includes('แลกของ') && t.includes('ไม่ใช้เงินจริง') && !/฿|บาท|THB/.test(t), t);
-  // โปรไฟล์: บัตรสัตว์เลี้ยง → ปุ่มเมนู → หน้ารวมรายการ → หน้าย่อย (สำรองข้อมูล เครดิต) → กลับเมนู → กลับบัตร · แตะแท็บซ้ำกลับบัตร
+  // โปรไฟล์ (v123 เจ้าของขอสลับ): แท็บเปิดมาเป็นเมนู → ดูโปรไฟล์ = บัตรสัตว์เลี้ยง → กลับเมนู → หน้าย่อย (สำรองข้อมูล เครดิต) → กลับเมนู · แตะแท็บซ้ำกลับเมนู
   await p.locator('#nav button:has-text("โปรไฟล์")').click();
-  assert.strictEqual(await p.locator('.idc').count(), 1, 'แท็บโปรไฟล์เปิดมาเป็นบัตรสัตว์เลี้ยง');
-  await p.locator('.mnb').click();
+  assert.deepStrictEqual(await p.evaluate(() => [meView, document.querySelectorAll('.idc').length, document.querySelector('.mehd h1').textContent]), ['menu', 0, 'โปรไฟล์'], 'แท็บโปรไฟล์เปิดมาเป็นเมนู');
+  await p.locator('.mnh .mnl:has-text("ดูโปรไฟล์")').click();
+  assert.deepStrictEqual(await p.evaluate(() => [meView, document.querySelectorAll('.idc').length]), ['card', 1], 'ดูโปรไฟล์ = บัตร');
+  await p.locator('.top .bk').click(); assert.strictEqual(await p.evaluate(() => meView), 'menu');
   t = await p.locator('#app').innerText();
   ['ดูโปรไฟล์', 'แก้ไข', 'บัญชีและข้อมูล', 'สำรองข้อมูล', 'ระดับที่เรียน', 'ช่วยเหลือและข้อมูล', 'แนะนำแอป', 'ลิขสิทธิ์และเครดิต', 'นโยบายความเป็นส่วนตัว', 'ข้อกำหนดการใช้งาน'].forEach(k => assert(t.includes(k), 'เมนูขาด ' + k));
   assert.strictEqual(await p.locator('.mnr[href="privacy.html"][target=_blank][rel~=noopener]').count(), 1);
@@ -1171,8 +1173,15 @@ test('แถบล่าง 5 หมวด: หน้าแรก เรีย�
   assert(await p.locator('#credits[open]').count() === 1 && (await p.locator('#credits').innerText()).includes('KanjiVG'));
   await p.locator('.top .bk').click(); await p.locator('.mnq:has-text("คลังสะสม")').click();
   assert.strictEqual(await p.evaluate(() => meView), 'card');
-  await p.locator('.mnb').click(); await p.locator('#nav button:has-text("โปรไฟล์")').click();
-  assert.strictEqual(await p.evaluate(() => meView), 'card', 'แตะแท็บโปรไฟล์ซ้ำกลับหน้าบัตร');
+  await p.locator('#nav button:has-text("โปรไฟล์")').click();
+  assert.strictEqual(await p.evaluate(() => meView), 'menu', 'แตะแท็บโปรไฟล์ซ้ำกลับเมนู');
+  // ธีม: ตามเครื่อง (ไม่มี data-theme) → มืด → สว่าง จำไว้ใน kn_theme และใช้ทันทีตอนเปิดแอปใหม่ · กลับตามเครื่องลบค่าทิ้ง
+  const th = () => p.evaluate(() => [document.documentElement.dataset.theme || 'auto', localStorage.getItem('kn_theme'), getComputedStyle(document.body).backgroundColor, document.querySelector('.seg2 [aria-pressed=true]').textContent]);
+  assert.deepStrictEqual((await th()).slice(0, 2), ['auto', null]);
+  await p.locator('.seg2 button:text-is("มืด")').click(); let v = await th(); assert.deepStrictEqual([v[0], v[1], v[3]], ['dark', 'dark', 'มืด']); const dk = v[2];
+  await p.reload(); assert.strictEqual(await p.evaluate(() => document.documentElement.dataset.theme), 'dark', 'จำธีมหลังเปิดใหม่');
+  await p.evaluate(() => goTab('me')); await p.locator('.seg2 button:text-is("สว่าง")').click(); v = await th(); assert.deepStrictEqual([v[0], v[1], v[3]], ['light', 'light', 'สว่าง']); assert.notStrictEqual(v[2], dk, 'พื้นหลังเปลี่ยนตามธีม');
+  await p.locator('.seg2 button:text-is("ตามเครื่อง")').click(); assert.deepStrictEqual((await th()).slice(0, 2), ['auto', null]);
   for (const n of ['หน้าแรก', 'เรียน', 'ความคืบหน้า', 'ร้านค้า', 'โปรไฟล์']) { await p.locator(`#nav button:has-text("${n}")`).click(); assert(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + ' ล้นจอแนวนอน'); }
   assert.deepStrictEqual(p.errors, []);
 });
@@ -1572,7 +1581,7 @@ test('แมวพิกเซล: กล่องกระดาษในห้
     Math.random = () => (a = (a * 1103515245 + 12345) % 2147483648) / 2147483648;
     T.setBox(true); T.setBoxSeen(false); M.place = { at: 'room', got: [] }; PixelCat.mount(cv, { place: 'room', coat: 'cream' }); T.setPart('day');
     const seq = []; let inBox = null; Object.assign(cat, { mode: 'sit', t: 0, dur: 1, x: 110, then: null, str: 0, bs: 0 });
-    for (let i = 0; i < 6000 && seq.length < 400; i++) { step(50); if (seq[seq.length - 1] !== cat.mode) seq.push(cat.mode); if (cat.mode === 'box' && !inBox) inBox = { x: cat.x, dy: cat.dy } }
+    for (let i = 0; i < 40000 && !/boxin box boxout sit/.test(seq.join(' ')); i++) { step(50); if (seq[seq.length - 1] !== cat.mode) seq.push(cat.mode); if (cat.mode === 'box' && !inBox) inBox = { x: cat.x, dy: cat.dy } } // อารมณ์รายวัน (jit) ตามวันที่จริง จึงจำลองจนกว่าจะมุดกล่องครบรอบ
     const j = seq.join(' '); out.j = j.slice(0, 600); out.firstSniff = j.indexOf('sniff') >= 0 && j.indexOf('sniff') < j.indexOf('boxin'); out.inBox = inBox; out.chain = /boxin box boxout sit/.test(j);
     // แตะตอนอยู่ในกล่อง: ไม่ออกมา
     Object.assign(cat, { mode: 'box', t: 0, dur: 1e9, x: BOX.cx, dy: BOX.dy, bz: true, then: 'sit' }); T.poke('head'); out.tapStay = cat.mode === 'box' && cat.bz === false;
