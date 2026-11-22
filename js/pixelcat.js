@@ -618,11 +618,11 @@ function idleAt(o,now){const ok=IDLE_FOR[o.k];if(!ok||!playing)return null;const
  return null}
 const frameAt=(dur,t)=>{const T=dur.reduce((a,b)=>a+b,0);t%=T;for(let i=0;i<dur.length;i++){if(t<dur[i])return i;t-=dur[i]}return 0};
 const SW=160,SH=90,FLOOR=85,CY=FLOOR-44,XMIN=-2,XMAX=SW-46,CUSH=12,GAIT={walk:{v:12,step:WALK_STEP,n:WALK_N},run:{v:84,step:RUN_STEP,n:RUN.length}}; // step: ระยะต่อเฟรม (เดิน = ระยะที่เท้าบนพื้นถอย เท้าจึงไม่ไถล)
-const SCOL={light:{paper:'#fbf1df',lit:null,trunk:'#9a7250',clk:'#fffaf0',hand:'#4f372b',bob:'#e8b04a',glass:'#f3e3cc',wall:'#fff3e3',wall2:'#fbe7cf',trim:'#e5c9a8',floor:'#efd6b5',floor2:'#e4c6a0',seam:'#d8b68e',sky:'#cfe9f7',sky2:'#e8f6fc',frame:'#c49a73',frame2:'#a97e58',cloud:'#ffffff',cloud2:'#d5e2ee',
+const SCOL={light:{fj:'#a9bfd6',fjs:'#f6f9fc',paper:'#fbf1df',lit:null,trunk:'#9a7250',clk:'#fffaf0',hand:'#4f372b',bob:'#e8b04a',glass:'#f3e3cc',wall:'#fff3e3',wall2:'#fbe7cf',trim:'#e5c9a8',floor:'#efd6b5',floor2:'#e4c6a0',seam:'#d8b68e',sky:'#cfe9f7',sky2:'#e8f6fc',frame:'#c49a73',frame2:'#a97e58',cloud:'#ffffff',cloud2:'#d5e2ee',
   cush:'#f3a8a0',cush2:'#de8a83',cush3:'#fbc9c2',pot:'#dd9264',pot2:'#bf744b',pot3:'#efb08a',leaf:'#86b96f',leaf2:'#65985a',leaf3:'#a8d48f',line:'#7a5a43',shade:'rgba(90,58,38,.14)',moon:null,
   cork:'#dcb98f',cork2:'#c9a277',note:'#fffaf0',note2:'#fde9a6',note3:'#d6ebf6',ink:'#c7b196',shin:'#8a6446',b1:'#e58f7d',b2:'#7ea9cd',b3:'#ebc66b',b4:'#93bf8c',b5:'#b89acb',spine:'rgba(255,255,255,.38)',mk:'#fffaf2',
   hill:'#b9d9c3',house:'#f2e3d0',roof:'#cf8f72',lwin:null,cur:'#f6cdbd',cur2:'#e6b09d',cur3:'#d98f7c',bird:'#ffffff',bird2:'#e1e6ec',bird4:'#2c2830',bird5:'#b3bdc9',bird6:'#d9a49c',eye:'#1b181e',glare:'rgba(255,255,255,.45)',fshd:'rgba(60,70,90,.10)',curH:'#fde4d9',trunk2:'#b88f6a',leaf4:'#4c7c45',soil:'#6b4a35',pilP:'#f6f1e8',pilP2:'#d8cfc1',box:'#d6a868',box2:'#b4884f',box3:'#ebc98f',box4:'#7d5a35',tape:'#efe3c6'},
- dark:{paper:'#6a5a4a',lit:'#ffd98a',trunk:'#6b5040',clk:'#d9ccb4',hand:'#2e221c',bob:'#b88a3a',glass:'#3a2f27',wall:'#2c2520',wall2:'#27211c',trim:'#3d332b',floor:'#3a3029',floor2:'#342a23',seam:'#2a221c',sky:'#1e2b47',sky2:'#273860',frame:'#7d604a',frame2:'#634a37',cloud:null,
+ dark:{fj:'#34435c',fjs:'#8d9bb0',paper:'#6a5a4a',lit:'#ffd98a',trunk:'#6b5040',clk:'#d9ccb4',hand:'#2e221c',bob:'#b88a3a',glass:'#3a2f27',wall:'#2c2520',wall2:'#27211c',trim:'#3d332b',floor:'#3a3029',floor2:'#342a23',seam:'#2a221c',sky:'#1e2b47',sky2:'#273860',frame:'#7d604a',frame2:'#634a37',cloud:null,
   cush:'#a6625c',cush2:'#864d48',cush3:'#bd7a73',pot:'#9a6544',pot2:'#7b4f34',pot3:'#b07a57',leaf:'#5f8c52',leaf2:'#4a7040',leaf3:'#79a868',line:'#b8987a',shade:'rgba(0,0,0,.3)',moon:'#f4e4a6',
   cork:'#5d4835',cork2:'#4f3d2d',note:'#7a6e60',note2:'#7f6f45',note3:'#5b6a74',ink:'#544638',shin:'#3f2f24',b1:'#8f5a4f',b2:'#4f6a82',b3:'#8f7a45',b4:'#5d7a58',b5:'#6e5d7c',spine:'rgba(255,255,255,.12)',mk:'#cfc6b8',
   hill:'#18233a',house:'#262c3d',roof:'#352f44',lwin:'#f6d27a',cur:'#5c4340',cur2:'#4b3634',cur3:'#6e4d47',bird:'#ffffff',bird2:'#e1e6ec',bird4:'#2c2830',bird5:'#b3bdc9',bird6:'#d9a49c',eye:'#1b181e',glare:'rgba(255,255,255,.12)',fshd:'rgba(0,0,0,.15)',curH:'#6e5250',trunk2:'#86664e',leaf4:'#3a5a33',soil:'#3a2a20',pilP:'#8a8378',pilP2:'#6e685f',box:'#806849',box2:'#64523c',box3:'#9a8062',box4:'#352a21',tape:'#958b74'}};
@@ -773,6 +773,8 @@ function clouds(c,k,A){if(!k.cloud)return;const s=A.P?A.ms/2500:0;
 
 // ===== ห้องอ่านหนังสือ (部屋): วอลเปเปอร์ลายจุด บอร์ดก๊อกโน้ต หน้าต่างมีม่านและวิวหลังคาบ้าน ชั้นหนังสือ โคมอันด้ง เบาะ · ฉากหน้า: กระถางต้นไม้
 // ขยับ: นาฬิกาลูกตุ้ม แดดจากหน้าต่างบนพื้นเลื่อนตามชั่วโมง (กลางคืนเป็นแสงจันทร์จางๆ) นกกระจอกมาเกาะขอบหน้าต่างเป็นพักๆ
+// ฟูจิลูกเล็กหลังเนินในบานล่างขวา (แผนที่เมือง: บ้านอยู่ใต้เมือง ฟูจิอยู่ไกลทางเหนือ) · ยอดตัดแบน หิมะยอดตามฤดู · จุด (100,30) ยังเป็นฟ้าเสมอ
+function roomFuji(c,k){const sn={winter:3,spring:2,autumn:1}[k.season]||0;for(let y=26;y<34;y++){const hw=1.5+(y-26)*1.4+(y-26)**2*.15;for(let x=Math.ceil(121-hw);x<=Math.min(128,121+hw);x++)if(x>=113)dot(c,x,y,y-26<sn-(sn>1&&(x*5)%3===0&&y-26===sn-1?1:0)?k.fjs:k.fj)}}
 function roomBg(c,k){
  rect(c,0,0,SW,SH,k.wall);for(let y=3;y<50;y+=6)for(let x=y%12===3?1:4;x<SW;x+=6)rect(c,x,y,1,1,k.wall2);  // วอลเปเปอร์ลายจุดจางๆ
  rect(c,0,52,SW,17,k.wall2);rect(c,0,51,SW,1,k.trim);rect(c,0,69,SW,2,k.trim);                             // ไม้บัวกลาง บัวเชิงผนัง
@@ -788,7 +790,7 @@ function roomBg(c,k){
  if(k.moon)moonSky(c,[[99,14],[104,24],[117,27],[100,20],[126,26]],moonXY(121,17,116,128,16),k.moon) // อยู่ในบานขวาตลอด (v105 ไม่ให้หายหลังเสากลางนานๆ) สูงสุดกลางบานบน ขึ้น-ตกหลังเนิน
  else if(k.sunY){blob(c,106,k.sunY-4,4.5,4.5,k.sun);c.drawImage(cloudImg(k,12,5,4),114,13)} // รุ่งเช้า/พลบค่ำ: พระอาทิตย์ต่ำใกล้หลังคา
  else{c.drawImage(cloudImg(k,13,6,4),96,12);c.drawImage(cloudImg(k,10,4,6),117,16)}
- poly(c,[[95,34],[103,32],[110,33.5],[117,31.5],[124,33],[129,32],[129,37],[95,37]],k.hill);
+ roomFuji(c,k);poly(c,[[95,34],[103,32],[110,33.5],[117,31.5],[124,33],[129,32],[129,37],[95,37]],k.hill);
  if(k.season==='spring'||k.season==='autumn'){const C=k.season==='spring'?(k.lwin?['#8a5a6c','#a86f85']:['#e9a5bb','#f6cad7']):(k.lwin?['#6e3a2c','#8a4d36']:['#d9774f','#eda36a']);rect(c,109,31,1,3,k.roof);blob(c,109.5,30.4,3,2.2,C[0]);blob(c,109,29.8,2,1.4,C[1])} // ต้นซากุระ/ต้นไม้ใบแดงบนเนิน
  [[99,33,6],[118,31,7]].forEach(([x,y,w])=>{rect(c,x,y+2,w,35-y,k.house);poly(c,[[x-1,y+2.5],[x+w/2,y-.5],[x+w+1,y+2.5]],k.roof);if(k.lwin)rect(c,x+2,y+3,1,1,k.lwin)}); // หนาว: หลังคาและเนินขาวด้วยหิมะ (สีตามฤดู)
  [[96,21],[97,20],[98,19],[99,18],[100,17],[98,21],[99,20],[100,19],[101,18],[124,36],[125,35],[126,34],[127,33]].forEach(([x,y])=>dot(c,x,y,k.glare)); // แสงสะท้อนกระจก
@@ -877,21 +879,26 @@ const roomTick=A=>{const o=birdAt(A),se=season(A.ms);return(A.P&&(se==='winter'|
 
 // ===== สวนญี่ปุ่น (庭): ภูเขาไกลยอดหิมะ แนวไม้หลังรั้ว เมเปิลแดง รั้วไม้ไผ่ผูกเชือก สนาม ทางกรวดคราด หินกลางวงคราด โคมหิน ต้นสน กระบอกไม้ไผ่ตอกหิน (ชิชิโอโดชิ) · ฉากหน้า: พุ่มอาซาเลีย
 // ขยับ: เมฆลอย กระบอกไม้ไผ่รับน้ำแล้วกระดกเทน้ำ ตีหินดังป๊อก ทุก 7 วินาที ผีเสื้อบินตอนกลางวัน หิ่งห้อยกะพริบตอนกลางคืน
-const GCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',cloud2:'#d5e2ee',mtn:'#b7d1c6',mtn2:'#a3c2b6',snow:'#f4f8fa',far:'#97bc9f',fence:'#d2b07a',fence2:'#ad8a55',rope:'#7d5f3a',grass:'#b4d68f',grass2:'#9cc579',
+const GCOL={light:{sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',cloud2:'#d5e2ee',mtn:'#b7d1c6',mtn2:'#a3c2b6',snow:'#f4f8fa',fuji:'#a9bfd6',fuji2:'#93a9c4',far:'#97bc9f',fence:'#d2b07a',fence2:'#ad8a55',rope:'#7d5f3a',grass:'#b4d68f',grass2:'#9cc579',
   gravel:'#efe8da',gravel2:'#dcd1bc',stone:'#c9c3b8',stone2:'#aaa294',stone3:'#e2ddd4',moss:'#9cbf72',lan:'#c2bbaf',lan2:'#9e9688',lwin:'#f6e7c0',glow:null,trunk:'#8a6a4a',
   leaf:'#86b96f',leaf2:'#65985a',leaf3:'#a8d48f',mp0:'#9c3a2e',mp1:'#e8735a',mp2:'#c9533f',mp3:'#f8ae80',pn1:'#3d6b4a',pn2:'#56895a',pn3:'#78a968',pn4:'#a2cb86',bark:'#7a5a40',bark2:'#9b7a5a',bark3:'#57402e',flower:'#f2a0b4',flower2:'#fcd3de',flower3:'#d97b93',az0:'#4f7f47',az1:'#64995a',az2:'#82b86c',az3:'#a9d48c',bam:'#a9c46a',bam2:'#7f9c48',bam3:'#cfe0a0',post:'#8a6a4a',water:'#a6d6ea',water2:'#e6f6fc',
   bfly:'#fffaf0',bfly2:'#f2d36b',ff:null,line:'#5f6e4a',shade:'rgba(70,80,50,.16)',moon:null},
- dark:{sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',mtn:'#2f3f4a',mtn2:'#28363f',snow:'#7f8ea4',far:'#24352f',fence:'#6e5a40',fence2:'#57462f',rope:'#3e3122',grass:'#3f5a3a',grass2:'#354d31',
+ dark:{sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',mtn:'#2f3f4a',mtn2:'#28363f',snow:'#7f8ea4',fuji:'#33425a',fuji2:'#2b384d',far:'#24352f',fence:'#6e5a40',fence2:'#57462f',rope:'#3e3122',grass:'#3f5a3a',grass2:'#354d31',
   gravel:'#4c4741',gravel2:'#403b36',stone:'#625d57',stone2:'#4c4843',stone3:'#736e67',moss:'#4f6a40',lan:'#5d5952',lan2:'#4a4741',lwin:'#f6d27a',glow:'rgba(246,210,122,.16)',trunk:'#5a4636',
   leaf:'#5f8c52',leaf2:'#4a7040',leaf3:'#79a868',mp0:'#55241f',mp1:'#93473a',mp2:'#76382e',mp3:'#b0644c',pn1:'#21382a',pn2:'#2f4f37',pn3:'#426849',pn4:'#5a855a',bark:'#4a3a2c',bark2:'#5e4a38',bark3:'#30251c',flower:'#b8738a',flower2:'#d79bae',flower3:'#91566a',az0:'#253b25',az1:'#34512f',az2:'#466c3e',az3:'#5f8c54',bam:'#62773f',bam2:'#4b5c30',bam3:'#7d9455',post:'#5a4636',water:'#3c5d74',water2:'#6d90a8',
   ff:'#eaf7a0',line:'#a9b893',shade:'rgba(0,0,0,.3)'}};
 function gardenFar(c,k){sky(c,k,52)}
 // ภูเขาอยู่หน้าเมฆ (เมฆลอยหลังยอดเขา)
-function gardenMid(c,k){
- poly(c,[[0,44],[18,34],[36,40],[60,21],[84,40],[102,35],[126,46],[160,36],[160,52],[0,52]],k.mtn);const se=k.season;                 // ภูเขาไกลยอดหิมะ: หิมะตามฤดู (ร้อนไม่มี ใบไม้ร่วงแค่ยอด หนาวลงมาถึงไหล่เขา)
- if(se==='winter'){poly(c,[[47,34],[60,21],[73,34],[70,35],[67,33],[64,35.5],[60,33],[56,35.5],[53,33],[50,35]],k.snow);poly(c,[[13,37],[18,34],[23,37],[21,37.8],[18,36.6],[15,37.8]],k.snow);poly(c,[[97,37.6],[102,35],[107,37.6],[105,38.2],[102,37.2],[99,38.2]],k.snow)}
- else if(se==='autumn')poly(c,[[56.5,25],[60,21],[63.5,25],[62,25.8],[60,24.6],[58,25.8]],k.snow);
- else if(se==='spring')poly(c,[[53.5,27],[60,21],[66.5,27],[64,28],[62,26.5],[59.5,28],[57,26.5]],k.snow);
+// ภูเขาฟูจิ (แผนที่เมือง js/town.js: สวนอยู่ฝั่งเหนือของเมือง หันไปทางฟูจิ): กรวยกว้างสมมาตร ยอดตัดแบน เชิงเขาเว้าบานออก · ซีกซ้ายรับแสง ซีกขวาเงา รอยต่อเป็นจุดสลับ (ไม่แบ่งครึ่งแข็ง)
+// หิมะตามฤดู: ร้อนไม่มี ใบไม้ร่วงหิมะแรกที่ยอด ใบไม้ผลิมาก หนาวลงถึงไหล่เขา · ขอบหิมะเป็นริ้วลงตามร่องเขา ซีกเงาใช้สี cloud2 · เนินเตี้ยสองข้างกับแนวเขาหน้าเหมือนเดิม
+const FJ={x:60,top:19,sh:{summer:0,autumn:3.5,spring:8,winter:13}},BAY4=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+function gardenMid(c,k){const se=k.season,sh=FJ.sh[se]||0;
+ poly(c,[[96,52],[112,41],[128,44],[146,37],[160,40],[160,52]],k.mtn);
+ for(let y=FJ.top;y<52;y++){const hw=4+(y-FJ.top)*1.02+(y-FJ.top)**2*.03;for(let x=Math.max(0,Math.ceil(FJ.x-hw));x<=Math.min(SW-1,FJ.x+hw);x++){const s=(x+.5-FJ.x)/hw,b=(BAY4[y&3][x&3]+.5)/16,shd=s>.12+(b-.5)*.5;
+  const sny=FJ.top+sh*(1-.22*Math.abs(s))+(sh?sh*.5*Math.max(0,Math.sin(s*12+1.1))**3*(1-Math.abs(s)*.5)+((x*7)%3-1)*.5:-9);
+  dot(c,x,y,y<sny-.5||(y<sny+.5&&b<.5)?(shd?k.cloud2:k.snow):shd?k.fuji2:k.fuji)}}
+ if(!sh)rect(c,FJ.x-3,FJ.top,7,1,k.fuji2);
+ poly(c,[[0,44],[12,40],[26,43],[38,48],[0,52]],k.mtn);
  poly(c,[[0,50],[30,42],[60,49],[96,43],[132,50],[160,45],[160,52],[0,52]],k.mtn2)}
 function gardenBg(c,k){
  const se=k.season,wi=se==='winter',FAR=[[40,46,7,3.5],[52,45,6,4],[64,46.5,7,3],[80,45.5,6,3.5],[92,46,7,3],[146,46,8,4],[158,45,6,4]];
@@ -1157,14 +1164,14 @@ const SNOW={light:{sn:'#fbfcfe',sn2:'#dbe4ee'},dark:{sn:'#c3cddc',sn2:'#8f9db2'}
 // ===== ร้านสะดวกซื้อ (コンビニ · v120): ผนังขาวแถบสีหัวร้าน (สีของร้านสมมติ ไม่ใช่แบรนด์จริง) · ประตูกระจกซ้ายเห็นถนนกับฟ้า ชั้นนิตยสารใต้หน้าต่าง
 // ตู้แช่เครื่องดื่มสามบาน (กลางคืนไฟในตู้สว่าง) · เคาน์เตอร์: หม้อโอเด้ง ตู้ของทอดอุ่น เครื่องคิดเงิน เครื่องชงกาแฟ · ฉากหน้า: ตะกร้าซ้อนกัน
 // ขยับ: ไอโอเด้ง ป้ายโปรโมชันห้อยแกว่ง (สีตามฤดู) · ห้ามมีตัวหนังสือ (ป้าย/ฉลากเป็นแถบสี)
-const KBCOL={light:{wall:'#f6f4ef',wall2:'#ebe7de',band:'#3fa7a0',band2:'#f2c14e',band3:'#2f7f7a',floor:'#e9e7e1',floor2:'#dcd9d1',frame:'#b9bec4',frame2:'#8f959c',
+const KBCOL={light:{hillF:'#a9c7b9',pad0:'#8fc46a',pad1:'#a5d47e',pad2:'#78b05a',house:'#f3e8d6',roofD:'#5f6a74',pole:'#7a6a5a',wire:'#5a5048',wall:'#f6f4ef',wall2:'#ebe7de',band:'#3fa7a0',band2:'#f2c14e',band3:'#2f7f7a',floor:'#e9e7e1',floor2:'#dcd9d1',frame:'#b9bec4',frame2:'#8f959c',
   sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',cloud2:'#d5e2ee',moon:null,bldg:'#e3d5c3',bldg2:'#cdbca6',bwin:'#a9cde3',road:'#b9b5ae',road2:'#a5a19a',walk:'#ddd6ca',
   fr:'#e3e7ea',fr2:'#aab2b9',frIn:'#eef6fa',frSh:'#c3ccd3',glare:'rgba(255,255,255,.55)',frGlow:null,b1:'#e86b5a',b2:'#5aa0d6',b3:'#f2c14e',b4:'#7bc47f',b5:'#ffffff',b6:'#b58ad6',cap:'#5b6168',
   mag:'#cfd3d8',mag2:'#a9afb6',m1:'#f08a5d',m2:'#6fb7e0',m3:'#e26a8d',m4:'#8fcf7a',m5:'#f7d35c',
   ctop:'#d8d3ca',ctop2:'#f1ede6',cfront:'#b8c3c9',cfront2:'#9aa6ad',reg:'#5b6168',reg2:'#868d93',scr:'#9fd7c9',pot:'#c9ccd0',pot2:'#9aa0a6',broth:'#d9a75a',daikon:'#f4ead0',kon:'#8a7a70',egg:'#f3d79a',
   case:'#f7ecd0',case2:'#e8c98a',chick:'#d99a45',chick2:'#b8782c',cof:'#4f565e',cof2:'#7a838b',cup:'#ffffff',steam:'#ffffff',post:'#5fb3e0',post2:'#7bc4c0',post3:'#f7d35c',
   bask:'#e5534b',bask2:'#b83a33',bask3:'#f2837b',pop:'#5fb3e0',pop2:'#ffffff',str:'#8f959c',line:'#5b5f66',shade:'rgba(60,60,70,.12)'},
- dark:{wall:'#6c6f76',wall2:'#62656c',band:'#2b6f6b',band2:'#a8873a',band3:'#215552',floor:'#5a5d63',floor2:'#505359',frame:'#7d838a',frame2:'#61676e',
+ dark:{hillF:'#2e4038',pad0:'#3f5a36',pad1:'#4a6a3f',pad2:'#34502f',house:'#5d564c',roofD:'#363c44',pole:'#4a4038',wire:'#2e2824',wall:'#6c6f76',wall2:'#62656c',band:'#2b6f6b',band2:'#a8873a',band3:'#215552',floor:'#5a5d63',floor2:'#505359',frame:'#7d838a',frame2:'#61676e',
   sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',bldg:'#303a50',bldg2:'#283146',bwin:'#f6d27a',road:'#2c3140',road2:'#252937',walk:'#3a4050',
   fr:'#8a9097',fr2:'#6a7077',frIn:'#e4f1f7',frSh:'#b7c3cb',glare:'rgba(255,255,255,.35)',frGlow:'rgba(220,240,250,.10)',b1:'#e86b5a',b2:'#5aa0d6',b3:'#f2c14e',b4:'#7bc47f',b5:'#ffffff',b6:'#b58ad6',cap:'#4a4f56',
   mag:'#7d828a',mag2:'#646970',m1:'#a8654a',m2:'#4f7f9c',m3:'#9c4f68',m4:'#64905a',m5:'#a89448',
@@ -1172,15 +1179,18 @@ const KBCOL={light:{wall:'#f6f4ef',wall2:'#ebe7de',band:'#3fa7a0',band2:'#f2c14e
   case:'#f2dca8',case2:'#c9a462',chick:'#c98a3a',chick2:'#9c6826',cof:'#33383e',cof2:'#545b62',cup:'#d9d6cf',steam:'#e8e6e1',post:'#3f7fa6',post2:'#4f8c89',post3:'#a8944a',
   bask:'#a8403a',bask2:'#7f2c27',bask3:'#bd5f57',pop:'#3f7fa6',pop2:'#d9d6cf',str:'#61676e',line:'#c9c6bf',shade:'rgba(0,0,0,.25)'}};
 // สีป้ายโปรโมชันกับโปสเตอร์ตามฤดู (ใบไม้ผลิชมพูซากุระ · ร้อนฟ้า · ใบไม้ร่วงส้ม · หนาวแดง) · หนาว: หิมะบนถนนและหลังคาตึกฝั่งตรงข้าม
-const KBSEA={spring:{light:{pop:'#f4a6bf',post:'#f4a6bf'},dark:{pop:'#a86a80',post:'#a86a80'}},autumn:{light:{pop:'#e8873a',post:'#e8873a'},dark:{pop:'#a86230',post:'#a86230'}},
- winter:{light:{pop:'#d9534f',post:'#d9534f',...SNOW.light},dark:{pop:'#9c3d3a',post:'#9c3d3a',...SNOW.dark}}}; // โปสเตอร์โปรโมชันบนกระจกสีเดียวกับป้ายห้อย
+const KBSEA={spring:{light:{pop:'#f4a6bf',post:'#f4a6bf',pad0:'#a9cfd6',pad1:'#c8e3e6',pad2:'#8fb98a'},dark:{pop:'#a86a80',post:'#a86a80',pad0:'#3c5a6e',pad1:'#4f6f82',pad2:'#3a5a3f'}},autumn:{light:{pop:'#e8873a',post:'#e8873a',pad0:'#e2c46a',pad1:'#efd88a',pad2:'#c9a64a',hillF:'#b9b79a'},dark:{pop:'#a86230',post:'#a86230',pad0:'#6e5c2c',pad1:'#84703a',pad2:'#5c4c24'}},
+ winter:{light:{pop:'#d9534f',post:'#d9534f',pad0:'#eef2f6',pad1:'#dbe4ee',pad2:'#c9b89a',hillF:'#c9d6e0',...SNOW.light},dark:{pop:'#9c3d3a',post:'#9c3d3a',pad0:'#59627a',pad1:'#4d556b',pad2:'#5e5446',hillF:'#4a5468',...SNOW.dark}}}; // โปสเตอร์โปรโมชันบนกระจกสีเดียวกับป้ายห้อย
 function kbBg(c,k){const wi=k.season==='winter';
  rect(c,0,0,SW,71,k.wall);for(let x=7;x<SW;x+=14)rect(c,x,8,1,63,k.wall2);rect(c,0,0,SW,5,k.band);rect(c,0,5,SW,1,k.band2);rect(c,0,6,SW,2,k.band3);   // ผนัง + แถบสีหัวร้าน
- // ประตูกระจกเลื่อน: ฟ้า ตึกฝั่งตรงข้าม ทางเท้า ถนน (พระจันทร์สูงสุดกลางบานซ้ายบน ขึ้นตกหลังตึก)
+ // ประตูกระจกเลื่อน: ฟ้า ถนนชนบท (แผนที่เมือง: ร้านอยู่หัวมุมถนนสายเก่านอกย่านสถานี) เนินไกล ทุ่งนาตามฤดู บ้านเตี้ย เสาไฟมีสายไฟ ทางเท้า ถนน (พระจันทร์สูงสุดกลางบานซ้ายบน ขึ้นตกหลังเนิน)
  rect(c,2,10,40,48,k.frame);rect(c,4,12,36,44,k.sky);rect(c,4,30,36,14,k.sky2);
  if(k.moon)moonSky(c,[[8,15],[16,20],[30,14],[35,22],[25,25]],moonXY(13,16,3,40,18),k.moon);else{c.drawImage(cloudImg(k,14,5,11),6,15);c.drawImage(cloudImg(k,9,4,13),28,19)}
- rect(c,4,30,15,14,k.bldg);rect(c,21,26,19,18,k.bldg2);[[6,32],[11,32],[6,37],[11,37],[23,29],[28,29],[33,29],[23,35],[28,35],[33,35]].forEach(([x,y],i)=>rect(c,x,y,3,3,k.moon?(i%3?k.bwin:k.bldg2):k.bwin));
- if(wi){rect(c,4,30,15,1,k.sn);rect(c,21,26,19,1,k.sn)}
+ poly(c,[[4,34],[10,31],[17,33],[25,30],[33,32.5],[40,31],[40,38],[4,38]],k.hillF);
+ [[36,2,0],[38,3,1],[41,3,0]].forEach(([y,h,i])=>{rect(c,4,y,36,h,i?k.pad1:k.pad0);for(let x=5+(y%4)*2;x<40;x+=10)rect(c,x,y,1,h,k.pad2)});rect(c,4,38,36,1,k.pad2);
+ for(let x=5;x<40;x+=2){const se=k.season;if(se==='spring'&&x%6===1)dot(c,x,37,k.sky2);if(se==='summer')dot(c,x,40+(x%4>>1),k.pad2);if(se==='autumn'&&x%3===0)dot(c,x,42,k.pad2);if(wi&&x%3===1)dot(c,x,42,k.pad2)}
+ [[25,35,9],[34,36,6]].forEach(([x,y,w])=>{rect(c,x,y+2,w,6-(y-35),k.house);rect(c,x-1,y,w+2,2,k.roofD);if(wi)rect(c,x-1,y,w+2,1,k.sn);if(k.moon)dot(c,x+2,y+3,k.lit||k.bwin)});
+ [[9,20],[31,23]].forEach(([x,y])=>{rect(c,x,y,1,44-y,k.pole);rect(c,x-2,y+1,5,1,k.pole)});for(let x=4;x<40;x++){const t=(x-9)/22,sag=Math.round(2.5*Math.sin(Math.max(0,Math.min(1,t))*Math.PI));dot(c,x,(x<9?21:x>31?24:21+Math.round(t*3)+sag),k.wire)}
  rect(c,4,44,36,4,k.walk);rect(c,4,48,36,8,k.road);for(let x=6;x<40;x+=8)rect(c,x,51,4,1,k.road2);if(wi){[[6,44,8],[20,45,10],[30,44,6]].forEach(([x,y,w])=>rect(c,x,y,w,1,k.sn));rect(c,4,48,36,1,k.sn2)}
  rect(c,21,12,2,44,k.frame);rect(c,4,40,36,1,k.frame2);rect(c,18,34,2,6,k.frame2);rect(c,24,34,2,6,k.frame2);rect(c,2,10,40,1,k.frame2);  // กรอบกลางบานเลื่อน มือจับ
  [[6,23,5,6,k.post],[33,41,6,7,k.post2],[9,41,4,5,k.post3]].forEach(([x,y,w,h,col])=>{rect(c,x,y,w,h,col);rect(c,x+1,y+1,w-2,1,k.pop2);rect(c,x+1,y+3,w-3,1,k.pop2+'aa')}); // โปสเตอร์ติดกระจก (แถบ ไม่มีตัวหนังสือ)
@@ -1221,14 +1231,14 @@ function kbLive(c,k,A){const se=season(A.ms);if(se!=='summer')fallIn(c,k,A,se,[4
 const kbTick=A=>A.P?''+(A.ms/120|0):'';
 // ===== ห้องเรียน (きょうしつ · v120): หน้าต่างซ้ายเห็นสนามโรงเรียนกับต้นไม้ตามฤดู ม่านขาวไหวตามลม · กระดานดำ (เส้นชอล์กแทนตัวหนังสือ + รูปแมวชอล์ก)
 // โต๊ะครู · นาฬิกาเหนือกระดาน (เวลาจริง) · บอร์ดประกาศ ช่องเก็บของมีกระเป๋า · ฉากหน้า: โต๊ะนักเรียนกับเก้าอี้ (แมวแอบได้)
-const CLCOL={light:{wall:'#f3ead9',wall2:'#e8dcc6',trim:'#b98c5e',wains:'#d9c3a0',wains2:'#c9b08a',board:'#3f6b55',board2:'#355c49',boardF:'#9c7650',boardF2:'#7d5b3a',
+const CLCOL={light:{fj:'#a9bfd6',fjs:'#f6f9fc',mtnF:'#a9c7b9',pad0:'#8fc46a',pad1:'#a5d47e',pad2:'#78b05a',wall:'#f3ead9',wall2:'#e8dcc6',trim:'#b98c5e',wains:'#d9c3a0',wains2:'#c9b08a',board:'#3f6b55',board2:'#355c49',boardF:'#9c7650',boardF2:'#7d5b3a',
   chalk:'#f3efe4',chalkY:'#f2d36b',chalkP:'#f2a0b4',tray:'#8a6a4a',er:'#5b6aa0',er2:'#ece6da',floor:'#d9b48a',floor2:'#c89f73',seam:'#b88d62',
   desk:'#c99a62',desk2:'#a87a44',desk3:'#e2ba82',metal:'#9aa3ab',metal2:'#737b83',seat:'#b98c5e',frame:'#c6cbd0',frame2:'#9aa1a8',
   sky:'#cfe9f7',sky2:'#e6f4fb',sun:'#ffd987',cloud:'#ffffff',cloud2:'#d5e2ee',moon:null,yard:'#e3cfa8',yard2:'#d4bd92',fence:'#9aa1a8',bldg:'#efe6d6',bldg2:'#d9cdb8',bwin:'#a9cde3',
   bark:'#7a5a40',bark2:'#9b7a5a',bark3:'#57402e',mp0:'#4f8a45',mp1:'#86b96f',mp2:'#65985a',mp3:'#a8d48f',
   cur:'#f4f7f8',cur2:'#dce4e8',clk:'#fffaf0',hand:'#3a3634',notice:'#dcbf8f',notice2:'#c4a473',n1:'#fffaf0',n2:'#fde9a6',n3:'#d6ebf6',n4:'#f7c9cf',pin:'#e05a5a',
   cub:'#c99a62',cub2:'#a87a44',cub3:'#8a6040',g1:'#e86b5a',g2:'#5aa0d6',g3:'#f2c14e',g4:'#7bc47f',g5:'#b58ad6',line:'#6b4f3a',shade:'rgba(90,58,38,.14)'},
- dark:{wall:'#4a4250',wall2:'#433b49',trim:'#6e5844',wains:'#55493f',wains2:'#4a3f36',board:'#24392f',board2:'#1e3128',boardF:'#5e4836',boardF2:'#4a3829',
+ dark:{fj:'#34435c',fjs:'#8d9bb0',mtnF:'#2e4038',pad0:'#3f5a36',pad1:'#4a6a3f',pad2:'#34502f',wall:'#4a4250',wall2:'#433b49',trim:'#6e5844',wains:'#55493f',wains2:'#4a3f36',board:'#24392f',board2:'#1e3128',boardF:'#5e4836',boardF2:'#4a3829',
   chalk:'#c9c6bc',chalkY:'#b8a35a',chalkP:'#b8778a',tray:'#4f3d2e',er:'#3e4870',er2:'#a9a49a',floor:'#5a4a3c',floor2:'#4f4134',seam:'#463a2e',
   desk:'#7d6448',desk2:'#62503b',desk3:'#94785a',metal:'#6a7178',metal2:'#53595f',seat:'#6e5844',frame:'#6f747a',frame2:'#575c62',
   sky:'#1e2b47',sky2:'#273860',moon:'#f4e4a6',yard:'#3a3a44',yard2:'#33333c',fence:'#565c66',bldg:'#3a3f52',bldg2:'#323647',bwin:'#f6d27a',
@@ -1236,16 +1246,20 @@ const CLCOL={light:{wall:'#f3ead9',wall2:'#e8dcc6',trim:'#b98c5e',wains:'#d9c3a0
   cur:'#8f949c',cur2:'#747a82',clk:'#d9ccb4',hand:'#2e221c',notice:'#7a6448',notice2:'#62503b',n1:'#b9b4a8',n2:'#b5a978',n3:'#8aa0ad',n4:'#a8838a',pin:'#a8403a',
   cub:'#7d6448',cub2:'#62503b',cub3:'#4f3f2e',g1:'#a8504a',g2:'#4a789c',g3:'#a8904a',g4:'#5a8c5c',g5:'#7f6a9c',line:'#c9b9a5',shade:'rgba(0,0,0,.28)'}};
 // ต้นไม้นอกหน้าต่างตามฤดู: ใบไม้ผลิซากุระ · ร้อนเขียว (ชุดหลัก) · ใบไม้ร่วงแปะก๊วยเหลือง · หนาวกิ่งโล่งหิมะ
-const CLSEA={spring:{light:{mp0:'#d97b93',mp1:'#f2a0b4',mp2:'#e88aa3',mp3:'#fcd3de'},dark:{mp0:'#7a4656',mp1:'#a86a80',mp2:'#91566a',mp3:'#c48ea0'}},
- autumn:{light:{mp0:'#c99a2e',mp1:'#f2c94e',mp2:'#e0b23a',mp3:'#f8e08a'},dark:{mp0:'#6e5420',mp1:'#a8903a',mp2:'#8c742c',mp3:'#c4ac5a'}},
- winter:{light:{yard:'#eef2f6',yard2:'#dbe4ee',...SNOW.light},dark:{yard:'#59627a',yard2:'#4d556b',...SNOW.dark}}};
+const CLSEA={spring:{light:{mp0:'#d97b93',mp1:'#f2a0b4',mp2:'#e88aa3',mp3:'#fcd3de',pad0:'#a9cfd6',pad1:'#c8e3e6',pad2:'#8fb98a'},dark:{mp0:'#7a4656',mp1:'#a86a80',mp2:'#91566a',mp3:'#c48ea0',pad0:'#3c5a6e',pad1:'#4f6f82',pad2:'#3a5a3f'}},
+ autumn:{light:{mp0:'#c99a2e',mp1:'#f2c94e',mp2:'#e0b23a',mp3:'#f8e08a',pad0:'#e2c46a',pad1:'#efd88a',pad2:'#c9a64a',mtnF:'#b9b79a'},dark:{mp0:'#6e5420',mp1:'#a8903a',mp2:'#8c742c',mp3:'#c4ac5a',pad0:'#6e5c2c',pad1:'#84703a',pad2:'#5c4c24'}},
+ winter:{light:{yard:'#eef2f6',yard2:'#dbe4ee',pad0:'#eef2f6',pad1:'#dbe4ee',pad2:'#c9b89a',mtnF:'#c9d6e0',...SNOW.light},dark:{yard:'#59627a',yard2:'#4d556b',pad0:'#59627a',pad1:'#4d556b',pad2:'#5e5446',mtnF:'#4a5468',...SNOW.dark}}};
 function clBg(c,k){const se=k.season,wi=se==='winter';
  rect(c,0,0,SW,52,k.wall);for(let y=4;y<50;y+=8)for(let x=y%16===4?2:6;x<SW;x+=8)dot(c,x,y,k.wall2);rect(c,0,52,SW,17,k.wains);for(let x=15;x<SW;x+=16)rect(c,x,53,1,16,k.wains2);
  rect(c,0,51,SW,1,k.trim);rect(c,0,69,SW,2,k.trim);
- // หน้าต่าง: ฟ้า ตึกเรียนฝั่งตรงข้าม รั้ว สนามดิน ต้นไม้ตามฤดู (พระจันทร์สูงสุดกลางบานบน)
+ // หน้าต่าง: ฟ้า ภูเขาไกลกับฟูจิเล็ก ทุ่งนาตามฤดู รั้ว สนามดิน ต้นไม้ตามฤดู (พระจันทร์สูงสุดกลางบานบน) · แผนที่เมือง: โรงเรียนติดทุ่งนา ฟูจิอยู่ทางเหนือ
  rect(c,1,5,30,46,k.frame);rect(c,3,7,26,42,k.sky);rect(c,3,26,26,12,k.sky2);
  if(k.moon)moonSky(c,[[6,10],[12,16],[24,11],[27,19]],moonXY(15,13,2,30,16),k.moon);else c.drawImage(cloudImg(k,13,5,15),5,11);
- rect(c,16,28,13,10,k.bldg);rect(c,16,28,13,1,k.bldg2);[[18,30],[22,30],[26,30],[18,34],[22,34]].forEach(([x,y])=>rect(c,x,y,2,2,k.bwin));if(wi)rect(c,16,27,13,1,k.sn);
+ const fs={winter:3,spring:2,autumn:1}[se]||0;for(let y=22;y<31;y++){const hw=1+(y-22)*1.3+(y-22)**2*.12;for(let x=Math.max(17,Math.ceil(23-hw));x<=Math.min(28,23+hw);x++)dot(c,x,y,y-22<fs?k.fjs:k.fj)}
+ poly(c,[[3,30],[7,28],[12,29.5],[18,27.5],[24,29.5],[29,28.5],[29,32],[3,32]],k.mtnF);
+ // ทุ่งนา: แปลงเรียงเป็นแถว คันนาคั่น ใบไม้ผลิน้ำขังมีประกายฟ้า ร้อนกล้าเป็นแถว ใบไม้ร่วงรวงทอง หนาวหิมะมีตอซัง
+ [[31,2,0],[33,2,1],[35,3,0]].forEach(([y,h,i])=>{rect(c,3,y,26,h,i?k.pad1:k.pad0);for(let x=3+(y%3)*3;x<29;x+=9)rect(c,x,y,1,h,k.pad2)});rect(c,3,33,26,1,k.pad2);
+ for(let x=4;x<29;x+=2){if(se==='spring'&&x%6===0)dot(c,x,32,k.sky2);if(se==='summer')dot(c,x,35+(x%4>>1),k.pad2);if(se==='autumn'&&x%3===0)dot(c,x,36,k.pad2);if(wi&&x%3===1)dot(c,x,36,k.pad2)}
  rect(c,3,38,26,11,k.yard);for(let x=4;x<29;x+=5)dot(c,x,43+(x%3),k.yard2);rect(c,3,37,26,1,k.fence);for(let x=4;x<29;x+=3)rect(c,x,34,1,4,k.fence);
  const TB=[k.bark,k.bark2,k.bark3];wood(c,[[[[9,47],[9,38],[10,30],[9,24]],2.6,1.4],[[[9,36],[5,31],[4,27]],1.5,1],[[[10,32],[14,28],[16,24]],1.5,1],[[[9,28],[7,23]],1.2,.9]],TB,5);
  if(wi)[[3,26],[6,22],[13,27],[15,23],[8,23]].forEach(([x,y])=>rect(c,x,y,2,1,k.sn));else[[9,22,6,3,3],[4,27,4,2.4,5],[15,24,4,2.4,7],[11,28,5,2.6,9]].forEach(([x,y,w,h,sd])=>clumpPad(c,x,y,w,h,[k.mp0,k.mp2,k.mp1,k.mp3],sd));
@@ -1668,7 +1682,9 @@ function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream'
 function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:Date.now()}}
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
+// frame/fall ใช้ในแผนที่เมือง (js/town.js): frame = ภาพแมวหนึ่งเฟรมเป็นตาราง 48×48 สี (ไม่ต้อง mount) · fall = ของตกตามฤดูลงผืนผ้าใบใดก็ได้ (หิมะเฉพาะวันที่หิมะตก)
 window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,season:()=>season(),coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
+ frame:(k,f,tm,coat,acc)=>frame(k,f,tm,COATS[coat]?coat:'cream',acc||'none'),fall:(c,se,R,n,ms=Date.now(),sk='light')=>fall(c,{P:true,ms,sk},se,R,n),
  _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},setSeason:v=>{SEAS=v;sLast=''},sniffGo,novel,circleSteps,setBox:v=>{BOXF=v;sLast=''},setChrono:v=>{CHR=v},boxDay,BOX,setBoxSeen:v=>{BOX_SEEN=v?boxKey():''},leave,poke,decide,catPose,setSnow:v=>{SNOWF=v;sLast=''},setLat:d=>{LAT=d*Math.PI/180;MOON=moonAt(NOW??Date.now());for(const k in bgC)delete bgC[k];sLast=''},latOf,lat:()=>LAT*180/Math.PI,snowDay,season,fall,moonAt,moonKey,moonIdx,moonBmp,moonGlow,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
   // ตัวช่วยวาดสำหรับร่างท่าในหน้าพรีวิว/ไฟล์ร่างใน docs/ (เพิ่มท่าร่างลง POSES แล้วเรียก frame ได้) แอปไม่ได้ใช้
   POSES,lib:{sitCat,sdBox,sdEll,sdCap,smin,ear,earPts,headMat,tail,P,put,bean,eyeClosed,eyeSleepy,eyeHappy,mouth,blush,zz,bowPart,RAMP,EYE,IRIS,NOSE,FX,fr,get ACC(){return ACC},get IDLE(){return IDLE}}}};

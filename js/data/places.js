@@ -1,9 +1,10 @@
 // สถานที่ของ "เจ้าเหมียวเที่ยวญี่ปุ่น": ฉากหลังของการ์ดสัตว์เลี้ยงในหน้าแรก (วาดเองทั้งหมด ไม่ได้คัดลอกจากที่ใด ใช้เชิงพาณิชย์ได้)
 // สีทุกจุดเป็น token ใน css/style.css (หัวข้อ "ฉากสถานที่") จึงเปลี่ยนตามโหมดสว่าง/มืดเอง · ชิ้นที่มี class day/night แสดงเฉพาะโหมดนั้น
 // แต่ละที่: id, n ชื่อไทย, jp ป้ายญี่ปุ่น {คันจิ|อ่าน}, cats หมวดคำศัพท์ที่ทบทวนก่อน (ชื่อหมวดของทุกระดับ), pet ตำแหน่งสัตว์เลี้ยง [x%, y% ของจุดที่เท้าแตะ], bub ฝั่งกล่องคำพูด
+// map = ตำแหน่งบนแผนที่เมือง (js/town.js): at จุดอาคาร (ปลายเส้นชี้จากป้าย) lb จุดกลางป้าย cat จุดเท้าแมว n ชื่อสั้นบนป้าย (ไม่ใส่ = ใช้ n) door จุดหน้าประตูที่แมวเดินเข้าออก (ไม่ใส่ = ใช้ at หาถนนที่ใกล้สุด) · พิกัดพิกเซลของแผนที่ 160×340
 // free = เปิดให้ตั้งแต่เริ่ม · ไม่ free = ปลดล็อกเมื่อจำคำในหมวด unlock.cats ได้แม่นครบ unlock.n คำ
 const PLACES = [
- {id:'room', n:'ห้องอ่านหนังสือ', jp:'{部屋|へや}', cats:[], free:1, pet:[25.6,93], bub:'l', note:'ทบทวนทุกหมวด',
+ {id:'room', n:'ห้องอ่านหนังสือ', jp:'{部屋|へや}', cats:[], free:1, pet:[25.6,93], bub:'l', note:'ทบทวนทุกหมวด', map:{n:'บ้าน', at:[137,280], lb:[134,304], cat:[118,300]},
   svg:`<rect width="820" height="420" class="f-r-wall"/><rect y="250" width="820" height="110" class="f-r-wall2"/><rect y="246" width="820" height="6" class="f-r-wood"/>
 <g transform="translate(470 40)"><rect width="270" height="180" rx="4" class="f-r-wood"/><rect x="10" y="10" width="250" height="160" class="f-r-sky"/><rect x="10" y="110" width="250" height="60" class="f-r-sky2"/>
 <g class="day"><circle cx="205" cy="104" r="17" class="f-r-sun"/><ellipse cx="70" cy="48" rx="30" ry="9" class="f-r-cloud"/><ellipse cx="95" cy="42" rx="20" ry="9" class="f-r-cloud"/><ellipse cx="190" cy="60" rx="22" ry="7" class="f-r-cloud"/></g>
@@ -23,7 +24,7 @@ const PLACES = [
 <rect x="-6" y="8" width="282" height="15" rx="3" class="f-r-wood"/><ellipse cx="200" cy="7" rx="32" ry="8" class="f-r-bowl"/><g class="f-r-mikan"><circle cx="187" cy="-3" r="10"/><circle cx="208" cy="-3" r="10"/><circle cx="198" cy="-15" r="10"/></g>
 <rect x="56" y="-14" width="22" height="22" rx="5" class="f-r-cup"/><path d="M100 6 L118 -6 L150 -6 L132 6 Z" class="f-r-page"/><path d="M132 6 L150 -6 L176 -2 L158 8 Z" class="f-r-page"/></g>
 <ellipse cx="210" cy="392" rx="98" ry="19" class="f-r-cush"/>`},
- {id:'garden', n:'สวนญี่ปุ่น', jp:'{庭|にわ}', cats:['ธรรมชาติ','ธรรมชาติและอากาศ','เวลาและฤดู'], free:1, pet:[36.6,90], bub:'l', note:'ธรรมชาติ อากาศ และฤดูกาล',
+ {id:'garden', n:'สวนญี่ปุ่น', jp:'{庭|にわ}', cats:['ธรรมชาติ','ธรรมชาติและอากาศ','เวลาและฤดู'], free:1, pet:[36.6,90], bub:'l', note:'ธรรมชาติ อากาศ และฤดูกาล', map:{at:[140,78], lb:[139,68], cat:[150,112], door:[140,103]},
   svg:`<rect width="820" height="420" class="f-g-sky"/><rect y="140" width="820" height="150" class="f-g-sky2"/><circle class="day f-g-sun" cx="600" cy="92" r="26"/>
 <g class="night"><circle cx="600" cy="80" r="22" class="f-g-moon"/><circle cx="612" cy="72" r="19" class="f-g-sky"/><g class="f-g-moon"><circle cx="120" cy="40" r="1.8"/><circle cx="260" cy="70" r="1.4"/><circle cx="430" cy="34" r="1.6"/><circle cx="720" cy="46" r="1.5"/><circle cx="340" cy="110" r="1.2"/></g></g>
 <path d="M0 232 L120 172 L210 212 L330 142 L470 216 L560 182 L700 222 L820 176 V300 H0Z" class="f-g-mtn"/><path d="M0 282 Q200 236 420 268 T820 258 V420 H0Z" class="f-g-grass"/>
@@ -32,7 +33,7 @@ const PLACES = [
 <g transform="translate(118 248)"><circle cx="0" cy="40" r="62" class="f-g-glow sg"/><rect x="-32" y="96" width="64" height="12" rx="2" class="f-g-stone2"/><rect x="-10" y="56" width="20" height="42" class="f-g-stone"/><rect x="-25" y="26" width="50" height="32" rx="2" class="f-g-stone"/><rect x="-11" y="33" width="22" height="17" class="f-g-win"/><path d="M-44 27 L0 0 L44 27 Z" class="f-g-stone2"/><circle cy="-5" r="7" class="f-g-stone2"/></g>
 <g transform="translate(700 168)"><path d="M0 150 C-8 100 12 62 -10 18 M-2 80 C20 60 40 56 54 40" class="s-g-trunk"/><g class="f-g-l1"><circle cx="-42" cy="8" r="50"/><circle cx="22" cy="-14" r="56"/><circle cx="66" cy="28" r="44"/><circle cx="-8" cy="48" r="42"/></g><g class="f-g-l2"><circle cx="40" cy="-30" r="26"/><circle cx="-60" cy="30" r="22"/><circle cx="72" cy="52" r="20"/><circle cx="10" cy="20" r="20"/></g></g>
 <g class="f-g-l1"><ellipse cx="470" cy="330" rx="6" ry="3" transform="rotate(30 470 330)"/><ellipse cx="590" cy="372" rx="6" ry="3" transform="rotate(-20 590 372)"/><ellipse cx="410" cy="300" rx="6" ry="3"/><ellipse cx="760" cy="330" rx="6" ry="3" transform="rotate(50 760 330)"/></g>`},
- {id:'cafe', n:'คาเฟ่', jp:'{喫茶店|きっさてん}', cats:['อาหารและของกิน','อาหาร'], free:1, pet:[24,70], bub:'r', note:'อาหารและของกิน',
+ {id:'cafe', n:'คาเฟ่', jp:'{喫茶店|きっさてん}', cats:['อาหารและของกิน','อาหาร'], free:1, pet:[24,70], bub:'r', note:'อาหารและของกิน', map:{at:[114,172], lb:[142,178], cat:[96,190], door:[97,193]},
   svg:`<rect width="820" height="420" class="f-k-wall"/><path d="M60 0V300 M140 0V300 M220 0V300 M300 0V300 M380 0V300 M460 0V300 M540 0V300 M620 0V300 M700 0V300 M780 0V300" class="s-k-plank"/>
 <g transform="translate(70 52)"><rect width="250" height="160" rx="6" class="f-k-board s-k-frame"/><g class="f-k-chalk sj"><text x="22" y="40" font-size="22">本日のおすすめ</text><text x="22" y="82" font-size="19">ほうじ茶ラテ</text><text x="228" y="82" text-anchor="end" font-size="17">480円</text><text x="22" y="116" font-size="19">どら焼き</text><text x="228" y="116" text-anchor="end" font-size="17">220円</text></g><path d="M22 50 H190" class="s-k-chalk"/></g>
 <g transform="translate(490 70)"><rect y="64" width="280" height="8" class="f-k-wood"/><rect y="146" width="280" height="8" class="f-k-wood"/><rect x="16" y="22" width="34" height="42" rx="5" class="f-k-jar"/><rect x="16" y="40" width="34" height="24" class="f-k-beans"/><rect x="13" y="16" width="40" height="8" rx="2" class="f-k-wood"/>
@@ -43,7 +44,7 @@ const PLACES = [
 <rect y="300" width="820" height="120" class="f-k-counter"/><rect y="290" width="820" height="18" class="f-k-top"/><path d="M0 350 H820 M160 308 V420 M480 308 V420" class="s-k-top"/>
 <g transform="translate(560 262)"><ellipse cy="28" rx="34" ry="7" class="f-k-saucer"/><path d="M-20 0 h40 v18 a12 12 0 0 1 -12 12 h-16 a12 12 0 0 1 -12 -12z" class="f-k-cup"/><ellipse cy="1" rx="19" ry="4" class="f-k-coffee"/><path d="M20 6 q12 2 0 14" class="s-k-cup"/></g>
 <g transform="translate(680 272)"><ellipse cy="18" rx="40" ry="8" class="f-k-saucer"/><ellipse cy="10" rx="26" ry="9" class="f-k-dora"/><ellipse cy="4" rx="26" ry="9" class="f-k-dora2"/></g>`},
- {id:'station', n:'สถานีรถไฟ', jp:'{駅|えき}', cats:['สถานที่','ทิศทางและขนาด','เมืองและการเดินทาง'], pet:[32.3,85], bub:'l', note:'สถานที่ ทิศทาง และการเดินทาง',
+ {id:'station', n:'สถานีรถไฟ', jp:'{駅|えき}', cats:['สถานที่','ทิศทางและขนาด','เมืองและการเดินทาง'], pet:[32.3,85], bub:'l', note:'สถานที่ ทิศทาง และการเดินทาง', map:{n:'สถานี', at:[64,119], lb:[74,114], cat:[48,162], door:[66,158]},
   unlock:{cats:['สถานที่','ทิศทางและขนาด','เมืองและการเดินทาง'], n:10, t:'จำคำหมวดสถานที่และการเดินทางได้แม่น'},
   svg:`<rect width="820" height="420" class="f-t-sky"/><rect y="160" width="820" height="140" class="f-t-sky2"/>
 <g class="night"><circle cx="385" cy="96" r="16" class="f-t-moon"/><circle cx="393" cy="90" r="14" class="f-t-sky"/><g class="f-t-moon"><circle cx="640" cy="60" r="1.5"/><circle cx="780" cy="130" r="1.3"/><circle cx="250" cy="70" r="1.4"/></g></g>
@@ -60,7 +61,7 @@ const PLACES = [
 <g class="f-t-d1"><rect x="14" y="18" width="12" height="22" rx="3"/><rect x="50" y="52" width="12" height="22" rx="3"/></g><g class="f-t-d2"><rect x="32" y="18" width="12" height="22" rx="3"/><rect x="14" y="52" width="12" height="22" rx="3"/></g><g class="f-t-d3"><rect x="50" y="18" width="12" height="22" rx="3"/><rect x="32" y="52" width="12" height="22" rx="3"/></g><rect x="20" y="110" width="46" height="14" rx="3" class="f-t-pillar"/></g>
 <rect y="330" width="820" height="90" class="f-t-plat"/><rect y="330" width="820" height="10" class="f-t-edge"/><path d="M0 372 H820" class="s-t-platline"/>
 <g transform="translate(190 0)"><rect x="0" y="322" width="150" height="10" rx="3" class="f-t-bench"/><rect x="0" y="350" width="150" height="10" rx="3" class="f-t-bench"/><rect x="12" y="360" width="8" height="30" class="f-t-pillar"/><rect x="130" y="360" width="8" height="30" class="f-t-pillar"/><rect x="12" y="332" width="6" height="18" class="f-t-pillar"/><rect x="132" y="332" width="6" height="18" class="f-t-pillar"/></g>`},
- {id:'konbini', n:'ร้านสะดวกซื้อ', jp:'コンビニ', cats:['ของใช้','อาหารและของกิน','ตัวเลขและเวลา'], pet:[38,93], bub:'r', note:'ของใช้ ของกิน และตัวเลข',
+ {id:'konbini', n:'ร้านสะดวกซื้อ', jp:'コンビニ', cats:['ของใช้','อาหารและของกิน','ตัวเลขและเวลา'], pet:[38,93], bub:'r', note:'ของใช้ ของกิน และตัวเลข', map:{at:[135,224], lb:[140,232], cat:[150,222]},
   unlock:{cats:['ของใช้'], n:10, t:'จำคำหมวดของใช้ได้แม่น'},
   svg:`<rect width="820" height="420" class="f-c-wall"/><rect width="820" height="26" class="f-c-band"/><rect y="26" width="820" height="6" class="f-c-band2"/><rect y="32" width="820" height="8" class="f-c-band"/>
 <g transform="translate(16 62)"><rect width="196" height="232" rx="4" class="f-c-frame"/><rect x="10" y="10" width="176" height="212" class="f-c-sky"/>
@@ -82,7 +83,7 @@ const PLACES = [
 <rect x="744" y="200" width="46" height="38" rx="4" class="f-c-reg"/><rect x="752" y="186" width="30" height="16" rx="2" class="f-c-scr"/>
 <rect y="360" width="820" height="60" class="f-c-floor"/><path d="M0 390 H820 M100 360 V420 M260 360 V420 M420 360 V420 M580 360 V420 M740 360 V420" class="s-c-tile"/>
 <g transform="translate(700 300)"><path d="M0 0 H100 L90 90 H10 Z" class="f-c-bask"/><path d="M20 20 V80 M40 20 V80 M60 20 V80 M80 20 V80" class="s-c-bask"/><path d="M30 0 Q50 -40 70 0" class="s-c-bask"/></g>`},
- {id:'classroom', n:'ห้องเรียน', jp:'きょうしつ', cats:['คำกริยา','คำคุณศัพท์','คำถามและคำชี้'], pet:[30,92], bub:'r', note:'คำกริยา คำคุณศัพท์ และคำถาม',
+ {id:'classroom', n:'ห้องเรียน', jp:'きょうしつ', cats:['คำกริยา','คำคุณศัพท์','คำถามและคำชี้'], pet:[30,92], bub:'r', note:'คำกริยา คำคุณศัพท์ และคำถาม', map:{at:[69,253], lb:[60,270], cat:[96,266], door:[98,262]},
   unlock:{cats:['คำกริยา'], n:10, t:'จำคำหมวดคำกริยาได้แม่น'},
   svg:`<rect width="820" height="420" class="f-e-wall"/><rect y="262" width="820" height="88" class="f-e-wains"/><rect y="256" width="820" height="8" class="f-e-wood"/>
 <g transform="translate(6 26)"><rect width="150" height="230" class="f-e-frame"/><rect x="10" y="10" width="130" height="210" class="f-e-sky"/>
@@ -99,7 +100,7 @@ const PLACES = [
 <rect x="636" y="210" width="184" height="140" class="f-e-wood"/><g class="f-e-bag"><rect x="650" y="226" width="34" height="50" rx="6"/><rect x="740" y="226" width="34" height="50" rx="6"/><rect x="694" y="290" width="34" height="50" rx="6"/></g><g class="f-e-bag2"><rect x="694" y="226" width="34" height="50" rx="6"/><rect x="650" y="290" width="34" height="50" rx="6"/><rect x="784" y="290" width="30" height="50" rx="6"/></g>
 <rect y="350" width="820" height="70" class="f-e-floor"/><path d="M0 372 H820 M0 396 H820" class="s-e-floorline"/>
 <g transform="translate(660 300)"><rect width="150" height="16" class="f-e-desk2"/><path d="M10 16 V120 M140 16 V120" class="s-e-leg"/><rect x="10" y="16" width="130" height="24" class="f-e-desk"/></g>`},
- {id:'shrine', n:'ศาลเจ้า', jp:'じんじゃ', cats:['ทักทายและมารยาท','วันและเวลา','คนและครอบครัว'], pet:[50,92], bub:'l', note:'คำทักทาย มารยาท วันและเวลา',
+ {id:'shrine', n:'ศาลเจ้า', jp:'じんじゃ', cats:['ทักทายและมารยาท','วันและเวลา','คนและครอบครัว'], pet:[50,92], bub:'l', note:'คำทักทาย มารยาท วันและเวลา', map:{at:[29,95], lb:[16,100], cat:[48,98]},
   unlock:{cats:['ทักทายและมารยาท'], n:10, t:'จำคำหมวดทักทายและมารยาทได้แม่น'},
   svg:`<rect width="820" height="420" class="f-j-sky"/><rect y="150" width="820" height="110" class="f-j-sky2"/><circle class="day f-j-sun" cx="360" cy="70" r="24"/>
 <g class="night"><circle cx="360" cy="64" r="20" class="f-j-moon"/><circle cx="370" cy="57" r="17" class="f-j-sky"/><g class="f-j-moon"><circle cx="120" cy="40" r="1.8"/><circle cx="260" cy="80" r="1.4"/><circle cx="470" cy="30" r="1.6"/><circle cx="560" cy="70" r="1.4"/></g></g>
