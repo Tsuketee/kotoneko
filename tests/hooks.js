@@ -83,5 +83,74 @@ test('tools/check.js ที่รันแค่บางขั้นไม่�
   assert(!fs.existsSync(path.join(tmp, STAMP)));
 });
 
+// ---------- ขอบเขตงาน · ข้อมูล · แนบหลักฐาน (prompt-start.js → approval-gate.js / stop-check.js) ----------
+const { TURN } = require('../tools/fingerprint.js');
+fs.mkdirSync(path.join(tmp, 'js/data'), { recursive: true }); fs.writeFileSync(path.join(tmp, 'js/data/k.js'), 'const K=1;\n');
+const turnStart = prompt => hook('prompt-start.js', { prompt });
+const gate = file => hook('approval-gate.js', { tool_name: 'Edit', tool_input: { file_path: path.join(tmp, file) } });
+const asked = r => r && r.hookSpecificOutput && r.hookSpecificOutput.permissionDecision === 'ask';
+test('UserPromptSubmit จำข้อความล่าสุดและลายนิ้วมือโค้ด/ข้อมูลตอนเริ่ม turn', () => {
+  turnStart('ทำต่อเลย');
+  const t = JSON.parse(fs.readFileSync(path.join(tmp, TURN), 'utf8'));
+  assert.strictEqual(t.prompt, 'ทำต่อเลย'); assert.strictEqual(t.hash, fingerprint(tmp).hash); assert.strictEqual(t.data, fingerprint(tmp, 'js/data/').hash);
+});
+test('ก่อนแก้ไฟล์: ข้อความบอกให้เสนอก่อน/ยังไม่ต้องแก้ → ขอให้เจ้าของอนุญาต (ask) · ข้อความปกติ → ไม่ตัดสิน', () => {
+  turnStart('ทำต่อเลย'); assert.strictEqual(gate('app.js'), null);
+  for (const p of ['เสนอแผนก่อน ยังไม่ต้องแก้', 'แสดงเป็นรายการให้ผมอนุมัติก่อนแก้', 'ยังไม่ต้องแก้นะ']) { turnStart(p); assert(asked(gate('app.js')), p); }
+  fs.rmSync(path.join(tmp, TURN)); assert.strictEqual(gate('app.js'), null, 'ไม่มี turn-start = ไม่ตัดสิน');
+});
+test('ก่อนแก้ js/data/: ต้องมีคำอนุมัติ · "ยังไม่ต้องแก้ข้อมูล" ถามแค่ไฟล์ข้อมูล ไม่ถามไฟล์โค้ด', () => {
+  turnStart('ทำต่อเลย'); assert(asked(gate('js/data/k.js')));
+  turnStart('อนุมัติคำแปลทั้งหมด นำเข้าได้เลย'); assert.strictEqual(gate('js/data/k.js'), null);
+  turnStart('ทำ validate:data ยังไม่ต้องแก้ข้อมูล ผมจะเลือกเอง'); assert(asked(gate('js/data/k.js'))); assert.strictEqual(gate('app.js'), null);
+});
+test('ก่อนจบ turn: บอกให้เสนอก่อนแต่ไฟล์เปลี่ยน (แม้แก้ผ่าน Bash) → บล็อก · ไม่เปลี่ยน → จบได้', () => {
+  check(true); turnStart('เสนอแผนก่อน ยังไม่ต้องแก้'); assert.strictEqual(stop(), null);
+  fs.writeFileSync(path.join(tmp, 'app.js'), 'let a = 10;\n'); check(true);
+  const r = stop({ last_assistant_message: 'ผ่านทั้งหมด 3 ข้อ' }); assert.strictEqual(r.decision, 'block'); assert.match(r.reason, /เสนอก่อน/);
+});
+test('ก่อนจบ turn: js/data/ เปลี่ยนโดยไม่มีคำอนุมัติ → บล็อก · มีคำอนุมัติ → จบได้', () => {
+  turnStart('ทำต่อเลย'); fs.writeFileSync(path.join(tmp, 'js/data/k.js'), 'const K=2;\n'); check(true);
+  assert.match(stop({ last_assistant_message: 'ผ่านทั้งหมด 3 ข้อ' }).reason, /js\/data/);
+  fs.writeFileSync(path.join(tmp, 'js/data/k.js'), 'const K=1;\n'); turnStart('อนุมัติ แก้ข้อมูลได้'); fs.writeFileSync(path.join(tmp, 'js/data/k.js'), 'const K=3;\n'); check(true);
+  assert.strictEqual(stop({ last_assistant_message: 'ผ่านทั้งหมด 3 ข้อ' }), null);
+});
+test('ก่อนจบ turn: โค้ดเปลี่ยนแต่ข้อความสุดท้ายไม่มีผล test → บล็อก · มีบรรทัดสรุปหรือตารางขั้น → จบได้ · ไม่ส่งข้อความมา = ไม่ตรวจ', () => {
+  turnStart('ทำต่อเลย'); fs.writeFileSync(path.join(tmp, 'app.js'), 'let a = 11;\n'); check(true);
+  assert.match(stop({ last_assistant_message: 'เสร็จแล้วค่ะ' }).reason, /ผล test/);
+  assert.strictEqual(stop({ last_assistant_message: '| e2e | ✅ ผ่าน |' }), null);
+  assert.strictEqual(stop({ last_assistant_message: 'e2e ไม่ผ่าน 1/60' }), null);
+  assert.strictEqual(stop({}), null);
+  const r = stop({ last_assistant_message: 'เสร็จแล้วค่ะ', stop_hook_active: true }); assert.strictEqual(r.decision, undefined); assert.match(r.systemMessage, /ผล test/);
+});
+
 fs.rmSync(tmp, { recursive: true, force: true });
+
+// ---------- tests/check-version.js: ต้องเพิ่ม VERSION เมื่อไฟล์ที่ผู้ใช้โหลดเปลี่ยนเท่านั้น ----------
+const vt = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-ver-'));
+const vgit = (...a) => execFileSync('git', a, { cwd: vt, stdio: 'pipe', encoding: 'utf8' });
+const sw = v => `const VERSION = 'v${v}';\nconst FILES = [\n  './',\n  'js/app.js',\n];\n`;
+fs.mkdirSync(path.join(vt, 'tests')); fs.mkdirSync(path.join(vt, 'js')); fs.mkdirSync(path.join(vt, 'docs'));
+fs.copyFileSync(path.join(ROOT, 'tests/check-version.js'), path.join(vt, 'tests/check-version.js'));
+fs.writeFileSync(path.join(vt, 'sw.js'), sw(5)); fs.writeFileSync(path.join(vt, 'index.html'), 'a'); fs.writeFileSync(path.join(vt, 'js/app.js'), 'a'); fs.writeFileSync(path.join(vt, 'docs/x.md'), 'a');
+vgit('init', '-q'); vgit('add', '.'); vgit('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base');
+const base = vgit('rev-parse', 'HEAD').trim();
+const ver = () => spawnSync('node', ['tests/check-version.js', base], { cwd: vt, encoding: 'utf8' });
+const reset = () => { vgit('checkout', '-q', '--', '.'); vgit('clean', '-qfd', '-e', 'tests'); };
+test('VERSION: ไม่ได้แก้อะไร หรือแก้แค่เอกสาร → ผ่านโดยไม่ต้องเพิ่ม', () => {
+  assert.strictEqual(ver().status, 0);
+  fs.writeFileSync(path.join(vt, 'docs/x.md'), 'b'); fs.writeFileSync(path.join(vt, 'docs/new.md'), 'b');
+  const r = ver(); assert.strictEqual(r.status, 0, r.stderr); assert.match(r.stdout, /ไม่ต้องเพิ่ม VERSION/); reset();
+});
+test('VERSION: ไฟล์ที่ผู้ใช้โหลดเปลี่ยน (รวม ./ = index.html และ sw.js เอง) แต่ไม่เพิ่ม → ไม่ผ่าน · เพิ่มแล้วผ่าน', () => {
+  for (const f of ['js/app.js', 'index.html']) { fs.writeFileSync(path.join(vt, f), 'b'); const r = ver(); assert.strictEqual(r.status, 1, f); assert.match(r.stderr, new RegExp(f.replace('.', '\\.'))); reset(); }
+  fs.appendFileSync(path.join(vt, 'sw.js'), '// x\n'); assert.strictEqual(ver().status, 1, 'sw.js'); reset();
+  fs.writeFileSync(path.join(vt, 'js/app.js'), 'b'); fs.writeFileSync(path.join(vt, 'sw.js'), sw(6));
+  const r = ver(); assert.strictEqual(r.status, 0, r.stderr); assert.match(r.stdout, /v5 → v6/); reset();
+});
+test('VERSION: ลดลง → ไม่ผ่าน · รายงานบอก sha และวันที่ของฐาน', () => {
+  fs.writeFileSync(path.join(vt, 'sw.js'), sw(4));
+  const r = ver(); assert.strictEqual(r.status, 1); assert.match(r.stderr, /ลดลง/); assert.match(r.stderr, new RegExp(base.slice(0, 7))); reset();
+});
+fs.rmSync(vt, { recursive: true, force: true });
 console.log(`\nผ่านทั้งหมด ${n} ข้อ`);

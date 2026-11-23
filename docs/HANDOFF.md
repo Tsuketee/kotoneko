@@ -1,16 +1,17 @@
-# ส่งต่องาน · session 2026-11-22 → 23 (branch `claude/beautiful-hamilton-o3aobm` · v137–v167)
+# ส่งต่องาน · session 2026-11-22 → 23 (branch `claude/beautiful-hamilton-o3aobm` · v137–v169 · PR #28 merge แล้ว · PR #29 รอ merge)
 
 อ่านไฟล์นี้ก่อนเริ่ม session ใหม่ แล้วอ่าน `CLAUDE.md` และ `FEATURE_MAP.md` · งานแมวพิกเซล/แผนที่อยู่ใน `docs/PET_PIXEL.md`
 
 ## สถานะ
-- **PR [Tsuketee/kotoneko#28](https://github.com/Tsuketee/kotoneko/pull/28)** (v137–v166 + บันทึกนี้ v167) เปิดแล้ว **ยังไม่ merge** · CI ของ v166 ผ่านทุกขั้น ([run #27](https://github.com/Tsuketee/kotoneko/actions/runs/45103890986)) · main อยู่ที่ v136
-- ถ้า PR #28 merge แล้ว ให้เริ่ม branch ใหม่จาก main ล่าสุด (งานที่ push หลัง merge จะค้างนอก main)
-- **`npm run check` ล่าสุด ผ่านทั้ง 12 ขั้น**: type · lint (0) · schema 8/8 · data (validate:data 0 จุด) · determinism 5/5 · featuremap · version · test-count · unit (payment 12/12) · hooks 10/10 · e2e 60/60 · flows 8/8
+- **PR [Tsuketee/kotoneko#28](https://github.com/Tsuketee/kotoneko/pull/28) merge แล้ว** (main = v167 · `e0e76a4`)
+- **PR [Tsuketee/kotoneko#29](https://github.com/Tsuketee/kotoneko/pull/29) เปิดแล้ว ยังไม่ merge**: งานหลัง merge (v168–v169 + hook + เอกสาร) จาก branch `claude/beautiful-hamilton-o3aobm` (merge main แล้ว ไม่มี conflict) · CI ตอนเปิด PR ยังรันอยู่ ([run #35](https://github.com/Tsuketee/kotoneko/actions/runs/45107804725)) รอบก่อนหน้าผ่าน ([run #33](https://github.com/Tsuketee/kotoneko/actions/runs/45107201970)) · **เช็กผล CI ของ PR #29 ก่อนทำอย่างอื่น**
+- ถ้า PR #29 merge แล้ว ให้เริ่ม branch ใหม่จาก main ล่าสุด · push แบบ force ถูกระบบปฏิเสธ ถ้าต้องตามให้ทัน main ให้ใช้ `git merge origin/main`
+- **`npm run check` ล่าสุด ผ่านทั้ง 12 ขั้น**: type · lint (0) · schema 9/9 · data (0 จุด) · determinism · featuremap · version · test-count · unit 12/12 · hooks 19/19 · e2e 60/60 · flows 8/8
 
 ## เริ่ม session ใหม่ต้องทำก่อน
 1. `npm ci` (container ใหม่ไม่มี `node_modules`) · Chromium ของ Playwright มีในเครื่องแล้ว
 2. `git fetch origin main` ก่อนรัน check (ขั้น version/test-count เทียบกับ `origin/main` ถ้าค้างเก่าจะเทียบผิดฐาน · session นี้เคยเจอ origin/main ค้างที่ v34)
-3. hook ทำงานเอง: หลังแก้ไฟล์ = lint/type ของไฟล์นั้น · ก่อนจบ turn = ต้องรัน `npm run check` กับโค้ดล่าสุดแล้ว (ราว 4 นาที) · เรียก `/verify-app` ก่อนบอกว่าเสร็จ
+3. hook ทำงานเอง (`.claude/settings.json`): หลังแก้ไฟล์ = lint/type ของไฟล์นั้น · ข้อความเจ้าของมี "เสนอแผนก่อน/ยังไม่ต้องแก้" หรือจะแก้ `js/data/` โดยไม่มีคำอนุมัติ = ขอให้เจ้าของกดอนุญาต · ก่อนจบ turn = ต้องรัน `npm run check` กับโค้ดล่าสุด และข้อความสุดท้ายต้องมีผล test · เรียก `/verify-app` ก่อนบอกว่าเสร็จ
 
 ## งานที่ทำใน session นี้
 | เวอร์ชัน | งาน |
@@ -30,11 +31,14 @@
 | v162–v163 | แหล่งที่มาค่าเริ่มต้นต่อไฟล์ `SRC_KANJI` `SRC_CONTENT` `SRC_EX` (ใส่รายรายการได้) · ห้ามชื่อตำรา Irodori/Minna/Genki |
 | v164–v165 | บทสนทนา `ผู้พูด\|ประโยค\|คำแปล` + ปุ่ม "คำแปล" · **คำแปล 116 บรรทัด AI ร่าง เจ้าของอนุมัติ** (`docs/dialogue-translations-draft.md`) |
 | v166 | คำตัวอย่าง 39 คำระบุ `เกินระดับ` · คำอ่านวลียอม `、。！？` · 三百 = "300 (สามร้อย)" → validate:data 0 จุด |
-| v167 | บันทึกนี้ |
+| v167 | บันทึกส่งต่องาน (merge ใน PR #28) |
+| v168 | corrections-log ก1–ก5 (ขอบเขตงาน 7 · DoD 5 · ห้ามเดา 3 · ทำทีละข้อ 2 · แถวใหม่ห้ามแก้ข้อมูลโดยไม่ถาม) |
+| v169 | ค1–ค5: `pet-grid.js` สร้างโฟลเดอร์เอง · SKILL ขั้น 2.5 `git fetch` · e2e `snap()` · SKILL ขั้น 3/4 · **ตัวตรวจ VERSION บังคับเพิ่มเฉพาะเมื่อไฟล์ที่ผู้ใช้โหลด (`FILES` ใน `sw.js`) เปลี่ยน** |
+| (ไม่ต้องเพิ่ม VERSION) | ข1–ข3 hook: `prompt-start.js` (UserPromptSubmit) · `approval-gate.js` (PreToolUse ask) · `stop-check.js` บล็อกเมื่อไฟล์/ข้อมูลเปลี่ยนผิดขอบเขต หรือไม่แนบผล test · กติกาคำใน `tools/hooks/gate-rules.js` · ข2(ข) ทุกไฟล์ใน `js/data/` ต้องมีใน NOTICE.md · ง1–ง4 ลบบรรทัด CLAUDE.md ที่ตัวตรวจครอบแล้ว |
 
 ## รอเจ้าของตัดสิน
-1. **merge PR #28** (และตั้ง branch protection: Settings → Branches → require "npm run check" และ "เพิ่มเลข VERSION แล้ว")
-2. **ปิด session: รายการเสนอ ก–ง** (ส่งในแชทวันที่ 2026-11-23 ท้าย session · ยังไม่ได้แก้อะไร) — ถ้ายังไม่ได้ตอบ ให้ถามเจ้าของใหม่ตามตารางด้านล่าง
+1. **merge PR #29** (หลัง CI ผ่าน) · ตั้ง branch protection ถ้ายังไม่ได้ตั้ง (Settings → Branches → require "npm run check" และ "เพิ่มเลข VERSION แล้ว")
+2. **ตรวจ hook ใหม่ใน session ถัดไป** (เริ่มทำงานตั้งแต่ session ใหม่): ชื่อช่อง `prompt` (UserPromptSubmit) และ `last_assistant_message` (Stop) มาจากสรุปเอกสาร Claude Code ไม่ใช่ข้อความตรง ถ้า `test-results/turn-start.json` ไม่ถูกสร้าง หรือไม่มีการตรวจแนบผล test แปลว่าชื่อช่องไม่ตรง (hook ไม่บล็อกผิดๆ เพราะถ้าไม่มีข้อมูลจะไม่ตัดสิน)
 3. **แผน "ถอนวัชพืช" 17 ข้อ** (ส่งในแชท 2026-11-23 · ยังไม่ได้แก้อะไร) — ต้องอนุมัติทีละข้อ · ทำทีละข้อ แต่ละข้อจบด้วย `npm run check` + verify-app ผ่าน แล้ว commit แยก · ดิฉันแนะนำเริ่ม 1–10 (เสี่ยงต่ำ–กลาง) · คำถามค้าง: ร่างเก่าใน `docs/` ลบหรือเก็บ · จะแยก `pixelcat.js` (ข้อ 16 เสี่ยงสูง) ไหม · Prettier ไหม
 4. เรื่องเดิม: ลองบน iPad จริง (นิ้ว/Pencil/กันฝ่ามือ · โหมดส่วนตัว · เสียงอ่าน · ปุ่มคำแปล) · กติการ้านค้า/ลายขน/เครื่องประดับ (`docs/PET_PIXEL.md`)
 
@@ -64,6 +68,7 @@
 - ESLint ไม่มี formatter `unix` ในตัวแล้ว (grep ผลจะว่างเงียบ) ใช้ `--format json` หรือค่าเริ่มต้น
 - `々` เป็น Script=Han แต่ไม่ใช่คันจิที่ต้องเรียน · ตัวตรวจข้อมูลยกเว้นไว้แล้ว
 - คำเตือนใน console ที่แอปตั้งใจพิมพ์ (`console.warn` พร้อมบริบท เช่น "อ่านราคา n3 ไม่ได้ ถือว่ายังไม่เปิดขาย") ไม่ใช่ error
+- hook ขอบเขตงานจับคำในข้อความล่าสุดของเจ้าของเท่านั้น คำตอบผ่านหน้าต่างถามตัวเลือก (AskUserQuestion) hook มองไม่เห็น ถ้าแก้ `js/data/` ตามคำตอบแบบนั้น จะมีหน้าต่างขออนุญาตขึ้น ให้เจ้าของกดอนุญาต
 - typescript-eslint 8.73 รองรับ TypeScript ถึง 6.0 (ใช้ 6.0.3) · `pet-grid.js` ต้องสร้างโฟลเดอร์ผลลัพธ์ก่อน (`mkdir -p`)
 - 404/403/409 ใน console ของ e2e ที่ URL `https://sb.test/` มาจาก Supabase จำลองที่ตั้งใจตอบแบบนั้น
 

@@ -7,6 +7,7 @@ const fs = require('fs'), path = require('path');
 const { chromium } = require('playwright');
 const SRC = path.join(__dirname, '..', 'docs', 'pixel-cat10.html');
 const OUT = path.resolve(process.argv[2] || '.');
+fs.mkdirSync(OUT, { recursive: true });
 
 (async () => {
   const browser = await chromium.launch();
