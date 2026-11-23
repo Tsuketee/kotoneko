@@ -10,7 +10,7 @@
 | `no-empty` | 38 | `catch (e) {}` ว่างทั้งหมด (cloud 12 · packs 10 · core 3 · learn 3 · profile 3 · อื่นๆ ไฟล์ละ 1) | ง |
 | `no-useless-escape` | 12 | `js/stats.js` ทั้งหมด | ค |
 | `no-restricted-globals` | 9 | localStorage นอกชั้นเก็บข้อมูล: `grammar.js:4,5` `learn.js:28,79` `pet.js:29` `place.js:24` `profile.js:11,14,14` | จ |
-| `@typescript-eslint/no-explicit-any` | 4 | `supabase/functions/stripe-webhook/index.ts:13,36,37,50` | ก |
+| `@typescript-eslint/no-explicit-any` | ~~4~~ 0 ✅ | แก้แล้ว v155 | ก |
 | `no-misleading-character-class` | 3 | regex ตรวจอิโมจิใน `tests/e2e.js:63,457,458` | ข |
 | `no-global-assign` | 2 | `js/packs.js:90,92` เขียนทับฟังก์ชัน `cloudForget` `cloudVerify` ของ `cloud.js` | ข |
 | `preserve-caught-error` | 1 | `js/packs.js:51` โยน error ใหม่โดยไม่แนบสาเหตุเดิม | ข |
@@ -18,7 +18,8 @@
 | `no-useless-assignment` | 1 | `tests/e2e.js:671` | ข |
 
 ## ลำดับแก้
-### ก · `any` ใน Edge Function (4 · เล็ก · เสี่ยงน้อย)
+### ก · `any` ใน Edge Function (4 · เล็ก · เสี่ยงน้อย) ✅ v155 · เหลือ 128 error
+ทำแล้ว: ใช้ type ของฟิลด์ Stripe ที่ใช้จริง (`Session` `Charge` `StripeEvent` `Purchase`) · ผล REST เป็น `unknown` · error ของฐานข้อมูลเป็น `DbError` ที่มี `code` · ตัวช่วย `levelOf` `userOf` แทนการอ่าน `metadata` ที่อาจเป็น null · `tests/payment.mjs` ผ่าน 12/12
 เปลี่ยนเป็น `unknown` หรือ type ของ response/error จริง แล้วให้ `tests/payment.mjs` ยืนยันพฤติกรรมเดิม
 
 ### ข · โค้ดที่น่าจะผิดหรือไม่ได้ใช้ (18)

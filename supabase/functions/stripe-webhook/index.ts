@@ -10,7 +10,16 @@
 // ความลับ: STRIPE_WEBHOOK_SECRET (whsec_…) · SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY มีให้อัตโนมัติ
 
 type Env = Record<string, string | undefined>;
-type Obj = Record<string, any>;
+// ฟิลด์ที่ใช้จาก Stripe (Checkout Session / Charge) ทุกฟิลด์ไม่บังคับ เพราะเนื้อหามาจากภายนอก ค่าที่ใช้ตัดสินสิทธิ์ตรวจด้วย UUID/LEVEL ก่อนเสมอ
+type Session = {
+  id?: string; mode?: string; payment_status?: string; client_reference_id?: string | null;
+  metadata?: Record<string, string> | null; payment_intent?: string | { id: string } | null;
+  amount_total?: number | null; currency?: string | null; livemode?: boolean;
+};
+type Charge = { refunded?: boolean; payment_intent?: string | { id: string } | null };
+type StripeEvent = { type?: string; data?: { object?: Session & Charge } };
+type Purchase = { session_id: string; user_id: string | null; level: string };
+class DbError extends Error { code?: string; constructor(message: string, code?: string) { super(message); this.code = code } }
 const LEVEL = /^n[1-4]$/, UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TOLERANCE = 300;   // วินาที: กันการนำ webhook เก่ามาส่งซ้ำ
 
@@ -33,30 +42,33 @@ export function makeHandler(env: Env, fx: typeof fetch = fetch) {
   const H = { apikey: k, ...(k.startsWith('eyJ') ? { Authorization: 'Bearer ' + k } : {}), 'Content-Type': 'application/json' };
   async function db(path: string, method: string, body?: unknown, prefer?: string) {
     const r = await fx(sbUrl + '/rest/v1/' + path, { method, headers: { ...H, ...(prefer ? { Prefer: prefer } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) });
-    const t = await r.text(); let j: any = null; try { j = t ? JSON.parse(t) : null } catch { /* ไม่ใช่ JSON */ }
-    if (!r.ok) { const e: any = new Error(`db ${method} ${path.split('?')[0]}: HTTP ${r.status} ${t.slice(0, 200)}`); e.code = j && j.code; throw e }
+    const t = await r.text(); let j: unknown = null; try { j = t ? JSON.parse(t) : null } catch { /* ไม่ใช่ JSON */ }
+    if (!r.ok) throw new DbError(`db ${method} ${path.split('?')[0]}: HTTP ${r.status} ${t.slice(0, 200)}`, (j as { code?: string } | null)?.code);
     return j;
   }
-  const record = (s: Obj, status: string, user_id: string | null, level: string) => db('purchases', 'POST', {
+  const record = (s: Session, status: string, user_id: string | null, level: string) => db('purchases', 'POST', {
     session_id: s.id, user_id, level, status, payment_intent: typeof s.payment_intent === 'string' ? s.payment_intent : null,
     amount: s.amount_total ?? null, currency: s.currency ?? null, livemode: !!s.livemode,
   }, 'resolution=merge-duplicates,return=minimal');
 
-  async function paid(s: Obj) {
+  const levelOf = (s: Session) => String((s.metadata && s.metadata.level) || '');
+  const userOf = (s: Session) => typeof s.client_reference_id === 'string' && UUID.test(s.client_reference_id) ? s.client_reference_id : null;
+
+  async function paid(s: Session) {
     const user = String(s.client_reference_id || (s.metadata && s.metadata.user_id) || ''), level = String((s.metadata && s.metadata.level) || '');
     if (!UUID.test(user) || !LEVEL.test(level)) { console.warn('ข้าม session ที่ไม่ได้สร้างจากแอป', s.id); return 'ignored' }
     try {
       await db('entitlements', 'POST', { user_id: user, level, source: 'stripe' }, 'resolution=ignore-duplicates,return=minimal');
-    } catch (e: any) {
-      if (e.code !== '23503') throw e;   // ผู้ใช้ลบบัญชีไปแล้วก่อน webhook มาถึง: บันทึกไว้ให้ผู้ดูแลคืนเงิน ไม่ให้ Stripe ส่งซ้ำไม่จบ
+    } catch (e) {
+      if (!(e instanceof DbError) || e.code !== '23503') throw e;   // ผู้ใช้ลบบัญชีไปแล้วก่อน webhook มาถึง: บันทึกไว้ให้ผู้ดูแลคืนเงิน ไม่ให้ Stripe ส่งซ้ำไม่จบ
       await record(s, 'paid_no_user', null, level); return 'no user';
     }
     await record(s, 'paid', user, level);
     return 'granted';
   }
-  async function refunded(c: Obj) {
+  async function refunded(c: Charge) {
     if (!c.refunded || typeof c.payment_intent !== 'string') return 'partial';   // คืนเงินบางส่วน: ไม่ถอนสิทธิ์
-    const rows = await db('purchases?select=session_id,user_id,level&payment_intent=eq.' + encodeURIComponent(c.payment_intent), 'GET');
+    const rows = await db('purchases?select=session_id,user_id,level&payment_intent=eq.' + encodeURIComponent(c.payment_intent), 'GET') as Purchase[] | null;
     for (const p of rows || []) {
       if (p.user_id) {
         await db(`entitlements?user_id=eq.${p.user_id}&level=eq.${p.level}&source=eq.stripe`, 'DELETE');
@@ -73,15 +85,15 @@ export function makeHandler(env: Env, fx: typeof fetch = fetch) {
     if (req.method !== 'POST') return new Response('method', { status: 405 });
     const body = await req.text();
     if (!(await verify(body, req.headers.get('stripe-signature'), env.STRIPE_WEBHOOK_SECRET || ''))) return new Response('bad signature', { status: 400 });
-    let ev: Obj; try { ev = JSON.parse(body) } catch { return new Response('bad json', { status: 400 }) }
-    const o = (ev.data && ev.data.object) || {};
+    let ev: StripeEvent; try { ev = JSON.parse(body) } catch { return new Response('bad json', { status: 400 }) }
+    const o: Session & Charge = (ev.data && ev.data.object) || {};
     try {
       let r = 'ignored';
       if (ev.type === 'checkout.session.completed' && o.mode === 'payment') {
         if (o.payment_status === 'paid' || o.payment_status === 'no_payment_required') r = await paid(o);
-        else if (LEVEL.test(String(o.metadata && o.metadata.level))) { await record(o, 'pending', UUID.test(o.client_reference_id) ? o.client_reference_id : null, o.metadata.level); r = 'pending' }
+        else if (LEVEL.test(levelOf(o))) { await record(o, 'pending', userOf(o), levelOf(o)); r = 'pending' }
       } else if (ev.type === 'checkout.session.async_payment_succeeded') r = await paid(o);
-      else if (ev.type === 'checkout.session.async_payment_failed' && LEVEL.test(String(o.metadata && o.metadata.level))) { await record(o, 'failed', UUID.test(o.client_reference_id) ? o.client_reference_id : null, o.metadata.level); r = 'failed' }
+      else if (ev.type === 'checkout.session.async_payment_failed' && LEVEL.test(levelOf(o))) { await record(o, 'failed', userOf(o), levelOf(o)); r = 'failed' }
       else if (ev.type === 'charge.refunded') r = await refunded(o);
       return new Response(JSON.stringify({ ok: true, r }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     } catch (e) {
