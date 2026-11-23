@@ -1,7 +1,8 @@
 // ตรวจว่าเพิ่มเลข VERSION ใน sw.js แล้ว (กฎใน CLAUDE.md: แก้ไฟล์ไหนก็ตามต้องเพิ่ม VERSION ไม่งั้นเครื่องผู้ใช้จะยังเห็นไฟล์เก่าจากแคช)
 // รัน: node tests/check-version.js <ref ฐาน>   เช่น  node tests/check-version.js origin/main
 // GitHub Actions รันให้ทุก PR (.github/workflows/test.yml) โดยเทียบกับ branch ปลายทางของ PR
-// ผ่าน = VERSION ของงานนี้มากกว่าของฐาน · ไม่ผ่าน = เท่าเดิม ลดลง หรือรูปแบบผิด (exit code 1)
+// npm run check รันให้ทุกครั้ง (ขั้น version ใน tools/check.js · ฐาน = ตัวแปร VERSION_BASE ถ้าไม่ตั้งใช้ origin/main)
+// ผ่าน = VERSION ของงานนี้มากกว่าของฐาน หรือไฟล์ทุกไฟล์ที่ git ติดตามเหมือนฐาน (เช่น main หลัง merge) · ไม่ผ่าน = แก้ไฟล์แล้วแต่ VERSION เท่าเดิม ลดลง หรือรูปแบบผิด (exit code 1)
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
 const base = process.argv[2];
 if (!base) { console.error('ต้องบอก ref ฐาน เช่น node tests/check-version.js origin/main'); process.exit(2); }
@@ -16,6 +17,8 @@ let baseSrc;
 try { baseSrc = execFileSync('git', ['show', `${base}:sw.js`], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); }
 catch (e) { console.error(`✗ อ่าน sw.js จาก ${base} ไม่ได้ (ลอง git fetch ก่อน): ${String(e.stderr || e.message).trim()}`); process.exit(1); }
 const was = ver(baseSrc, base);
+const same = (() => { try { execFileSync('git', ['diff', '--quiet', base, '--'], { cwd: ROOT, stdio: 'ignore' }); return true; } catch { return false; } })();
+if (same && head === was) { console.log(`✓ ไม่มีไฟล์ไหนต่างจาก ${base} (VERSION v${head})`); process.exit(0); }
 if (head > was) { console.log(`✓ VERSION v${was} → v${head}`); process.exit(0); }
 console.error(`✗ VERSION ไม่ได้เพิ่ม: ${base} เป็น v${was} แต่งานนี้เป็น v${head} · แก้ const VERSION ใน sw.js เป็น 'v${was + 1}'`
   + (head === was ? '' : ' (ถ้ามี PR อื่น merge ไปก่อน ให้ merge main เข้ามาแล้วเพิ่มเลขต่อจากนั้น)'));

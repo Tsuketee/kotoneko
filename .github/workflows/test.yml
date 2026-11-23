@@ -1,5 +1,5 @@
 # ตรวจทุก push และทุก PR (main ขึ้น GitHub Pages ทันที จึงต้องกันโค้ดพังก่อนถึงผู้ใช้)
-# - check: npm run check = type (tsc strict) → lint (ESLint) → determinism (tests/check-determinism.js) → featuremap (tests/check-feature-map.js) → unit (tests/payment.mjs) → hooks (tests/hooks.js) → e2e (tests/e2e.js) → flows (tests/flows.js)
+# - check: npm run check = type (tsc strict) → lint (ESLint) → determinism (tests/check-determinism.js) → featuremap (tests/check-feature-map.js) → version (tests/check-version.js เทียบกับ main หรือ branch ปลายทางของ PR) → unit (tests/payment.mjs) → hooks (tests/hooks.js) → e2e (tests/e2e.js) → flows (tests/flows.js)
 #          ผิดกฎข้อไหน ขั้นนั้นไม่ผ่าน และ job นี้แดง · ภาพหน้าจอและ console log อัปโหลดเป็น artifact "test-results"
 # - version (เฉพาะ PR): VERSION ใน sw.js ต้องมากกว่าของ branch ปลายทาง (tests/check-version.js)
 # รันเองในเครื่องได้: npm run check · node tests/check-version.js origin/main
@@ -29,10 +29,16 @@ jobs:
         with:
           node-version: 22 # tests/payment.mjs ต้องใช้ Node 22.18 ขึ้นไป (อ่านไฟล์ .ts เอง)
           cache: npm
+      - name: ดึง branch ฐานของขั้น version
+        env:
+          BASE: ${{ github.base_ref || 'main' }}
+        run: git fetch --no-tags --depth=1 origin "+refs/heads/$BASE:refs/remotes/origin/$BASE"
       - run: npm ci
       - name: ติดตั้ง Chromium ของ Playwright
         run: npx playwright install --with-deps chromium
       - run: npm run check
+        env:
+          VERSION_BASE: origin/${{ github.base_ref || 'main' }}
       - name: เก็บภาพหน้าจอและ console log (test-results/)
         if: always()
         uses: actions/upload-artifact@v4
