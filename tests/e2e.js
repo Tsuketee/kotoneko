@@ -276,8 +276,11 @@ test('บทสนทนา: คำแปลรายบรรทัด ผู�
   // รูปแบบข้อมูล: | ในฟุริงะนะไม่ถูกตัดเป็นคำแปล · ไม่มีคำแปลได้
   const parsed = await p.evaluate(() => parseD('@1|ทดสอบ (สุภาพ)\nけん|{今日|きょう}はいい{天気|てんき}ですね。|วันนี้อากาศดีนะครับ\nさくら|{今日|きょう}は。\nさくら|はい。|<b>ค่ะ</b>')[0].turns);
   assert.deepStrictEqual(parsed, [['けん', '{今日|きょう}はいい{天気|てんき}ですね。', 'วันนี้อากาศดีนะครับ'], ['さくら', '{今日|きょう}は。'], ['さくら', 'はい。', '<b>ค่ะ</b>']]);
-  // บทที่ยังไม่มีคำแปล: ไม่มีปุ่ม
-  await p.evaluate(() => { openDs('d'); dgo(0); });
+  // ข้อมูลจริงทุกบทมีคำแปลแล้ว (npm run validate:data ตรวจ) → มีปุ่มทุกบท
+  await p.evaluate(() => openDs('d'));
+  for (let i = 0, n = await p.evaluate(() => D.length); i < n; i++) { await p.evaluate(i => dgo(i), i); assert.strictEqual(await p.getByTestId('dlg-translate').count(), 1, 'บทที่ ' + (i + 1)); }
+  // บทที่ไม่มีคำแปล (ลบออกในหน้านี้เท่านั้น): ไม่มีปุ่ม
+  await p.evaluate(() => { D[0].turns.forEach(t => { t.length = 2 }); dgo(0); });
   assert.strictEqual(await p.getByTestId('dlg-translate').count(), 0);
   // ใส่คำแปลให้บทแรก (ข้อมูลทดสอบ ไม่ใช่เนื้อหาจริง) → มีปุ่ม ปิดไว้ก่อน → กดแล้วเห็นครบทุกบรรทัด → กดอีกครั้งซ่อน
   const n = await p.evaluate(() => { D[0].turns.forEach((t, i) => { t[2] = i === 0 ? '<b>แปล</b>' : 'แปล ' + i }); render(); return D[0].turns.length; });
