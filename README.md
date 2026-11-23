@@ -71,7 +71,7 @@ repo นี้เป็น public จึงใช้ GitHub Pages ได้ฟ�
 ```
 npm install
 npx playwright install chromium   # ครั้งแรกครั้งเดียว
-npm test
+npm run check
 ```
 ทุกข้อเก็บภาพหน้าจอและ console log ไว้ใน `test-results/` (ไม่ commit · สรุปใน `test-results/<ชุด>/summary.md`) · ใน Claude Code ใช้ skill `verify-app` ตรวจและสรุปผลก่อนบอกว่าเสร็จ
 
