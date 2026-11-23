@@ -442,7 +442,7 @@ test('แท็บเรียน: หน้ารวมมีเส้นทา
   assert.deepStrictEqual(p.errors, []);
 });
 
-test('แถบล่าง 5 หมวด: หน้าแรก เรียน ความคืบหน้า (ภาพรวม/ผิดบ่อย) ร้านค้า (เร็วๆ นี้) โปรไฟล์ (บัตร + เมนู: บัญชี สำรองข้อมูล เครดิต)', async (b, base) => {
+test('แถบล่าง 5 หมวด: หน้าแรก เรียน ความคืบหน้า (ภาพรวม/ผิดบ่อย) ร้านค้า (โคบัง) โปรไฟล์ (บัตร + เมนู: บัญชี สำรองข้อมูล เครดิต)', async (b, base) => {
   const p = await fresh(b, base, { viewport: { width: 375, height: 812 } });
   assert.deepStrictEqual(await p.locator('#nav button').allInnerTexts(), ['หน้าแรก', 'เรียน', 'ความคืบหน้า', 'ร้านค้า', 'โปรไฟล์']);
   // ป้ายทุกปุ่มอยู่บรรทัดเดียว ไม่ล้นปุ่มบนจอมือถือแคบ
@@ -456,10 +456,10 @@ test('แถบล่าง 5 หมวด: หน้าแรก เรีย�
   assert((await p.locator('#app').innerText()).includes('ผิดตั้งแต่ 2 ครั้ง'));
   await p.locator('.pgs button:text-is("ภาพรวม")').click();
   assert.strictEqual(await p.evaluate(() => tab), 'stats');
-  // ร้านค้า: ยังไม่เปิด ไม่มีราคาเงินจริง · ลิงก์ไปคลังสะสม
+  // ร้านค้า (โคบัง): ยอดโคบัง ถุงโชคดี ตู้สะสมทุกหมวด ไม่มีราคาเงินจริง (รายละเอียดใน tests/e2e/shop.js)
   await p.locator('#nav button:has-text("ร้านค้า")').click();
   t = await p.locator('#app').innerText();
-  assert(t.includes('เร็วๆ นี้') && t.includes('ตู้สุ่ม') && t.includes('แลกของ') && t.includes('ไม่ใช้เงินจริง') && !/฿|บาท|THB/.test(t), t);
+  assert(t.includes('โคบัง') && t.includes('ถุงโชคดี') && t.includes('ลายขน') && t.includes('อาหาร') && t.includes('ไม่ใช้เงินจริง') && !/฿|บาท|THB/.test(t), t);
   // โปรไฟล์ (v123 เจ้าของขอสลับ): แท็บเปิดมาเป็นเมนู → ดูโปรไฟล์ = บัตรสัตว์เลี้ยง → กลับเมนู → หน้าย่อย (สำรองข้อมูล เครดิต) → กลับเมนู · แตะแท็บซ้ำกลับเมนู
   await p.locator('#nav button:has-text("โปรไฟล์")').click();
   assert.deepStrictEqual(await p.evaluate(() => [meView, document.querySelectorAll('.idc').length, document.querySelector('.mehd h1').textContent]), ['menu', 0, 'โปรไฟล์'], 'แท็บโปรไฟล์เปิดมาเป็นเมนู');

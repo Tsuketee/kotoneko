@@ -3,7 +3,7 @@
 const { chromium } = require('playwright');
 const { recorder } = require('./artifacts');
 const { server, tests, setRec } = require('./e2e/harness');
-for (const f of ['data', 'main', 'pet', 'places', 'cloud', 'packs', 'device']) require('./e2e/' + f);
+for (const f of ['data', 'main', 'pet', 'shop', 'places', 'cloud', 'packs', 'device']) require('./e2e/' + f);
 
 (async () => {
   await new Promise(r => server.listen(0, r));

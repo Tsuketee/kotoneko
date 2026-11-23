@@ -34,12 +34,12 @@ test('สัตว์เลี้ยง: บทพูดตามช่วงเ
   assert(lines.first.includes(await say(0)));
   await p.evaluate(() => { M.pet.rv = '2000-01-01'; M.pet.last = '2026-11-01'; M.pet.lastTs = Date.now() - 5 * 864e5; });
   assert(lines.back.includes(await say(0)));
-  // ให้อาหาร: Energy พอ -> ประโยค feed + ความสนิท +10 ; ไม่พอ -> ประโยค hungry
+  // ให้อาหาร (ตู้กับข้าว): มีข้าวปั้น -> ประโยค feed + ความสนิท +10 ไม่ใช้ Energy ; ตู้ว่าง -> ประโยค hungry
   const toastText = () => p.evaluate(() => { const e = document.querySelectorAll('.toast'); return e.length ? e[e.length - 1].innerText : ''; });
-  await p.evaluate(() => { M.pet.energy = 100; M.pet.bond = 0; pfeed(); });
+  await p.evaluate(() => { M.pet.energy = 100; M.pet.bond = 0; M.pet.food = { onigiri: 1 }; M.pet.hg = 80; M.pet.ht = Date.now(); pfood('onigiri'); });
   let tx = await toastText(); assert(lines.feed.some(l => tx.includes(l)), 'feed: ' + tx);
-  assert.deepStrictEqual(await p.evaluate(() => [M.pet.energy, M.pet.bond]), [70, 10]);
-  await p.evaluate(() => { document.querySelectorAll('.toast').forEach(e => e.remove()); M.pet.energy = 5; pfeed(); });
+  assert.deepStrictEqual(await p.evaluate(() => [M.pet.energy, M.pet.bond, M.pet.food.onigiri]), [100, 10, 0]);
+  await p.evaluate(() => { document.querySelectorAll('.toast').forEach(e => e.remove()); document.querySelectorAll('.cov').forEach(e => e.remove()); M.pet.food = {}; pfeed(); });
   await p.waitForTimeout(2500); tx = await toastText();
   assert(lines.hungry.some(l => tx.includes(l)), 'hungry: ' + tx);
   // โตเป็นร่าง 2 และ 3 : เด้งเฉพาะตอนข้ามขั้น
@@ -151,10 +151,10 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   assert.strictEqual(await p.locator('.pet').count(), 0, 'แมวต้องไม่เป็นอิโมจิแล้ว');
   const T = () => p.evaluate(() => { const c = PixelCat._t.cat; return [c.mode, c.pose || null]; });
   // ให้อาหาร = ท่ากินข้าวปั้น (ถ้ากำลังเดินอยู่ รอจนนั่งพักก่อน)
-  await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'sit', t: 0, dur: 1e9 }); M.pet.energy = 100; pfeed(); });
+  await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'sit', t: 0, dur: 1e9 }); M.pet.food = { onigiri: 1 }; M.pet.hg = 80; M.pet.ht = Date.now(); pfood('onigiri'); });
   assert.deepStrictEqual(await T(), ['pose', 'eat']);
-  // Energy ไม่พอ → ขออาหาร (รายงานพฤติกรรมข้อ 12): เดินหางตั้งมากลางฉาก เงยหน้ามอง ニャー แล้วถูหัวคราง (ไม่ใช่ท่าเศร้า) · หลับอยู่ตื่นก่อน
-  const begSim = (o) => p.evaluate(o => { const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'sit', x: 5, t: 0, dur: 1e9, then: null, pend: null, pose: null, tol: 0, cool: 0, lv: 0, after: null }, o); M.pet.energy = 5; pfeed();
+  // ตู้กับข้าวว่าง → ขออาหาร (รายงานพฤติกรรมข้อ 12): เดินหางตั้งมากลางฉาก เงยหน้ามอง ニャー แล้วถูหัวคราง (ไม่ใช่ท่าเศร้า) · หลับอยู่ตื่นก่อน
+  const begSim = (o) => p.evaluate(o => { const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'sit', x: 5, t: 0, dur: 1e9, then: null, pend: null, pose: null, tol: 0, cool: 0, lv: 0, after: null }, o); M.pet.food = {}; document.querySelectorAll('.cov').forEach(e => e.remove()); pfeed();
     const r = { first: cat.mode, up: false }; for (let i = 0; i < 800 && !(cat.mode === 'pose' && cat.pose === 'curious'); i++) { step(50); if (cat.mode === 'walk' && cat.then === 'beg') r.up = true }
     r.pose = [cat.mode, cat.pose]; r.x = Math.round(cat.x); r.say = document.querySelector('.scn.px .scb').textContent; for (let j = 0; j < 40 && cat.mode !== 'pet'; j++) step(50); r.after = cat.mode; return r }, o);
   let bg = await begSim({});
