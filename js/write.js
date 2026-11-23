@@ -12,8 +12,10 @@ function draw(c,i){const g=c.getContext('2d');g.clearRect(0,0,200,200);g.lineWid
  if(ep&&ep.i===i){g.beginPath();g.lineWidth=1.5;g.strokeStyle='#e0952f';g.arc(ep.x,ep.y,esz,0,7);g.stroke()}}
 function hit(s,p,r){for(let k=0;k<s.length;k++){const a=s[k],b=s[k+1]||a,dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy;let t=l?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l:0;t=Math.max(0,Math.min(1,t));if(Math.hypot(a[0]+t*dx-p[0],a[1]+t*dy-p[1])<=r)return true}return false}
 function erase(i,p){st[i]=(st[i]||[]).filter(s=>!hit(s,p,esz))}
+// นิ้วเขียนได้ · ถ้าใช้ Apple Pencil อยู่ (แตะ/ยก/ลอยปากกาภายใน PALM_MS) การแตะด้วยนิ้วหรือฝ่ามือจะไม่วาด และปากกาที่แตะลงระหว่างนิ้วกำลังลากจะลบเส้นของนิ้วนั้นทิ้งแล้ววาดแทน
+const PALM_MS=1000;
 function initCv(){const sh=document.querySelector('.sheet'),cv=[...document.querySelectorAll('canvas[data-c]')];if(!sh)return;
- let d=null,R=[],t0=0,cc=-1,lp=null,raf=0;const dirty=new Set();
+ let d=null,R=[],t0=0,cc=-1,lp=null,raf=0,pen=-1e9,tk=null;const dirty=new Set();
  const loc=(k,x,y)=>[(x-R[k].left)*200/R[k].width,(y-R[k].top)*200/R[k].height];
  const cellOf=(x,y)=>{const p=R[1].left-R[0].left,q=R[4].top-R[0].top;return Math.max(0,Math.min(3,Math.floor((y-R[0].top)/q)))*4+Math.max(0,Math.min(3,Math.floor((x-R[0].left)/p)))};
  const flush=()=>{raf=0;dirty.forEach(k=>draw(cv[k],k));dirty.clear()};
@@ -24,11 +26,15 @@ function initCv(){const sh=document.querySelector('.sheet'),cv=[...document.quer
    cc=n;(st[n]=st[n]||[]).push([loc(n,lp[0],lp[1]),loc(n,x,y)]);dirty.add(n)}
   else{const s=st[n][st[n].length-1],p=loc(n,x,y),l=s[s.length-1];if(Math.abs(p[0]-l[0])+Math.abs(p[1]-l[1])>.4){s.push(p);dirty.add(n)}}
   lp=[x,y]};
- sh.onpointerdown=e=>{if(e.pointerType==='touch')return;e.preventDefault();R=cv.map(c=>c.getBoundingClientRect());d=e.pointerId;t0=e.timeStamp;try{sh.setPointerCapture(d)}catch(x){}
+ sh.onpointerdown=e=>{e.preventDefault();const t=e.pointerType==='touch';
+  if(t&&(d!==null||e.timeStamp-pen<PALM_MS))return;
+  if(!t){pen=e.timeStamp;if(tk)cv.forEach((c,k)=>{if(st[k]&&st[k].length>tk[k]){st[k].length=tk[k];dirty.add(k)}})}
+  else if(d!==null)return;
+  R=cv.map(c=>c.getBoundingClientRect());d=e.pointerId;t0=e.timeStamp;tk=t?cv.map((c,k)=>st[k]?st[k].length:0):null;sh.setPointerCapture(d);
   const n=cellOf(e.clientX,e.clientY);cc=n;lp=[e.clientX,e.clientY];
   if(tool==='er')add(e.clientX,e.clientY);else{(st[n]=st[n]||[]).push([loc(n,e.clientX,e.clientY)]);dirty.add(n)}sched()};
- sh.onpointermove=e=>{if(d!==e.pointerId)return;e.preventDefault();let ev=e.getCoalescedEvents?e.getCoalescedEvents().filter(x=>x.timeStamp>=t0-1&&(x.pressure>0||x.buttons>0)):[];if(!ev.length)ev=[e];ev.forEach(x=>add(x.clientX,x.clientY));sched()};
- sh.onpointerup=sh.onpointercancel=sh.onlostpointercapture=e=>{if(d===e.pointerId){d=null;ep=null;cv.forEach((c,k)=>dirty.add(k));sched()}};
+ sh.onpointermove=e=>{if(e.pointerType==='pen')pen=e.timeStamp;if(d!==e.pointerId)return;e.preventDefault();let ev=e.getCoalescedEvents?e.getCoalescedEvents().filter(x=>x.timeStamp>=t0-1&&(x.pressure>0||x.buttons>0)):[];if(!ev.length)ev=[e];ev.forEach(x=>add(x.clientX,x.clientY));sched()};
+ sh.onpointerup=sh.onpointercancel=sh.onlostpointercapture=e=>{if(e.pointerType==='pen')pen=e.timeStamp;if(d===e.pointerId){d=null;ep=null;tk=null;cv.forEach((c,k)=>dirty.add(k));sched()}};
  sh.oncontextmenu=e=>e.preventDefault();sh.onselectstart=e=>e.preventDefault();sh.ondragstart=e=>e.preventDefault();document.onselectstart=e=>e.preventDefault();
  cv.forEach((c,k)=>draw(c,k));addArrows()}
 function undo(){if(st[lc])st[lc].pop();render()}

@@ -2,6 +2,7 @@
 // ไม่ต้อง build แอป สคริปต์นี้เปิด http server เล็กๆ เองแล้วรันทดสอบด้วย Chromium
 const http = require('http'), fs = require('fs'), path = require('path'), assert = require('assert');
 const { chromium } = require('playwright');
+const { recorder } = require('./artifacts'); // หลักฐานทุกข้อ: test-results/e2e/ (ภาพหน้าจอ + console log + summary.md)
 const ROOT = path.join(__dirname, '..');
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 
@@ -59,7 +60,7 @@ test('ข้อมูล: คำคันจิใช้เฉพาะคัน
         kj(l).forEach(c => ok.has(c) || tbad.push('คันจิเกิน N5 ในบทพูด นิสัย ' + i + ': ' + c));
       });
     });
-    const EMO = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}\uFE0F]/u;
+    const EMO = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}]|\uFE0F/u;
     TR.forEach((t, i) => { if (!P[t.i]) tbad.push('นิสัย ' + i + ' ไม่มีไอคอน ' + t.i); [t.n, ...Object.values(t.s).flat()].forEach(l => { if (EMO.test(l)) tbad.push('ห้ามมีอิโมจิในบทพูด (ใช้ไอคอนเส้นแทน) นิสัย ' + i + ': ' + l); }); });
     const gbad = [];
     G.forEach((g, i) => {
@@ -219,7 +220,7 @@ test('สถานที่: ทุกฉากใช้สีจาก token (�
   const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8'), js = fs.readFileSync(path.join(ROOT, 'js/data/places.js'), 'utf8');
   const used = new Set([...js.matchAll(/\bf-([a-z]-[a-z0-9]+)/g)].map(m => m[1]));
   [...new Set([...js.matchAll(/\b(s-[a-z]-[a-z0-9]+)/g)].map(m => m[1]))].forEach(c => assert(css.includes('.' + c + '{'), 'ไม่มีสไตล์เส้น ' + c));
-  const blk = re => (css.match(re) || [, ''])[1];
+  const blk = re => (css.match(re) || ['', ''])[1];
   const lt = blk(/ฉากสถานที่[\s\S]*?\n:root\{([^}]*)\}/), dk = blk(/ฉากสถานที่[\s\S]*?:root\[data-theme="dark"\]\{([^}]*)\}/);
   used.forEach(t => { assert(lt.includes('--' + t + ':'), 'ไม่มีสีโหมดสว่าง ' + t); assert(dk.includes('--' + t + ':'), 'ไม่มีสีโหมดมืด ' + t) });
   [lt, dk].forEach(B => { const m = B.match(/[^;{\s]--[a-z]+-[a-z0-9]+:/); assert(!m, 'ลืม ; ก่อน token (token ถัดไปจะใช้ไม่ได้ทั้งตัว): ' + (m && m[0])) }); // v120 เคยต่อ token ท้าย --sc-gop:.22 ที่ไม่มี ; แล้วสีทั้งฉากหาย
@@ -237,6 +238,13 @@ test('คันจิ: เปิดการ์ด พลิก ตอบ "จ�
   await p.locator('button:text-is("จำได้")').click();
   const saved = await p.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('kn5') || '{}')).length);
   assert(saved >= 1);
+  // ข้อมูลคุนแยกโอกุริงานะด้วย . (よ.っつ) แต่บนจอแสดงเป็นวงเล็บ และเสียงอ่านตัดโอกุริงานะออก (เหมือนก่อนเปลี่ยนรูปแบบข้อมูล)
+  const kun = await p.evaluate(() => ['四', '生', '空'].map(c => { const x = K.find(k => k.k === c); return [x.u, rd(x), speakFor(x)] }));
+  assert.deepStrictEqual(kun, [
+    ['よん・よ.っつ', 'シ ・ よん・よ(っつ)', 'よん'],
+    ['い.きる・う.まれる', 'セイ/ショウ ・ い(きる)・う(まれる)', 'い'],
+    ['そら・あ.く・から', 'クウ ・ そら・あ(く)・から', 'そら'],
+  ]);
   assert.deepStrictEqual(p.errors, []);
 });
 
@@ -261,6 +269,30 @@ test('บทสนทนา: ไล่ทุกบทได้ สลับฟ�
   assert.strictEqual(await p.locator('ruby').count(), 0);
   await p.locator('button:has-text("อ่านจบแล้ว")').click();
   assert(await p.evaluate(() => M.pet.d.r.length) === 1);
+  assert.deepStrictEqual(p.errors, []);
+});
+test('บทสนทนา: คำแปลรายบรรทัด ผู้พูด|ประโยค|คำแปล อ่านถูกแม้มีฟุริงะนะ · ปุ่ม "คำแปล" ขึ้นเฉพาะบทที่มีคำแปล ปิดไว้ก่อน กดแล้วเห็นใต้ทุกบรรทัด', async (b, base) => {
+  const p = await fresh(b, base);
+  // รูปแบบข้อมูล: | ในฟุริงะนะไม่ถูกตัดเป็นคำแปล · ไม่มีคำแปลได้
+  const parsed = await p.evaluate(() => parseD('@1|ทดสอบ (สุภาพ)\nけん|{今日|きょう}はいい{天気|てんき}ですね。|วันนี้อากาศดีนะครับ\nさくら|{今日|きょう}は。\nさくら|はい。|<b>ค่ะ</b>')[0].turns);
+  assert.deepStrictEqual(parsed, [['けん', '{今日|きょう}はいい{天気|てんき}ですね。', 'วันนี้อากาศดีนะครับ'], ['さくら', '{今日|きょう}は。'], ['さくら', 'はい。', '<b>ค่ะ</b>']]);
+  // ข้อมูลจริงทุกบทมีคำแปลแล้ว (npm run validate:data ตรวจ) → มีปุ่มทุกบท
+  await p.evaluate(() => openDs('d'));
+  for (let i = 0, n = await p.evaluate(() => D.length); i < n; i++) { await p.evaluate(i => dgo(i), i); assert.strictEqual(await p.getByTestId('dlg-translate').count(), 1, 'บทที่ ' + (i + 1)); }
+  // บทที่ไม่มีคำแปล (ลบออกในหน้านี้เท่านั้น): ไม่มีปุ่ม
+  await p.evaluate(() => { D[0].turns.forEach(t => { t.length = 2 }); dgo(0); });
+  assert.strictEqual(await p.getByTestId('dlg-translate').count(), 0);
+  // ใส่คำแปลให้บทแรก (ข้อมูลทดสอบ ไม่ใช่เนื้อหาจริง) → มีปุ่ม ปิดไว้ก่อน → กดแล้วเห็นครบทุกบรรทัด → กดอีกครั้งซ่อน
+  const n = await p.evaluate(() => { D[0].turns.forEach((t, i) => { t[2] = i === 0 ? '<b>แปล</b>' : 'แปล ' + i }); render(); return D[0].turns.length; });
+  const btn = p.getByTestId('dlg-translate');
+  assert.strictEqual(await btn.getAttribute('aria-pressed'), 'false');
+  assert.strictEqual(await p.getByTestId('dlg-translation').count(), 0);
+  await btn.click();
+  assert.strictEqual(await p.getByTestId('dlg-translation').count(), n);
+  assert.strictEqual(await p.getByTestId('dlg-translation').first().innerText(), '<b>แปล</b>', 'คำแปลต้องแสดงเป็นข้อความ ไม่ใช่ HTML');
+  assert.strictEqual(await p.locator('.dtr b').count(), 0);
+  await p.getByTestId('dlg-translate').click();
+  assert.strictEqual(await p.getByTestId('dlg-translation').count(), 0);
   assert.deepStrictEqual(p.errors, []);
 });
 
@@ -367,6 +399,9 @@ test('ไวยากรณ์: เปิดรายการ อ่านบ�
   const f = path.join(require('os').tmpdir(), 'kanji-e2e-g-' + Date.now() + '.json'); await dl.saveAs(f);
   const o = JSON.parse(fs.readFileSync(f, 'utf8')); fs.unlinkSync(f);
   assert(o.data.kg1 && o.data.kg1['1'] && o.data.kg1['2']);
+  // เปิดแอปใหม่แล้วความคืบหน้าไวยากรณ์อ่านกลับมาครบ (GS โหลดจาก kg1 ตอนเริ่ม)
+  await p.reload();
+  assert.deepStrictEqual(await p.evaluate(() => GS), o.data.kg1);
   assert.deepStrictEqual(p.errors, []);
 });
 
@@ -453,7 +488,7 @@ test('ธีม A และไอคอนเส้น: ตัวแปรสี
     }
   }
   const p = await fresh(b, base);
-  const emo = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}\uFE0F]/u, bad = [];
+  const emo = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}]|\uFE0F/u, bad = [];
   const scan = async (label) => { const t = (await p.evaluate(() => document.getElementById('app').innerText + document.getElementById('nav').innerText)).replace(/[\u{1F431}\u{1F430}\u{1F436}]/gu, ''); const m = t.match(new RegExp(emo.source, 'gu')) || []; if (m.length) bad.push(label + ': ' + m.join('')); };
   await p.evaluate(() => { M.pet.energy = 100; }); await scan('home');
   for (const t of ['learn', 'mis', 'stats', 'shop', 'me']) { await p.evaluate(t => goTab(t), t); await scan(t); }
@@ -667,7 +702,7 @@ test('ซิงก์: สองเครื่องแก้พร้อมก
   // รอบสอง: เลือกของคลาวด์
   db.row = { ...db.row, rev: 4, data: { ...db.row.data, kv1: { 'cloud2': { b: 2, w: 0, d: 1 } } } };
   await p.evaluate(() => localStorage.setItem('kv1', JSON.stringify({ 'local2': { b: 1, w: 0, d: 1 } })));
-  r = p.evaluate(() => cloudSync(true)).catch(() => 'pulled');
+  void p.evaluate(() => cloudSync(true)).catch(() => 'pulled');
   await p.waitForSelector('.cov');
   await Promise.all([p.waitForNavigation(), p.locator('.cov button:text-is("ใช้ของคลาวด์")').click()]);
   await p.waitForSelector('.toast');
@@ -1156,6 +1191,28 @@ test('เข้าสู่ระบบด้วย Google (PKCE): ปุ่ม�
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('ที่เก็บข้อมูลในเครื่องเขียนไม่ได้ (พื้นที่เต็ม/โหมดส่วนตัว): แจ้งผู้ใช้ครั้งเดียว และไม่พาไปหน้า Google · ปุ่มฟังเสียงเล่นไม่ได้ก็แจ้งผู้ใช้', async (b, base) => {
+  const db = mockCloud(); db.google = true;
+  const p = await cloudPage(b, base, db);
+  // เก็บทุกข้อความเด้งที่ขึ้นจอ · นับหลังคิวข้อความว่าง (toastFree) จะได้รู้ว่าไม่มีข้อความซ้ำรอขึ้นอยู่
+  await p.evaluate(() => { window.__toasts = []; new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.dataset && n.dataset.testid === 'toast') window.__toasts.push(n.textContent) }))).observe(document.body, { childList: true }); });
+  const shown = async s => { await p.waitForFunction(() => Date.now() > toastFree, null, { timeout: 15000 }); return p.evaluate(s => window.__toasts.filter(m => m.includes(s)).length, s) };
+  // ปุ่มฟังเสียง: เบราว์เซอร์เล่นไม่ได้ → แจ้ง ไม่เงียบ
+  await p.evaluate(() => { speechSynthesis.speak = () => { throw new Error('ทดสอบ: เล่นไม่ได้') }; speak('ねこ'); });
+  assert.strictEqual(await shown('เล่นเสียงไม่ได้ค่ะ'), 1);
+  // เขียนไม่ได้: บันทึกหลายครั้งแจ้งแค่ครั้งเดียว แอปยังทำงานต่อด้วยข้อมูลในหน่วยความจำ
+  await p.evaluate(() => { Storage.prototype.setItem = () => { throw new DOMException('ทดสอบ: เต็ม', 'QuotaExceededError') }; M.goal = 30; saveM(); save(); saveM(); render(); });
+  assert.strictEqual(await shown('บันทึกข้อมูลในเครื่องไม่ได้'), 1);
+  assert.strictEqual(await p.evaluate(() => M.goal), 30);
+  // เข้าสู่ระบบด้วย Google: เก็บ code_verifier ไม่ได้ → ไม่ไปหน้า Google (กลับมาก็เข้าสู่ระบบไม่ได้อยู่ดี) และบอกให้ใช้อีเมล
+  await p.evaluate(() => goMe('acct')); await p.waitForSelector('.sgg');
+  const url = p.url();
+  await p.locator('.sgg').click();
+  await p.waitForSelector('text=เข้าสู่ระบบด้วย Google ไม่ได้ในโหมดนี้');
+  assert.strictEqual(p.url(), url); assert(!db.auth, 'ต้องไม่เรียกหน้า authorize');
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('แท็บเรียน: หน้ารวมมีเส้นทางเรียน (ย้ายจากหน้าแรก) · ปุ่มเรียนต่อ · ปุ่มกลับในหมวดย่อยกลับหน้ารวม · แตะแท็บเรียนซ้ำกลับหน้ารวม', async (b, base) => {
   const p = await fresh(b, base, { viewport: { width: 390, height: 844 } });
   assert(!(await p.locator('#app').innerText()).includes('เส้นทางเรียน'), 'หน้าแรกไม่มีเส้นทางเรียนแล้ว');
@@ -1268,6 +1325,7 @@ test('สัตว์เลี้ยงปลอบหลังตอบผิ�
 
 test('แมวพิกเซล: หน้าหลักวาดฉากห้อง, เหตุการณ์เรียกท่าอารมณ์, แตะแยกโซนและมาตรวัดความทน, เปลี่ยนท่าไม่ค้าง, กระต่ายยังเป็นอิโมจิ', async (b, base) => {
   const p = await fresh(b, base);
+  await p.evaluate(() => { PixelCat._t.setJit(false); PixelCat._t.setNow(new Date('2026-11-22T12:00:00').getTime()); });
   await p.waitForTimeout(300);
   const info = await p.evaluate(() => { const c = document.getElementById('petcv'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return [c.width, c.height, n, getComputedStyle(c).imageRendering]; });
   assert.deepStrictEqual(info.slice(0, 2), [160, 90]); assert(info[2] > 160 * 90 * .9, 'ฉากต้องถูกวาด'); assert.strictEqual(info[3], 'pixelated');
@@ -1516,7 +1574,7 @@ test('แมวพิกเซล: ท่าที่ใช้ของในฉ
   assert.deepStrictEqual(bad, []);
   // ตัวช่วย: ตรึงนาฬิกาของฉาก ตั้งสถานที่ แมวนั่งว่างที่ x แล้วเดินเวลาทีละ 50 ms เก็บลำดับโหมด · Math.random คงที่ให้ผลแน่นอน
   // v109: นาฬิกาฉากในข้อนี้อยู่ปี 1970 (เดือนมกราคม = หน้าหนาว ไม่มีผีเสื้อ) จึงตรึงฤดูเป็นหน้าร้อนทั้งข้อ (ทุกอย่างในฉากมีครบ) · ข้อ "ฉากตามฤดู" ตรวจผลของฤดูแยก
-  await p.evaluate(() => PixelCat._t.setSeason('summer'));
+  await p.evaluate(() => { PixelCat._t.setSeason('summer'); PixelCat._t.setJit(false); });
   const run = (o) => p.evaluate(o => { const T = PixelCat._t, { step, cat } = T, R0 = Math.random; Math.random = () => o.rnd;
     try { T.setTod(o.tod); T.setNow(o.ms); M.place = { at: o.at, got: PLACES.map(q => q.id), fam: {} }; render(); T.setFam(o.fam || 99, 0); // render() ติดตั้งแมวใหม่และนับวันที่อยู่ที่นั้น จึงตั้งช่วงปรับตัวทีหลัง
       document.querySelector('.scn.px .scb').classList.remove('on'); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: o.x, dir: 1, then: null, after: null, pend: null, str: 0, wk: 0, hunt: 0, tol: 0, cool: 0, lv: 0, pose: null });
@@ -1629,9 +1687,9 @@ test('แมวพิกเซล: กล่องกระดาษในห้
     out.garden = img('garden', true) === img('garden', false);
     // วันที่มีกล่อง (ห้อง): ตัดสินใจครั้งแรกๆ มักไปดมกล่องใหม่ · ดมแล้วมุดกล่อง → โผล่หัว (เลื่อนลง BOX.dy) → ออกมานั่ง
     Math.random = () => (a = (a * 1103515245 + 12345) % 2147483648) / 2147483648;
-    T.setBox(true); T.setBoxSeen(false); M.place = { at: 'room', got: [] }; PixelCat.mount(cv, { place: 'room', coat: 'cream' }); T.setPart('day');
+    T.setJit(false); T.setNow(at('2026-11-22T12:00:00')); T.setBox(true); T.setBoxSeen(false); M.place = { at: 'room', got: [] }; PixelCat.mount(cv, { place: 'room', coat: 'cream' }); T.setPart('day');
     const seq = []; let inBox = null; Object.assign(cat, { mode: 'sit', t: 0, dur: 1, x: 110, then: null, str: 0, bs: 0 });
-    for (let i = 0; i < 40000 && !/boxin box boxout sit/.test(seq.join(' ')); i++) { step(50); if (seq[seq.length - 1] !== cat.mode) seq.push(cat.mode); if (cat.mode === 'box' && !inBox) inBox = { x: cat.x, dy: cat.dy } } // อารมณ์รายวัน (jit) ตามวันที่จริง จึงจำลองจนกว่าจะมุดกล่องครบรอบ
+    for (let i = 0; i < 40000 && !/boxin box boxout sit/.test(seq.join(' ')); i++) { step(50); if (seq[seq.length - 1] !== cat.mode) seq.push(cat.mode); if (cat.mode === 'box' && !inBox) inBox = { x: cat.x, dy: cat.dy } }
     const j = seq.join(' '); out.j = j.slice(0, 600); out.firstSniff = j.indexOf('sniff') >= 0 && j.indexOf('sniff') < j.indexOf('boxin'); out.inBox = inBox; out.chain = /boxin box boxout sit/.test(j);
     // แตะตอนอยู่ในกล่อง: ไม่ออกมา
     Object.assign(cat, { mode: 'box', t: 0, dur: 1e9, x: BOX.cx, dy: BOX.dy, bz: true, then: 'sit' }); T.poke('head'); out.tapStay = cat.mode === 'box' && cat.bz === false;
@@ -1647,7 +1705,7 @@ test('แมวพิกเซล: กล่องกระดาษในห้
   assert(r.tapStay, 'แตะในกล่องแล้วไม่ออก (ลืมตา)'); assert(r.leave === 'boxhide' && r.leaveBox, 'หนีไปหลบในกล่อง');
   assert(r.shy > r.energy * 2.5, 'ขี้อายมุดกล่องบ่อยกว่า ' + [r.shy, r.energy]);
   // ภาพจริงบนผืนผ้าใบ: อยู่ในกล่องแล้วไม่เห็นขา/หางใต้กล่อง (แถว 87–89 เหมือนตอนแมวอยู่ที่อื่น) แต่เห็นหัวเหนือขอบกล่อง
-  const px = await p.evaluate(async () => { const T = PixelCat._t, { cat, BOX } = T, c = document.getElementById('petcv'); T.setBox(true); T.setTod('day'); render(); const c2 = document.getElementById('petcv');
+  const px = await p.evaluate(async () => { const T = PixelCat._t, { cat, BOX } = T; T.setBox(true); T.setTod('day'); render(); const c2 = document.getElementById('petcv');
     const grab = async st => { Object.assign(cat, st); await new Promise(r => setTimeout(r, 250)); return [...c2.getContext('2d').getImageData(0, 0, 160, 90).data] };
     const inb = await grab({ mode: 'box', t: 0, dur: 1e9, x: BOX.cx, dy: BOX.dy, bz: false, then: 'sit' }), away = await grab({ mode: 'sit', t: 0, dur: 1e9, x: 114, dy: 0, then: null });
     let below = 0, head = 0; for (let y = 87; y < 90; y++) for (let x = 50; x < 95; x++) { const i = (y * 160 + x) * 4; if (inb.slice(i, i + 3).join() !== away.slice(i, i + 3).join()) below++ }
@@ -1823,13 +1881,19 @@ test('PWA: manifest ถูกต้องและ service worker ติดต�
   await new Promise(r => server.listen(0, r));
   const base = `http://localhost:${server.address().port}/`;
   const browser = await chromium.launch();
+  const rec = recorder(browser, 'e2e');
   let fail = 0;
   const only = process.argv[2], run = only ? tests.filter(([n]) => n.includes(only)) : tests; // node tests/e2e.js <คำในชื่อข้อ> = รันเฉพาะข้อที่ชื่อมีคำนั้น
   for (const [name, fn] of run) {
+    rec.begin(String(tests.findIndex(t => t[0] === name) + 1).padStart(2, '0'), name);
+    let ok = true, err;
     try { await Promise.race([fn(browser, base), new Promise((_, j) => setTimeout(() => j(new Error('หมดเวลา 30 วินาที')), 30000))]); console.log('  ✓', name); }
-    catch (e) { fail++; console.log('  ✗', name, '\n     ', (e.stack || e.message || e).split("\n").slice(0, 4).join(" | ")); }
+    catch (e) { ok = false; err = e; fail++; console.log('  ✗', name, '\n     ', (e.stack || e.message || e).split("\n").slice(0, 4).join(" | ")); }
+    await rec.end(ok, err);
   }
+  rec.finish();
   await browser.close(); server.close();
+  console.log('หลักฐาน: test-results/e2e/summary.md');
   console.log(fail ? `\nไม่ผ่าน ${fail}/${run.length}` : `\nผ่านทั้งหมด ${run.length} ข้อ`);
   process.exit(fail ? 1 : 0);
 })();

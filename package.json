@@ -1,12 +1,24 @@
 {
   "name": "kotoneko",
   "private": true,
-  "description": "เว็บแอป PWA ทบทวนภาษาญี่ปุ่น N5 (ไม่มีขั้นตอน build ไฟล์นี้มีไว้รันชุดทดสอบเท่านั้น)",
+  "description": "เว็บแอป PWA ทบทวนภาษาญี่ปุ่น N5 (ไม่มีขั้นตอน build · ไฟล์นี้มีไว้ตรวจโค้ดและรันชุดทดสอบ: npm run check)",
   "scripts": {
     "start": "python3 -m http.server 8000",
-    "test": "node tests/payment.mjs && node tests/e2e.js"
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "test:unit": "node tests/payment.mjs && node tests/hooks.js && node tests/data-schema.js",
+    "test:e2e": "node tests/e2e.js && node tests/flows.js",
+    "test": "npm run test:unit && npm run test:e2e",
+    "check": "node tools/check.js",
+    "validate:data": "node tools/validate-data.js"
   },
   "devDependencies": {
-    "playwright": "1.63.0"
+    "@eslint/js": "10.0.1",
+    "eslint": "10.15.0",
+    "globals": "17.14.0",
+    "playwright": "1.63.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0",
+    "zod": "4.6.7"
   }
 }

@@ -7,6 +7,22 @@ const LKEY = { n5: { k: 'kn5', w: 'kw1', v: 'kv1', g: 'kg1' }, n4: { k: 'kn4', w
 const LVK = 'kn_level', PACKK = l => 'kn_pack_' + l;
 let LV = 'n5';
 
+// อ่าน/เขียนที่เก็บข้อมูลของเบราว์เซอร์ผ่านฟังก์ชันชุดนี้ (ไฟล์นอกชั้นเก็บข้อมูลเรียก localStorage ตรงไม่ได้ · eslint.config.mjs) · ss = ใช้ sessionStorage
+// อ่านไม่ได้/ข้อมูลเสีย = fb · เขียนไม่ได้ (พื้นที่เต็ม/โหมดส่วนตัว) = false และแจ้งผู้ใช้ครั้งเดียวต่อการเปิดแอป (เฉพาะ localStorage)
+const stOf = ss => ss ? sessionStorage : localStorage;
+function readStr(k, ss) { try { return stOf(ss).getItem(k) } catch { return null } }
+function readJSON(k, fb, ss) { try { const v = stOf(ss).getItem(k); return v ? JSON.parse(v) : fb } catch { return fb } }
+let storeWarned = false;
+function writeStr(k, v, ss) {
+  try { if (v == null) stOf(ss).removeItem(k); else stOf(ss).setItem(k, v); return true }
+  catch (e) {
+    console.warn('เขียนที่เก็บข้อมูลไม่ได้', k, e);
+    if (!ss && v != null && !storeWarned && typeof toast === 'function') { storeWarned = true; toast('บันทึกข้อมูลในเครื่องไม่ได้ (พื้นที่เต็มหรือเปิดแบบส่วนตัว) ความคืบหน้าอาจหายเมื่อปิดแอป') }
+    return false;
+  }
+}
+function writeJSON(k, v, ss) { return writeStr(k, JSON.stringify(v), ss) }
+
 // แปลงแพ็ก (ข้อความดิบรูปแบบเดียวกับไฟล์ข้อมูล N5) เป็นข้อมูลที่แอปใช้ ด้วยตัวแปลงเดียวกับ N5 · ไม่สมบูรณ์จะโยน error
 function packParse(p) {
   if (!p || p.format !== 1 || !LKEY[p.level] || p.level === 'n5' || !Number.isInteger(p.version)) throw new Error('รูปแบบแพ็กไม่ถูกต้อง');
@@ -30,6 +46,6 @@ function packApply(x) {
   Object.assign(DT, x.DT);
 }
 try {
-  const lv = localStorage.getItem(LVK);
-  if (lv && lv !== 'n5') { packApply(packParse(JSON.parse(localStorage.getItem(PACKK(lv)) || 'null'))); LV = lv }
-} catch (e) { try { localStorage.setItem(LVK, 'n5') } catch (_) {} }
+  const lv = readStr(LVK);
+  if (lv && lv !== 'n5') { packApply(packParse(readJSON(PACKK(lv), null))); LV = lv }
+} catch (e) { console.warn('เปิดแพ็กในเครื่องไม่ได้ กลับไป N5', e); writeStr(LVK, 'n5') }

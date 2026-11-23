@@ -21,7 +21,7 @@ const placeCats = () => { if (!M.pet || !M.pet.name) return null; const c = plac
 // จำนวนคำในหมวดที่ระบุที่จำได้แม่น (คำคันจิ + คำศัพท์คะนะ ของระดับที่เปิดอยู่)
 function plCount(cats) {
   let n = 0;
-  ['w', 'v'].forEach(k => { let s = {}; try { s = JSON.parse(localStorage.getItem(DS[k].key) || '{}') } catch (e) {} DS[k].d.forEach(x => { if (cats.includes(x.c) && s[x.k] && s[x.k].b >= MASTERY) n++ }) });
+  ['w', 'v'].forEach(k => { const s = readJSON(DS[k].key, {}) || {}; DS[k].d.forEach(x => { if (cats.includes(x.c) && s[x.k] && s[x.k].b >= MASTERY) n++ }) });
   return n;
 }
 // ปลดล็อกที่ใหม่เมื่อถึงเกณฑ์ (เรียกตอนวาดหน้าแรก) · ปลดล็อกแล้วเก็บถาวร เปลี่ยนระดับก็ไม่หาย
@@ -43,7 +43,7 @@ const plTod = () => window.PixelCat ? PixelCat.tod() : (h => h >= 5 && h < 7 ? '
 function placeHero(say, pet, size, px) {
   const p = placeOf(plState().at), tk = `<button class="scgo" onclick="placeAsk()" title="เลือกสถานที่">${icx('ticket', 18)}<span>ไปเที่ยว</span></button>`;
   // ฉากพิกเซล: ตั๋วอยู่แถวชื่อสถานที่ใต้ฉาก เพราะกล่องคำพูดลอยตามแมวไปทั่วฉาก
-  return `<div class="scn${px ? ' px' : ''}" data-place="${p.id}" data-tod="${plTod()}">${px ? '<canvas id="petcv"></canvas>' : `<svg viewBox="0 0 820 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${p.svg}</svg>`}
+  return `<div class="scn${px ? ' px' : ''}" data-place="${p.id}" data-tod="${plTod()}">${px ? '<canvas id="petcv" data-testid="pet-canvas"></canvas>' : `<svg viewBox="0 0 820 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${p.svg}</svg>`}
 <div class="pzb scb ${p.bub === 'r' && !px ? 'r' : ''}">${say}</div>
 ${px ? '' : `<div class="scp" style="left:${p.pet[0]}%;top:${p.pet[1]}%"><span class="pet" style="font-size:${size}px">${pet}</span></div>`}
 ${px ? '' : tk}</div>

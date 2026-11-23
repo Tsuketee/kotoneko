@@ -104,9 +104,8 @@ function render(pose){
   if(c===IRIS)c=CO.eye||(dk?LINE_L:EYE);else if(c===EYE&&dk)c=LINE_L;out[y][x]=c});
  return out}
 // ---------- หน้าตา ----------
-const D=[];const put=(a,x,y,pts,c)=>pts.forEach(([u,v])=>a.push([x+u,y+v,c]));
+const put=(a,x,y,pts,c)=>pts.forEach(([u,v])=>a.push([x+u,y+v,c]));
 const eyeClosed=(a,x,y)=>put(a,x,y,[[0,0],[1,1],[2,1],[3,0]],EYE);           // ‿ หลับสบาย
-const eyeDash=(a,x,y,h=2)=>put(a,x,y,h===2?[[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]]:[[0,0],[1,0],[2,0]],EYE); // ขีด
 const eyeSleepy=(a,x,y)=>put(a,x,y,[[0,0],[1,0],[2,0],[3,0],[1,1],[2,1]],EYE); // ตาปรือ
 const eyeHappy=(a,x,y)=>put(a,x,y,[[0,1],[1,0],[2,0],[3,1]],EYE);            // ⌒ ยิ้มตาปิด
 const mouth=(a,x,y)=>{put(a,x,y,[[0,0],[1,1],[2,0],[3,1],[4,0]],EYE);a.push([x+2,y-1,NOSE])}; // ω + จมูก
@@ -475,7 +474,7 @@ POSES.groomLeg=f=>{const G=LEGLICK[f],foot=[9.6,20.8-(G.toe||0)*.4];return sitCa
    a.push([hx,hy+3.6,NOSE]);
    if(G.lick){put(a,hx-1.4,hy+4.6,[[0,0],[1,0],[2,0]],EYE);put(a,hx-4.4,hy+5.6,[[0,0],[1,0],[2,0],[3,0]],TONGUE);put(a,hx-4.4,hy+5.6,[[0,0]],TONGUE_D)}else put(a,hx-1.4,hy+4.8,[[0,0],[1,1],[2,0]],EYE);
    blush(a,hx+8.2,hy+3.6)}, // แก้มซ้ายอยู่หลังขา
-  fx:(a,by)=>{const c=RAMP[P('inner')][1],g=(G.toe||0)*.5;put(a,foot[0]-2-g,foot[1]-2.4,[[0,0]],c);put(a,foot[0],foot[1]-3,[[0,0]],c);put(a,foot[0]+2+g,foot[1]-2.4,[[0,0]],c)}})}; // เม็ดถั่วนิ้วเท้า
+  fx:a=>{const c=RAMP[P('inner')][1],g=(G.toe||0)*.5;put(a,foot[0]-2-g,foot[1]-2.4,[[0,0]],c);put(a,foot[0],foot[1]-3,[[0,0]],c);put(a,foot[0]+2+g,foot[1]-2.4,[[0,0]],c)}})}; // เม็ดถั่วนิ้วเท้า
 // ---------- ท่าตอนถูกแตะ (รายงานพฤติกรรมข้อ 4 · v60) ----------
 // ตาครึ่งปิดแบบเบื่อๆ: เปลือกตาเป็นเส้นทับครึ่งบนของตาเม็ดถั่ว
 const eyeMeh=(a,x,y)=>{bean(a,x,y+1,2);put(a,x-1,y,[[0,0],[1,0],[2,0],[3,0]],EYE)};
@@ -687,7 +686,7 @@ const TZLAT={Bangkok:13.75,Vientiane:18,Phnom_Penh:11.6,Ho_Chi_Minh:10.8,Saigon:
  Sydney:-33.9,Melbourne:-37.8,Brisbane:-27.5,Perth:-31.95,Adelaide:-34.9,Darwin:-12.5,Hobart:-42.9,Auckland:-36.85},
  TZREG={Asia:25,Europe:50,America:35,Africa:5,Australia:-30,Pacific:-15,Atlantic:35,Indian:-10},
  latOf=tz=>{if(!tz)return 14;const P=tz.split('/'),c=TZLAT[P[P.length-1]];return c!=null?c:TZREG[P[0]]!=null?TZREG[P[0]]:14};
-let LAT=(()=>{try{return latOf(Intl.DateTimeFormat().resolvedOptions().timeZone)}catch(e){return 14}})()*Math.PI/180;const OBL=23.44*Math.PI/180,RAD=Math.PI/180;
+let LAT=(()=>{try{return latOf(Intl.DateTimeFormat().resolvedOptions().timeZone)}catch{return 14}})()*Math.PI/180;const OBL=23.44*Math.PI/180,RAD=Math.PI/180;
 function moonTilt(ms,p,h){const dd=(ms-Date.UTC(2000,0,1,12))/864e5,ls=(280.46+.9856474*dd)*RAD,lm=ls+p*TAU,
  eq=l=>[Math.atan2(Math.cos(OBL)*Math.sin(l),Math.cos(l)),Math.asin(Math.sin(OBL)*Math.sin(l))],[ras,des]=eq(ls),[ram,dem]=eq(lm),
  hs=(h-12)*15*RAD,hm=hs-(ram-ras),
@@ -810,7 +809,7 @@ function roomBg(c,k){
  [[91,66,15,2,0],[92,64,13,2,3],[91,62,14,2,1]].forEach(([x,y,w,h,i])=>{rect(c,x,y,w,h,B[i]);rect(c,x+w-1,y,1,h,k.spine)});                       // กองหนังสือนอน
  [[112,2,7],[114,3,8],[117,2,6],[119,2,8],[121,3,7],[124,2,8],[126,3,6],[129,2,7]].forEach(([x,w,h],i)=>book(x,68,w,h,i+1));
  // ต้นพิเลีย (ใบกลมเหมือนเหรียญ ก้านติดกลางใบ) ในกระถางเซรามิกขาว ตรงมุมหน้าต่าง
- [[90.5,39],[93.5,35.5],[96.5,37.5],[89.5,41.5],[97.5,41],[92,37.5],[95,40]].forEach(([x,y],i)=>stem(c,93.5,42,93.5+(x-93.5)*.3,y+2,x,y,k.leaf2));
+ [[90.5,39],[93.5,35.5],[96.5,37.5],[89.5,41.5],[97.5,41],[92,37.5],[95,40]].forEach(([x,y])=>stem(c,93.5,42,93.5+(x-93.5)*.3,y+2,x,y,k.leaf2));
  [[92,37.5],[95,40],[90.5,39],[93.5,35.5],[96.5,37.5],[89.5,41.5],[97.5,41]].forEach(([x,y],i)=>{blob(c,x,y,1.7,1.35,i<2?k.leaf2:k.leaf);dot(c,x-1,y-1,k.leaf3);dot(c,x,y,i<2?k.leaf4:k.leaf2)});
  rect(c,91,43,6,4,k.pilP);rect(c,90,42,8,1,k.pilP);rect(c,96,43,1,4,k.pilP2);rect(c,90,42,8,1,k.pilP2);dot(c,91,43,k.cup||k.note);
  rect(c,102,45,10,2,k.b2);rect(c,103,43,9,2,k.b3);rect(c,111,45,1,2,k.spine);rect(c,111,43,1,2,k.spine);                                            // หนังสือซ้อน
@@ -1431,7 +1430,7 @@ function greetGo(){goTo((XMIN+XMAX)/2+rr(-14,14),'greet')}
 function beg(woke){if(!woke&&SLEEPM[cat.mode]){cat.after='beg';return cat.mode==='wake'?0:setMode('wake',1400)}cat.lv=0; // woke = เรียกจากตอนตื่นเสร็จ (wake อยู่ใน SLEEPM จึงต้องข้ามการเช็ก ไม่งั้นวนตื่นไม่จบ)
  if(!playing){act('curious',2600);return say([['ニャー',1200],['ゴロゴロ…',1400]])}
  goTo((XMIN+XMAX)/2+rr(-10,10),'beg')}
-const GT=k=>DUR[k].reduce((a,b)=>a+b,0),GROOM_T=GT('groom');function groom(k='groom'){cat.gk=k;setMode('groom',GT(k)*2)} // เริ่มที่อุ้งเท้าหน้า/หน้าเสมอ แล้วต่อขาหลัง 60% (เลียไล่จากหัวลงหาง Eckstein & Hart 2000)
+const GT=k=>DUR[k].reduce((a,b)=>a+b,0);function groom(k='groom'){cat.gk=k;setMode('groom',GT(k)*2)} // เริ่มที่อุ้งเท้าหน้า/หน้าเสมอ แล้วต่อขาหลัง 60% (เลียไล่จากหัวลงหาง Eckstein & Hart 2000)
 // เล่นท่าใดก็ได้ใน INFO ตามเวลาที่กำหนด แล้วกลับมานั่ง (ไว้ผูกกับเหตุการณ์ในแอป เช่น ตอบถูก = act('happy',1600))
 function act(k,ms){cat.pose=k;cat.beg=0;setMode('pose',ms)}
 // น้ำหนักการตัดสินใจตามช่วงเวลาจริงของเครื่อง (รายงาน reports/พฤติกรรมแมวบ้าน… 2026-11-19): แมวจริงคึกช่วงเช้า/เย็น ง่วงช่วงเที่ยงและกลางคืน
@@ -1569,7 +1568,7 @@ function poke(z,x,y){const m=cat.mode,h=headAt();cat.beg=0; // แตะระ�
  cat.tol+=TAPW[z]||1;const lv=tolLv();
  if(z==='sleep'){fx('tap',x,y);if(m!=='wake')setMode('wake',1400);return} // หลับ/งีบ: ตื่น
  if(z==='move')return fx('tap',x,y); // กำลังเดิน/วิ่ง/หันตัว: ไม่ตัดกลางก้าว
- if(lv>=3)return leave(h);
+ if(lv>=3)return leave();
  if(lv>=1||z==='tail'||z==='belly'){fx('tap',x,y,{c:FX});if(cat.k==='belly'&&lv<2)return forceIdle('flick'); // แตะพุงตอนโชว์พุง: ปลายหางสะบัด (โชว์พุง = ทักทาย ไม่ใช่ให้ลูบพุง)
   const a=Math.max(1,lv);if(a>1&&!(m==='annoy'&&cat.lv>1)){fx('vein',h.x+15,h.y+3);say([['ムッ',1100]])}cat.lv=a;return setMode('annoy',a>1?1600:1300)}
  const busy=m==='pose'&&cat.pose!=='curious'; // กำลังเล่นท่าตามเหตุการณ์ (กิน ดีใจ): ไม่ขัด มีแค่เอฟเฟกต์
@@ -1579,7 +1578,7 @@ function poke(z,x,y){const m=cat.mode,h=headAt();cat.beg=0; // แตะระ�
   const ln=LINE&&Math.random()<Math.min(.9,.65*pk('voc'))?LINE('pat'):'';return say([['ゴロゴロ…',ln?1300:1800]],ln)}
  fx('tap',x,y);if(busy)return;if(m!=='notice')say([['ニャ？',900]],MAIN);setMode('notice',1300)} // แตะตัว: หันมอง หูกระดิก แล้วพูดประโยคหลักอีกครั้ง
 // ขั้นที่ 3: ぷいっ แล้วเดินหนีไปอีกฝั่ง เลียขน (เลียขนหลังเครียด) พักราว 15–20 วิ · ปิดแอนิเมชัน: ไม่เดิน แค่ทำหน้ารำคาญแล้วพัก
-function leave(h){say([['ぷいっ',1300]]);cat.lv=0;cat.pend=null;
+function leave(){say([['ぷいっ',1300]]);cat.lv=0;cat.pend=null;
  if(!playing){cat.cool=rr(15000,20000)*pk('cool');return setMode('annoy',1300)}
  if(boxOn()&&Math.abs(cat.x-BOX.cx)>8)return goTo(BOX.cx,'boxhide'); // วันที่มีกล่อง: หนีไปมุดกล่องแทน (ที่หลบช่วยให้แมวฟื้นจากความเครียดเร็วขึ้น Vinke 2014)
  goTo(cat.x<(XMIN+XMAX)/2?XMAX-rr(0,10):XMIN+rr(0,10),'leave')}
@@ -1666,7 +1665,7 @@ function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream'
  cv.addEventListener('pointerdown',e=>{const[x,y]=pt(e),X=Math.round(cat.x);if(!(x>=X+4&&x<=X+44&&y>=CY+4&&y<=CY+46))return;const z=zoneAt(x,y);
   if(z!=='head'||cat.k==='belly'||cat.cool>0)return poke(z,x,y);
   endHold(false);fx('hold',x,y);hold={x,y,tm:setTimeout(()=>{if(!hold)return;hold.done=1;dropHold();if(!slowBlink(1))poke('head',hold.x,hold.y)},HOLD)};
-  try{cv.setPointerCapture(e.pointerId)}catch(_){}});
+  try{cv.setPointerCapture(e.pointerId)}catch(err){console.warn('จับนิ้วไว้ที่ฉากแมวไม่ได้',err)}});
  cv.addEventListener('pointerup',()=>endHold(true));cv.addEventListener('pointercancel',()=>endHold(false));
  cv.addEventListener('pointermove',e=>{if(!hold||hold.done)return;const[x,y]=pt(e);if(Math.hypot(x-hold.x,y-hold.y)>6)endHold(true)}); // ลากออกไป = นับเป็นแตะ
  cv.addEventListener('contextmenu',e=>e.preventDefault()); // กดค้างไม่ให้เมนูของระบบเด้ง

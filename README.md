@@ -42,6 +42,8 @@ js/main.js              จุดเริ่มต้นแอป (ต้อง
 sw.js, manifest.webmanifest, icons/   ส่วนของ PWA (ใช้ออฟไลน์ และเพิ่มลงหน้าจอโฮม)
 docs/ROADMAP.md         รายการงานที่จะทำต่อ
 CLAUDE.md               คำสั่งสำหรับ Claude Code
+FEATURE_MAP.md          แผนที่ฟีเจอร์: หน้า วิธีเข้า ไฟล์ selector flow ที่ห้ามพัง
+docs/corrections-log.md เรื่องที่ต้องบอก AI ซ้ำ และสถานะการทำเป็นกฎอัตโนมัติ
 ```
 
 ## ลองเปิดในเครื่อง
@@ -62,13 +64,32 @@ repo นี้เป็น public จึงใช้ GitHub Pages ได้ฟ�
 หรือเปิดระบบบัญชีและซิงก์คลาวด์ (ตั้งค่าครั้งเดียวตาม `docs/CLOUD.md`) แล้วเข้าสู่ระบบด้วยอีเมลเดียวกันทุกเครื่อง
 
 ## ปล่อยเวอร์ชันใหม่
-ทุกครั้งที่แก้ไฟล์ ให้เพิ่มเลข `VERSION` ใน `sw.js` ไม่งั้นเครื่องที่เคยเปิดแอปแล้วจะยังเห็นไฟล์เก่า
+ทุกครั้งที่แก้ไฟล์ ให้เพิ่มเลข `VERSION` ใน `sw.js` ไม่งั้นเครื่องที่เคยเปิดแอปแล้วจะยังเห็นไฟล์เก่า (ทุก PR ถูกตรวจอัตโนมัติ ดูหัวข้อ "ทดสอบ")
 
 ## ทดสอบ
-ชุดทดสอบอัตโนมัติ 2 ชุด: `tests/payment.mjs` 11 ข้อ (Edge Function ชำระเงิน กับ Stripe/Supabase จำลอง ต้องใช้ Node 22.18 ขึ้นไป) และ `tests/e2e.js` 36 ข้อ (ข้อมูล, การใช้งานหลัก, ส่งออก/นำเข้า, ซิงก์คลาวด์ด้วย Supabase จำลอง, แพ็กเสียเงินและการซื้อ, iPad แนวตั้ง/นอน, PWA ออฟไลน์) ใช้ Playwright เปิด Chromium จริง
+ชุดทดสอบอัตโนมัติ 4 ชุด: `tests/hooks.js` 10 ข้อ (hook ของ Claude Code ที่ไม่ให้จบงานถ้าโค้ดเปลี่ยนหลัง `npm run check`), `tests/flows.js` 8 ข้อ (flow หลักแบบผู้ใช้จริง: กดปุ่มและอ่านจอผ่าน `data-testid` ไม่เรียกโค้ดภายใน · ดู FEATURE_MAP.md), `tests/payment.mjs` 12 ข้อ (Edge Function ชำระเงิน กับ Stripe/Supabase จำลอง ต้องใช้ Node 22.18 ขึ้นไป) และ `tests/e2e.js` 59 ข้อ (ข้อมูล, การใช้งานหลัก, สัตว์เลี้ยงและแมวพิกเซล, สถานที่และแผนที่เมือง, ส่งออก/นำเข้า, ซิงก์คลาวด์ด้วย Supabase จำลอง, แพ็กเสียเงินและการซื้อ, iPad แนวตั้ง/นอน, PWA ออฟไลน์) ใช้ Playwright เปิด Chromium จริง
 ```
 npm install
 npx playwright install chromium   # ครั้งแรกครั้งเดียว
 npm test
 ```
+ทุกข้อเก็บภาพหน้าจอและ console log ไว้ใน `test-results/` (ไม่ commit · สรุปใน `test-results/<ชุด>/summary.md`) · ใน Claude Code ใช้ skill `verify-app` ตรวจและสรุปผลก่อนบอกว่าเสร็จ
+
 ควรรันก่อนปล่อยเวอร์ชันใหม่ทุกครั้ง ส่วนการทดสอบบน iPad Safari จริง (Apple Pencil, safe-area) ยังต้องลองด้วยมือ
+
+**ตรวจทั้งหมดด้วยคำสั่งเดียว**: `npm run check` = type check (`tsc` strict) → lint (ESLint) → schema (`tests/data-schema.js` ทดสอบตัวตรวจข้อมูลด้วยข้อมูลที่ผิดโดยตั้งใจ) → data (`npm run validate:data` ตรวจคันจิ คำศัพท์ บทสนทนา ตาม schema ใน `tools/data-schema.js`) → determinism (`tests/check-determinism.js` ข้อทดสอบที่จำลองพฤติกรรมแมวต้องปิดอารมณ์รายวันและตรึงนาฬิกาฉาก) → featuremap (`tests/check-feature-map.js` ทุกข้อที่ FEATURE_MAP อ้างมีอยู่จริง) → version (`tests/check-version.js` แก้ไฟล์แล้วต้องเพิ่ม `VERSION` ใน `sw.js` · เทียบกับ `origin/main` หรือตัวแปร `CHECK_BASE`) → test-count (`tests/check-test-count.js` จำนวนข้อทดสอบแต่ละไฟล์ต้องไม่น้อยกว่าฐานเดียวกัน) → unit (`tests/payment.mjs`) → hooks (`tests/hooks.js`) → e2e (`tests/e2e.js`) → flows (`tests/flows.js`) แล้วสรุปเป็นตาราง และบันทึกผลใน `test-results/check-stamp.json` · lint ของโค้ดเดิมแก้ครบแล้ว (บันทึกใน `docs/LINT_PLAN.md`) · แผนย้ายไป TypeScript ใน `docs/TYPESCRIPT_PLAN.md`
+
+**GitHub Actions** (`.github/workflows/test.yml`) รันให้เองทุก push และทุก PR:
+- **npm run check**: ผิดกฎข้อไหนก็แดง
+- **เพิ่มเลข VERSION แล้ว** (เฉพาะ PR): `VERSION` ใน `sw.js` ต้องมากกว่าของ branch ปลายทาง · รันเองได้ด้วย `node tests/check-version.js origin/main`
+
+ให้ GitHub ห้าม merge เมื่อไม่ผ่าน: Settings → Branches → เพิ่มกฎของ `main` → Require status checks to pass → เลือก "เพิ่มเลข VERSION แล้ว" และ "npm run check"
+
+## สั่งงาน Claude Code
+**งานที่ต้องการเห็นแผนและอนุมัติก่อนแก้ ให้เปิด plan mode ก่อนส่งข้อความ** อย่าเขียนว่า "เสนอก่อน อย่าเพิ่งแก้" ไว้ในข้อความ
+- เปิด plan mode
+  - ในเทอร์มินัล: กด Shift+Tab จนขึ้น `plan mode on`
+  - ในแอป Claude หรือเว็บ: เลือกโหมด Plan ที่ปุ่มเลือกโหมดข้างช่องพิมพ์
+- ระหว่างอยู่ใน plan mode Claude อ่านไฟล์ ค้นหา และเขียนแผนได้ แต่แก้ไฟล์หรือรันคำสั่งที่เปลี่ยนอะไรไม่ได้ จนกว่าเจ้าของจะกดอนุมัติแผน
+- ถ้าอนุมัติแค่บางส่วน ให้ตอบกลับว่าจะเปลี่ยนตรงไหน Claude จะแก้แผนแล้วส่งมาให้อนุมัติใหม่
+- งานที่สั่งชัดเจนแล้ว (เช่น "ทำต่อเลย 2ข") ใช้โหมดปกติได้
