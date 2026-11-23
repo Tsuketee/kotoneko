@@ -17,7 +17,8 @@
 | test ทั้งหมด | `npm test` (= `node tests/payment.mjs && node tests/hooks.js && node tests/e2e.js && node tests/flows.js` ราว 3 นาที · หลักฐานใน `test-results/`) |
 | test เฉพาะข้อ | `node tests/e2e.js <คำในชื่อข้อ>` หรือ `node tests/flows.js <คำในชื่อข้อ>` |
 | ภาพแมวพิกเซล | `node tests/pet-grid.js <โฟลเดอร์ผลลัพธ์>` |
-| ตรวจทั้งหมด | `npm run check` (type → lint → determinism → featuremap → version → test-count → unit → hooks → e2e → flows · ทุก push/PR บน CI ต้องผ่าน) |
+| ตรวจข้อมูล | `npm run validate:data` (คันจิ คำศัพท์ บทสนทนา ตาม schema ใน `tools/data-schema.js` · รายงานเต็ม `test-results/validate-data.md` · ห้ามแก้ข้อมูลเพื่อให้ผ่านโดยไม่ถามเจ้าของ) |
+| ตรวจทั้งหมด | `npm run check` (type → lint → schema → data → determinism → featuremap → version → test-count → unit → hooks → e2e → flows · ทุก push/PR บน CI ต้องผ่าน) |
 | lint / type check | `npm run lint` · `npm run typecheck` (type ตรวจเฉพาะ `.ts` · แผนย้ายไป TypeScript ใน `docs/TYPESCRIPT_PLAN.md`) |
 
 Hook (`.claude/settings.json`) รัน lint/type ของไฟล์ที่เพิ่งแก้ให้ทันที ถ้าขึ้น error ให้แก้ก่อนทำต่อ
