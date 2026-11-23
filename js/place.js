@@ -50,3 +50,11 @@ ${px ? '' : tk}</div>
 <div class="st scl${px ? ' px' : ''}"><span><span class="scj">${rb(p.jp)}</span> ${p.n}${p.cats.length ? ' · ทบทวนคำหมวด' + p.note + 'ก่อน' : ' · ' + p.note}</span>${px ? tk : ''}</div>`;
 }
 // หน้าต่างเลือกที่เที่ยว placeAsk() เป็นแผนที่เมืองพิกเซล อยู่ใน js/town.js
+// ---------- หน้าต่าง "ไปเที่ยว": ต่อแผนที่เมือง (window.TownMap ใน js/town.js) เข้ากับข้อมูลของแอป · ย้ายจาก js/town.js (ถอนวัชพืชข้อ 17) ----------
+function placeAsk() {
+  const st = plState(), sp = (M.pet && M.pet.sp) || 0;
+  TownMap.ask({ places: PLACES, at: st.at, has: plHas, count: p => plCount(p.unlock.cats), rb, icon: icx,
+    cat: sp === 0 && window.PixelCat ? { coat: M.pet.coat, acc: M.pet.acc } : null, emoji: SPC[sp][0],
+    season: () => window.PixelCat ? PixelCat.season() : ['spring', 'summer', 'autumn', 'winter'][((new Date().getMonth() + 10) % 12) / 3 | 0], tod: plTod, date: () => new Date(),
+    go: (id, close) => { st.at = id; if (!st.fam) st.fam = {}; plSave(st); close(); render(); toast(icx('paw', 16) + ' ถึง' + placeOf(id).n + 'แล้ว') } }); // เรียกตอนแมวเดินไปถึงแล้ว
+}

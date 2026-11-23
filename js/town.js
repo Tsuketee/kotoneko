@@ -3,7 +3,7 @@
 // ตำแหน่งของแต่ละที่อยู่ในช่อง map ของ js/data/places.js ({at: จุดอาคาร (ปลายเส้นชี้), lb: จุดกลางป้าย, cat: จุดเท้าแมว}) · อาคารวาดใน SITE ของไฟล์นี้
 // เพิ่มสถานที่ใหม่: ต้องมีทั้งฉากใน SCENES ช่อง map และอาคารใน SITE (ชุดทดสอบตรวจ) · แปลงว่าง LOTS คือที่ที่เผื่อไว้ เมืองจริงจะมีของแบบนั้นตรงนั้น
 // ภาพนิ่งแคชต่อ (ฤดู · ที่ที่ล็อก · เทศกาล) ส่วนขยับวาดทุกเฟรม: รถไฟ ไม้กั้นทางข้ามรถไฟ ธงปลาคาร์ป แมว ของตกตามฤดู แสงตามเวลา · ปิดแอนิเมชันในระบบ = นิ่ง
-// ห่อใน IIFE ส่งออก window.TownMap · placeAsk() ท้ายไฟล์ต่อแผนที่เข้ากับข้อมูลของแอป · ต้นแบบเดิม docs/town-map.html ลบแล้ว (git b3e20b8)
+// ห่อใน IIFE ส่งออก window.TownMap · placeAsk() ที่ต่อแผนที่เข้ากับข้อมูลของแอปอยู่ js/place.js · ต้นแบบเดิม docs/town-map.html ลบแล้ว (git b3e20b8)
 (() => {
 'use strict';
 const W = 160, H = 340;
@@ -306,11 +306,3 @@ ${pl.map(p => `<button type="button" class="tmp" data-p="${p.id}"></button>`).jo
   return { close, info: id => info(pl.find(p => p.id === id) || null) } }
 window.TownMap = { W, H, LOTS, SITE, PAL, mount, ask, festOf, trainHead, base, trip, paths: { RIVER, RAIL, MAIN, ONS, SHOT, WEST, HILL, SCH, RES1, RES2, RES3, LANES }, cross };
 })();
-// ---------- ต่อเข้ากับแอป (แทนรายการสถานที่แบบเดิม) ----------
-function placeAsk() {
-  const st = plState(), sp = (M.pet && M.pet.sp) || 0;
-  TownMap.ask({ places: PLACES, at: st.at, has: plHas, count: p => plCount(p.unlock.cats), rb, icon: icx,
-    cat: sp === 0 && window.PixelCat ? { coat: M.pet.coat, acc: M.pet.acc } : null, emoji: SPC[sp][0],
-    season: () => window.PixelCat ? PixelCat.season() : ['spring', 'summer', 'autumn', 'winter'][((new Date().getMonth() + 10) % 12) / 3 | 0], tod: plTod, date: () => new Date(),
-    go: (id, close) => { st.at = id; if (!st.fam) st.fam = {}; plSave(st); close(); render(); toast(icx('paw', 16) + ' ถึง' + placeOf(id).n + 'แล้ว') } }); // เรียกตอนแมวเดินไปถึงแล้ว
-}
