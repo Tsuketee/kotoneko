@@ -25,6 +25,12 @@ test('คันจิผิด: ไม่ใช่คันจิ 1 ตัว ·
   has(rules(Kanji, { ...K, strokes: 0 }), 'จำนวนขีด');
   has(rules(Kanji, { ...K, source: undefined }), 'แหล่งที่มา');
 });
+test('แหล่งที่มาเป็นตำราที่ห้ามใช้ ไม่ผ่าน (ทุกประเภทข้อมูล · ไม่สนตัวพิมพ์เล็กใหญ่ · ชื่อญี่ปุ่นด้วย) · แหล่งอื่นผ่าน', () => {
+  for (const s of ['Irodori Starter บทที่ 3', 'いろどり 初級1', 'Minna no Nihongo I', 'みんなの日本語 第5課', 'GENKI II', 'げんき 3'])
+    for (const [schema, rec] of [[Kanji, K], [Vocab, { word: '日本', reading: 'にほん', meaning: 'ญี่ปุ่น' }], [Dialogue, { title: 'ทัก (สุภาพ)', register: 'สุภาพ', lines: [{ speaker: 'a', text: 'b', translation: 'แปล' }] }]])
+      has(rules(schema, { ...rec, source: s }), 'ห้ามใช้');
+  assert.deepStrictEqual(rules(Kanji, { ...K, source: 'KANJIDIC2 (EDRDG) · ความหมายไทยเขียนเอง' }), []);
+});
 const W = { word: '日本', reading: 'にほん', meaning: 'ญี่ปุ่น', source: 'เขียนเอง' }, set = new Set(['日', '本', '時']);
 test('คำศัพท์: ถูกต้องผ่าน · คำอ่านมีคันจิ/ตัวโรมัน/เครื่องหมายไม่ผ่าน · ความหมายไม่ใช่ไทยไม่ผ่าน', () => {
   assert.deepStrictEqual(rules(Vocab, W), []);

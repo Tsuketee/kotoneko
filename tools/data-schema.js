@@ -13,7 +13,10 @@ const SEP = /[・/]/u;                                      // ตัวคั�
 const NONE = '-';                                          // ไม่มีคำอ่านแบบนี้
 
 const thai = z.string().trim().min(1, 'ความหมายภาษาไทยว่าง').regex(THAI, 'ความหมายต้องมีภาษาไทย');
-const source = z.string({ error: 'ไม่มีแหล่งที่มา' }).trim().min(1, 'แหล่งที่มาว่าง');
+// ตำราเชิงพาณิชย์ที่ห้ามใช้เนื้อหา (CLAUDE.md · NOTICE.md) ชื่อเหล่านี้จึงเป็นแหล่งที่มาไม่ได้
+const BANNED = /irodori|いろどり|minna\s*no\s*nihongo|みんなの日本語|genki|げんき/iu;
+const source = z.string({ error: 'ไม่มีแหล่งที่มา' }).trim().min(1, 'แหล่งที่มาว่าง')
+  .refine(s => !BANNED.test(s), 'แหล่งที่มาเป็นตำราที่ห้ามใช้เนื้อหา (Irodori · Minna no Nihongo · Genki) ต้องเขียนเองหรือใช้ข้อมูลเปิดที่อนุญาตเชิงพาณิชย์');
 const readings = (re, msg) => z.string().min(1, 'คำอ่านว่าง').refine(s => s === NONE || s.split(SEP).every(r => re.test(r)), msg);
 
 const Kanji = z.object({
