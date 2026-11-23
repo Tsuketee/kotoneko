@@ -21,7 +21,7 @@ description: ตรวจแอป Kotoneko เหมือนผู้ใช้
    ถ้าจะไปขั้น 5 ทันทีโดยไม่แก้อะไรระหว่างนั้น ข้ามขั้นนี้ได้ แล้วใช้ภาพและ log ของ flows จาก `npm run check` ในขั้น 5 แทน (อยู่ที่ `test-results/flows/` เหมือนกัน) จะได้ไม่รัน flows ซ้ำ · ขั้น 5 ต้องรัน `npm run check` เต็มชุดเสมอ เพราะ hook Stop ยอมรับเฉพาะการรันครบทุกขั้น
 4. รันข้อ e2e ของฟีเจอร์ที่เกี่ยวข้อง: บรรทัด **test** ของ FEATURE_MAP เขียนเป็น `e2e.js "<คำ>"` ให้ใช้คำนั้นตรงๆ เช่น
    `node tests/e2e.js "ไวยากรณ์:"` (ชุดนี้เปิด server ของตัวเอง · ถ้าขึ้น `ผ่านทั้งหมด 0 ข้อ` แปลว่าคำไม่ตรงชื่อข้อ ให้แก้ FEATURE_MAP)
-5. ก่อนบอกว่าเสร็จ รันทั้งชุด: `npm run check` (type → lint → determinism → featuremap → version → unit → hooks → e2e → flows ราว 3–4 นาที · ขั้น version ตรวจเลข VERSION ให้แล้ว)
+5. ก่อนบอกว่าเสร็จ รันทั้งชุด: `npm run check` (type → lint → determinism → featuremap → version → test-count → unit → hooks → e2e → flows ราว 3–4 นาที · ขั้น version ตรวจเลข VERSION ให้แล้ว)
 6. ถ้าแก้แมวพิกเซลหรือฉาก ให้รัน `node tests/pet-grid.js test-results/pet-grid` เพิ่มด้วย
 
 ## 3. เปิดดูภาพหน้าจอ

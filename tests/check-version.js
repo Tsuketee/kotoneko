@@ -1,7 +1,7 @@
 // ตรวจว่าเพิ่มเลข VERSION ใน sw.js แล้ว (กฎใน CLAUDE.md: แก้ไฟล์ไหนก็ตามต้องเพิ่ม VERSION ไม่งั้นเครื่องผู้ใช้จะยังเห็นไฟล์เก่าจากแคช)
 // รัน: node tests/check-version.js <ref ฐาน>   เช่น  node tests/check-version.js origin/main
 // GitHub Actions รันให้ทุก PR (.github/workflows/test.yml) โดยเทียบกับ branch ปลายทางของ PR
-// npm run check รันให้ทุกครั้ง (ขั้น version ใน tools/check.js · ฐาน = ตัวแปร VERSION_BASE ถ้าไม่ตั้งใช้ origin/main)
+// npm run check รันให้ทุกครั้ง (ขั้น version ใน tools/check.js · ฐาน = ตัวแปร CHECK_BASE ถ้าไม่ตั้งใช้ origin/main)
 // ผ่าน = VERSION ของงานนี้มากกว่าของฐาน หรือไฟล์ทุกไฟล์ที่ git ติดตามเหมือนฐาน (เช่น main หลัง merge) · ไม่ผ่าน = แก้ไฟล์แล้วแต่ VERSION เท่าเดิม ลดลง หรือรูปแบบผิด (exit code 1)
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
 const base = process.argv[2];

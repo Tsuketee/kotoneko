@@ -77,7 +77,7 @@ npm test
 
 ควรรันก่อนปล่อยเวอร์ชันใหม่ทุกครั้ง ส่วนการทดสอบบน iPad Safari จริง (Apple Pencil, safe-area) ยังต้องลองด้วยมือ
 
-**ตรวจทั้งหมดด้วยคำสั่งเดียว**: `npm run check` = type check (`tsc` strict) → lint (ESLint) → determinism (`tests/check-determinism.js` ข้อทดสอบที่จำลองพฤติกรรมแมวต้องปิดอารมณ์รายวันและตรึงนาฬิกาฉาก) → featuremap (`tests/check-feature-map.js` ทุกข้อที่ FEATURE_MAP อ้างมีอยู่จริง) → version (`tests/check-version.js` แก้ไฟล์แล้วต้องเพิ่ม `VERSION` ใน `sw.js` · เทียบกับ `origin/main` หรือตัวแปร `VERSION_BASE`) → unit (`tests/payment.mjs`) → hooks (`tests/hooks.js`) → e2e (`tests/e2e.js`) → flows (`tests/flows.js`) แล้วสรุปเป็นตาราง และบันทึกผลใน `test-results/check-stamp.json` · แผนแก้โค้ดเดิมที่ยังไม่ผ่าน lint อยู่ใน `docs/LINT_PLAN.md` และแผนย้ายไป TypeScript ใน `docs/TYPESCRIPT_PLAN.md`
+**ตรวจทั้งหมดด้วยคำสั่งเดียว**: `npm run check` = type check (`tsc` strict) → lint (ESLint) → determinism (`tests/check-determinism.js` ข้อทดสอบที่จำลองพฤติกรรมแมวต้องปิดอารมณ์รายวันและตรึงนาฬิกาฉาก) → featuremap (`tests/check-feature-map.js` ทุกข้อที่ FEATURE_MAP อ้างมีอยู่จริง) → version (`tests/check-version.js` แก้ไฟล์แล้วต้องเพิ่ม `VERSION` ใน `sw.js` · เทียบกับ `origin/main` หรือตัวแปร `CHECK_BASE`) → test-count (`tests/check-test-count.js` จำนวนข้อทดสอบแต่ละไฟล์ต้องไม่น้อยกว่าฐานเดียวกัน) → unit (`tests/payment.mjs`) → hooks (`tests/hooks.js`) → e2e (`tests/e2e.js`) → flows (`tests/flows.js`) แล้วสรุปเป็นตาราง และบันทึกผลใน `test-results/check-stamp.json` · แผนแก้โค้ดเดิมที่ยังไม่ผ่าน lint อยู่ใน `docs/LINT_PLAN.md` และแผนย้ายไป TypeScript ใน `docs/TYPESCRIPT_PLAN.md`
 
 **GitHub Actions** (`.github/workflows/test.yml`) รันให้เองทุก push และทุก PR:
 - **npm run check**: ผิดกฎข้อไหนก็แดง
