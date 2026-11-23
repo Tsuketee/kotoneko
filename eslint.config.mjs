@@ -31,16 +31,6 @@ const OWN = Object.fromEntries(APP.map(f => [f, declared(f)]));
 const EXPORTED = { PixelCat: 'readonly', TownMap: 'readonly' }; // window.PixelCat (js/pixelcat.js) · window.TownMap (js/town.js)
 const othersOf = f => Object.assign({}, EXPORTED, ...APP.filter(g => g !== f).map(g => OWN[g]));
 const ALL_APP = Object.assign({}, EXPORTED, ...APP.map(f => OWN[f]));
-// tests/pet-grid.js รันโค้ดในหน้าร่าง docs/pixel-cat10.html (ไม่ใช่แอป) จึงใช้ชื่อระดับบนสุดของสคริปต์ในหน้านั้น
-const DRAFT = (() => {
-  const out = {};
-  for (const [, src] of fs.readFileSync('docs/pixel-cat10.html', 'utf8').matchAll(/<script>([\s\S]*?)<\/script>/g))
-    for (const n of espree.parse(src, { ecmaVersion: 'latest', sourceType: 'script' }).body) {
-      if (n.type === 'FunctionDeclaration') out[n.id.name] = 'readonly';
-      if (n.type === 'VariableDeclaration') for (const d of n.declarations) if (d.id.type === 'Identifier') out[d.id.name] = n.kind === 'const' ? 'readonly' : 'writable';
-    }
-  return out;
-})();
 
 export default tseslint.config(
   { ignores: ['node_modules/**', 'test-results/**', 'docs/**', 'icons/**', 'fonts/**', 'img/**'] },
@@ -101,10 +91,6 @@ export default tseslint.config(
     ...js.configs.recommended,
     languageOptions: { ecmaVersion: 'latest', sourceType: 'commonjs', globals: { ...globals.node, ...globals.browser, ...ALL_APP } },
     rules: { ...js.configs.recommended.rules },
-  },
-  {
-    files: ['tests/pet-grid.js'],
-    languageOptions: { globals: { ...globals.node, ...globals.browser, ...DRAFT } },
   },
   {
     files: ['tests/**/*.mjs', 'eslint.config.mjs'],
