@@ -238,6 +238,13 @@ test('คันจิ: เปิดการ์ด พลิก ตอบ "จ�
   await p.locator('button:text-is("จำได้")').click();
   const saved = await p.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('kn5') || '{}')).length);
   assert(saved >= 1);
+  // ข้อมูลคุนแยกโอกุริงานะด้วย . (よ.っつ) แต่บนจอแสดงเป็นวงเล็บ และเสียงอ่านตัดโอกุริงานะออก (เหมือนก่อนเปลี่ยนรูปแบบข้อมูล)
+  const kun = await p.evaluate(() => ['四', '生', '空'].map(c => { const x = K.find(k => k.k === c); return [x.u, rd(x), speakFor(x)] }));
+  assert.deepStrictEqual(kun, [
+    ['よん・よ.っつ', 'シ ・ よん・よ(っつ)', 'よん'],
+    ['い.きる・う.まれる', 'セイ/ショウ ・ い(きる)・う(まれる)', 'い'],
+    ['そら・あ.く・から', 'クウ ・ そら・あ(く)・から', 'そら'],
+  ]);
   assert.deepStrictEqual(p.errors, []);
 });
 

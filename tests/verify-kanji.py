@@ -24,7 +24,7 @@ for k,o,u,m,cat in rows:
         if rt=='ja_on':on.add(kata(rv))
         else:kun.add(hira(rv.split('.')[0].replace('-','')))
     mine_on={kata(x) for x in o.split('/') if x and x!='-'}
-    mine_kun={re.sub(r'\(.*?\)','',x) for x in re.split(r'[・/]',u) if x and x!='-'}
+    mine_kun={re.sub(r'\(.*?\)|\..*','',x) for x in re.split(r'[・/]',u) if x and x!='-'}
     if mine_on-on or mine_kun-kun:bad.append((k,sorted(mine_on-on),sorted(mine_kun-kun)))
 print('คำอ่านที่ KANJIDIC2 ไม่มี:',bad)
 sys.exit(1 if bad else 0)

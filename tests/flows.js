@@ -12,7 +12,7 @@ const VP = { width: 820, height: 1180 }; // iPad Air แนวตั้ง
 // เฉลยคำอ่านคันจิจากเนื้อหาที่ผู้เรียนต้องจำ (js/data/kanji-n5.js) ในรูปแบบที่ตัวเลือกควิซแสดง: ออน ・ คุน (ช่อง - = ไม่มีคำอ่านแบบนั้น)
 const KEY = (() => {
   const raw = /`([^`]*)`/.exec(fs.readFileSync(path.join(ROOT, 'js/data/kanji-n5.js'), 'utf8'))[1], m = {};
-  raw.trim().split('\n').forEach(l => { const [k, o, u] = l.split(','); m[k] = [o, u].filter(v => v && v !== '-').join(' ・ '); });
+  raw.trim().split('\n').forEach(l => { const [k, o, u] = l.split(','); m[k] = [o, u.replace(/\.([^・/]+)/g, '($1)')].filter(v => v && v !== '-').join(' ・ '); });   // ข้อมูลคุน ひと.つ ผู้เรียนเห็นเป็น ひと(つ)
   return m;
 })();
 // ตัวอักษรที่ตารางคานะต้องมีครบ: พื้นฐาน 46 · เสียงขุ่น/กึ่งขุ่น 25 · เสียงควบ 33

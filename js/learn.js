@@ -14,7 +14,9 @@ function srsNext(s,ok,now=Date.now(),rnd=Math.random){s=s?{...s}:{b:0};
  return s}
 const pool=()=>K.filter(x=>(ds!=='a'||ks==='all'||x.sc===ks)&&(cat==='ทั้งหมด'||(cat==='ผิดบ่อย'?(S[x.k]&&S[x.k].w>=2):x.c===cat)));
 // คำอ่าน: ออน ・ คุน โดยข้ามช่องที่เป็น '-' (เช่น 込 畑 ของ N3 เป็นคันจิที่ญี่ปุ่นคิดเอง จึงไม่มีอ่านแบบออน)
-const rds=x=>[x.o,x.u].filter(v=>v&&v!=='-');
+// คุนในข้อมูลแยกโอกุริงานะด้วย . (ひと.つ) แสดงบนจอเป็น ひと(つ) · แพ็กที่ยังใช้วงเล็บแสดงตามเดิม
+const kunShow=u=>u&&u.replace(/\.([^・/]+)/g,'($1)');
+const rds=x=>[x.o,kunShow(x.u)].filter(v=>v&&v!=='-');
 const rd=x=>rds(x).join(' ・ ');
 const sh=a=>a.map(v=>[Math.random(),v]).sort((p,q)=>p[0]-q[0]).map(v=>v[1]);
 function pick1(){const p=pool(),n=Date.now();
@@ -43,7 +45,7 @@ function mkch(){const f=x=>(ds==='a'||qt==='read')?rd(x):x.m;const c=f(cur);
 function nv(i){if(i==='d'||i==='m'||i==='n5'||i==='g'){view=i}else{view='s';ds=i;K=DS[i].d;CATS=['ทั้งหมด',...new Set(K.map(x=>x.c))];cat='ทั้งหมด';S=load();mode=i==='a'?'chart':'card';wi=0;ci=0;st=[];prac=0;cur=null;ch=null;ans=null;fl=false}render()}
 const EXT={o:['ออน','on'],k:['คุน','kun'],s:['พิเศษ','sp']};
 function exHtml(c){if(ds!=='k'||!EX[c.k])return'';return `<div class="ex"><div class="exh">ตัวอย่างการใช้</div>${EX[c.k].map(e=>`<div class="er" data-t="${e[1]}" onclick="event.stopPropagation();speak(this.dataset.t)"><span class="et ${EXT[e[3]][1]}">${EXT[e[3]][0]}</span><span class="ew">${e[0]}</span><span class="ed"><b>${e[1]}</b> ${e[2]}</span></div>`).join('')}</div>`}
-function speakFor(x){if(ds==='a')return x.k;if(ds==='k')return x.u&&x.u!=='-'?x.u.split('・')[0].replace(/\(.*?\)/g,''):x.o.split('/')[0];return x.o}
+function speakFor(x){if(ds==='a')return x.k;if(ds==='k')return x.u&&x.u!=='-'?x.u.split('・')[0].replace(/\(.*?\)|\..*$/g,''):x.o.split('/')[0];return x.o}
 function speak(t){if(!t)return;if(!('speechSynthesis' in window))return toast('เครื่องนี้ยังไม่รองรับเสียงอ่าน');try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='ja-JP';u.rate=.85;const v=speechSynthesis.getVoices().find(v=>/^ja/i.test(v.lang));if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){console.warn('เล่นเสียงอ่านไม่ได้',e);toast('เล่นเสียงไม่ได้ค่ะ')}}
 const spHtml=x=>`<button class="sp" data-t="${speakFor(x).replace(/"/g,'')}" onclick="event.stopPropagation();speak(this.dataset.t)">${IC.vol} ฟังเสียง</button>`;
 const mnHtml=x=>ds==='a'&&MN[x.k]?`<div class="ex"><div class="exh">เคล็ดจำ</div><div class="mn">${MN[x.k]}</div></div>`:'';
