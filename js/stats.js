@@ -10,7 +10,9 @@ function creditsHtml(){return `<h2>เกี่ยวกับและเคร
 <div class="st" style="margin-top:10px;line-height:1.7"><b>ข้อมูลลำดับขีด</b> (ที่ใช้ในโหมดฝึกเขียน) มาจากโปรเจกต์ <a href="https://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a> © Ulrich Apel และผู้ร่วมพัฒนา เผยแพร่ภายใต้สัญญาอนุญาต <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a> ข้อมูลที่นำมาใช้ถูกจัดรูปแบบใหม่เป็น JavaScript โดยไม่แก้ค่าพิกัดของเส้น<br><br><b>รายการคันจิและคำอ่าน</b> ตรวจสอบและเสริมด้วยข้อมูลจาก <a href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project" target="_blank" rel="noopener">KANJIDIC2</a> ของ Electronic Dictionary Research and Development Group (EDRDG) ใช้ภายใต้ <a href="https://www.edrdg.org/edrdg/licence.html" target="_blank" rel="noopener">สัญญาอนุญาตของ EDRDG</a><br><br><b>คำศัพท์ บทสนทนา บทเรียนไวยากรณ์ และบทพูดของสัตว์เลี้ยง</b> เขียนขึ้นเองสำหรับแอปนี้<br>เนื้อหาในแอปมีไว้เพื่อการเรียนรู้ ไม่รับรองว่าตรงกับข้อสอบ JLPT ทุกข้อ</div></details>`}
 // ===== ส่งออก/นำเข้าความคืบหน้า =====
 const PK=[...new Set([DS.a.key,...Object.values(LKEY).flatMap(o=>Object.values(o)),MK])]; // ความคืบหน้าทุกระดับ (ไม่ใช่แค่ระดับที่เปิดอยู่)
-function exportProg(){const data={};PK.forEach(k=>{const v=readJSON(k);if(v!==undefined)data[k]=v});
+// อ่านความคืบหน้าทุก key ใน PK วิธีเดียว ใช้ทั้งส่งออกไฟล์และซิงก์คลาวด์ (js/cloud.js)
+function snapshot(){const d={};PK.forEach(k=>{const v=readJSON(k);if(v!==undefined)d[k]=v});return d}
+function exportProg(){const data=snapshot();
  const o={app:'kanji-app',format:1,exported:new Date().toISOString(),data},b=new Blob([JSON.stringify(o)],{type:'application/json'}),a=document.createElement('a');
  a.href=URL.createObjectURL(b);a.download='kanji-progress-'+dstr(new Date())+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('ส่งออกแล้วค่ะ')}
 function importProg(el){const f=el.files[0];el.value='';if(!f)return;const r=new FileReader();

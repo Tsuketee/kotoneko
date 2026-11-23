@@ -622,6 +622,9 @@ test('ส่งออก/นำเข้า: ข้อมูลกลับม�
   await dl.saveAs(f);
   const o = JSON.parse(fs.readFileSync(f, 'utf8'));
   assert(o.app === 'kanji-app' && o.data.kw1 && o.data.kn_meta);
+  assert.deepStrictEqual(o.data, await p.evaluate(() => snapshot()), 'ไฟล์ส่งออกต้องเป็นข้อมูลชุดเดียวกับที่ซิงก์ขึ้นคลาวด์ (snapshot ใน js/stats.js)');
+  const readers = fs.readdirSync(path.join(ROOT, 'js')).filter(x => x.endsWith('.js') && /PK\.(forEach|map|reduce)\(k\s*=>\s*\{?\s*const v\s*=\s*readJSON/.test(fs.readFileSync(path.join(ROOT, 'js', x), 'utf8')));
+  assert.deepStrictEqual(readers, ['stats.js'], 'อ่านความคืบหน้าทุก key ต้องผ่าน snapshot() ใน js/stats.js วิธีเดียว');
   await p.evaluate(() => localStorage.removeItem('kw1')); p.on('dialog', d => d.accept());
   await Promise.all([p.waitForNavigation(), p.setInputFiles('#imp', f)]);
   assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kw1'))['テスト'].b), 3);
