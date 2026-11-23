@@ -1,75 +1,71 @@
-# ส่งต่องาน · session 2026-11-22 รอบสี่ (โครงสร้างตรวจอัตโนมัติ)
+# ส่งต่องาน · session 2026-11-22 → 23 (branch `claude/beautiful-hamilton-o3aobm` · v137–v167)
 
 อ่านไฟล์นี้ก่อนเริ่ม session ใหม่ แล้วอ่าน `CLAUDE.md` และ `FEATURE_MAP.md` · งานแมวพิกเซล/แผนที่อยู่ใน `docs/PET_PIXEL.md`
 
-## สถานะ (อัปเดต 2026-11-23 · v159)
-- **branch** `claude/beautiful-hamilton-o3aobm` (v137–v159 · ต่อจาก `claude/affectionate-hypatia-hmsdap` ที่หยุดที่ v142) **ยังไม่มี PR และยังไม่อยู่ใน main** · main อยู่ที่ v136 (PR #27)
-- เจ้าของตกลงว่าจะเปิด PR เมื่อ CI เขียว · ในเครื่อง `npm run check` ผ่านครบแล้ว รอดูผล CI จริงบน GitHub
-- ถ้า PR ของ branch นี้ merge แล้ว ให้เริ่ม branch ใหม่จาก main ล่าสุด (งานที่ push หลัง merge จะค้างนอก main)
-- **ผล `npm run check` ล่าสุด** (v159 · exit 0 · ผ่านทั้งหมด 10 ขั้น):
-
-| ขั้น | ผล |
-|---|---|
-| type (`tsc` strict เฉพาะ `.ts`) | ✅ |
-| lint (ESLint) | ✅ 0 error (เดิม 134 · แก้ครบทุกกลุ่มตาม `docs/LINT_PLAN.md`) |
-| determinism · featuremap · version · test-count | ✅ |
-| unit (`tests/payment.mjs`) | ✅ 12/12 |
-| hooks (`tests/hooks.js`) | ✅ 10/10 |
-| e2e (`tests/e2e.js`) | ✅ 59/59 |
-| flows (`tests/flows.js`) | ✅ 8/8 |
+## สถานะ
+- **PR [Tsuketee/kotoneko#28](https://github.com/Tsuketee/kotoneko/pull/28)** (v137–v166 + บันทึกนี้ v167) เปิดแล้ว **ยังไม่ merge** · CI ของ v166 ผ่านทุกขั้น ([run #27](https://github.com/Tsuketee/kotoneko/actions/runs/45103890986)) · main อยู่ที่ v136
+- ถ้า PR #28 merge แล้ว ให้เริ่ม branch ใหม่จาก main ล่าสุด (งานที่ push หลัง merge จะค้างนอก main)
+- **`npm run check` ล่าสุด ผ่านทั้ง 12 ขั้น**: type · lint (0) · schema 8/8 · data (validate:data 0 จุด) · determinism 5/5 · featuremap · version · test-count · unit (payment 12/12) · hooks 10/10 · e2e 60/60 · flows 8/8
 
 ## เริ่ม session ใหม่ต้องทำก่อน
-1. `npm ci` (container ใหม่ไม่มี `node_modules` · ESLint/tsc/hook ต้องใช้) · Chromium ของ Playwright ติดตั้งในเครื่องอยู่แล้ว
-2. hook ตรวจไฟล์ (`.claude/settings.json` → `tools/hooks/check-file.js`) จะเริ่มทำงานตั้งแต่ session ใหม่ · แก้ไฟล์ที่มี lint error เดิมแล้วจะขึ้นรายการ error ทั้งไฟล์ เป็นเรื่องปกติจนกว่าจะแก้ตาม LINT_PLAN
-3. skill `verify-app` เรียกใช้ได้แล้ว (`/verify-app`) · ใช้ก่อนบอกว่าเสร็จทุกครั้ง
+1. `npm ci` (container ใหม่ไม่มี `node_modules`) · Chromium ของ Playwright มีในเครื่องแล้ว
+2. `git fetch origin main` ก่อนรัน check (ขั้น version/test-count เทียบกับ `origin/main` ถ้าค้างเก่าจะเทียบผิดฐาน · session นี้เคยเจอ origin/main ค้างที่ v34)
+3. hook ทำงานเอง: หลังแก้ไฟล์ = lint/type ของไฟล์นั้น · ก่อนจบ turn = ต้องรัน `npm run check` กับโค้ดล่าสุดแล้ว (ราว 4 นาที) · เรียก `/verify-app` ก่อนบอกว่าเสร็จ
 
-## ทำไปใน session นี้
+## งานที่ทำใน session นี้
 | เวอร์ชัน | งาน |
 |---|---|
-| v137 | ย้ายบันทึกส่งต่องานรอบสามจาก branch เก่ามาไว้ branch นี้ |
-| v138 | CI ตรวจ VERSION ทุก PR (`tests/check-version.js`) · README แก้จำนวนข้อทดสอบ |
-| v139 | `CLAUDE.md` ใหม่ (สั้น) · `FEATURE_MAP.md` (21 ฟีเจอร์) · `docs/corrections-log.md` |
-| v140 | `tests/flows.js` 7 flow แบบผู้ใช้จริง · data-testid 37 จุด · ภาพหน้าจอ + console log ทุกข้อใน `test-results/` (`tests/artifacts.js`) · skill `verify-app` |
-| v141 | `tsconfig.json` strict · `eslint.config.mjs` (กฎชั้น: localStorage เฉพาะ core/level/stats/cloud/packs · fetch เฉพาะ cloud · js/data ห้ามแตะ DOM) · `npm run check` (`tools/check.js`) · CI ทุก push/PR · hook · `docs/TYPESCRIPT_PLAN.md` `docs/LINT_PLAN.md` |
-| v142 | บันทึกนี้ |
+| v137–v142 | (รอบก่อนหน้าใน branch `claude/affectionate-hypatia-hmsdap`) CI ตรวจ VERSION · CLAUDE.md สั้น · FEATURE_MAP · corrections-log · flows แบบผู้ใช้จริง · tsc strict · ESLint กฎแบ่งชั้น · `npm run check` · hook ตรวจไฟล์ |
+| v143 | **ฝึกเขียนด้วยนิ้วได้** + กันฝ่ามือ (`PALM_MS` 1 วินาที · ปากกาแตะลงระหว่างนิ้วลากลบเส้นนิ้ว) · flows 06b |
+| v144 | corrections-log 1ก–1จ |
+| v145 | **Stop hook** ไม่ให้จบ turn ถ้าโค้ดเปลี่ยนหลัง check (`tools/hooks/stop-check.js` · `tests/hooks.js`) |
+| v146 | README หัวข้อ "สั่งงาน Claude Code" (plan mode) |
+| v147–v148 | ขั้น determinism + แก้ test แมว 3 ข้อให้ผลเท่ากันทุกวัน |
+| v149 | FEATURE_MAP อ้าง e2e ด้วยคำในชื่อข้อ + ขั้น featuremap |
+| v150 | SKILL verify-app 3ข–3ฉ · console error มี URL ต้นทาง |
+| v151–v154 | ESLint `noInlineConfig` · ขั้น version · ลบ DoD ข้อ 1 · ขั้น test-count (`CHECK_BASE`) |
+| v155–v159 | **lint 134 → 0** ตาม `docs/LINT_PLAN.md` (ก–จ) · `CLOUD_HOOKS` · ฟังก์ชันที่เก็บข้อมูล `readJSON` `writeJSON` `readStr` `writeStr` ใน `js/level.js` · เขียนในเครื่องไม่ได้แจ้งผู้ใช้ครั้งเดียว · ไม่ไปหน้า Google ถ้าเก็บ code_verifier ไม่ได้ · ฟังเสียงไม่ได้แจ้งผู้ใช้ |
+| v160 | **schema ข้อมูล (zod)** `tools/data-schema.js` · `npm run validate:data` · ขั้น schema/data ใน check · เริ่มที่ 972 จุด |
+| v161 | คุนแยกโอกุริงานะด้วย `.` (หน้าจอยังแสดงวงเล็บผ่าน `kunShow`) |
+| v162–v163 | แหล่งที่มาค่าเริ่มต้นต่อไฟล์ `SRC_KANJI` `SRC_CONTENT` `SRC_EX` (ใส่รายรายการได้) · ห้ามชื่อตำรา Irodori/Minna/Genki |
+| v164–v165 | บทสนทนา `ผู้พูด\|ประโยค\|คำแปล` + ปุ่ม "คำแปล" · **คำแปล 116 บรรทัด AI ร่าง เจ้าของอนุมัติ** (`docs/dialogue-translations-draft.md`) |
+| v166 | คำตัวอย่าง 39 คำระบุ `เกินระดับ` · คำอ่านวลียอม `、。！？` · 三百 = "300 (สามร้อย)" → validate:data 0 จุด |
+| v167 | บันทึกนี้ |
 
 ## รอเจ้าของตัดสิน
-0. ~~**ตรวจข้อมูลด้วย schema**~~ ✅ v166 `npm run validate:data` ผ่านทั้งหมด (เริ่ม 972 จุด) · คุนใช้ `.` (v161) · แหล่งที่มาค่าเริ่มต้นต่อไฟล์ + ห้ามชื่อตำรา (v162–v163) · คำแปลบทสนทนา 116 บรรทัด (v165) · คำตัวอย่างนอก N5 39 คำระบุ `เกินระดับ` · คำอ่านวลียอม 、。！？ · 三百 = "300 (สามร้อย)" (เจ้าของเลือกทุกข้อ) · **ห้ามแก้ข้อมูลเพื่อให้ผ่านเองโดยไม่ถามเจ้าของ**
-1. **เขียนด้วยนิ้ว** (`js/write.js:27` ข้าม pointer ชนิด touch แต่คำแนะนำบนจอบอกว่าเขียนด้วยนิ้วได้)
-   - ก. ให้เขียนด้วยนิ้วได้ → แก้ `write.js` แล้ว test 06 จะผ่าน
-   - ข. ตั้งใจให้ใช้แค่ Pencil (กันฝ่ามือ) → แก้ข้อความบนจอ และเปลี่ยน test 06 ให้ตรวจว่านิ้ว "ไม่" วาด
-2. **เปิด PR หรือยัง**: ตอนนี้ CI จะแดงเพราะ lint 134 + test 06 · ถ้าตั้ง branch protection (Settings → Branches → require "npm run check" และ "เพิ่มเลข VERSION แล้ว") จะ merge ไม่ได้จนกว่าจะเขียว
-3. **รายการปรับปรุงที่เสนอไว้ท้าย session (ยังไม่ได้ทำ รออนุมัติทีละรหัส)**:
+1. **merge PR #28** (และตั้ง branch protection: Settings → Branches → require "npm run check" และ "เพิ่มเลข VERSION แล้ว")
+2. **ปิด session: รายการเสนอ ก–ง** (ส่งในแชทวันที่ 2026-11-23 ท้าย session · ยังไม่ได้แก้อะไร) — ถ้ายังไม่ได้ตอบ ให้ถามเจ้าของใหม่ตามตารางด้านล่าง
+3. **แผน "ถอนวัชพืช" 17 ข้อ** (ส่งในแชท 2026-11-23 · ยังไม่ได้แก้อะไร) — ต้องอนุมัติทีละข้อ · ทำทีละข้อ แต่ละข้อจบด้วย `npm run check` + verify-app ผ่าน แล้ว commit แยก · ดิฉันแนะนำเริ่ม 1–10 (เสี่ยงต่ำ–กลาง) · คำถามค้าง: ร่างเก่าใน `docs/` ลบหรือเก็บ · จะแยก `pixelcat.js` (ข้อ 16 เสี่ยงสูง) ไหม · Prettier ไหม
+4. เรื่องเดิม: ลองบน iPad จริง (นิ้ว/Pencil/กันฝ่ามือ · โหมดส่วนตัว · เสียงอ่าน · ปุ่มคำแปล) · กติการ้านค้า/ลายขน/เครื่องประดับ (`docs/PET_PIXEL.md`)
 
-| รหัส | เรื่อง |
-|---|---|
-| 1ก | ✅ v144 · corrections-log: แถว "แนบหลักฐาน" 1 → 4 ครั้ง |
-| 1ข | ✅ v144 · แถวใหม่ "ขอบเขตงาน: ห้ามแก้เกินที่สั่ง เสนอก่อนรออนุมัติ" 4 ครั้ง |
-| 1ค 1ง 1จ | ✅ v144 · แถวใหม่ "ห้ามเดา ต้องอ้างแหล่งจริง" 2 · "ห้ามปิดกฎ/ผ่อน test" 1 · "ทำทีละข้อ รายงานทีละข้อ" 1 |
-| 2ก | ✅ v145 · Stop hook: บล็อกการจบ turn ถ้าโค้ดเปลี่ยนหลัง `npm run check` ครั้งล่าสุด (`check.js` เขียน `test-results/check-stamp.json`) |
-| 2ข | ✅ v146 · งานที่ต้องอนุมัติก่อนแก้ → เจ้าของใช้ plan mode (Shift+Tab) แทนการเขียนกำกับในข้อความ |
-| 2ค | ✅ v147 (แก้ข้อเดิม 3 ข้อ v148) · `tests/check-determinism.js` ในขั้น check: ข้อทดสอบที่จำลองพฤติกรรมแมวต้องมี `setJit(false)` และ `setNow(` |
-| 3ก | ✅ v149 · FEATURE_MAP อ้าง e2e ด้วยคำในชื่อข้อแทนเลขบรรทัด + ขั้นตรวจว่าคำค้นเจอข้อจริง · SKILL ขั้น 2.4 ตาม |
-| 3ข–3ฉ | ✅ v150 · SKILL verify-app: ภาพจาง/ว่าง = ยังไม่มีหลักฐาน · แยก 404/403 ที่ตั้งใจของ Supabase จำลอง (`pageerror` ต้องเป็น 0) · "KillShell" → `pkill -f "http.server 8000"` · ไม่รัน flows ซ้ำในขั้น 5 ถ้าไม่ได้แก้โค้ดหลังขั้น 3 · สถานะ "ไม่ผ่าน · ปัญหาเดิม" |
-| 4ก | ✅ v151 · ESLint `linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: "error" }` แล้วลบ CLAUDE.md L24 |
-| 4ข | ✅ v152 · ขั้น `version` ใน `check.js` แล้วลบแถว "เลข VERSION" (L20) |
-| 4ค | ✅ v153 (ทำ 2ก แล้ว จึงลบข้อ 1) · ถ้าทำ 2ก ลบ DoD ข้อ 1 (L28–29) · ถ้าไม่ทำ อย่างน้อยแก้ `npm test` → `npm run check` (ตอนนี้ L29 ตกหล่น lint/type) |
-| 4ง | ✅ v154 · ขั้น `test-count` (จำนวนข้อต้องไม่น้อยกว่า main) แล้วตัด "ข้าม ปิด" ออกจาก L32 |
-
-4. เรื่องเดิมจากรอบก่อน (ดู `docs/PET_PIXEL.md` หัวข้อ "ส่งต่อ session 2026-11-22 รอบสาม"): ลองบน iPad จริง · หัวแมวตอนตอบข้อ · แผนที่เส้นทางเรียน · กติการ้านค้า · กติกาปลดล็อกลายขน/เครื่องประดับ
-
-## งานถัดไปที่แนะนำ (เมื่อเจ้าของสั่ง)
-1. ตัดสินข้อ 1 แล้วทำให้ flows ผ่าน 7/7
-2. lint ~~กลุ่ม ก (`any` 4 จุดใน `stripe-webhook`)~~ ✅ v155 → ~~กลุ่ม ข (18 จุด รวม `packs.js:90,92` ที่เขียนทับฟังก์ชันของ `cloud.js`)~~ ✅ v156 → ~~ค~~ ✅ v157 → ~~จ~~ ✅ v158 → ~~ง~~ ✅ v159 · lint เหลือ 0
-3. อัปเดต actions ใน CI (`checkout` `setup-node` `upload-artifact` @v4 ใช้ Node 20 ที่ GitHub เลิกรองรับ · ยังรันได้)
-4. TypeScript ระยะ 1 ตาม `docs/TYPESCRIPT_PLAN.md`
+### แผนถอนวัชพืช (สรุป)
+| # | สิ่งที่ทำ | ความเสี่ยง |
+|---|---|---|
+| 1 | ลบโค้ดตาย `goalHtml` `undo` `pvars` + ขั้น check ชื่อที่ไม่มีใครใช้ | ต่ำ |
+| 2 | ลบ comment ที่มีตัวตรวจครอบแล้ว (`sw.js:2,71` `pet-lines.js:11`) | ต่ำ |
+| 3 | test ลำดับ `<script>` (data → level → core → ตรรกะ → main) + ห้ามชื่อระดับบนสุดซ้ำข้ามไฟล์ | ต่ำ |
+| 4 | test กันซูม iPad (`main.js:2` `style.css:5`) | ต่ำ |
+| 5 | test แตะแมวไม่เพิ่มความสนิท/Energy (`pixelcat.js:1553`) | ต่ำ |
+| 6 | กติกาการออกแบบที่ test ไม่ได้ → `docs/PET_PIXEL.md` (`pixelcat.js:634,1165,1464` `profile.js:4` `shop.js:2`) | ต่ำ |
+| 7 | test ชื่อไฟล์ไอคอน + hash ภาพ (`tools/make-icons.js:2`) | ต่ำ |
+| 8 | `esc` เหลือตัวเดียว (`cloud.js` `town.js`) | ต่ำ–กลาง |
+| 9 | รวบรวมความคืบหน้าเหลือวิธีเดียว (`snapshot` + `exportProg`) | กลาง |
+| 10 | เขียนความคืบหน้าเหลือวิธีเดียว (`applyData` `importProg` `packs.js` ×2) + ESLint ให้ localStorage แค่ `level.js` | กลาง |
+| 11 | `pet-grid.js` ใช้ `js/pixelcat.js` จริง · ร่างเก่าใน `docs/` | กลาง |
+| 12 | แยก `tests/e2e.js` ตามฟีเจอร์ | ต่ำ |
+| 13–15 | แยก `pet.js` (rewards, onboard) · `learn.js` (srs, quiz, kana, mistakes) · `cloud.js` (sync/auth) · `packs.js` (buy) | กลาง |
+| 16 | แยก `pixelcat.js` เริ่มจากฉาก 7 สถานที่ (เทียบภาพทุกพิกเซล) | สูง |
+| 17 | (ไม่บังคับ) แยก `town.js` · `style.css` | กลาง |
 
 ## ข้อควรระวังที่เจอใน session นี้
-- typescript-eslint 8.73 รองรับ TypeScript ถึง 6.0 จึงใช้ 6.0.3 (อย่าอัปเป็น 7.x จนกว่า typescript-eslint จะรองรับ)
-- FEATURE_MAP อ้าง e2e ด้วยคำในชื่อข้อแล้ว (v149) · เปลี่ยนชื่อข้อ e2e ต้องแก้ FEATURE_MAP ด้วย ไม่งั้นขั้น featuremap ไม่ผ่าน
-- ภาพหน้าจอต้องถ่ายด้วย `animations: 'disabled'` (`tests/artifacts.js`) ไม่งั้นได้ภาพจางระหว่างแอนิเมชัน
-- skill หรือ hook ที่สร้างระหว่าง session จะยังใช้ไม่ได้จนกว่าจะเริ่ม session ใหม่ (หรือเปิด `/hooks`)
-- 404/403 ใน console ของ e2e ข้อซิงก์/ซื้อ/แพ็ก มาจาก Supabase จำลองที่ตั้งใจตอบแบบนั้น
+- **ข้อมูล (`js/data/`)**: ห้ามแก้เพื่อให้ validate:data ผ่าน และห้ามแต่งคำอ่าน/ความหมาย/คำแปลเอง ต้องถามเจ้าของทุกครั้ง · ร่างใส่ไฟล์แยกให้ตรวจก่อน (แบบ `docs/dialogue-translations-draft.md`)
+- zod ไม่รันกฎระดับทั้งระเบียน (`superRefine`) ถ้าช่องอื่นผิดอยู่ → กฎคันจิเกินชุดจึงแยกเป็น `VocabLevel`
+- Node 22 อ่าน `.ts` แบบตัด type อย่างเดียว ห้ามใช้ parameter property (`constructor(readonly x)`) · `tests/payment.mjs` จะล้ม
+- ESLint ไม่มี formatter `unix` ในตัวแล้ว (grep ผลจะว่างเงียบ) ใช้ `--format json` หรือค่าเริ่มต้น
+- `々` เป็น Script=Han แต่ไม่ใช่คันจิที่ต้องเรียน · ตัวตรวจข้อมูลยกเว้นไว้แล้ว
+- คำเตือนใน console ที่แอปตั้งใจพิมพ์ (`console.warn` พร้อมบริบท เช่น "อ่านราคา n3 ไม่ได้ ถือว่ายังไม่เปิดขาย") ไม่ใช่ error
+- typescript-eslint 8.73 รองรับ TypeScript ถึง 6.0 (ใช้ 6.0.3) · `pet-grid.js` ต้องสร้างโฟลเดอร์ผลลัพธ์ก่อน (`mkdir -p`)
+- 404/403/409 ใน console ของ e2e ที่ URL `https://sb.test/` มาจาก Supabase จำลองที่ตั้งใจตอบแบบนั้น
 
 ## ข้อความเริ่ม session ใหม่
-> อ่าน `docs/HANDOFF.md` ก่อน รัน `npm ci` แล้วทำต่อจากหัวข้อ "รอเจ้าของตัดสิน"
+> อ่าน `docs/HANDOFF.md` ก่อน รัน `npm ci` และ `git fetch origin main` แล้วถามผมเรื่องที่ค้างในหัวข้อ "รอเจ้าของตัดสิน"
