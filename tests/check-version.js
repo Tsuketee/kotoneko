@@ -3,7 +3,7 @@
 // รัน: node tests/check-version.js <ref ฐาน>   เช่น  node tests/check-version.js origin/main
 // GitHub Actions รันให้ทุก PR (.github/workflows/test.yml) โดยเทียบกับ branch ปลายทางของ PR
 // npm run check รันให้ทุกครั้ง (ขั้น version ใน tools/check.js · ฐาน = ตัวแปร CHECK_BASE ถ้าไม่ตั้งใช้ origin/main)
-// ไม่ผ่าน (exit 1) = ไฟล์ที่ผู้ใช้โหลดเปลี่ยนแต่ VERSION ไม่เพิ่ม · VERSION ลดลง · รูปแบบผิด
+// ไม่ผ่าน (exit 1) = ไฟล์ที่ผู้ใช้โหลดเปลี่ยนแต่ VERSION ไม่เพิ่ม · VERSION ลดลง · รูปแบบผิด · ไอคอน apple-touch-icon-vN.png เปลี่ยนหน้าตาแต่ชื่อเดิม
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
 const base = process.argv[2];
 if (!base) { console.error('ต้องบอก ref ฐาน เช่น node tests/check-version.js origin/main'); process.exit(2); }
@@ -27,6 +27,9 @@ if (!files) { console.error('✗ หา const FILES = [...] ใน sw.js ไม�
 const served = new Set(['sw.js', ...[...files[1].matchAll(/'([^']+)'/g)].map(m => m[1] === './' ? 'index.html' : m[1])]);
 const changed = [...new Set([...git(['diff', '--name-only', base, '--']).split('\n'), ...git(['ls-files', '--others', '--exclude-standard']).split('\n')].filter(Boolean))];
 const servedChanged = changed.filter(f => served.has(f));
+const inBase = f => { try { git(['cat-file', '-e', `${base}:${f}`]); return true; } catch { return false; } };
+const iconSame = changed.filter(f => /^icons\/apple-touch-icon-v\d+\.png$/.test(f) && inBase(f) && fs.existsSync(path.join(ROOT, f)));
+if (iconSame.length) { console.error(`✗ ${iconSame.join(' ')} เปลี่ยนหน้าตาแต่ชื่อเดิม: Safari เก็บไอคอนหน้าจอโฮมตามชื่อไฟล์ เครื่องที่ติดตั้งแล้วจะยังเห็นไอคอนเก่า · เปลี่ยนเลข -vN ใน tools/icon.html แล้วรัน node tools/make-icons.js (ชื่อใน index.html และ sw.js ต้องตรงกัน)`); process.exit(1); }
 
 if (head < was) { console.error(`✗ VERSION ลดลง: ${label} เป็น v${was} แต่งานนี้เป็น v${head} (ถ้ามี PR อื่น merge ไปก่อน ให้ merge main เข้ามาแล้วเพิ่มเลขต่อจากนั้น)`); process.exit(1); }
 if (!servedChanged.length) { console.log(`✓ ไม่มีไฟล์ที่ผู้ใช้โหลดเปลี่ยนจาก ${label} (ไม่ต้องเพิ่ม VERSION · ตอนนี้ v${head})`); process.exit(0); }

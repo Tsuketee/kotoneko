@@ -99,6 +99,20 @@ test('ข้อมูล: ไฟล์ที่ index.html โหลดและ
   assert(!fs.existsSync(path.join(ROOT, 'js/app.js')), 'js/app.js ถูกแยกแล้ว ไม่ควรมีอีก');
 });
 
+test('ไอคอน: apple-touch-icon มีไฟล์เดียว ชื่อเดียวกันใน index.html sw.js และ tools/icon.html · ไอคอนใน manifest มีไฟล์จริงและ sw.js แคช', async () => {
+  const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+  const files = fs.readdirSync(path.join(ROOT, 'icons')).filter(f => /^apple-touch-icon/.test(f));
+  assert.strictEqual(files.length, 1, 'icons/ ต้องมี apple-touch-icon ไฟล์เดียว (ลบชื่อเก่าออก): ' + files.join(' '));
+  assert.match(files[0], /^apple-touch-icon-v\d+\.png$/, 'ชื่อต้องเป็น apple-touch-icon-vN.png');
+  const refs = { 'index.html': rd('index.html'), 'sw.js': rd('sw.js'), 'tools/icon.html': rd('tools/icon.html') };
+  for (const [f, src] of Object.entries(refs)) {
+    const names = [...new Set([...src.matchAll(/apple-touch-icon-v\d+\.png/g)].map(m => m[0]))];
+    assert.deepStrictEqual(names, [files[0]], `${f} ต้องอ้าง ${files[0]} เท่านั้น (Safari เก็บไอคอนหน้าจอโฮมตามชื่อไฟล์): ${names.join(' ')}`);
+  }
+  const sw = rd('sw.js');
+  JSON.parse(rd('manifest.webmanifest')).icons.forEach(i => { assert(fs.existsSync(path.join(ROOT, i.src)), 'ไม่พบ ' + i.src); assert(sw.includes(`'${i.src}'`), 'sw.js ไม่ได้แคช ' + i.src); });
+});
+
 // ทุกไฟล์เป็น <script> ธรรมดาที่ใช้ตัวแปร global ร่วมกัน: ลำดับโหลดผิดหรือชื่อซ้ำข้ามไฟล์ทำให้ค่าถูกทับเงียบๆ
 const scriptOrder = html => [...html.matchAll(/<script src="(js\/[^"]+)"/g)].map(m => m[1]);
 function scriptOrderProblems(order, onDisk) {

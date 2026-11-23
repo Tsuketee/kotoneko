@@ -130,7 +130,7 @@ fs.rmSync(tmp, { recursive: true, force: true });
 const vt = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-ver-'));
 const vgit = (...a) => execFileSync('git', a, { cwd: vt, stdio: 'pipe', encoding: 'utf8' });
 const sw = v => `const VERSION = 'v${v}';\nconst FILES = [\n  './',\n  'js/app.js',\n];\n`;
-fs.mkdirSync(path.join(vt, 'tests')); fs.mkdirSync(path.join(vt, 'js')); fs.mkdirSync(path.join(vt, 'docs'));
+fs.mkdirSync(path.join(vt, 'tests')); fs.mkdirSync(path.join(vt, 'js')); fs.mkdirSync(path.join(vt, 'docs')); fs.mkdirSync(path.join(vt, 'icons')); fs.writeFileSync(path.join(vt, 'icons/apple-touch-icon-v1.png'), 'a');
 fs.copyFileSync(path.join(ROOT, 'tests/check-version.js'), path.join(vt, 'tests/check-version.js'));
 fs.writeFileSync(path.join(vt, 'sw.js'), sw(5)); fs.writeFileSync(path.join(vt, 'index.html'), 'a'); fs.writeFileSync(path.join(vt, 'js/app.js'), 'a'); fs.writeFileSync(path.join(vt, 'docs/x.md'), 'a');
 vgit('init', '-q'); vgit('add', '.'); vgit('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base');
@@ -151,6 +151,12 @@ test('VERSION: ไฟล์ที่ผู้ใช้โหลดเปลี�
 test('VERSION: ลดลง → ไม่ผ่าน · รายงานบอก sha และวันที่ของฐาน', () => {
   fs.writeFileSync(path.join(vt, 'sw.js'), sw(4));
   const r = ver(); assert.strictEqual(r.status, 1); assert.match(r.stderr, /ลดลง/); assert.match(r.stderr, new RegExp(base.slice(0, 7))); reset();
+});
+test('ไอคอน: apple-touch-icon-vN.png เปลี่ยนหน้าตาแต่ชื่อเดิม → ไม่ผ่าน (แม้เพิ่ม VERSION) · เปลี่ยนชื่อเป็น v2 แล้วผ่าน', () => {
+  fs.writeFileSync(path.join(vt, 'icons/apple-touch-icon-v1.png'), 'b'); fs.writeFileSync(path.join(vt, 'sw.js'), sw(6));
+  let r = ver(); assert.strictEqual(r.status, 1); assert.match(r.stderr, /apple-touch-icon-v1\.png เปลี่ยนหน้าตาแต่ชื่อเดิม/); reset();
+  fs.rmSync(path.join(vt, 'icons/apple-touch-icon-v1.png')); fs.writeFileSync(path.join(vt, 'icons/apple-touch-icon-v2.png'), 'b'); fs.writeFileSync(path.join(vt, 'sw.js'), sw(6));
+  r = ver(); assert.strictEqual(r.status, 0, r.stderr); reset();
 });
 fs.rmSync(vt, { recursive: true, force: true });
 console.log(`\nผ่านทั้งหมด ${n} ข้อ`);

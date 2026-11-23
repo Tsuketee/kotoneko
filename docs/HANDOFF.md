@@ -51,7 +51,7 @@
 | 4 | ✅ e2e "iPad กันซูม": meta viewport · html `touch-action:pan-y` ไม่เลื่อน/เด้งแนวนอน · gesture* และสองนิ้วถูกกัน นิ้วเดียวเลื่อนได้ · ช่องเขียน `none` · ฉากแมว `manipulation` (comment เดิมเขียนผิดว่า none) · ลบ comment `main.js:2` `style.css:5` · v173 | ต่ำ |
 | 5 | ✅ e2e "แมวพิกเซล: แตะแมวทุกแบบ" (หัว/ตัว/หาง/แตะรัวจนเดินหนี/กดค้าง/ตอนหลับ/Enter) ความสนิท Energy ภารกิจ และค่าที่บันทึกไม่เปลี่ยน · `pixelcat.js:1553` เหลือแค่ "ห้ามขู่/โก่งหลัง" (ไม่มีตัวตรวจ · ข้อ 6) · v174 | ต่ำ |
 | 6 | ✅ กติกาการออกแบบที่ test ไม่ได้ 7 ข้อ → `docs/PET_PIXEL.md` หัวข้อ "กติกาการออกแบบที่ test ตรวจไม่ได้" · comment ในโค้ดเหลือตัวชี้ไปหัวข้อนั้น (รวมกฎห้ามขู่ที่เหลือจากข้อ 5) · v175 | ต่ำ |
-| 7 | test ชื่อไฟล์ไอคอน + hash ภาพ (`tools/make-icons.js:2`) | ต่ำ |
+| 7 | ✅ ขั้น version: `apple-touch-icon-vN.png` เปลี่ยนหน้าตาแต่ชื่อเดิม (เทียบไฟล์กับฐาน) → ไม่ผ่าน · e2e "ไอคอน:" มีไฟล์เดียว ชื่อตรงกันใน index.html sw.js tools/icon.html · hooks 20 ข้อ · ลบ comment `make-icons.js:2` `index.html:12` · v176 | ต่ำ |
 | 8 | `esc` เหลือตัวเดียว (`cloud.js` `town.js`) | ต่ำ–กลาง |
 | 9 | รวบรวมความคืบหน้าเหลือวิธีเดียว (`snapshot` + `exportProg`) | กลาง |
 | 10 | เขียนความคืบหน้าเหลือวิธีเดียว (`applyData` `importProg` `packs.js` ×2) + ESLint ให้ localStorage แค่ `level.js` | กลาง |
