@@ -57,25 +57,26 @@ const DATA = ['js/data/kanji-n5.js', 'js/data/content.js', 'js/data/examples.js'
 function loadApp(root) {
   const ctx = vm.createContext({});
   for (const f of DATA) vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, { filename: f });
-  return vm.runInContext('({ K, W, V, D, EX, SV })', ctx);
+  const src = n => `typeof ${n} === 'undefined' ? undefined : ${n}`;
+  return vm.runInContext(`({ K, W, V, D, EX, SV, SRC_KANJI: ${src('SRC_KANJI')}, SRC_CONTENT: ${src('SRC_CONTENT')}, SRC_EX: ${src('SRC_EX')} })`, ctx);
 }
 
 // แปลงข้อมูลแอปเป็นระเบียนมาตรฐาน · file = ไฟล์ต้นทาง · label = ใช้อ้างในรายงาน
 function records(app, level = 'N5') {
   const kanji = app.K.map((k, i) => ({
     file: 'js/data/kanji-n5.js', label: `แถว ${i + 1} ${k.k}`,
-    rec: { id: k.k, on: k.o, kun: k.u, meaning: k.m, jlpt: level, strokes: app.SV[k.k] ? app.SV[k.k].s.length : undefined, source: k.src },
+    rec: { id: k.k, on: k.o, kun: k.u, meaning: k.m, jlpt: level, strokes: app.SV[k.k] ? app.SV[k.k].s.length : undefined, source: k.src || app.SRC_KANJI },
   }));
   const vocab = [
-    ...app.W.map((w, i) => ({ file: 'js/data/content.js', label: `W แถว ${i + 1} ${w.k}`, rec: { word: w.k, reading: w.o, meaning: w.m, source: w.src } })),
-    ...app.V.map((v, i) => ({ file: 'js/data/content.js', label: `V แถว ${i + 1} ${v.k}`, rec: { word: v.k, reading: v.o, meaning: v.m, source: v.src } })),
-    ...Object.entries(app.EX).flatMap(([k, xs]) => xs.map(([word, reading, meaning], j) => ({ file: 'js/data/examples.js', label: `${k} ตัวอย่างที่ ${j + 1} ${word}`, rec: { word, reading, meaning, source: undefined } }))),
+    ...app.W.map((w, i) => ({ file: 'js/data/content.js', label: `W แถว ${i + 1} ${w.k}`, rec: { word: w.k, reading: w.o, meaning: w.m, source: w.src || app.SRC_CONTENT } })),
+    ...app.V.map((v, i) => ({ file: 'js/data/content.js', label: `V แถว ${i + 1} ${v.k}`, rec: { word: v.k, reading: v.o, meaning: v.m, source: v.src || app.SRC_CONTENT } })),
+    ...Object.entries(app.EX).flatMap(([k, xs]) => xs.map(([word, reading, meaning, , src], j) => ({ file: 'js/data/examples.js', label: `${k} ตัวอย่างที่ ${j + 1} ${word}`, rec: { word, reading, meaning, source: src || app.SRC_EX } }))),
   ];
   const dialogues = app.D.map((d, i) => {
     const m = /\((สุภาพ|กันเอง)\)\s*$/u.exec(d.t || '');
     return {
       file: 'js/data/content.js', label: `บทที่ ${i + 1} (หมวด ${d.l}) ${d.t}`,
-      rec: { title: d.t, register: m ? m[1] : undefined, lines: d.turns.map(([speaker, text, translation]) => ({ speaker, text, translation })), source: d.src },
+      rec: { title: d.t, register: m ? m[1] : undefined, lines: d.turns.map(([speaker, text, translation]) => ({ speaker, text, translation })), source: d.src || app.SRC_CONTENT },
     };
   });
   return { kanji, vocab, dialogues };

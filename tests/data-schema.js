@@ -57,4 +57,15 @@ test('id คันจิซ้ำ และคำศัพท์ซ้ำ ถู
   const out = validate({ kanji: [k('a'), k('b')], vocab: [v('c'), v('d')], dialogues: [] }).map(e => e.rule);
   has(out, 'id คันจิซ้ำ'); has(out, 'คำศัพท์ซ้ำ');
 });
+test('แหล่งที่มา: ใช้ค่าเริ่มต้นของไฟล์ · รายการที่ใส่เองใช้ค่าของรายการ · ไฟล์ไม่มีค่าเริ่มต้นและรายการไม่ใส่ → ไม่ผ่าน', () => {
+  const { records } = require('../tools/data-schema.js');
+  const app = { K: [{ k: '日', o: 'ニチ', u: 'ひ', m: 'วัน' }, { k: '本', o: 'ホン', u: 'もと', m: 'หนังสือ', src: 'อื่น' }], SV: { '日': { s: [1, 2, 3, 4] }, '本': { s: [1, 2, 3, 4, 5] } },
+    W: [{ k: '日本', o: 'にほん', m: 'ญี่ปุ่น' }], V: [], D: [{ l: 1, t: 'ทัก (สุภาพ)', turns: [['a', 'b', 'แปล']] }], EX: { '日': [['日本', 'にほん', 'ญี่ปุ่น', 'o'], ['本日', 'ほんじつ', 'วันนี้', 'o', 'อื่น']] },
+    SRC_KANJI: 'ค่าเริ่มต้น', SRC_CONTENT: 'เขียนเอง' };
+  const r = records(app);
+  assert.deepStrictEqual(r.kanji.map(k => k.rec.source), ['ค่าเริ่มต้น', 'อื่น']);
+  assert.deepStrictEqual([r.vocab[0].rec.source, r.dialogues[0].rec.source], ['เขียนเอง', 'เขียนเอง']);
+  assert.deepStrictEqual(r.vocab.slice(1).map(v => v.rec.source), [undefined, 'อื่น'], 'examples ไม่มีค่าเริ่มต้น (SRC_EX) ใช้ได้แค่ค่าที่ใส่เอง');
+  has(validate(r).map(e => e.rule), 'ไม่มีแหล่งที่มา');
+});
 console.log(`\nผ่านทั้งหมด ${n} ข้อ`);
