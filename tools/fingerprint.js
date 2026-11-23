@@ -4,10 +4,12 @@ const fs = require('fs'), path = require('path'), crypto = require('crypto'), { 
 
 const STAMP = path.join('test-results', 'check-stamp.json');
 const BASE = path.join('test-results', 'session-base.json');
+const TURN = path.join('test-results', 'turn-start.json');   // ข้อความล่าสุดของเจ้าของ + ลายนิ้วมือตอนเริ่ม turn (tools/hooks/prompt-start.js)
 
-function fingerprint(root) {
+// only = นับเฉพาะไฟล์ที่ขึ้นต้นด้วยค่านี้ (เช่น 'js/data/')
+function fingerprint(root, only = '') {
   const out = execFileSync('git', ['ls-files', '-z', '-co', '--exclude-standard'], { cwd: root, encoding: 'utf8', maxBuffer: 64 << 20 });
-  const files = [...new Set(out.split('\0').filter(f => f && !f.startsWith('test-results/') && !f.endsWith('.md')))].sort();
+  const files = [...new Set(out.split('\0').filter(f => f && f.startsWith(only) && !f.startsWith('test-results/') && !f.endsWith('.md')))].sort();
   const h = crypto.createHash('sha1');
   for (const f of files) {
     h.update(f + '\0');
@@ -28,4 +30,4 @@ function writeJSON(root, rel, data) {
   fs.writeFileSync(path.join(root, rel), JSON.stringify(data, null, 2) + '\n');
 }
 
-module.exports = { fingerprint, readJSON, writeJSON, STAMP, BASE };
+module.exports = { fingerprint, readJSON, writeJSON, STAMP, BASE, TURN };

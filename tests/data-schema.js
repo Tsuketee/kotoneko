@@ -79,4 +79,10 @@ test('แหล่งที่มา: ใช้ค่าเริ่มต้น
   assert.deepStrictEqual(r.vocab.slice(1).map(v => v.rec.source), [undefined, 'อื่น'], 'examples ไม่มีค่าเริ่มต้น (SRC_EX) ใช้ได้แค่ค่าที่ใส่เอง');
   has(validate(r).map(e => e.rule), 'ไม่มีแหล่งที่มา');
 });
+test('ทุกไฟล์เนื้อหาใน js/data/ มีหัวข้อแหล่งที่มาใน NOTICE.md (ยกเว้น cloud-config.js ที่เป็นค่าตั้งค่า ไม่ใช่เนื้อหา · เจ้าของตัดสิน 2026-11-23)', () => {
+  const fs = require('fs'), path = require('path'), root = path.join(__dirname, '..');
+  const notice = fs.readFileSync(path.join(root, 'NOTICE.md'), 'utf8'), SKIP = ['cloud-config.js'];
+  const missing = fs.readdirSync(path.join(root, 'js/data')).filter(f => f.endsWith('.js') && !SKIP.includes(f) && !notice.includes('`js/data/' + f + '`'));
+  assert.deepStrictEqual(missing, [], 'เพิ่มหัวข้อใน NOTICE.md ว่าไฟล์นี้มาจากไหน (ห้ามเดา ถามเจ้าของ)');
+});
 console.log(`\nผ่านทั้งหมด ${n} ข้อ`);
