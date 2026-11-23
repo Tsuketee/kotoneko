@@ -2,7 +2,10 @@
 // ไม่ต้อง build แอป สคริปต์นี้เปิด http server เล็กๆ เองแล้วรันทดสอบด้วย Chromium
 const http = require('http'), fs = require('fs'), path = require('path'), assert = require('assert');
 const { chromium } = require('playwright');
-const { recorder } = require('./artifacts'); // หลักฐานทุกข้อ: test-results/e2e/ (ภาพหน้าจอ + console log + summary.md)
+const { recorder } = require('./artifacts');
+let rec = null;
+// ภาพหน้าจอระหว่างข้อ (เช่นตอนเปิดคำแปล) · ภาพตอนจบข้อถ่ายให้อัตโนมัติ: snap(p, 'translation-on') → test-results/e2e/<ข้อ>-translation-on.png
+const snap = (p, step) => rec.shot(p, step); // หลักฐานทุกข้อ: test-results/e2e/ (ภาพหน้าจอ + console log + summary.md)
 const ROOT = path.join(__dirname, '..');
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 
@@ -289,6 +292,7 @@ test('บทสนทนา: คำแปลรายบรรทัด ผู�
   assert.strictEqual(await p.getByTestId('dlg-translation').count(), 0);
   await btn.click();
   assert.strictEqual(await p.getByTestId('dlg-translation').count(), n);
+  await snap(p, 'translation-on');
   assert.strictEqual(await p.getByTestId('dlg-translation').first().innerText(), '<b>แปล</b>', 'คำแปลต้องแสดงเป็นข้อความ ไม่ใช่ HTML');
   assert.strictEqual(await p.locator('.dtr b').count(), 0);
   await p.getByTestId('dlg-translate').click();
@@ -1881,7 +1885,7 @@ test('PWA: manifest ถูกต้องและ service worker ติดต�
   await new Promise(r => server.listen(0, r));
   const base = `http://localhost:${server.address().port}/`;
   const browser = await chromium.launch();
-  const rec = recorder(browser, 'e2e');
+  rec = recorder(browser, 'e2e');
   let fail = 0;
   const only = process.argv[2], run = only ? tests.filter(([n]) => n.includes(only)) : tests; // node tests/e2e.js <คำในชื่อข้อ> = รันเฉพาะข้อที่ชื่อมีคำนั้น
   for (const [name, fn] of run) {

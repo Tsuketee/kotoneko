@@ -84,4 +84,32 @@ test('tools/check.js ที่รันแค่บางขั้นไม่�
 });
 
 fs.rmSync(tmp, { recursive: true, force: true });
+
+// ---------- tests/check-version.js: ต้องเพิ่ม VERSION เมื่อไฟล์ที่ผู้ใช้โหลดเปลี่ยนเท่านั้น ----------
+const vt = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-ver-'));
+const vgit = (...a) => execFileSync('git', a, { cwd: vt, stdio: 'pipe', encoding: 'utf8' });
+const sw = v => `const VERSION = 'v${v}';\nconst FILES = [\n  './',\n  'js/app.js',\n];\n`;
+fs.mkdirSync(path.join(vt, 'tests')); fs.mkdirSync(path.join(vt, 'js')); fs.mkdirSync(path.join(vt, 'docs'));
+fs.copyFileSync(path.join(ROOT, 'tests/check-version.js'), path.join(vt, 'tests/check-version.js'));
+fs.writeFileSync(path.join(vt, 'sw.js'), sw(5)); fs.writeFileSync(path.join(vt, 'index.html'), 'a'); fs.writeFileSync(path.join(vt, 'js/app.js'), 'a'); fs.writeFileSync(path.join(vt, 'docs/x.md'), 'a');
+vgit('init', '-q'); vgit('add', '.'); vgit('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base');
+const base = vgit('rev-parse', 'HEAD').trim();
+const ver = () => spawnSync('node', ['tests/check-version.js', base], { cwd: vt, encoding: 'utf8' });
+const reset = () => { vgit('checkout', '-q', '--', '.'); vgit('clean', '-qfd', '-e', 'tests'); };
+test('VERSION: ไม่ได้แก้อะไร หรือแก้แค่เอกสาร → ผ่านโดยไม่ต้องเพิ่ม', () => {
+  assert.strictEqual(ver().status, 0);
+  fs.writeFileSync(path.join(vt, 'docs/x.md'), 'b'); fs.writeFileSync(path.join(vt, 'docs/new.md'), 'b');
+  const r = ver(); assert.strictEqual(r.status, 0, r.stderr); assert.match(r.stdout, /ไม่ต้องเพิ่ม VERSION/); reset();
+});
+test('VERSION: ไฟล์ที่ผู้ใช้โหลดเปลี่ยน (รวม ./ = index.html และ sw.js เอง) แต่ไม่เพิ่ม → ไม่ผ่าน · เพิ่มแล้วผ่าน', () => {
+  for (const f of ['js/app.js', 'index.html']) { fs.writeFileSync(path.join(vt, f), 'b'); const r = ver(); assert.strictEqual(r.status, 1, f); assert.match(r.stderr, new RegExp(f.replace('.', '\\.'))); reset(); }
+  fs.appendFileSync(path.join(vt, 'sw.js'), '// x\n'); assert.strictEqual(ver().status, 1, 'sw.js'); reset();
+  fs.writeFileSync(path.join(vt, 'js/app.js'), 'b'); fs.writeFileSync(path.join(vt, 'sw.js'), sw(6));
+  const r = ver(); assert.strictEqual(r.status, 0, r.stderr); assert.match(r.stdout, /v5 → v6/); reset();
+});
+test('VERSION: ลดลง → ไม่ผ่าน · รายงานบอก sha และวันที่ของฐาน', () => {
+  fs.writeFileSync(path.join(vt, 'sw.js'), sw(4));
+  const r = ver(); assert.strictEqual(r.status, 1); assert.match(r.stderr, /ลดลง/); assert.match(r.stderr, new RegExp(base.slice(0, 7))); reset();
+});
+fs.rmSync(vt, { recursive: true, force: true });
 console.log(`\nผ่านทั้งหมด ${n} ข้อ`);

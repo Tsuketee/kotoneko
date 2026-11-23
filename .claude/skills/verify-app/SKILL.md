@@ -21,7 +21,7 @@ description: ตรวจแอป Kotoneko เหมือนผู้ใช้
    ถ้าจะไปขั้น 5 ทันทีโดยไม่แก้อะไรระหว่างนั้น ข้ามขั้นนี้ได้ แล้วใช้ภาพและ log ของ flows จาก `npm run check` ในขั้น 5 แทน (อยู่ที่ `test-results/flows/` เหมือนกัน) จะได้ไม่รัน flows ซ้ำ · ขั้น 5 ต้องรัน `npm run check` เต็มชุดเสมอ เพราะ hook Stop ยอมรับเฉพาะการรันครบทุกขั้น
 4. รันข้อ e2e ของฟีเจอร์ที่เกี่ยวข้อง: บรรทัด **test** ของ FEATURE_MAP เขียนเป็น `e2e.js "<คำ>"` ให้ใช้คำนั้นตรงๆ เช่น
    `node tests/e2e.js "ไวยากรณ์:"` (ชุดนี้เปิด server ของตัวเอง · ถ้าขึ้น `ผ่านทั้งหมด 0 ข้อ` แปลว่าคำไม่ตรงชื่อข้อ ให้แก้ FEATURE_MAP)
-5. ก่อนบอกว่าเสร็จ รันทั้งชุด: `npm run check` (type → lint → schema → data → determinism → featuremap → version → test-count → unit → hooks → e2e → flows ราว 3–4 นาที · ขั้น version ตรวจเลข VERSION ให้แล้ว)
+5. ก่อนบอกว่าเสร็จ: `git fetch -q origin main` ก่อน (ขั้น version/test-count เทียบกับ `origin/main` ถ้าค้างเก่าจะเทียบผิดฐาน · ดู sha/วันที่ของฐานในบรรทัดผลขั้น version) แล้วรันทั้งชุด: `npm run check` (type → lint → schema → data → determinism → featuremap → version → test-count → unit → hooks → e2e → flows ราว 3–4 นาที · ขั้น version ตรวจเลข VERSION ให้แล้ว)
 6. ถ้าแก้แมวพิกเซลหรือฉาก ให้รัน `node tests/pet-grid.js test-results/pet-grid` เพิ่มด้วย
 
 ## 3. เปิดดูภาพหน้าจอ
@@ -30,6 +30,7 @@ description: ตรวจแอป Kotoneko เหมือนผู้ใช้
 - ดูว่าภาพตรงกับที่ flow ควรเป็น: ข้อความไทยไม่ล้น ไม่มีหน้าว่าง ไม่มีส่วนที่ซ้อนทับกัน และปุ่มอยู่ในจอ
 - ถ้าภาพผิดแต่ test ผ่าน ให้ถือว่าไม่ผ่าน และบอกว่า test ยังจับจุดนั้นไม่ได้
 - ภาพจาง (ถ่ายระหว่างแอนิเมชัน) ว่างทั้งภาพ หรือเห็นแค่หน้าโหลด = **ยังไม่มีหลักฐาน** ห้ามนับว่าผ่าน ให้ถ่ายใหม่หลังหน้าจอนิ่ง (`rec.shot` ใน `tests/artifacts.js` ปิดแอนิเมชันให้แล้ว ถ้ายังจางแปลว่าถ่ายเร็วไป) หรือรายงานว่าข้อนั้นยังไม่มีภาพยืนยัน
+- ภาพตอนจบข้อไม่เห็นสิ่งที่เปลี่ยน (เช่นปุ่มที่กดแล้วซ่อนกลับ) ให้เพิ่ม `snap(p, 'ชื่อขั้น')` (e2e) หรือ `rec.shot(p, 'ชื่อขั้น')` (flows) ใน test ณ จุดนั้น แล้วเปิดภาพนั้น ไม่ต้องเขียนสคริปต์ถ่ายภาพแยก
 
 ## 4. อ่าน console error
 console error ใน log ต่อท้ายด้วย ` @ <URL>` ที่เกิด แยกเป็น 3 กลุ่ม:
@@ -40,6 +41,7 @@ console error ใน log ต่อท้ายด้วย ` @ <URL>` ที่�
    `grep -n "\[p[0-9]* error\]" test-results/*/*.console.log | grep -v " @ https://sb.test/"`
 - ข้อที่ไม่ผ่าน: อ่าน `test-results/<ชุด>/<ข้อ>.console.log` ทั้งไฟล์ (บรรทัดบนสุดคือข้อผิดพลาดของ test)
 - `warning` ที่เป็น "Service Worker registration blocked by Playwright" เกิดจากการตั้งค่าของ test เอง ไม่ใช่ปัญหาของแอป
+- `warning` ที่แอปตั้งใจพิมพ์ด้วย `console.warn` พร้อมบริบทภาษาไทย (เช่น "อ่านราคา n3 ไม่ได้ ถือว่ายังไม่เปิดขาย") ไม่ใช่ปัญหา · ให้ดูเฉพาะคำเตือน**ใหม่**ที่ไม่เคยมี: `grep -h "\[p[0-9]* warning\]" test-results/*/*.console.log | sed 's/ @ .*//' | sort | uniq -c`
 
 ## 5. สรุป
 ตอบเจ้าของด้วยตารางนี้ หนึ่งแถวต่อ flow ที่รัน:
