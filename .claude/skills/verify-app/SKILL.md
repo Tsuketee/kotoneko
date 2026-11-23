@@ -36,7 +36,7 @@ description: ตรวจแอป Kotoneko เหมือนผู้ใช้
 console error ใน log ต่อท้ายด้วย ` @ <URL>` ที่เกิด แยกเป็น 3 กลุ่ม:
 1. **JavaScript error ของหน้า ต้องเป็น 0 เสมอ** (มีแม้บรรทัดเดียว = ไม่ผ่าน):
    `grep -n "\[p[0-9]* pageerror\]" test-results/*/*.console.log`
-2. **ที่ตั้งใจ ไม่ใช่ปัญหา**: `Failed to load resource` ที่ URL เป็น `https://sb.test/` คือ Supabase จำลองใน `tests/e2e.js` ตอบ 404/403/409 ตามที่ข้อซิงก์/ซื้อ/แพ็กตั้งใจทดสอบ
+2. **ที่ตั้งใจ ไม่ใช่ปัญหา**: `Failed to load resource` ที่ URL เป็น `https://sb.test/` คือ Supabase จำลองใน `tests/e2e/harness.js` ตอบ 404/403/409 ตามที่ข้อซิงก์/ซื้อ/แพ็กตั้งใจทดสอบ
 3. **error อื่นทั้งหมด ต้องอธิบายได้ทุกบรรทัด** ไม่งั้นถือว่าไม่ผ่าน:
    `grep -n "\[p[0-9]* error\]" test-results/*/*.console.log | grep -v " @ https://sb.test/"`
 - ข้อที่ไม่ผ่าน: อ่าน `test-results/<ชุด>/<ข้อ>.console.log` ทั้งไฟล์ (บรรทัดบนสุดคือข้อผิดพลาดของ test)

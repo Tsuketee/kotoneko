@@ -56,7 +56,7 @@
 | 9 | ✅ อ่านความคืบหน้าวิธีเดียว `snapshot()` ย้ายไป `js/stats.js` ข้าง `PK` · ส่งออกไฟล์และซิงก์ใช้ตัวเดียวกัน · e2e "ส่งออก/นำเข้า:" ตรวจไฟล์ = snapshot และห้ามมีตัวอ่านซ้ำ · v178 | กลาง |
 | 10 | ✅ เขียนความคืบหน้าวิธีเดียว `writeProg(d, all)` ใน `js/stats.js` (แทน `applyData` และการเขียนใน `importProg`) · `packs.js` ใช้ `writeJSON`/`writeStr` · ESLint ให้แตะ localStorage ได้แค่ `js/level.js` · e2e "ที่เก็บข้อมูล:" · v179 | กลาง |
 | 11 | ✅ `tests/pet-grid.js` เปิดแอปจริงและใช้ `js/pixelcat.js` (ตาราง 2 ภาพ + จำลองฉาก 30 นาทีผ่าน + ฉากกลางวัน/กลางคืน) · ESLint เลิกอ่าน `docs/pixel-cat10.html` · ลบร่างเก่า 9 ไฟล์ใน `docs/` (เจ้าของสั่ง · ดูได้จาก git `b3e20b8`) · v180 | กลาง |
-| 12 | แยก `tests/e2e.js` ตามฟีเจอร์ | ต่ำ |
+| 12 | ✅ `tests/e2e.js` เหลือแค่ตัวรัน · ข้อทดสอบ 67 ข้อแยกเป็น `tests/e2e/` data main pet places cloud packs device + `harness.js` (ชื่อข้อครบเดิม) · test-count นับชุด e2e รวมกัน · featuremap/determinism อ่านทุกไฟล์ในชุด | ต่ำ |
 | 13–15 | แยก `pet.js` (rewards, onboard) · `learn.js` (srs, quiz, kana, mistakes) · `cloud.js` (sync/auth) · `packs.js` (buy) | กลาง |
 | 16 | แยก `pixelcat.js` เริ่มจากฉาก 7 สถานที่ (เทียบภาพทุกพิกเซล) | สูง |
 | 17 | (ไม่บังคับ) แยก `town.js` · `style.css` | กลาง |

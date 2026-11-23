@@ -67,7 +67,7 @@ repo นี้เป็น public จึงใช้ GitHub Pages ได้ฟ�
 แก้ไฟล์ที่ผู้ใช้โหลด (รายการ `FILES` ใน `sw.js` และ `sw.js` เอง) ต้องเพิ่มเลข `VERSION` ใน `sw.js` ไม่งั้นเครื่องที่เคยเปิดแอปแล้วจะยังเห็นไฟล์เก่า · แก้แค่เอกสาร test หรือเครื่องมือไม่ต้องเพิ่ม (ขั้น version ใน `npm run check` และทุก PR ตรวจให้ ดูหัวข้อ "ทดสอบ")
 
 ## ทดสอบ
-ชุดทดสอบอัตโนมัติ 4 ชุด: `tests/hooks.js` 10 ข้อ (hook ของ Claude Code ที่ไม่ให้จบงานถ้าโค้ดเปลี่ยนหลัง `npm run check`), `tests/flows.js` 8 ข้อ (flow หลักแบบผู้ใช้จริง: กดปุ่มและอ่านจอผ่าน `data-testid` ไม่เรียกโค้ดภายใน · ดู FEATURE_MAP.md), `tests/payment.mjs` 12 ข้อ (Edge Function ชำระเงิน กับ Stripe/Supabase จำลอง ต้องใช้ Node 22.18 ขึ้นไป) และ `tests/e2e.js` 59 ข้อ (ข้อมูล, การใช้งานหลัก, สัตว์เลี้ยงและแมวพิกเซล, สถานที่และแผนที่เมือง, ส่งออก/นำเข้า, ซิงก์คลาวด์ด้วย Supabase จำลอง, แพ็กเสียเงินและการซื้อ, iPad แนวตั้ง/นอน, PWA ออฟไลน์) ใช้ Playwright เปิด Chromium จริง
+ชุดทดสอบอัตโนมัติ 4 ชุด: `tests/hooks.js` 10 ข้อ (hook ของ Claude Code ที่ไม่ให้จบงานถ้าโค้ดเปลี่ยนหลัง `npm run check`), `tests/flows.js` 8 ข้อ (flow หลักแบบผู้ใช้จริง: กดปุ่มและอ่านจอผ่าน `data-testid` ไม่เรียกโค้ดภายใน · ดู FEATURE_MAP.md), `tests/payment.mjs` 12 ข้อ (Edge Function ชำระเงิน กับ Stripe/Supabase จำลอง ต้องใช้ Node 22.18 ขึ้นไป) และ `tests/e2e.js` (ข้อทดสอบแยกตามหมวดใน `tests/e2e/`: ข้อมูล, การใช้งานหลัก, สัตว์เลี้ยงและแมวพิกเซล, สถานที่และแผนที่เมือง, ส่งออก/นำเข้า, ซิงก์คลาวด์ด้วย Supabase จำลอง, แพ็กเสียเงินและการซื้อ, iPad แนวตั้ง/นอน, PWA ออฟไลน์) ใช้ Playwright เปิด Chromium จริง
 ```
 npm install
 npx playwright install chromium   # ครั้งแรกครั้งเดียว

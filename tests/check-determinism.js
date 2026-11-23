@@ -3,7 +3,7 @@
 //   - ตรึงนาฬิกาฉากด้วย setNow(...) (นก รถไฟ ผีเสื้อ แดด และวันของอารมณ์รายวันใช้นาฬิกานี้)
 // ตรวจทีละข้อ test('...') ในไฟล์ · รัน: node tests/check-determinism.js [ไฟล์ ...] (ค่าเริ่มต้น tests/e2e.js)
 const fs = require('fs'), path = require('path');
-const files = process.argv.slice(2).length ? process.argv.slice(2) : [path.join(__dirname, 'e2e.js')];
+const files = process.argv.slice(2).length ? process.argv.slice(2) : [path.join(__dirname, 'e2e.js'), ...fs.readdirSync(path.join(__dirname, 'e2e')).filter(f => f.endsWith('.js')).map(f => path.join(__dirname, 'e2e', f))];
 const bad = [];
 let sims = 0;
 for (const file of files) {
