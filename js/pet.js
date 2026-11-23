@@ -5,7 +5,7 @@ const OBO=[SPC.map(s=>s[0]+' '+s[1]),null,null,['เพิ่งเริ่ม�
 let ob=0,obl=[],tp={};
 // ขั้นตั้งค่า: 0 ชนิด · 1 ชื่อสัตว์เลี้ยง · 2 ชื่อเจ้าของ (ข้ามได้ เก็บใน M.me.name · v77) · 3 ระดับ · 4 เหตุผล · 5 จำนวนข้อต่อวัน
 function obn(v){obl.push([OBQ[ob],v]);if(ob===0)tp.sp=Math.max(0,SPC.findIndex(s=>v.startsWith(s[0])));if(ob===1)tp.name=v;if(ob===2)tp.owner=v===OBSKIP?'':v;if(ob===3)tp.lv=v;if(ob===4)tp.goal=v;
- if(ob===5){tp.min=parseInt(v);const{owner,...pt}=tp;M.pet={...pt,energy:0,bond:0,d:null,trait:Math.floor(Math.random()*TR.length),rv:dstr(new Date())};if(owner||!(M.me&&M.me.name))M.me={...(M.me||{}),name:owner||''};saveM();obl=[];ob=0;tab='home';return render()}ob++;render()}
+ if(ob===5){M.goal=goalOk(parseInt(v))||M.goal;const{owner,...pt}=tp;M.pet={...pt,energy:0,bond:0,d:null,trait:Math.floor(Math.random()*TR.length),rv:dstr(new Date())};if(owner||!(M.me&&M.me.name))M.me={...(M.me||{}),name:owner||''};saveM();obl=[];ob=0;tab='home';return render()}ob++;render()}
 const OBSKIP='ขอข้ามไปก่อนนะ';
 function obt(){const v=document.getElementById('nm').value.replace(/[<>&"']/g,'').trim();if(v)obn(v)}
 function obHtml(){let h='<h1>ยินดีต้อนรับ</h1><div class="st">ตั้งค่าครั้งแรก ใช้เวลาไม่ถึงนาที</div>';
@@ -14,7 +14,7 @@ function obHtml(){let h='<h1>ยินดีต้อนรับ</h1><div class
  h+=ob===1||ob===2?`<div class="row"><input id="nm" data-testid="onboard-name" maxlength="${ob===1?12:20}" placeholder="${ob===1?'ชื่อเพื่อน':'ชื่อของเธอ'}" value="${ob===2&&M.me&&M.me.name?M.me.name:''}" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font-size:16px"><button style="padding:11px 16px;border:0;border-radius:12px;background:var(--ac);color:#fff;font-size:15px" onclick="obt()">ต่อไป</button></div>${ob===2?`<button class="lk" style="margin-top:0" onclick="obn(OBSKIP)">ข้ามไปก่อน</button>`:''}`:`<div class="ch">${OBO[ob].map(o=>`<button onclick="obn('${o}')">${o}</button>`).join('')}</div>`;
 if(ob===0)h+=cloudObLink()+'<div class="st" style="margin-top:14px"><a href="about.html" target="_blank" rel="noopener" style="color:var(--ac)">ดูแนะนำแอป</a></div>';
  return h}
-const PM=[{id:'rev',n:'ทบทวนให้ถูก',e:20,go:'k',t:()=>M.pet.min},{id:'neu',n:'เจอคำ/คันจิใหม่',e:20,go:'w',t:()=>Math.max(3,Math.round(M.pet.min/2))},{id:'dlg',n:'อ่านบทสนทนาจบ 1 บท',e:30,go:'d',t:()=>1}];
+const PM=[{id:'rev',n:'ทบทวนให้ถูก',e:20,go:'k',t:()=>M.goal},{id:'neu',n:'เจอคำ/คันจิใหม่',e:20,go:'w',t:()=>Math.max(3,Math.round(M.goal/2))},{id:'dlg',n:'อ่านบทสนทนาจบ 1 บท',e:30,go:'d',t:()=>1}];
 // d.done = ภารกิจที่ทำครบแล้ว · d.cl = ภารกิจที่กด "รับ" Energy แล้ว (v71: ทำครบแล้วต้องกดรับเองที่หน้าแรก แมวดีใจตอนกด) · วันเก่าที่ไม่มี cl ได้ Energy ไปตอนทำครบแล้ว จึงนับว่ารับแล้ว
 function pens(){const p=M.pet,k=dstr(new Date());if(!p.d||p.d.date!==k)p.d={date:k,rev:0,neu:0,dlg:0,done:{},cl:{},r:[]};else if(!p.d.cl)p.d.cl={...p.d.done}}
 function ptrack(k){if(!M.pet||!M.pet.name)return;pens();const p=M.pet;p.d[k]++;PM.forEach(m=>{if(!p.d.done[m.id]&&p.d[m.id]>=m.t()){p.d.done[m.id]=1;toast(IC.ok+' '+m.n+' สำเร็จ · กด "รับ" ที่หน้าแรกได้ +'+m.e+' Energy')}});saveM();if(typeof navUpdate==='function')navUpdate()}

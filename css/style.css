@@ -40,8 +40,6 @@ html,body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout
 .sheet,.sheet *{touch-action:none}
 .cell canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
-.gl{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 12px;margin-bottom:12px;font-size:14px;white-space:nowrap}
-.gl .bar{flex:1;margin:0}
 .mi{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd)}
 .mi .mk{font-size:30px;min-width:48px;text-align:center}
 .mi .mt{flex:1;font-size:14px;line-height:1.5}
@@ -56,7 +54,8 @@ h2{font-size:16px;margin:20px 0 10px}
 .top b{font-size:18px}
 .bk{width:36px;height:36px;border-radius:50%;border:1px solid var(--bd);background:var(--card);color:var(--fg);font-size:22px;line-height:1}
 .hero{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:16px}
-.ring{position:relative;width:88px;height:88px;flex:none}
+.ring{position:relative;width:88px;height:88px;flex:none;cursor:pointer;border-radius:50%}
+.ring:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
 .ring svg{width:100%;height:100%}
 .rb{fill:none;stroke:var(--bd);stroke-width:8}
 .rf{fill:none;stroke:var(--ok);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .6s}
@@ -273,6 +272,10 @@ h2{font-size:16px;margin:20px 0 10px}
 .sgm{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;margin:2px auto 0;border:0;background:none;color:var(--ac);font:inherit;font-size:15px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .sgg{background:#131314;color:#e3e3e3;border-color:#8e918f}:root:not([data-theme="light"]) .sga{background:#fff;color:#000;border-color:#fff}}
 :root[data-theme="dark"] .sgg{background:#131314;color:#e3e3e3;border-color:#8e918f}:root[data-theme="dark"] .sga{background:#fff;color:#000;border-color:#fff}
+.fin{width:100%;box-sizing:border-box;padding:11px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--fg);font-size:16px}
+.glp{display:flex;gap:6px;margin-top:10px}.glp button{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--fg);font-size:15px}.glp button[aria-pressed="true"]{border-color:var(--ac);color:var(--ac);font-weight:700}
+.gler{min-height:1.4em;margin-top:8px;font-size:13.5px;color:var(--err)}
+.glr{min-height:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;text-align:left}.glr b{font-size:20px}.glr button{flex:none;min-height:44px;padding:8px 18px;border-radius:12px;font-size:15px;font-weight:600;background:transparent;color:var(--ac);border:1.5px solid var(--ac)}
 .pfl2{display:grid;gap:6px;margin-top:10px;font-size:13.5px;color:var(--mut);text-align:left}
 /* แท็บโปรไฟล์ (v76): หัวหน้ามีปุ่มเมนู · หน้าเมนู = การ์ดหัว ปุ่มลัด 3 ช่อง กลุ่มรายการ เวอร์ชัน ออกจากระบบ */
 .mehd{display:flex;align-items:center;justify-content:space-between;gap:10px}.mehd h1{margin:0}

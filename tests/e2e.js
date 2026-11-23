@@ -113,7 +113,7 @@ test('เปิดแอปครั้งแรก: เข้าหน้าต
   assert(await p.locator('button:text-is("ข้ามไปก่อน")').count() === 1 && await p.locator('#nm[placeholder="ชื่อของเธอ"]').count() === 1);
   await p.evaluate(() => { document.getElementById('nm').value = 'พ<อ>'; obt(); obn('N5'); obn('เพื่อไปสอบวัดระดับ JLPT'); obn('10'); });
   assert(await p.locator('nav#nav button').count() === 5);
-  assert.deepStrictEqual(await p.evaluate(() => [M.me.name, M.pet.name, M.pet.owner, M.pet.lv, M.pet.min]), ['พอ', 'มะลิ', undefined, 'N5', 10]);
+  assert.deepStrictEqual(await p.evaluate(() => [M.me.name, M.pet.name, M.pet.owner, M.pet.lv, M.goal, M.pet.min]), ['พอ', 'มะลิ', undefined, 'N5', 10, undefined], 'คำตอบวันละกี่ข้อเป็นเป้าหมายต่อวันตัวเดียว (M.goal)');
   assert((await p.locator('.hi').innerText()).includes('สวัสดีค่ะ พอ'), 'ทักทายด้วยชื่อเจ้าของ');
   assert.deepStrictEqual(p.errors, []);
 });
@@ -506,8 +506,47 @@ test('ธีม A และไอคอนเส้น: ตัวแปรสี
 test('สถิติ: เปลี่ยนเป้าหมายต่อวันแล้วค่าถูกจำ', async (b, base) => {
   const p = await fresh(b, base);
   await p.evaluate(() => goTab('stats'));
-  await p.locator('.seg button:text-is("50")').click();
+  await p.getByTestId('stats-goal').click();
+  await p.locator('.glp button:text-is("50")').click();
+  await p.getByTestId('goal-save').click();
   assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).goal), 50);
+  assert.match(await p.locator('.glr').innerText(), /50\s*ข้อต่อวัน/);
+});
+
+test('เป้าหมายต่อวัน: พิมพ์เองได้ 1–200 · ค่าผิดไม่บันทึกและบอกเหตุผล · เปิดจากวงหน้าแรกและเมนูโปรไฟล์ · วง ภารกิจทบทวน และเมนูใช้ค่าเดียวกัน · จำหลังเปิดใหม่', async (b, base) => {
+  const p = await fresh(b, base);
+  await p.getByTestId('home-goal').click();
+  const inp = p.getByTestId('goal-input');
+  assert.strictEqual(await inp.inputValue(), '20');
+  for (const bad of ['0', '201', '', '-3', '2.5']) {
+    await inp.fill(bad);
+    await p.getByTestId('goal-save').click();
+    assert.match(await p.getByTestId('goal-error').innerText(), /1–200/, 'ค่า "' + bad + '" ต้องขึ้นคำเตือน');
+    assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).goal), 20, 'ค่า "' + bad + '" ต้องไม่ถูกบันทึก');
+  }
+  await inp.fill('7');
+  await inp.press('Enter');
+  assert.strictEqual(await p.locator('.cov').count(), 0, 'บันทึกแล้วหน้าต่างต้องปิด');
+  assert.match(await p.getByTestId('home-today').innerText(), /0\s*\/\s*7/);
+  assert.match(await p.getByTestId('mission-rev').innerText(), /0 \/ 7/);
+  assert.match(await p.getByTestId('mission-neu').innerText(), /0 \/ 4/);
+  await p.reload();
+  assert.match(await p.getByTestId('home-today').innerText(), /0\s*\/\s*7/, 'เปิดใหม่แล้วต้องยังเป็น 7');
+  // ยกเลิกไม่เปลี่ยนค่า
+  await p.getByTestId('home-goal').click();
+  await p.getByTestId('goal-input').fill('99');
+  await p.locator('.cov button:text-is("ยกเลิก")').click();
+  assert.strictEqual(await p.evaluate(() => M.goal), 7);
+  // เมนูโปรไฟล์แสดงค่าเดียวกันและเปิดหน้าต่างเดียวกัน
+  await p.evaluate(() => goTab('me'));
+  const row = p.locator('.mnr:has-text("เป้าหมายต่อวัน")');
+  assert.match(await row.innerText(), /7 ข้อ/);
+  await row.click();
+  await p.getByTestId('goal-input').fill('120');
+  await p.getByTestId('goal-save').click();
+  assert.match(await p.locator('.mnr:has-text("เป้าหมายต่อวัน")').innerText(), /120 ข้อ/);
+  assert.strictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).goal), 120);
+  assert.deepStrictEqual(p.errors, []);
 });
 
 test('ส่งออก/นำเข้า: ข้อมูลกลับมาครบ และไฟล์ผิดรูปแบบถูกปฏิเสธ', async (b, base) => {
@@ -1096,7 +1135,7 @@ test('บทสนทนา: ฟุริงะนะบนกรอบข้อ
 test('ภารกิจรายวัน: ทำครบแล้วกด "รับ" ถึงได้ Energy · ป้ายบนแท็บหน้าแรก · หลอด Energy · วันเก่าที่ได้ Energy ไปแล้วไม่รับซ้ำ', async (b, base) => {
   const p = await fresh(b, base);
   // ทำภารกิจทบทวนครบ: ยังไม่ได้ Energy แต่ขึ้นปุ่มรับ และป้าย 1 บนแท็บหน้าแรก
-  await p.evaluate(() => { M.pet.energy = 0; M.pet.bond = 0; pens(); for (let i = 0; i < M.pet.min; i++) ptrack('rev'); goTab('learn'); });
+  await p.evaluate(() => { M.pet.energy = 0; M.pet.bond = 0; pens(); for (let i = 0; i < M.goal; i++) ptrack('rev'); goTab('learn'); });
   assert.deepStrictEqual(await p.evaluate(() => [M.pet.energy, !!M.pet.d.done.rev, punclaimed()]), [0, true, 1], 'ทำครบแล้วยังไม่ให้ Energy จนกว่าจะกดรับ');
   assert.strictEqual(await p.locator('#nav .nb').innerText(), '1');
   await p.evaluate(() => goTab('home'));
