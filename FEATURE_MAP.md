@@ -23,7 +23,7 @@
 ## 1. ตั้งค่าครั้งแรก
 - **หน้า**: `index.html` ตอนยังไม่มี `M.pet.name` (`render()` แสดง `obHtml()` แทนทุกหน้า)
 - **เข้าถึง**: เปิดแอปครั้งแรก (localStorage ว่าง)
-- **ไฟล์หลัก**: `js/pet.js` (`obHtml` `obn` `obt`), `js/cloud.js` (`cloudObHtml` เข้าสู่ระบบจากเครื่องใหม่)
+- **ไฟล์หลัก**: `js/onboard.js` (`obHtml` `obn` `obt`), `js/cloud.js` (`cloudObHtml` เข้าสู่ระบบจากเครื่องใหม่)
 - **data-testid**: `onboard-name` ช่องชื่อ · ปุ่มตัวเลือกใช้ role ตามข้อความ เช่น `getByRole('button', {name: 'N5', exact: true})`
 - **selector (e2e เดิม)**: `text=ยินดีต้อนรับ` · ช่องชื่อ `#nm` · `button:text-is("ข้ามไปก่อน")` · หลังเสร็จ `nav#nav button` (ต้องมี 5 ปุ่ม) · คำทัก `.hi`
 - **flow ที่ต้องไม่พัง**: เลือกสัตว์ (แมว/กระต่าย/หมา) → ตั้งชื่อสัตว์ → ชื่อเจ้าของ (ข้ามได้) → ระดับ → เหตุผล → จำนวนข้อต่อวัน (เป็นเป้าหมายต่อวัน `M.goal`) → หน้าแรกทัก "สวัสดีค่ะ <ชื่อ>" · ชื่อที่มีอักขระ HTML ต้องถูกตัด · เครื่องใหม่เข้าสู่ระบบแล้วได้ข้อมูลเดิม
@@ -42,7 +42,7 @@
 ## 3. สัตว์เลี้ยง: ภารกิจรายวัน · Energy · ความสนิท · บทพูด
 - **หน้า**: การ์ดสัตว์เลี้ยงบนหน้าแรก
 - **เข้าถึง**: หน้าแรก
-- **ไฟล์หลัก**: `js/pet.js` (`ptrack` `pclaim` `punclaimed` `pline`), `js/data/pet-lines.js` (10 นิสัย)
+- **ไฟล์หลัก**: `js/rewards.js` (`ptrack` `pclaim` `punclaimed` `pbond`), `js/pet.js` (`pline`), `js/data/pet-lines.js` (10 นิสัย)
 - **data-testid**: `mission-rev` `mission-neu` `mission-dlg` การ์ดภารกิจ · `mission-claim-<id>` ปุ่มรับ · `pet-energy` หลอด Energy (ค่าใน `aria-valuenow`) · `pet-bond` ความสนิท · `toast` ข้อความเด้ง
 - **selector (e2e เดิม)**: ปุ่มรับ `.pzm.cl .pcl` · การ์ดที่รับแล้ว `.pzm.got` · หลอด `.ebar[aria-valuenow]` · `.pel span` · `.toast`
 - **flow ที่ต้องไม่พัง**: ทำภารกิจครบ → ยังไม่ได้ Energy จนกดรับ → +20 Energy +2 ความสนิท ป้ายบนแท็บหาย · รับซ้ำไม่ได้ · ยังไม่ครบรับไม่ได้ · บทพูดคงที่ภายในชั่วโมงตามช่วงเวลา/ฤดู · ตอบผิดแล้วสัตว์เลี้ยงปลอบ
