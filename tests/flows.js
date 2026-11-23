@@ -351,7 +351,7 @@ test('09-shop', 'ร้านค้า: รับภารกิจได้ Ene
   await p.getByTestId('nav-home').click();
   await p.getByTestId('mission-claim-rev').click();
   await p.getByTestId('mission-claim-neu').click();
-  assert.strictEqual(await p.getByTestId('pet-energy').getAttribute('aria-valuenow'), '30');
+  assert.strictEqual(await p.getByTestId('pet-energy').getAttribute('aria-valuenow'), '40');
   await p.getByTestId('nav-shop').click();
   assert.match(await p.getByTestId('shop-koban').innerText(), /^10$/);
   await p.getByTestId('shop-log-toggle').click();

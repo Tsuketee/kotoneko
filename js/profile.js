@@ -1,7 +1,7 @@
 // แท็บโปรไฟล์ (tab='me'): หน้าแรกของแท็บคือเมนู (v123 เจ้าของขอสลับ 2026-11-22 · เดิมเป็นบัตร) กด "ดูโปรไฟล์" ไปบัตรโปรไฟล์สัตว์เลี้ยง + คลังสะสม · เมนูมีรายการ (บัญชีและซิงก์ สำรองข้อมูล เครดิต นโยบาย เวอร์ชัน)
 // v76 ตามตัวอย่างที่เจ้าของส่งมา 2026-11-19 · meView: card | menu | acct | backup | credits · ปุ่มโปรไฟล์บนการ์ดหน้าแรกพามาที่นี่
 // อายุนับจาก M.pet.rv (สัตว์เลี้ยงรุ่นเก่าที่ไม่มี rv ใช้วันแรกที่มีใน M.days) · ความสนิทและร่าง · นิสัย · การ์ดสตรีค · คลังสะสม (เหรียญ ลายขน เครื่องประดับ)
-// ลายขนและเครื่องประดับ (โชว์ล็อกไว้ก่อน · มีแค่ลายที่ใส่อยู่): docs/PET_PIXEL.md หัวข้อ "กติกาการออกแบบที่ test ตรวจไม่ได้"
+// ลายขนและเครื่องประดับ: แลกที่ร้านค้า (js/shop.js) แล้วมาใส่ที่นี่ (colWear) · ของที่มีคำนวณจากสมุดโคบัง (js/koban.js kbOwns)
 const PACC=[['scarf','ผ้าพันคอ'],['bow','โบว์']];
 let meView='menu';
 function goMe(v){tab='me';meView=v||'menu';render();window.scrollTo(0,0)}
@@ -14,6 +14,8 @@ function thApply(){const v=thGet(),r=document.documentElement;if(v==='auto')dele
 function thSet(v){writeStr('kn_theme',v==='auto'?null:v);thApply();render()}
 thApply();
 function goProf(){goMe('card')} // บัตรโปรไฟล์ (จากปุ่มบนการ์ดหน้าแรก และ "ดูโปรไฟล์" ในเมนู)
+// ใส่ลายขน หรือใส่/ถอดเครื่องประดับ (แตะของที่มีแล้วในคลังสะสม)
+function colWear(id){const it=kbItem(id),p=M.pet;if(!it||!kbOwns(id))return;if(it.t==='coat')p.coat=it.k;else if(it.t==='acc')p.acc=p.acc===it.k?'none':it.k;saveM();render()}
 function goCol(){goMe('card');setTimeout(()=>{const e=document.getElementById('pfcol');if(e)e.scrollIntoView({block:'start'})},30)} // ไปที่คลังสะสม
 // วันที่ 'YYYY-MM-DD' (เวลาท้องถิ่น) → จำนวนวันที่อยู่ด้วยกัน นับวันแรกเป็นวันที่ 1
 function pdays(rv){const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(rv||'');if(!m)return 1;const a=new Date(+m[1],m[2]-1,+m[3]),b=new Date(),t=new Date(b.getFullYear(),b.getMonth(),b.getDate());return Math.max(1,Math.round((t-a)/864e5)+1)}
@@ -43,9 +45,12 @@ function profHtml(){pens();const p=M.pet,sp=SPC[p.sp||0],cat=(p.sp||0)===0&&!!wi
   h+=`<div class="pfi${ok?'':' pfo'}" aria-label="เหรียญ${nm} ${ok?'ได้แล้ว':'ยังไม่ได้'}">${icx('medal',30,'m'+lv)}<b>เหรียญ${nm}</b><span>${ok?'ได้แล้ว':Math.min(tot,t)+' / '+t}</span></div>`});
  h+='</div>';
  if(cat){const co=PixelCat._t.COATS,on=co[p.coat]?p.coat:'cream';
-  h+='<div class="pfk">ลายขน</div><div class="pfg">'+Object.keys(co).map(k=>{const ok=k===on;return `<div class="pfi${ok?' on':' pfo'}" aria-label="ลาย${co[k].name} ${ok?'ใส่อยู่':'ยังล็อกอยู่'}"><span class="pft3"><canvas class="pfth" data-coat="${k}" width="48" height="48" aria-hidden="true"></canvas>${ok?'':icx('lock',16,'pfl')}</span><b>${co[k].name}</b><span>${ok?'ใส่อยู่':'ยังล็อก'}</span></div>`}).join('')+'</div>';
-  h+='<div class="pfk">เครื่องประดับ</div><div class="pfg">'+PACC.map(([k,nm])=>{const ok=p.acc===k;return `<div class="pfi${ok?' on':' pfo'}" aria-label="${nm} ${ok?'ใส่อยู่':'ยังล็อกอยู่'}"><span class="pft3"><canvas class="pfth" data-coat="${on}" data-acc="${k}" width="48" height="48" aria-hidden="true"></canvas>${ok?'':icx('lock',16,'pfl')}</span><b>${nm}</b><span>${ok?'ใส่อยู่':'ยังล็อก'}</span></div>`}).join('')+'</div>';
-  h+='<div class="st" style="margin:10px 0 16px">ลายขนและเครื่องประดับจะเปิดให้สะสมจากการเรียนเร็วๆ นี้ ไม่ต้องใช้เงินจริง</div>'}
+  // ของที่มีแล้วแตะเพื่อใส่ (ลายขน) หรือใส่/ถอด (เครื่องประดับ) · ยังไม่มีบอกวิธีได้ (ราคาโคบังหรือเป้าการเรียน)
+  const how=id=>{const it=KBI.find(x=>x.id===id);return it&&it.goal?'แม่น '+it.goal+' ข้อ':it?it.p+' โคบัง':''};
+  const tile=(id,nm,coat,acc,on,lbl)=>{const own=kbOwns(id);return `<${own?'button':'div'} class="pfi${on?' on':own?'':' pfo'}"${own?` data-testid="col-${id}" onclick="colWear('${id}')"`:''} aria-label="${lbl} ${on?'ใส่อยู่':own?'มีแล้ว แตะเพื่อใส่':'ยังล็อกอยู่'}"><span class="pft3"><canvas class="pfth" data-coat="${coat}" data-acc="${acc}" width="48" height="48" aria-hidden="true"></canvas>${own?'':icx('lock',16,'pfl')}</span><b>${nm}</b><span>${on?(id.startsWith('acc:')?'ใส่อยู่ แตะเพื่อถอด':'ใส่อยู่'):own?'แตะเพื่อใส่':how(id)}</span></${own?'button':'div'}>`};
+  h+='<div class="pfk">ลายขน</div><div class="pfg">'+Object.keys(co).map(k=>tile('coat:'+k,co[k].name,k,'none',k===on,'ลาย'+co[k].name)).join('')+'</div>';
+  h+='<div class="pfk">เครื่องประดับ</div><div class="pfg">'+PACC.map(([k,nm])=>tile('acc:'+k,nm,on,k,p.acc===k,nm)).join('')+'</div>';
+  h+='<div class="st" style="margin:10px 0 16px">แลกลายขนและเครื่องประดับได้ที่ร้านค้าด้วยโคบังจากการเรียน ไม่ต้องใช้เงินจริง</div>'}
  else h+=`<div class="st" style="margin:10px 0 16px">ลายขนและเครื่องประดับมีให้แมวก่อน ${sp[1]}จะตามมาทีหลังนะ</div>`;
  return h}
 // วาดภาพแมวท่านั่ง (ไม่ขยับ) ลงผืนผ้าใบในหน้าโปรไฟล์ · ชุดสีตามโหมดมืด/สว่างของแอป เพราะพื้นการ์ดเปลี่ยนตามโหมด

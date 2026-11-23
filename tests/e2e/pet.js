@@ -83,8 +83,8 @@ test('ภารกิจรายวัน: ทำครบแล้วกด "�
   assert(/\+20 Energy · ทดสอบ/.test(await p.locator('.toast').last().innerText()), 'ข้อความเด้งบอกความรู้สึกของสัตว์เลี้ยง');
   await p.evaluate(() => pclaim('rev')); assert.strictEqual(await p.evaluate(() => M.pet.energy), 20, 'รับซ้ำไม่ได้');
   await p.evaluate(() => pclaim('dlg')); assert.strictEqual(await p.evaluate(() => M.pet.energy), 20, 'ยังไม่ครบรับไม่ได้');
-  // หลอด Energy ถึงมื้อถัดไป
-  assert.deepStrictEqual(await p.evaluate(() => [document.querySelector('.ebar').getAttribute('aria-valuenow'), document.querySelector('.pel span').textContent]), ['20', 'อีก 10 ถึงมื้อถัดไป']);
+  // หลอด Energy (ใช้ซื้ออาหารที่ร้านค้า · หลอดเต็มที่ 70 = ราคาอาหารแพงสุด)
+  assert.deepStrictEqual(await p.evaluate(() => [document.querySelector('.ebar').getAttribute('aria-valuenow'), document.querySelector('.ebar').getAttribute('aria-valuemax'), document.querySelector('.pel span').textContent]), ['20', '70', 'ใช้ซื้ออาหารที่ร้านค้า']);
   // ข้อมูลวันเดิมจากเวอร์ชันก่อน (ไม่มี cl): ภารกิจที่ครบแล้วได้ Energy ไปแล้ว นับว่ารับแล้ว
   assert.deepStrictEqual(await p.evaluate(() => { M.pet.d = { date: dstr(new Date()), rev: 10, neu: 5, dlg: 0, done: { rev: 1, neu: 1 }, r: [] }; pens(); return [M.pet.d.cl, punclaimed()] }), [{ rev: 1, neu: 1 }, 0]);
   assert.deepStrictEqual(p.errors, []);
@@ -154,7 +154,7 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'sit', t: 0, dur: 1e9 }); M.pet.food = { onigiri: 1 }; M.pet.hg = 80; M.pet.ht = Date.now(); pfood('onigiri'); });
   assert.deepStrictEqual(await T(), ['pose', 'eat']);
   // ตู้กับข้าวว่าง → ขออาหาร (รายงานพฤติกรรมข้อ 12): เดินหางตั้งมากลางฉาก เงยหน้ามอง ニャー แล้วถูหัวคราง (ไม่ใช่ท่าเศร้า) · หลับอยู่ตื่นก่อน
-  const begSim = (o) => p.evaluate(o => { const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'sit', x: 5, t: 0, dur: 1e9, then: null, pend: null, pose: null, tol: 0, cool: 0, lv: 0, after: null }, o); M.pet.food = {}; document.querySelectorAll('.cov').forEach(e => e.remove()); pfeed();
+  const begSim = (o) => p.evaluate(o => { const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'sit', x: 5, t: 0, dur: 1e9, then: null, pend: null, pose: null, tol: 0, cool: 0, lv: 0, after: null }, o); M.pet.food = {}; pfeed(); document.querySelectorAll('.cov').forEach(e => e.remove());
     const r = { first: cat.mode, up: false }; for (let i = 0; i < 800 && !(cat.mode === 'pose' && cat.pose === 'curious'); i++) { step(50); if (cat.mode === 'walk' && cat.then === 'beg') r.up = true }
     r.pose = [cat.mode, cat.pose]; r.x = Math.round(cat.x); r.say = document.querySelector('.scn.px .scb').textContent; for (let j = 0; j < 40 && cat.mode !== 'pet'; j++) step(50); r.after = cat.mode; return r }, o);
   let bg = await begSim({});

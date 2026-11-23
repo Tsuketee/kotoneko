@@ -2,7 +2,7 @@
 // แบบที่เจ้าของเลือก (2026-11-23): หน้าร้านและแผ่นล่างแบบ ข · แลกแล้วไปใส่ที่คลังสะสมแบบ ค · ถุงโชคดีก่อนเปิดแบบ ก + อนิเมชัน · หลังเปิดแบบ ค · อาหารแบบ ค เป็นหน้าต่างรูปอาหาร
 // ตั้งข้อมูลก่อนเปิดแอปผ่าน localStorage แล้วกดและอ่านจากหน้าจอด้วย data-testid เท่านั้น
 // สมุดโคบัง kn_meta.kbl = [[คีย์, จำนวน, เวลา ms, เหตุผล]] · คีย์ buy:<รหัส> / bag:<รหัส> = ของที่มี
-const { assert, test, SEED } = require('./harness');
+const { assert, test, SEED, snap } = require('./harness');
 
 // เปิดแอปด้วยข้อมูลตั้งต้น · streak = จำนวนวันติดกันที่ถึงเป้าจนถึงวันนี้ · missions = ทำภารกิจวันนี้ครบแล้วแต่ยังไม่กดรับ
 async function open(b, base, { pet = {}, meta = {}, store = {}, streak = 0, missions = false, clock, reduce, viewport } = {}) {
@@ -35,6 +35,7 @@ test('ร้านโคบัง: ได้โคบังจากผลกา
   assert.strictEqual(await koban(p), 62 + 30, 'ย้อนหลัง 31 ข้อ = 62 + สตรีค 7 วัน 30');
   await p.getByTestId('shop-log-toggle').click();
   let log = await p.getByTestId('shop-log').innerText();
+  await snap(p, 'wallet-log');
   assert(log.includes('จำได้แม่นเพิ่ม 31 ข้อ') && log.includes('+62') && log.includes('เรียนติดกัน 7 วัน') && log.includes('+30'), log);
   await p.reload(); await shop(p);
   assert.strictEqual(await koban(p), 92, 'เปิดแอปใหม่ต้องไม่ได้ซ้ำ');
@@ -75,17 +76,20 @@ test('ร้านโคบัง: หน้าร้านแบบตู้ส
   assert((await sh.innerText()).includes('วิเชียรมาศ') && (await sh.innerText()).includes('หายาก'));
   assert.strictEqual(await p.getByTestId('shop-preview').getAttribute('data-coat'), 'siamese', 'แผ่นล่างลองใส่ลายที่แตะ');
   assert.strictEqual(await p.getByTestId('shop-buy').innerText(), 'แลก 300 โคบัง');
+  await snap(p, 'sheet-tryon');
   assert.strictEqual(await koban(p), 500, 'แค่แตะดูยังไม่จ่าย');
   await p.getByTestId('shop-buy').click();
   await p.getByTestId('toast').filter({ hasText: 'ใส่ได้ที่คลังสะสม' }).waitFor();
   assert.strictEqual(await koban(p), 200);
   assert((await sh.innerText()).includes('มีแล้ว'));
+  await snap(p, 'sheet-bought');
   assert.strictEqual((await kmeta(p)).pet.coat || 'cream', 'cream', 'แลกแล้วยังไม่ใส่ให้เอง');
   // ไปใส่ที่คลังสะสม
   await p.getByTestId('shop-go-col').click();
   await p.getByTestId('col-coat:siamese').click();
   assert.strictEqual((await kmeta(p)).pet.coat, 'siamese');
   assert((await p.getByTestId('col-coat:siamese').innerText()).includes('ใส่อยู่'));
+  await p.getByTestId('col-coat:siamese').scrollIntoViewIfNeeded(); await snap(p, 'collection-wear');
   // แลกครั้งที่สองจนโคบังหมด แล้วชิ้นถัดไปปุ่มแลกกดไม่ได้และบอกว่าขาดเท่าไร
   await shop(p);
   assert((await p.getByTestId('shop-item-coat:siamese').innerText()).includes('ใส่อยู่'));
@@ -129,11 +133,14 @@ test('ถุงโชคดี: ก่อนจ่ายบอกรายชื
   assert(names.every(n => txt.includes(n)) && !txt.includes('สามสี') && !txt.includes('ดารุมะ'), 'รายชื่อเฉพาะของที่สุ่มได้: ' + txt);
   assert((await p.getByTestId('shop-bag-odds').innerText()).includes('1/9'));
   assert.strictEqual(await p.getByTestId('shop-bag-price').innerText(), '150');
+  await snap(p, 'bag-ask');
   await p.getByTestId('shop-bag-confirm').click();
   await p.getByTestId('bag-anim').waitFor();
+  await p.waitForTimeout(400); await p.screenshot({ path: 'test-results/e2e/bag-anim-mid.png' });
   await p.getByTestId('bag-reveal').waitFor();
   const got = (await p.getByTestId('bag-reveal-name').innerText()).trim();
   assert(names.includes(got), got);
+  await p.waitForTimeout(600); await snap(p, 'bag-reveal');
   assert.strictEqual(await p.getByTestId('bag-anim').count(), 0, 'อนิเมชันจบแล้วหายไป');
   await p.getByTestId('bag-reveal-close').click();
   assert.strictEqual(await koban(p), 850);
@@ -183,12 +190,14 @@ test('อาหาร: ซื้อด้วย Energy เข้าตู้ก�
   for (const k of ['milk', 'onigiri', 'fish', 'sushi']) assert(await p.getByTestId('food-img-' + k).isVisible(), 'รูปอาหาร ' + k);
   assert(await p.getByTestId('feed-milk').isDisabled(), 'ไม่มีในตู้กดไม่ได้');
   assert((await p.getByTestId('feed-fish').innerText()).includes('×1'));
+  await snap(p, 'feed-dialog');
   await p.getByTestId('feed-fish').click();
   assert.strictEqual(await p.getByTestId('feed-dialog').count(), 0, 'ป้อนแล้วหน้าต่างปิด');
   const m = await kmeta(p);
   assert.deepStrictEqual([m.pet.energy, m.pet.bond, m.pet.food.fish], [55, 16, 0]);
   assert.strictEqual(await p.getByTestId('pet-hunger').getAttribute('aria-valuenow'), '0');
   assert.match(await p.getByTestId('pet-bond').innerText(), /16 \/ 120/);
+  await p.getByTestId('pet-feed').scrollIntoViewIfNeeded(); await snap(p, 'after-feed');
   // อิ่มแล้ว (หิวน้อยกว่า 10) ไม่กิน ของในตู้ไม่ลด
   await shop(p); await p.getByTestId('food-item-milk').click(); await p.getByTestId('food-buy').click(); await p.getByTestId('shop-sheet-close').click();
   await p.getByTestId('nav-home').click(); await p.getByTestId('pet-feed').click(); await p.getByTestId('feed-milk').click();

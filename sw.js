@@ -1,5 +1,5 @@
 // Service worker: ทำให้แอปเปิดได้ตอนออฟไลน์
-const VERSION = 'v185';
+const VERSION = 'v186';
 const CACHE = 'kotoneko-' + VERSION;
 const FILES = [
   './',
@@ -43,6 +43,7 @@ const FILES = [
   'js/place.js',
   'js/town.js',
   'js/profile.js',
+  'js/koban.js',
   'js/shop.js',
   'js/grammar.js',
   'js/stats.js',
