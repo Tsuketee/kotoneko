@@ -13,6 +13,7 @@
   - ห้ามใส่เนื้อหาเสียเงินจริงใน repo นี้ (public) เนื้อหา N4/N3 อยู่ใน repo private `Tsuketee/kotoneko-content` · test ใช้ `FAKE_PACK` เท่านั้น
   - ห้ามคัดลอกเนื้อหาจาก Irodori, Minna no Nihongo หรือตำราเชิงพาณิชย์ เขียนเอง หรือใช้ข้อมูลเปิดที่อนุญาตเชิงพาณิชย์และใส่เครดิตใน `NOTICE.md`
   - ข้อความทุกอย่างใน UI เป็นภาษาไทย
+  - อ่าน/เขียน localStorage ผ่าน `readJSON` `writeJSON` `readStr` `writeStr` ใน `js/core.js` (ไฟล์นอกชั้นเก็บข้อมูลเรียกตรงไม่ได้ · ESLint ตรวจ)
   - ห้ามเปลี่ยนชื่อ key ใน localStorage โดยไม่มีโค้ดย้ายข้อมูล (ดูฟีเจอร์ "สำรองข้อมูล")
   - ไอคอนแอปสร้างจาก `tools/icon.html` ด้วย `node tools/make-icons.js` ห้ามแก้ `icons/` เอง · เปลี่ยนหน้าตาไอคอนต้องเปลี่ยนชื่อ `apple-touch-icon-vN.png`
 - **ที่อยู่ของงาน**: งานถัดไปอยู่ใน `docs/ROADMAP.md` · รายละเอียดแมวพิกเซล/ฉาก/แผนที่อยู่ใน `docs/PET_PIXEL.md` · ตั้งค่าคลาวด์ `docs/CLOUD.md` · ชำระเงิน `docs/PAYMENT.md`

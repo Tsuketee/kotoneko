@@ -25,7 +25,7 @@ function pick1(){const p=pool(),n=Date.now();
  const nw=p.filter(x=>!S[x.k]);if(nw.length){const pn=pc&&nw.filter(x=>pc.includes(x.c)),L=pn&&pn.length?pn:nw;return mode==='quiz'?L[Math.floor(Math.random()*L.length)]:L[0]}
  return prac?sh(p)[0]:null}
 function go(){st=[];ci=0;cur=null;ch=null;ans=null;fl=false;render()}
-function allMis(){const o=[];for(const k in DS){let s={};try{s=JSON.parse(localStorage.getItem(DS[k].key)||'{}')}catch(e){}DS[k].d.forEach(x=>{const r=s[x.k];if(r&&r.w>=1)o.push({k,x,w:r.w})})}return o.sort((a,b)=>b.w-a.w)}
+function allMis(){const o=[];for(const k in DS){const s=readJSON(DS[k].key,{})||{};DS[k].d.forEach(x=>{const r=s[x.k];if(r&&r.w>=1)o.push({k,x,w:r.w})})}return o.sort((a,b)=>b.w-a.w)}
 function renderMis(){const L=allMis();let h=progHead()+`<div class="st" style="margin-top:12px">รวมทุกแท็บ · ผิดตั้งแต่ 2 ครั้งถือว่าผิดบ่อย · ตอบถูกต่อเนื่องแล้วจะหลุดจากรายการเอง</div>`;
  if(!L.length)h+=`<div class="card" style="margin-top:12px"><div class="k">${ic(P.star,72)}</div><div class="d">ยังไม่มีข้อที่ตอบผิด<br>ไปฝึกก่อนแล้วกลับมาดูนะคะ</div></div>`;
  else{const bs=Object.keys(DN).filter(k=>L.some(o=>o.k===k&&o.w>=2));
@@ -76,7 +76,7 @@ function renderLv(){const m=Object.fromEntries(Object.keys(DS).map(k=>[k,dsStat(
  const sec=(k,s,g)=>`<div class="pc" data-testid="section-${k}" onclick="openDs('${k}')"><div class="pb"><b>${k==='d'?'บทสนทนา':DS[k].n}</b><div class="st">${k==='d'?D.length+' บทสนทนา':m[k].lr+'/'+m[k].t+' จำได้แม่น'+(m[k].due?' · ทบทวน '+m[k].due:'')}</div>${k==='d'?'':`<div class="bar"><i style="width:${m[k].t?m[k].lr/m[k].t*100:0}%"></i></div>`}</div><div class="pg2">${g}</div></div>`,
  soon=(n,s,g)=>`<div class="pc lk0"><div class="pb"><b>${icx('lock',15)} ${n}</b><div class="st">${s}</div></div><div class="pg2">${g}</div></div>`;
  document.getElementById('app').innerHTML=NAV()+`<div class="st">จำได้แม่นรวม ${l}/${t} · เนื้อหาเขียนเอง</div><div class="bar"><i style="width:${t?l/t*100:0}%"></i></div><div class="path" style="margin-top:14px">${sec('k','','漢')}${sec('w','','語')}${sec('v','','文')}${sec('d','','話')}${gsec()}${soon('ซ้อมสอบ '+LEVELS[LV].n,'ปลดล็อกเมื่อเรียนครบทุกหมวด','試')}</div>`}
-function dsStat(k){let s={};try{s=JSON.parse(localStorage.getItem(DS[k].key)||'{}')}catch(e){}const n=Date.now();let seen=0,lr=0,due=0;const L=k==='a'?DS[k].d.filter(x=>x.g==='b'):DS[k].d;L.forEach(x=>{const r=s[x.k];if(r){seen++;if(r.b>=MASTERY)lr++;if(r.d<=n)due++}});return{seen,lr,due,t:L.length}}
+function dsStat(k){const s=readJSON(DS[k].key,{})||{};const n=Date.now();let seen=0,lr=0,due=0;const L=k==='a'?DS[k].d.filter(x=>x.g==='b'):DS[k].d;L.forEach(x=>{const r=s[x.k];if(r){seen++;if(r.b>=MASTERY)lr++;if(r.d<=n)due++}});return{seen,lr,due,t:L.length}}
 function openDs(k){M.last=k;saveM();tab='learn';nv(k);window.scrollTo(0,0)}
 function resume(){openDs(M.last&&(DS[M.last]||M.last==='d'||M.last==='g')?M.last:'k')}
 function renderLearn(){

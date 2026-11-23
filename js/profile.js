@@ -8,10 +8,10 @@ function goMe(v){tab='me';meView=v||'menu';render();window.scrollTo(0,0)}
 // ธีมของแอป (v123 เจ้าของถามหาปุ่มสลับ): auto ตามเครื่อง | light | dark · เก็บใน localStorage kn_theme (ค่าของเครื่องนี้ ไม่ใช่ความคืบหน้า จึงไม่ซิงก์)
 // ใส่ data-theme บน <html> ซึ่ง css/style.css และแมวพิกเซลอ่านอยู่แล้ว · ใช้ทันทีตอนโหลดไฟล์ จะได้ไม่กะพริบเป็นอีกธีมก่อน
 const THN={auto:'ตามเครื่อง',light:'สว่าง',dark:'มืด'};
-const thGet=()=>{try{const v=localStorage.getItem('kn_theme');return v==='light'||v==='dark'?v:'auto'}catch(e){return'auto'}};
+const thGet=()=>{const v=readStr('kn_theme');return v==='light'||v==='dark'?v:'auto'};
 function thApply(){const v=thGet(),r=document.documentElement;if(v==='auto')delete r.dataset.theme;else r.dataset.theme=v;
  document.querySelectorAll('meta[name=theme-color]').forEach(m=>{if(!m.dataset.c)m.dataset.c=m.content;m.content=v==='auto'?m.dataset.c:v==='dark'?'#1f1a16':'#fff8ef'})}
-function thSet(v){try{v==='auto'?localStorage.removeItem('kn_theme'):localStorage.setItem('kn_theme',v)}catch(e){}thApply();render()}
+function thSet(v){writeStr('kn_theme',v==='auto'?null:v);thApply();render()}
 thApply();
 function goProf(){goMe('card')} // บัตรโปรไฟล์ (จากปุ่มบนการ์ดหน้าแรก และ "ดูโปรไฟล์" ในเมนู)
 function goCol(){goMe('card');setTimeout(()=>{const e=document.getElementById('pfcol');if(e)e.scrollIntoView({block:'start'})},30)} // ไปที่คลังสะสม

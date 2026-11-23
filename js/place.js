@@ -21,7 +21,7 @@ const placeCats = () => { if (!M.pet || !M.pet.name) return null; const c = plac
 // จำนวนคำในหมวดที่ระบุที่จำได้แม่น (คำคันจิ + คำศัพท์คะนะ ของระดับที่เปิดอยู่)
 function plCount(cats) {
   let n = 0;
-  ['w', 'v'].forEach(k => { let s = {}; try { s = JSON.parse(localStorage.getItem(DS[k].key) || '{}') } catch (e) {} DS[k].d.forEach(x => { if (cats.includes(x.c) && s[x.k] && s[x.k].b >= MASTERY) n++ }) });
+  ['w', 'v'].forEach(k => { const s = readJSON(DS[k].key, {}) || {}; DS[k].d.forEach(x => { if (cats.includes(x.c) && s[x.k] && s[x.k].b >= MASTERY) n++ }) });
   return n;
 }
 // ปลดล็อกที่ใหม่เมื่อถึงเกณฑ์ (เรียกตอนวาดหน้าแรก) · ปลดล็อกแล้วเก็บถาวร เปลี่ยนระดับก็ไม่หาย

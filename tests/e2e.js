@@ -368,6 +368,9 @@ test('ไวยากรณ์: เปิดรายการ อ่านบ�
   const f = path.join(require('os').tmpdir(), 'kanji-e2e-g-' + Date.now() + '.json'); await dl.saveAs(f);
   const o = JSON.parse(fs.readFileSync(f, 'utf8')); fs.unlinkSync(f);
   assert(o.data.kg1 && o.data.kg1['1'] && o.data.kg1['2']);
+  // เปิดแอปใหม่แล้วความคืบหน้าไวยากรณ์อ่านกลับมาครบ (GS โหลดจาก kg1 ตอนเริ่ม)
+  await p.reload();
+  assert.deepStrictEqual(await p.evaluate(() => GS), o.data.kg1);
   assert.deepStrictEqual(p.errors, []);
 });
 

@@ -2,6 +2,11 @@
 const PAL=['#e05a5a','#3aa65f','#4a86d8','#e0952f','#9b59b6','#16a5a5','#c2528b','#7a8c2e'];
 const DS={a:{n:'ฮิระงะนะ・คะตะคะนะ',d:KA,key:'ka1'},k:{n:'คันจิ '+LEVELS[LV].n,d:K,key:LKEY[LV].k},w:{n:'คำที่เขียนด้วยคันจิ',d:W,key:LKEY[LV].w},v:{n:'คำศัพท์คะนะ',d:V,key:LKEY[LV].v}}; // key ตามระดับ ดู js/level.js
 let ks='h',tab='home',ds='k',view='s',fur=true,dl=1,CATS=['ทั้งหมด',...new Set(K.map(x=>x.c))];
+// ไฟล์นอกชั้นเก็บข้อมูลอ่าน/เขียน localStorage ผ่านฟังก์ชันชุดนี้ (eslint.config.mjs ห้ามเรียกตรง) · อ่านไม่ได้/ข้อมูลเสีย = fb · เขียนไม่ได้ (เต็ม/โหมดส่วนตัว) = false
+function readJSON(k,fb){try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb}catch{return fb}}
+function writeJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}}
+function readStr(k){try{return localStorage.getItem(k)}catch{return null}}
+function writeStr(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v);return true}catch{return false}}
 function load(){try{return JSON.parse(localStorage.getItem(DS[ds].key)||'{}')}catch(e){return{}}}
 function save(){try{localStorage.setItem(DS[ds].key,JSON.stringify(S))}catch(e){}}
 let S=load(),st=[],lc=0,tool='pen',esz=14,ep=null,wi=0,ci=0,guide=2,cat='ทั้งหมด',mode='card',qt='read',prac=0,cur=null,ch=null,ans=null,fl=false;

@@ -26,7 +26,7 @@ const punclaimed=()=>{const p=M.pet;if(!p||!p.name||!p.d||p.d.date!==dstr(new Da
 function pdd(i){if(!M.pet||!M.pet.name)return;pens();if(!M.pet.d.r.includes(i)){M.pet.d.r.push(i);ptrack('dlg')}render()}
 function pfeed(){const p=M.pet;if(p.energy<30){pcue('beg');toast(IC.rice+' '+pline(p,'hungry',false))}else{p.energy-=30;pbond(10);pcue('eat',2600);toast(IC.rice+' '+pline(p,'feed',false))}saveM();render()}
 function pgo(x){tab='learn';nv(x)}
-function pmast(){let n=0;for(const k in DS){try{n+=Object.values(JSON.parse(localStorage.getItem(DS[k].key)||'{}')).filter(v=>v.b>=MASTERY).length}catch(e){}}return n}
+function pmast(){let n=0;for(const k in DS)n+=Object.values(readJSON(DS[k].key,{})||{}).filter(v=>v&&v.b>=MASTERY).length;return n}
 function ptr(p){if(p.trait==null||!TR[p.trait]){p.trait=Math.floor(Math.random()*TR.length);p.rv=dstr(new Date());saveM()}return TR[p.trait]}
 // เลือกประโยคของสัตว์เลี้ยงตามช่วง/เหตุการณ์ (key ดูใน js/data/pet-lines.js)
 // stable=true: เลือกให้คงที่ภายใน 1 ชั่วโมง (ใช้กับกล่องคำพูดที่วาดซ้ำบ่อย) / false: สุ่มทุกครั้ง (ใช้กับข้อความเด้งตอนเกิดเหตุการณ์)
