@@ -231,7 +231,6 @@ function cloudFormInner() {
   if (CU.step === 'code') return `<div class="st">ส่งรหัสไปที่ <b>${esc(CU.email)}</b> แล้ว กรอกรหัสตัวเลขจากอีเมล</div><input id="ccd" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="รหัสจากอีเมล" style="${INP};margin-top:10px;letter-spacing:4px;text-align:center" onkeydown="if(event.key==='Enter')cloudVerify()">${err}<div class="btns" style="margin-top:10px"><button${dis} onclick="cloudVerify()">${CU.busy ? 'กำลังตรวจ…' : 'ยืนยัน'}</button></div><button class="lk" onclick="cloudBack()">เปลี่ยนอีเมล / ส่งรหัสใหม่</button>`;
   return `<div class="st">ใช้อีเมลเข้าสู่ระบบ เราจะส่งรหัสไปให้ ไม่ต้องตั้งรหัสผ่าน</div><input id="cem" type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="อีเมล" value="${esc(CU.email)}" style="${INP};margin-top:10px" onkeydown="if(event.key==='Enter')cloudSend()">${err}<div class="btns" style="margin-top:10px"><button${dis} onclick="cloudSend()">${CU.busy ? 'กำลังส่ง…' : 'ส่งรหัส'}</button></div>${back}`;
 }
-const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 function cloudHtml() {
   if (!cloudOn()) return '';
   let b;

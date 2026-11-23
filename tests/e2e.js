@@ -113,6 +113,21 @@ test('ไอคอน: apple-touch-icon มีไฟล์เดียว ชื
   JSON.parse(rd('manifest.webmanifest')).icons.forEach(i => { assert(fs.existsSync(path.join(ROOT, i.src)), 'ไม่พบ ' + i.src); assert(sw.includes(`'${i.src}'`), 'sw.js ไม่ได้แคช ' + i.src); });
 });
 
+test('ความปลอดภัย: แปลงข้อความเป็น HTML ด้วย esc ใน js/core.js ตัวเดียว · ชื่อที่มีแท็กแสดงเป็นตัวหนังสือ ไม่กลายเป็น HTML', async (b, base) => {
+  const others = fs.readdirSync(path.join(ROOT, 'js')).filter(f => f.endsWith('.js') && f !== 'core.js' && /&amp;|&lt;|&#39;/.test(fs.readFileSync(path.join(ROOT, 'js', f), 'utf8')));
+  assert.deepStrictEqual(others, [], 'ตัวแปลง HTML ต้องมีตัวเดียวคือ esc ใน js/core.js (ใช้ตัวนั้นแทนการเขียนใหม่)');
+  const p = await fresh(b, base);
+  assert.deepStrictEqual(await p.evaluate(() => [esc(`<a href="x" onclick='y'>&</a>`), esc(null), esc(undefined), esc(0), esc('ねこ')]),
+    ['&lt;a href=&quot;x&quot; onclick=&#39;y&#39;&gt;&amp;&lt;/a&gt;', '', '', '0', 'ねこ']);
+  const bad = '<img src=x onerror="window.__x=1">';
+  await p.evaluate(b => { M.me = { name: b }; saveM(); goTab('home'); }, bad);
+  assert((await p.getByTestId('home-greeting').innerText()).includes(bad), 'คำทักต้องแสดงชื่อเป็นตัวหนังสือ');
+  await p.evaluate(() => goTab('me')); await p.evaluate(() => goProf());
+  assert.strictEqual(await p.locator('#app img[src="x"]').count(), 0, 'ชื่อเจ้าของต้องไม่กลายเป็นแท็ก img');
+  assert.strictEqual(await p.evaluate(() => window.__x), undefined);
+  assert.deepStrictEqual(p.errors, []);
+});
+
 // ทุกไฟล์เป็น <script> ธรรมดาที่ใช้ตัวแปร global ร่วมกัน: ลำดับโหลดผิดหรือชื่อซ้ำข้ามไฟล์ทำให้ค่าถูกทับเงียบๆ
 const scriptOrder = html => [...html.matchAll(/<script src="(js\/[^"]+)"/g)].map(m => m[1]);
 function scriptOrderProblems(order, onDisk) {

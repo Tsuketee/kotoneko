@@ -253,7 +253,6 @@ function mount(cv, o) { let raf = 0; const loop = now => { if (!cv.isConnected) 
 // ---------- หน้าต่าง "ไปเที่ยวที่ไหนดี": แผนที่ + ป้ายเป็นปุ่ม HTML (ตัวหนังสือจริง) + เส้นชี้ + กล่องข้อมูล ----------
 // a: {places, at, has(p), count(p), go(id), rb(s), icon(k, s), cat: {coat, acc} | null, emoji, season(), tod(), date()} · host = ใส่ในกล่องที่ให้ (พรีวิว) แทนหน้าต่างลอย
 const MARKS = [['ふじさん', 56, 22], ['ねこがわ', 116, 131], ['たんぼ', 11, 238]];
-const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 function ask(a, host) {
   if (!host && document.querySelector('.cov')) return;
   const ov = host ? null : document.createElement('div'), d = document.createElement('div'); d.className = 'cdl tmd'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'ไปเที่ยวที่ไหนดี'); if (ov) { ov.className = 'cov'; d.setAttribute('aria-modal', 'true') }
