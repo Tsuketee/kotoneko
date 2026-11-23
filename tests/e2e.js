@@ -1160,6 +1160,28 @@ test('เข้าสู่ระบบด้วย Google (PKCE): ปุ่ม�
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('ที่เก็บข้อมูลในเครื่องเขียนไม่ได้ (พื้นที่เต็ม/โหมดส่วนตัว): แจ้งผู้ใช้ครั้งเดียว และไม่พาไปหน้า Google · ปุ่มฟังเสียงเล่นไม่ได้ก็แจ้งผู้ใช้', async (b, base) => {
+  const db = mockCloud(); db.google = true;
+  const p = await cloudPage(b, base, db);
+  // เก็บทุกข้อความเด้งที่ขึ้นจอ · นับหลังคิวข้อความว่าง (toastFree) จะได้รู้ว่าไม่มีข้อความซ้ำรอขึ้นอยู่
+  await p.evaluate(() => { window.__toasts = []; new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.dataset && n.dataset.testid === 'toast') window.__toasts.push(n.textContent) }))).observe(document.body, { childList: true }); });
+  const shown = async s => { await p.waitForFunction(() => Date.now() > toastFree, null, { timeout: 15000 }); return p.evaluate(s => window.__toasts.filter(m => m.includes(s)).length, s) };
+  // ปุ่มฟังเสียง: เบราว์เซอร์เล่นไม่ได้ → แจ้ง ไม่เงียบ
+  await p.evaluate(() => { speechSynthesis.speak = () => { throw new Error('ทดสอบ: เล่นไม่ได้') }; speak('ねこ'); });
+  assert.strictEqual(await shown('เล่นเสียงไม่ได้ค่ะ'), 1);
+  // เขียนไม่ได้: บันทึกหลายครั้งแจ้งแค่ครั้งเดียว แอปยังทำงานต่อด้วยข้อมูลในหน่วยความจำ
+  await p.evaluate(() => { Storage.prototype.setItem = () => { throw new DOMException('ทดสอบ: เต็ม', 'QuotaExceededError') }; M.goal = 30; saveM(); save(); saveM(); render(); });
+  assert.strictEqual(await shown('บันทึกข้อมูลในเครื่องไม่ได้'), 1);
+  assert.strictEqual(await p.evaluate(() => M.goal), 30);
+  // เข้าสู่ระบบด้วย Google: เก็บ code_verifier ไม่ได้ → ไม่ไปหน้า Google (กลับมาก็เข้าสู่ระบบไม่ได้อยู่ดี) และบอกให้ใช้อีเมล
+  await p.evaluate(() => goMe('acct')); await p.waitForSelector('.sgg');
+  const url = p.url();
+  await p.locator('.sgg').click();
+  await p.waitForSelector('text=เข้าสู่ระบบด้วย Google ไม่ได้ในโหมดนี้');
+  assert.strictEqual(p.url(), url); assert(!db.auth, 'ต้องไม่เรียกหน้า authorize');
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('แท็บเรียน: หน้ารวมมีเส้นทางเรียน (ย้ายจากหน้าแรก) · ปุ่มเรียนต่อ · ปุ่มกลับในหมวดย่อยกลับหน้ารวม · แตะแท็บเรียนซ้ำกลับหน้ารวม', async (b, base) => {
   const p = await fresh(b, base, { viewport: { width: 390, height: 844 } });
   assert(!(await p.locator('#app').innerText()).includes('เส้นทางเรียน'), 'หน้าแรกไม่มีเส้นทางเรียนแล้ว');

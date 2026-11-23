@@ -2,18 +2,21 @@
 
 อ่านไฟล์นี้ก่อนเริ่ม session ใหม่ แล้วอ่าน `CLAUDE.md` และ `FEATURE_MAP.md` · งานแมวพิกเซล/แผนที่อยู่ใน `docs/PET_PIXEL.md`
 
-## สถานะ
-- **branch** `claude/affectionate-hypatia-hmsdap` (v137–v142) **ยังไม่มี PR และยังไม่อยู่ใน main** · main อยู่ที่ v136 (PR #27)
+## สถานะ (อัปเดต 2026-11-23 · v159)
+- **branch** `claude/beautiful-hamilton-o3aobm` (v137–v159 · ต่อจาก `claude/affectionate-hypatia-hmsdap` ที่หยุดที่ v142) **ยังไม่มี PR และยังไม่อยู่ใน main** · main อยู่ที่ v136 (PR #27)
+- เจ้าของตกลงว่าจะเปิด PR เมื่อ CI เขียว · ในเครื่อง `npm run check` ผ่านครบแล้ว รอดูผล CI จริงบน GitHub
 - ถ้า PR ของ branch นี้ merge แล้ว ให้เริ่ม branch ใหม่จาก main ล่าสุด (งานที่ push หลัง merge จะค้างนอก main)
-- **ผล `npm run check` ล่าสุด** (exit 1 · ตรงกับ CI [run #1](https://github.com/Tsuketee/kotoneko/actions/runs/45034707818) ที่แดงตามคาด):
+- **ผล `npm run check` ล่าสุด** (v159 · exit 0 · ผ่านทั้งหมด 10 ขั้น):
 
 | ขั้น | ผล |
 |---|---|
-| type (`tsc` strict เฉพาะ `.ts`) | ✅ 0 error |
-| lint (ESLint) | ❌ 134 error ในโค้ดเดิม · ไม่ได้ปิดกฎ · แผนแก้ `docs/LINT_PLAN.md` |
+| type (`tsc` strict เฉพาะ `.ts`) | ✅ |
+| lint (ESLint) | ✅ 0 error (เดิม 134 · แก้ครบทุกกลุ่มตาม `docs/LINT_PLAN.md`) |
+| determinism · featuremap · version · test-count | ✅ |
 | unit (`tests/payment.mjs`) | ✅ 12/12 |
-| e2e (`tests/e2e.js`) | ✅ 58/58 |
-| flows (`tests/flows.js`) | ❌ 6/7 · `06-write-finger` ลากนิ้วในหน้าฝึกเขียนไม่เกิดเส้น |
+| hooks (`tests/hooks.js`) | ✅ 10/10 |
+| e2e (`tests/e2e.js`) | ✅ 59/59 |
+| flows (`tests/flows.js`) | ✅ 8/8 |
 
 ## เริ่ม session ใหม่ต้องทำก่อน
 1. `npm ci` (container ใหม่ไม่มี `node_modules` · ESLint/tsc/hook ต้องใช้) · Chromium ของ Playwright ติดตั้งในเครื่องอยู่แล้ว
@@ -56,7 +59,7 @@
 
 ## งานถัดไปที่แนะนำ (เมื่อเจ้าของสั่ง)
 1. ตัดสินข้อ 1 แล้วทำให้ flows ผ่าน 7/7
-2. lint ~~กลุ่ม ก (`any` 4 จุดใน `stripe-webhook`)~~ ✅ v155 → ~~กลุ่ม ข (18 จุด รวม `packs.js:90,92` ที่เขียนทับฟังก์ชันของ `cloud.js`)~~ ✅ v156 → ~~ค~~ ✅ v157 → ~~จ~~ ✅ v158 → ง ตาม `docs/LINT_PLAN.md`
+2. lint ~~กลุ่ม ก (`any` 4 จุดใน `stripe-webhook`)~~ ✅ v155 → ~~กลุ่ม ข (18 จุด รวม `packs.js:90,92` ที่เขียนทับฟังก์ชันของ `cloud.js`)~~ ✅ v156 → ~~ค~~ ✅ v157 → ~~จ~~ ✅ v158 → ~~ง~~ ✅ v159 · lint เหลือ 0
 3. อัปเดต actions ใน CI (`checkout` `setup-node` `upload-artifact` @v4 ใช้ Node 20 ที่ GitHub เลิกรองรับ · ยังรันได้)
 4. TypeScript ระยะ 1 ตาม `docs/TYPESCRIPT_PLAN.md`
 

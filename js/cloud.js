@@ -5,8 +5,8 @@
 // - ถ้าทั้งเครื่องนี้และคลาวด์มีของใหม่ทั้งคู่ ให้ผู้ใช้เลือกเองว่าจะเก็บฝั่งไหน
 // สถานะเก็บใน localStorage key 'kn_cloud' (ไม่ใช่ความคืบหน้า จึงไม่อยู่ใน PK และไม่ถูกส่งออก/ซิงก์)
 const CK = 'kn_cloud';
-let CS = {}; try { CS = JSON.parse(localStorage.getItem(CK) || '{}') } catch (e) { CS = {} }
-const csave = () => { try { localStorage.setItem(CK, JSON.stringify(CS)) } catch (e) {} };
+let CS = readJSON(CK, {});
+const csave = () => writeJSON(CK, CS);
 const cloudOn = () => !!(typeof CLOUD !== 'undefined' && CLOUD.url && CLOUD.key);
 const cloudIn = () => !!(CS.rt && CS.uid);
 let CU = { step: 'email', email: '', busy: false, err: '' }, cloudBusy = null, cloudOb = false;
@@ -15,22 +15,22 @@ let CU = { step: 'email', email: '', busy: false, err: '' }, cloudBusy = null, c
 // ขาไป: เก็บ code_verifier ใน 'kn_pkce' แล้วพาไปหน้า Google ในหน้าต่างเดิม (แอปบนหน้าจอโฮมของ iPad จะได้กลับมาที่เดิม) · ขากลับ: ?code= แลกเป็น session
 // 'kn_auth' 'kn_pkce' ไม่ใช่ความคืบหน้า (ไม่อยู่ใน PK) · client secret ของ Google อยู่ในหน้าตั้งค่า Supabase เท่านั้น
 const AK = 'kn_auth', PKK = 'kn_pkce', OAP = ['google', 'apple']; // ลำดับปุ่ม · LINE ต้องทำ Edge Function เอง ยังไม่ทำ
-let CA = null, cloudAuthAsked = false; try { CA = JSON.parse(localStorage.getItem(AK) || 'null') } catch (e) { CA = null }
+let CA = readJSON(AK, null), cloudAuthAsked = false;
 const cloudPv = () => OAP.filter(k => CA && CA[k]);
 async function cloudAuthCfg() {
   try {
     const j = await sb('/auth/v1/settings', { auth: false }), x = (j && j.external) || {}, n = {};
     OAP.forEach(k => { n[k] = !!x[k] });
-    const ch = JSON.stringify(n) !== JSON.stringify(CA); CA = n; try { localStorage.setItem(AK, JSON.stringify(n)) } catch (e) {}
+    const ch = JSON.stringify(n) !== JSON.stringify(CA); CA = n; writeJSON(AK, n);
     if (ch && !cloudIn() && !document.querySelector('.cov') && (cloudOb || (tab === 'me' && meView === 'acct'))) render();
-  } catch (e) {}
+  } catch (e) { console.warn('อ่านการตั้งค่าผู้ให้บริการเข้าสู่ระบบไม่ได้ ใช้ค่าเดิม', e) }
 }
 const b64u = a => btoa(String.fromCharCode(...new Uint8Array(a))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 async function cloudOAuth(pv) {
   if (!window.crypto || !crypto.subtle) { CU.err = 'เบราว์เซอร์นี้ใช้วิธีนี้ไม่ได้ ลองใช้อีเมลแทนนะคะ'; return render() }
   CU = { ...CU, busy: true, err: '' }; render();
   const v = b64u(crypto.getRandomValues(new Uint8Array(32))), ch = b64u(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v)));
-  try { localStorage.setItem(PKK, JSON.stringify({ v, pv, t: Date.now(), ob: cloudOb })) } catch (e) {}
+  if (!writeJSON(PKK, { v, pv, t: Date.now(), ob: cloudOb })) { CU = { ...CU, busy: false, err: 'เข้าสู่ระบบด้วย Google ไม่ได้ในโหมดนี้ ลองใช้รหัสทางอีเมลแทนนะคะ' }; return render() }
   location.href = CLOUD.url.replace(/\/$/, '') + '/auth/v1/authorize?' + new URLSearchParams({ provider: pv, redirect_to: location.origin + location.pathname, code_challenge: ch, code_challenge_method: 's256' });
 }
 // ขากลับจากหน้า Google: ลบ ?code ออกจากแถบที่อยู่ก่อน แลกเป็น session แล้วซิงก์ (เหมือนเข้าสู่ระบบด้วยอีเมล) · ชื่อจากบัญชีใช้เป็นชื่อเจ้าของถ้ายังไม่ได้ตั้ง
@@ -38,8 +38,8 @@ async function cloudOAuthBack() {
   const q = new URLSearchParams(location.search), code = q.get('code'), er = q.get('error_description') || q.get('error');
   if (!code && !er) return false;
   ['code', 'error', 'error_code', 'error_description', 'state'].forEach(k => q.delete(k));
-  try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash) } catch (e) {}
-  let s = null; try { s = JSON.parse(localStorage.getItem(PKK) || 'null'); localStorage.removeItem(PKK) } catch (e) {}
+  try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash) } catch (e) { console.warn('ลบ ?code ออกจากแถบที่อยู่ไม่ได้', e) }
+  const s = readJSON(PKK, null); writeStr(PKK, null);
   if (er) { toast('เข้าสู่ระบบไม่สำเร็จ: ' + esc(er)); return true }
   if (!s || !s.v || Date.now() - s.t > 15 * 60000) { toast('เข้าสู่ระบบไม่สำเร็จ ลองกดเข้าสู่ระบบจากในแอปอีกครั้ง หรือใช้อีเมลแทนนะคะ'); return true }
   cloudOb = !!s.ob && !(M.pet && M.pet.name); CU = { ...CU, busy: true, err: '' }; render();
@@ -64,7 +64,7 @@ async function sb(path, { method = 'GET', body, auth = true, prefer, keepalive }
   const ac = new AbortController(), t = setTimeout(() => ac.abort(), 15000);
   try {
     const r = await fetch(CLOUD.url.replace(/\/$/, '') + path, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body), signal: ac.signal, keepalive: !!keepalive && (body === undefined || JSON.stringify(body).length < 60000) });
-    let j = null; try { j = await r.json() } catch (e) {}
+    let j = null; try { j = await r.json() } catch (e) { console.warn('คำตอบจากเซิร์ฟเวอร์ไม่ใช่ JSON', r.status, e) }
     if (!r.ok) { const e = new Error((j && (j.msg || j.message || j.error_description || j.error)) || ('HTTP ' + r.status)); e.status = r.status; e.code = j && (j.error_code || j.code); throw e }
     return j;
   } finally { clearTimeout(t) }
@@ -89,7 +89,7 @@ async function cloudToken() {
 const canon = v => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']' : v && typeof v === 'object' ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}' : JSON.stringify(v);
 // ไม่นับ pet.lastTs (เวลาที่เปิดหน้าแรกล่าสุด เปลี่ยนทุกครั้งที่เปิดแอป) ไม่งั้นแค่เปิดแอปก็กลายเป็น "มีของใหม่" แล้วส่งขึ้น/ถามซ้ำไม่จบ
 function chash(o) { let x = o; if (o && o[MK] && o[MK].pet && 'lastTs' in o[MK].pet) { const pet = { ...o[MK].pet }; delete pet.lastTs; x = { ...o, [MK]: { ...o[MK], pet } } } const s = canon(x); let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) } return (h >>> 0).toString(36) + '.' + s.length }
-function snapshot() { const d = {}; PK.forEach(k => { try { const v = localStorage.getItem(k); if (v) d[k] = JSON.parse(v) } catch (e) {} }); return d }
+function snapshot() { const d = {}; PK.forEach(k => { const v = readJSON(k); if (v !== undefined) d[k] = v }); return d }
 const hasPet = d => !!(d && d[MK] && d[MK].pet && d[MK].pet.name);
 function applyData(d) {
   PK.forEach(k => { if (d[k] && typeof d[k] === 'object' && !Array.isArray(d[k])) localStorage.setItem(k, JSON.stringify(d[k])); else localStorage.removeItem(k) });
@@ -141,7 +141,7 @@ async function push(local, lh, rev, opt) {
 function pull(row) {
   applyData(row.data || {});
   done(row.rev, chash(snapshot()));
-  try { sessionStorage.setItem('kn_pulled', '1') } catch (e) {}
+  writeStr('kn_pulled', '1', true);
   location.reload();
   return 'pulled';
 }
@@ -187,7 +187,7 @@ async function cloudLogout() {
   if (!confirm('ออกจากระบบ? ความคืบหน้ายังอยู่ในเครื่องนี้ แต่จะไม่ซิงก์จนกว่าจะเข้าสู่ระบบอีกครั้ง')) return;
   await cloudSync(false, { quiet: true });
   const at = CS.at; cloudForget(); render();
-  try { await fetch(CLOUD.url.replace(/\/$/, '') + '/auth/v1/logout', { method: 'POST', headers: { apikey: CLOUD.key, Authorization: 'Bearer ' + at } }) } catch (e) {}
+  try { await fetch(CLOUD.url.replace(/\/$/, '') + '/auth/v1/logout', { method: 'POST', headers: { apikey: CLOUD.key, Authorization: 'Bearer ' + at } }) } catch (e) { console.warn('แจ้งเซิร์ฟเวอร์ว่าออกจากระบบไม่ได้ (ในเครื่องออกแล้ว)', e) }
 }
 // ลบบัญชี: เรียกฟังก์ชัน delete_my_account (ดู supabase/schema.sql) ข้อมูลในเครื่องนี้ไม่ถูกลบ
 let cloudDeleting = false;
@@ -205,7 +205,7 @@ async function cloudDelete(o) {
     await cloudToken();
     await sb('/rest/v1/rpc/delete_my_account', { method: 'POST', body: {} });
     const at = CS.at; cloudForget();
-    try { await fetch(CLOUD.url.replace(/\/$/, '') + '/auth/v1/logout', { method: 'POST', headers: { apikey: CLOUD.key, Authorization: 'Bearer ' + at } }) } catch (e) {}
+    try { await fetch(CLOUD.url.replace(/\/$/, '') + '/auth/v1/logout', { method: 'POST', headers: { apikey: CLOUD.key, Authorization: 'Bearer ' + at } }) } catch (e) { console.warn('แจ้งเซิร์ฟเวอร์ว่าออกจากระบบไม่ได้ (ในเครื่องออกแล้ว)', e) }
     o.remove(); CU = { step: 'email', email: '', busy: false, err: '' };
     toast('ลบบัญชีแล้วค่ะ'); render();
   } catch (e) {
@@ -250,7 +250,7 @@ const cloudObLink = () => cloudOn() ? `<button class="lk" onclick="cloudOb=true;
 
 // ---------- เริ่มทำงาน ----------
 async function cloudStart() {
-  try { if (sessionStorage.getItem('kn_pulled')) { sessionStorage.removeItem('kn_pulled'); toast('ดึงความคืบหน้าล่าสุดจากคลาวด์แล้วค่ะ') } } catch (e) {}
+  if (readStr('kn_pulled', true)) { writeStr('kn_pulled', null, true); toast('ดึงความคืบหน้าล่าสุดจากคลาวด์แล้วค่ะ') }
   if (!cloudOn()) return;
   if (!(await cloudOAuthBack())) cloudSync(true, { quiet: true });
   document.addEventListener('visibilitychange', () => {

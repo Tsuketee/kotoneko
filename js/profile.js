@@ -25,7 +25,7 @@ const PWHY={'เพื่อไปสอบวัดระดับ JLPT':'ส�
 let pfTab='about';
 const pesc=t=>String(t==null?'':t).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
 const page=d=>d<14?d+' วัน':d<60?Math.floor(d/7)+' สัปดาห์':d<365?Math.floor(d/30)+' เดือน':Math.floor(d/365)+' ปี'+(Math.floor(d%365/30)?' '+Math.floor(d%365/30)+' เดือน':'');
-const pbday=k=>{const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(k||'');if(!m)return'วันนี้';try{return new Date(+m[1],m[2]-1,+m[3]).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'})}catch(e){return k}};
+const pbday=k=>{const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(k||'');if(!m)return'วันนี้';try{return new Date(+m[1],m[2]-1,+m[3]).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'})}catch{return k}};
 const pdark=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':typeof matchMedia==='function'&&matchMedia('(prefers-color-scheme: dark)').matches};
 function pfT(t){pfTab=t;render()}
 function profHtml(){pens();const p=M.pet,sp=SPC[p.sp||0],cat=(p.sp||0)===0&&!!window.PixelCat,tr=ptr(p),st=pstage(p.bond),tot=pmast(),since=p.rv||Object.keys(M.days).sort()[0]||'',age=pdays(since),n=streak(),dd=Object.values(M.days).filter(v=>v>0).length;
@@ -51,7 +51,7 @@ function profHtml(){pens();const p=M.pet,sp=SPC[p.sp||0],cat=(p.sp||0)===0&&!!wi
  return h}
 // วาดภาพแมวท่านั่ง (ไม่ขยับ) ลงผืนผ้าใบในหน้าโปรไฟล์ · ชุดสีตามโหมดมืด/สว่างของแอป เพราะพื้นการ์ดเปลี่ยนตามโหมด
 function profMount(){if(!window.PixelCat)return;const T=PixelCat._t,tm=pdark()?'dark':'light',p=M.pet,on=T.COATS[p.coat]?p.coat:'cream';
- const dw=(c,coat,acc)=>{try{T.draw(c.getContext('2d'),T.frame('sit',0,tm,coat,acc||'none'))}catch(e){}};
+ const dw=(c,coat,acc)=>{try{T.draw(c.getContext('2d'),T.frame('sit',0,tm,coat,acc||'none'))}catch(e){console.warn('วาดตัวอย่างลายขนไม่ได้',coat,acc,e)}};
  const hc=document.getElementById('pfcv');if(hc)dw(hc,on,p.acc);
  document.querySelectorAll('.pfth').forEach(c=>dw(c,c.dataset.coat,c.dataset.acc))}
 // แก้ชื่อสัตว์เลี้ยง (ปุ่มดินสอบนบัตร) · ตัดอักขระ HTML แบบเดียวกับตอนตั้งชื่อครั้งแรก (obt() ใน js/pet.js)
@@ -77,7 +77,7 @@ function menuHtml(){const p=M.pet,sp=SPC[p.sp||0],cat=(p.sp||0)===0&&!!window.Pi
 <h2>ช่วยเหลือและข้อมูล</h2><div class="mng">${mnRow('info','แนะนำแอป','about.html')}${mnRow('sparkle','ลิขสิทธิ์และเครดิต',"goMe('credits')")}${mnRow('shield','นโยบายความเป็นส่วนตัว','privacy.html')}${mnRow('doc','ข้อกำหนดการใช้งาน','terms.html')}</div>
 <div class="mnv" id="mnv"></div>${inn?`<button class="mno" onclick="cloudLogout()">${icx('logout',20)} ออกจากระบบ</button>`:''}`}
 // เวอร์ชันอ่านจากชื่อแคชของ service worker (ไม่ต้องจำเลขไว้สองที่) · ไม่มี service worker ก็ไม่แสดง
-function mnVer(){try{if(!window.caches)return;caches.keys().then(k=>{const v=(k.find(x=>/^kotoneko-v\d+$/.test(x))||'').slice(9),e=document.getElementById('mnv');if(v&&e)e.textContent='เวอร์ชัน '+v}).catch(()=>{})}catch(e){}}
+function mnVer(){try{if(!window.caches)return;caches.keys().then(k=>{const v=(k.find(x=>/^kotoneko-v\d+$/.test(x))||'').slice(9),e=document.getElementById('mnv');if(v&&e)e.textContent='เวอร์ชัน '+v}).catch(()=>{})}catch(err){console.warn('อ่านเลขเวอร์ชันจากแคชไม่ได้',err)}}
 function meHtml(){if(meView==='menu')return menuHtml();if(meView==='card')return profHtml();
  const T={acct:'บัญชีและซิงก์',backup:'สำรองข้อมูล',credits:'ลิขสิทธิ์และเครดิต'},b={acct:()=>cloudHtml().replace(/^<h2>[^<]*<\/h2>/,'')||'<div class="st">ยังไม่ได้ตั้งค่าการซิงก์</div>',backup:backupHtml,credits:()=>creditsHtml().replace(/^<h2>[^<]*<\/h2>/,'').replace('<details class="card" id="credits"','<details open class="card" id="credits"')}[meView];
  if(!b){meView='card';return profHtml()}

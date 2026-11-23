@@ -686,7 +686,7 @@ const TZLAT={Bangkok:13.75,Vientiane:18,Phnom_Penh:11.6,Ho_Chi_Minh:10.8,Saigon:
  Sydney:-33.9,Melbourne:-37.8,Brisbane:-27.5,Perth:-31.95,Adelaide:-34.9,Darwin:-12.5,Hobart:-42.9,Auckland:-36.85},
  TZREG={Asia:25,Europe:50,America:35,Africa:5,Australia:-30,Pacific:-15,Atlantic:35,Indian:-10},
  latOf=tz=>{if(!tz)return 14;const P=tz.split('/'),c=TZLAT[P[P.length-1]];return c!=null?c:TZREG[P[0]]!=null?TZREG[P[0]]:14};
-let LAT=(()=>{try{return latOf(Intl.DateTimeFormat().resolvedOptions().timeZone)}catch(e){return 14}})()*Math.PI/180;const OBL=23.44*Math.PI/180,RAD=Math.PI/180;
+let LAT=(()=>{try{return latOf(Intl.DateTimeFormat().resolvedOptions().timeZone)}catch{return 14}})()*Math.PI/180;const OBL=23.44*Math.PI/180,RAD=Math.PI/180;
 function moonTilt(ms,p,h){const dd=(ms-Date.UTC(2000,0,1,12))/864e5,ls=(280.46+.9856474*dd)*RAD,lm=ls+p*TAU,
  eq=l=>[Math.atan2(Math.cos(OBL)*Math.sin(l),Math.cos(l)),Math.asin(Math.sin(OBL)*Math.sin(l))],[ras,des]=eq(ls),[ram,dem]=eq(lm),
  hs=(h-12)*15*RAD,hm=hs-(ram-ras),
@@ -1665,7 +1665,7 @@ function mount(canvas,o={}){stop();cv=canvas;S.coat=COATS[o.coat]?o.coat:'cream'
  cv.addEventListener('pointerdown',e=>{const[x,y]=pt(e),X=Math.round(cat.x);if(!(x>=X+4&&x<=X+44&&y>=CY+4&&y<=CY+46))return;const z=zoneAt(x,y);
   if(z!=='head'||cat.k==='belly'||cat.cool>0)return poke(z,x,y);
   endHold(false);fx('hold',x,y);hold={x,y,tm:setTimeout(()=>{if(!hold)return;hold.done=1;dropHold();if(!slowBlink(1))poke('head',hold.x,hold.y)},HOLD)};
-  try{cv.setPointerCapture(e.pointerId)}catch(_){}});
+  try{cv.setPointerCapture(e.pointerId)}catch(err){console.warn('จับนิ้วไว้ที่ฉากแมวไม่ได้',err)}});
  cv.addEventListener('pointerup',()=>endHold(true));cv.addEventListener('pointercancel',()=>endHold(false));
  cv.addEventListener('pointermove',e=>{if(!hold||hold.done)return;const[x,y]=pt(e);if(Math.hypot(x-hold.x,y-hold.y)>6)endHold(true)}); // ลากออกไป = นับเป็นแตะ
  cv.addEventListener('contextmenu',e=>e.preventDefault()); // กดค้างไม่ให้เมนูของระบบเด้ง

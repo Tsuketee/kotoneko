@@ -3,15 +3,15 @@
 //   price:{ระดับ:{amount,currency}} (ระดับที่เปิดขายแล้ว), buy:{l,t} (กำลังไปจ่ายเงิน)}
 // การซื้อ: Edge Function 'checkout' สร้างหน้าชำระเงิน Stripe → 'stripe-webhook' เพิ่มสิทธิ์ใน entitlements (ดู docs/PAYMENT.md)
 const PSK = 'kn_packs';
-let PS = {}, RR = null; try { PS = JSON.parse(localStorage.getItem(PSK) || '{}') } catch (e) { PS = {} }
-const psave = () => { try { localStorage.setItem(PSK, JSON.stringify(PS)) } catch (e) {} };
+let PS = readJSON(PSK, {}), RR = null;
+const psave = () => writeJSON(PSK, PS);
 const PAID = ['n4', 'n3'];  // ระดับเสียเงินที่มีแพ็กเนื้อหาแล้ว
-function packLocal(l) { try { const p = JSON.parse(localStorage.getItem(PACKK(l)) || 'null'); return p && p.level === l ? p : null } catch (e) { return null } }
+function packLocal(l) { const p = readJSON(PACKK(l), null); return p && p.level === l ? p : null }
 const packEnt = l => (PS.ent || []).includes(l);
 // พร้อมเรียน = มีแพ็กในเครื่อง หรือมีสิทธิ์ (ผู้ดูแลถือว่ามีสิทธิ์) และมีแพ็กบนเซิร์ฟเวอร์
 const packReady = l => !!packLocal(l) || ((packEnt(l) || PS.admin) && !!(PS.ver || {})[l]);
 const packWait = l => !packReady(l) && packEnt(l);   // ปลดล็อกแล้ว แต่ผู้ดูแลยังไม่ได้อัปโหลดเนื้อหา
-function lvGo(l, msg) { try { localStorage.setItem(LVK, l); if (msg) sessionStorage.setItem('kn_lvmsg', msg) } catch (e) {} location.reload() }
+function lvGo(l, msg) { writeStr(LVK, l); if (msg) writeStr('kn_lvmsg', msg, true); location.reload() }
 
 // ---------- การ์ดระดับในหน้าเรียน (เรียกจาก pathHtml ในหน้ารวมของแท็บเรียน) ----------
 function lvCard(l) {
@@ -34,7 +34,7 @@ async function lvSwitch(l) {
   if (l === LV) return openLv();
   if (l === 'n5') return lvGo('n5');
   const p = packLocal(l);
-  if (p) { try { packParse(p); return lvGo(l) } catch (e) { localStorage.removeItem(PACKK(l)) } }
+  if (p) { try { packParse(p); return lvGo(l) } catch (e) { console.warn('แพ็กในเครื่องเสีย ลบทิ้งแล้วดาวน์โหลดใหม่', e); writeStr(PACKK(l), null) } }
   if (!cloudOn() || !cloudIn()) return lvLocked(l);
   if (lvBusy) return; lvBusy = true;
   toast('กำลังดาวน์โหลดเนื้อหา ' + LEVELS[l].n + '…');
@@ -58,11 +58,11 @@ async function packCheck() {
     const er = await sb('/rest/v1/entitlements?select=level,source,created_at'), ent = er.map(r => r.level), src = {};
     er.forEach(r => src[r.level] = { s: r.source, t: Date.parse(r.created_at) || 0 });
     const ver = {}; (await sb('/rest/v1/content_packs?select=level,version')).forEach(r => ver[r.level] = r.version);
-    let admin = false; try { admin = (await sb('/rest/v1/rpc/is_admin', { method: 'POST', body: {} })) === true } catch (e) {}
+    let admin = false; try { admin = (await sb('/rest/v1/rpc/is_admin', { method: 'POST', body: {} })) === true } catch (e) { console.warn('ตรวจสิทธิ์ผู้ดูแลไม่ได้ ถือว่าไม่ใช่ผู้ดูแล', e) }
     const price = {};   // ราคามาจาก Stripe ผ่าน Edge Function ระดับที่ยังไม่เปิดขาย (หรือยังไม่ติดตั้งฟังก์ชัน) จะไม่มีราคา
-    for (const l of PAID) if (!ent.includes(l)) { try { const r = await sb(FN, { method: 'POST', body: { action: 'price', level: l } }); if (r && r.amount > 0) price[l] = { amount: r.amount, currency: r.currency } } catch (e) {} }
+    for (const l of PAID) if (!ent.includes(l)) { try { const r = await sb(FN, { method: 'POST', body: { action: 'price', level: l } }); if (r && r.amount > 0) price[l] = { amount: r.amount, currency: r.currency } } catch (e) { console.warn('อ่านราคา ' + l + ' ไม่ได้ ถือว่ายังไม่เปิดขาย', e) } }
     // คำขอคืนเงิน: ผู้ใช้เห็นของตัวเอง ผู้ดูแลเห็นทั้งหมด (เก็บในหน่วยความจำเท่านั้น ไม่ลง localStorage) · ยังไม่รัน schema ใหม่ = ไม่มีตาราง ข้ามไป
-    let rr = null; try { rr = await sb('/rest/v1/refund_requests?select=id,user_id,email,level,reason,detail,status,created_at&order=created_at.desc&limit=200') } catch (e) {}
+    let rr = null; try { rr = await sb('/rest/v1/refund_requests?select=id,user_id,email,level,reason,detail,status,created_at&order=created_at.desc&limit=200') } catch (e) { console.warn('อ่านคำขอคืนเงินไม่ได้', e) }
     const before = JSON.stringify([PS.ent, PS.admin, PS.price, PS.src, RR]);
     RR = rr;
     PS = { ent, src, ver, admin, price, buy: PS.buy, t: Date.now() };
@@ -74,16 +74,16 @@ async function packCheck() {
         localStorage.removeItem(PACKK(l));
         if (LV === l) return lvGo('n5', 'บัญชีนี้ไม่มีสิทธิ์ ' + LEVELS[l].n + ' แล้ว จึงกลับมาที่ N5 ค่ะ');
       } else if (p && ver[l] > p.version) {   // มีเวอร์ชันใหม่: ดาวน์โหลดไว้ ใช้เมื่อเปิดแอปครั้งถัดไป
-        try { await packFetch(l); if (LV === l) toast('อัปเดตเนื้อหา ' + LEVELS[l].n + ' แล้ว จะใช้เมื่อเปิดแอปครั้งถัดไปค่ะ') } catch (e) {}
+        try { await packFetch(l); if (LV === l) toast('อัปเดตเนื้อหา ' + LEVELS[l].n + ' แล้ว จะใช้เมื่อเปิดแอปครั้งถัดไปค่ะ') } catch (e) { console.warn('ดาวน์โหลดแพ็ก ' + l + ' รุ่นใหม่ไม่ได้ จะลองใหม่ครั้งหน้า', e) }
       }
     }
     if (before !== JSON.stringify([PS.ent, PS.admin, PS.price, PS.src, RR]) && ((tab === 'learn' && view === 'path') || tab === 'me') && !document.querySelector('.cov')) render();
-  } catch (e) {}
+  } catch (e) { console.warn('ตรวจสิทธิ์และแพ็กจากเซิร์ฟเวอร์ไม่ได้ ใช้ข้อมูลเดิม', e) }
 }
 // ออกจากระบบ / ลบบัญชี / การเข้าสู่ระบบหมดอายุ: แพ็กผูกกับบัญชี จึงลบออกจากเครื่องและกลับไป N5
 function packsClear() {
-  Object.keys(LEVELS).forEach(l => { try { localStorage.removeItem(PACKK(l)) } catch (e) {} });
-  PS = {}; RR = null; try { localStorage.removeItem(PSK) } catch (e) {}
+  Object.keys(LEVELS).forEach(l => writeStr(PACKK(l), null));
+  PS = {}; RR = null; writeStr(PSK, null);
   if (LV !== 'n5') lvGo('n5', 'ออกจากระบบแล้ว กลับมาที่ N5 ค่ะ');
 }
 CLOUD_HOOKS.forget.push(packsClear);
@@ -177,7 +177,7 @@ const ZERO_DEC = ['jpy', 'krw', 'vnd'];   // สกุลเงินที่ S
 function buyPrice(l) {
   const p = (PS.price || {})[l]; if (!p) return '';
   const c = String(p.currency || 'thb').toUpperCase(), a = ZERO_DEC.includes(p.currency) ? p.amount : p.amount / 100;
-  try { return new Intl.NumberFormat('th-TH', { style: 'currency', currency: c, maximumFractionDigits: a % 1 ? 2 : 0 }).format(a) } catch (e) { return a + ' ' + c }
+  try { return new Intl.NumberFormat('th-TH', { style: 'currency', currency: c, maximumFractionDigits: a % 1 ? 2 : 0 }).format(a) } catch { return a + ' ' + c }
 }
 function buyAsk(l) {
   if (document.querySelector('.cov')) return;
@@ -214,7 +214,7 @@ function buyWatch(l, tries = 20) {
 }
 
 function packStart() {
-  try { const m = sessionStorage.getItem('kn_lvmsg'); if (m) { sessionStorage.removeItem('kn_lvmsg'); toast(m) } } catch (e) {}
+  const m = readStr('kn_lvmsg', true); if (m) { writeStr('kn_lvmsg', null, true); toast(m) }
   const q = new URLSearchParams(location.search), paid = q.get('paid'), cancel = q.get('buy') === 'cancel';
   if (paid || cancel) { q.delete('paid'); q.delete('buy'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash) }
   if (cancel) { delete PS.buy; psave(); toast('ยกเลิกการชำระเงินแล้ว ยังไม่มีการตัดเงินค่ะ') }
