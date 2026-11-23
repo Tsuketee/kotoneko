@@ -39,25 +39,27 @@
 ## รอเจ้าของตัดสิน
 1. **merge PR #29** (หลัง CI ผ่าน) · ตั้ง branch protection ถ้ายังไม่ได้ตั้ง (Settings → Branches → require "npm run check" และ "เพิ่มเลข VERSION แล้ว")
 2. **ตรวจ hook ใหม่ใน session ถัดไป** (เริ่มทำงานตั้งแต่ session ใหม่): ชื่อช่อง `prompt` (UserPromptSubmit) และ `last_assistant_message` (Stop) มาจากสรุปเอกสาร Claude Code ไม่ใช่ข้อความตรง ถ้า `test-results/turn-start.json` ไม่ถูกสร้าง หรือไม่มีการตรวจแนบผล test แปลว่าชื่อช่องไม่ตรง (hook ไม่บล็อกผิดๆ เพราะถ้าไม่มีข้อมูลจะไม่ตัดสิน)
-3. **แผน "ถอนวัชพืช" 17 ข้อ** (ส่งในแชท 2026-11-23 · ยังไม่ได้แก้อะไร) — ต้องอนุมัติทีละข้อ · ทำทีละข้อ แต่ละข้อจบด้วย `npm run check` + verify-app ผ่าน แล้ว commit แยก · ดิฉันแนะนำเริ่ม 1–10 (เสี่ยงต่ำ–กลาง) · คำถามค้าง: ร่างเก่าใน `docs/` ลบหรือเก็บ · จะแยก `pixelcat.js` (ข้อ 16 เสี่ยงสูง) ไหม · Prettier ไหม
+3. **แผน "ถอนวัชพืช" 17 ข้อ** (ส่งในแชท 2026-11-23 · ยังไม่ได้แก้อะไร) — ต้องอนุมัติทีละข้อ · ทำทีละข้อ แต่ละข้อจบด้วย `npm run check` + verify-app ผ่าน แล้ว commit แยก · ดิฉันแนะนำเริ่ม 1–10 (เสี่ยงต่ำ–กลาง) · จะแยก `pixelcat.js` (ข้อ 16 เสี่ยงสูง) ไหม · Prettier ไหม
 4. เรื่องเดิม: ลองบน iPad จริง (นิ้ว/Pencil/กันฝ่ามือ · โหมดส่วนตัว · เสียงอ่าน · ปุ่มคำแปล) · กติการ้านค้า/ลายขน/เครื่องประดับ (`docs/PET_PIXEL.md`)
 
 ### แผนถอนวัชพืช (สรุป)
 | # | สิ่งที่ทำ | ความเสี่ยง |
 |---|---|---|
-| 1 | ลบโค้ดตาย `goalHtml` `undo` `pvars` + ขั้น check ชื่อที่ไม่มีใครใช้ | ต่ำ |
-| 2 | ลบ comment ที่มีตัวตรวจครอบแล้ว (`sw.js:2,71` `pet-lines.js:11`) | ต่ำ |
-| 3 | test ลำดับ `<script>` (data → level → core → ตรรกะ → main) + ห้ามชื่อระดับบนสุดซ้ำข้ามไฟล์ | ต่ำ |
-| 4 | test กันซูม iPad (`main.js:2` `style.css:5`) | ต่ำ |
-| 5 | test แตะแมวไม่เพิ่มความสนิท/Energy (`pixelcat.js:1553`) | ต่ำ |
-| 6 | กติกาการออกแบบที่ test ไม่ได้ → `docs/PET_PIXEL.md` (`pixelcat.js:634,1165,1464` `profile.js:4` `shop.js:2`) | ต่ำ |
-| 7 | test ชื่อไฟล์ไอคอน + hash ภาพ (`tools/make-icons.js:2`) | ต่ำ |
-| 8 | `esc` เหลือตัวเดียว (`cloud.js` `town.js`) | ต่ำ–กลาง |
-| 9 | รวบรวมความคืบหน้าเหลือวิธีเดียว (`snapshot` + `exportProg`) | กลาง |
-| 10 | เขียนความคืบหน้าเหลือวิธีเดียว (`applyData` `importProg` `packs.js` ×2) + ESLint ให้ localStorage แค่ `level.js` | กลาง |
-| 11 | `pet-grid.js` ใช้ `js/pixelcat.js` จริง · ร่างเก่าใน `docs/` | กลาง |
-| 12 | แยก `tests/e2e.js` ตามฟีเจอร์ | ต่ำ |
-| 13–15 | แยก `pet.js` (rewards, onboard) · `learn.js` (srs, quiz, kana, mistakes) · `cloud.js` (sync/auth) · `packs.js` (buy) | กลาง |
+| 1 | ✅ ลบโค้ดตาย `goalHtml` `undo` (v170) · ลบ npm script `test` `test:unit` `test:e2e` (README ใช้ `npm run check`) · ไม่ลบ `pvars` (`pline` ยังใช้ · เจ้าของตัดออก 2026-11-23) · เป้ารายวันเหลือตัวเดียว `M.goal` พิมพ์เองได้ 1–200 (v171 · เจ้าของเลือก) · ลบ CSS `.gl` | ต่ำ |
+| 2 | ✅ ลบ comment `sw.js:2` (ขั้น version ครอบ) และ `sw.js:71` (เพิ่ม e2e "PWA:" ออฟไลน์เปิด `?paid=n4` ได้ · v172) · `pet-lines.js:11` เก็บไว้ (กฎห้ามใช้ผลงานผู้อื่นตรวจได้แค่รายชื่อต้องห้าม · เจ้าของเลือก 2026-11-23) | ต่ำ |
+| 3 | ✅ e2e "โครงสร้าง:" ลำดับ `<script>` (data → level → core → ตรรกะ → main) · ทุกไฟล์ใน `js/` `js/data/` โหลดครั้งเดียว · ชื่อระดับบนสุดไม่ซ้ำข้ามไฟล์ (อ่านด้วย TypeScript parser) · `pet-lines.js:11` ของข้อ 2 เก็บไว้ตามเดิม (เจ้าของเลือก) | ต่ำ |
+| 4 | ✅ e2e "iPad กันซูม": meta viewport · html `touch-action:pan-y` ไม่เลื่อน/เด้งแนวนอน · gesture* และสองนิ้วถูกกัน นิ้วเดียวเลื่อนได้ · ช่องเขียน `none` · ฉากแมว `manipulation` (comment เดิมเขียนผิดว่า none) · ลบ comment `main.js:2` `style.css:5` · v173 | ต่ำ |
+| 5 | ✅ e2e "แมวพิกเซล: แตะแมวทุกแบบ" (หัว/ตัว/หาง/แตะรัวจนเดินหนี/กดค้าง/ตอนหลับ/Enter) ความสนิท Energy ภารกิจ และค่าที่บันทึกไม่เปลี่ยน · `pixelcat.js:1553` เหลือแค่ "ห้ามขู่/โก่งหลัง" (ไม่มีตัวตรวจ · ข้อ 6) · v174 | ต่ำ |
+| 6 | ✅ กติกาการออกแบบที่ test ไม่ได้ 7 ข้อ → `docs/PET_PIXEL.md` หัวข้อ "กติกาการออกแบบที่ test ตรวจไม่ได้" · comment ในโค้ดเหลือตัวชี้ไปหัวข้อนั้น (รวมกฎห้ามขู่ที่เหลือจากข้อ 5) · v175 | ต่ำ |
+| 7 | ✅ ขั้น version: `apple-touch-icon-vN.png` เปลี่ยนหน้าตาแต่ชื่อเดิม (เทียบไฟล์กับฐาน) → ไม่ผ่าน · e2e "ไอคอน:" มีไฟล์เดียว ชื่อตรงกันใน index.html sw.js tools/icon.html · hooks 20 ข้อ · ลบ comment `make-icons.js:2` `index.html:12` · v176 | ต่ำ |
+| 8 | ✅ `esc` ตัวเดียวใน `js/core.js` (รวม `esc` ของ `cloud.js` `town.js` และ `pesc` ของ `profile.js`) · e2e "ความปลอดภัย:" ห้ามมีตัวแปลง HTML ในไฟล์อื่น + ชื่อที่มีแท็กไม่กลายเป็น HTML · v177 | ต่ำ–กลาง |
+| 9 | ✅ อ่านความคืบหน้าวิธีเดียว `snapshot()` ย้ายไป `js/stats.js` ข้าง `PK` · ส่งออกไฟล์และซิงก์ใช้ตัวเดียวกัน · e2e "ส่งออก/นำเข้า:" ตรวจไฟล์ = snapshot และห้ามมีตัวอ่านซ้ำ · v178 | กลาง |
+| 10 | ✅ เขียนความคืบหน้าวิธีเดียว `writeProg(d, all)` ใน `js/stats.js` (แทน `applyData` และการเขียนใน `importProg`) · `packs.js` ใช้ `writeJSON`/`writeStr` · ESLint ให้แตะ localStorage ได้แค่ `js/level.js` · e2e "ที่เก็บข้อมูล:" · v179 | กลาง |
+| 11 | ✅ `tests/pet-grid.js` เปิดแอปจริงและใช้ `js/pixelcat.js` (ตาราง 2 ภาพ + จำลองฉาก 30 นาทีผ่าน + ฉากกลางวัน/กลางคืน) · ESLint เลิกอ่าน `docs/pixel-cat10.html` · ลบร่างเก่า 9 ไฟล์ใน `docs/` (เจ้าของสั่ง · ดูได้จาก git `b3e20b8`) · v180 | กลาง |
+| 12 | ✅ `tests/e2e.js` เหลือแค่ตัวรัน · ข้อทดสอบ 67 ข้อแยกเป็น `tests/e2e/` data main pet places cloud packs device + `harness.js` (ชื่อข้อครบเดิม) · test-count นับชุด e2e รวมกัน · featuremap/determinism อ่านทุกไฟล์ในชุด | ต่ำ |
+| 13 | ✅ `pet.js` → `onboard.js` (ตั้งค่าครั้งแรก) + `rewards.js` (ภารกิจ ความสนิท เหรียญ) · ย้ายทั้งคำสั่งด้วย parser ตรวจแล้วบรรทัดครบไม่ซ้ำ · v181 | กลาง |
+| 14 | ✅ `learn.js` → `srs.js` (ทบทวนเว้นระยะ) + `quiz.js` (เลือกข้อ/ตอบ/บันทึก) + `mistakes.js` (หน้าผิดบ่อย) + `kanachart.js` (ตารางคานะ) · บรรทัดครบไม่ซ้ำ · v182 | กลาง |
+| 15 | ✅ `cloud.js` → `cloud-sync.js` (ซิงก์) · auth กับ API อยู่ `cloud.js` ต่อ (ESLint ให้เรียกเน็ตได้แค่ `cloud.js`) · `packs.js` → `buy.js` (ซื้อ + ขอคืนเงิน) · บรรทัดครบไม่ซ้ำ · v183 | กลาง |
 | 16 | แยก `pixelcat.js` เริ่มจากฉาก 7 สถานที่ (เทียบภาพทุกพิกเซล) | สูง |
 | 17 | (ไม่บังคับ) แยก `town.js` · `style.css` | กลาง |
 

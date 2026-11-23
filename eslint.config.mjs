@@ -10,7 +10,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-const STORAGE_LAYER = ['js/core.js', 'js/level.js', 'js/stats.js', 'js/cloud.js', 'js/packs.js'];
+const STORAGE_LAYER = ['js/level.js'];
 const API_LAYER = ['js/cloud.js'];
 const NO_STORAGE = ['localStorage', 'sessionStorage', 'indexedDB'].map(name => ({ name, message: 'เข้าถึงที่เก็บข้อมูลได้เฉพาะไฟล์ชั้นเก็บข้อมูล (' + STORAGE_LAYER.join(' ') + ') ให้เรียกผ่าน readJSON/writeJSON/readStr/writeStr ใน js/level.js' }));
 const NO_NET = ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource'].map(name => ({ name, message: 'เรียกเน็ตได้เฉพาะชั้น API (' + API_LAYER.join(' ') + ')' }));
@@ -31,16 +31,6 @@ const OWN = Object.fromEntries(APP.map(f => [f, declared(f)]));
 const EXPORTED = { PixelCat: 'readonly', TownMap: 'readonly' }; // window.PixelCat (js/pixelcat.js) · window.TownMap (js/town.js)
 const othersOf = f => Object.assign({}, EXPORTED, ...APP.filter(g => g !== f).map(g => OWN[g]));
 const ALL_APP = Object.assign({}, EXPORTED, ...APP.map(f => OWN[f]));
-// tests/pet-grid.js รันโค้ดในหน้าร่าง docs/pixel-cat10.html (ไม่ใช่แอป) จึงใช้ชื่อระดับบนสุดของสคริปต์ในหน้านั้น
-const DRAFT = (() => {
-  const out = {};
-  for (const [, src] of fs.readFileSync('docs/pixel-cat10.html', 'utf8').matchAll(/<script>([\s\S]*?)<\/script>/g))
-    for (const n of espree.parse(src, { ecmaVersion: 'latest', sourceType: 'script' }).body) {
-      if (n.type === 'FunctionDeclaration') out[n.id.name] = 'readonly';
-      if (n.type === 'VariableDeclaration') for (const d of n.declarations) if (d.id.type === 'Identifier') out[d.id.name] = n.kind === 'const' ? 'readonly' : 'writable';
-    }
-  return out;
-})();
 
 export default tseslint.config(
   { ignores: ['node_modules/**', 'test-results/**', 'docs/**', 'icons/**', 'fonts/**', 'img/**'] },
@@ -101,10 +91,6 @@ export default tseslint.config(
     ...js.configs.recommended,
     languageOptions: { ecmaVersion: 'latest', sourceType: 'commonjs', globals: { ...globals.node, ...globals.browser, ...ALL_APP } },
     rules: { ...js.configs.recommended.rules },
-  },
-  {
-    files: ['tests/pet-grid.js'],
-    languageOptions: { globals: { ...globals.node, ...globals.browser, ...DRAFT } },
   },
   {
     files: ['tests/**/*.mjs', 'eslint.config.mjs'],

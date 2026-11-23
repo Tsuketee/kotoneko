@@ -6,9 +6,6 @@
     "start": "python3 -m http.server 8000",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
-    "test:unit": "node tests/payment.mjs && node tests/hooks.js && node tests/data-schema.js",
-    "test:e2e": "node tests/e2e.js && node tests/flows.js",
-    "test": "npm run test:unit && npm run test:e2e",
     "check": "node tools/check.js",
     "validate:data": "node tools/validate-data.js"
   },

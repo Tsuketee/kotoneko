@@ -314,6 +314,32 @@ test('07-reward', 'รางวัล: ตอบควิซถูกครบ�
   assert.deepStrictEqual(rec.errors(), []);
 });
 
+// ---------- 8. เป้าหมายต่อวัน ----------
+test('08-goal', 'เป้าหมายต่อวัน: คำตอบตอนตั้งค่าครั้งแรกเป็นเป้าของวงหน้าแรกและภารกิจ · แตะวงแล้วพิมพ์ตัวเลขเองได้ · ค่าผิดขึ้นคำเตือน · เปิดแอปใหม่แล้วยังอยู่', async (b) => {
+  const p = await open(b);
+  await onboard(p, '10 ข้อ');
+  assert.match(await p.getByTestId('home-today').innerText(), /0\s*\/\s*10/);
+  assert.match(await p.getByTestId('mission-rev').innerText(), /0 \/ 10/);
+  await p.getByTestId('home-goal').click();
+  await p.getByTestId('goal-input').fill('500');
+  await p.getByTestId('goal-save').click();
+  await p.getByTestId('goal-error').filter({ hasText: 'ใส่จำนวนข้อเป็นตัวเลข 1–200' }).waitFor();
+  await rec.shot(p, 'invalid');
+  await p.getByTestId('goal-input').fill('12');
+  await rec.shot(p, 'typed');
+  await p.getByTestId('goal-save').click();
+  await p.getByTestId('toast').filter({ hasText: 'เป้าหมายต่อวัน 12 ข้อ' }).waitFor();
+  assert.match(await p.getByTestId('home-today').innerText(), /0\s*\/\s*12/);
+  assert.match(await p.getByTestId('mission-rev').innerText(), /0 \/ 12/);
+  await p.reload();
+  assert.match(await p.getByTestId('home-today').innerText(), /0\s*\/\s*12/, 'เปิดใหม่แล้วเป้าต้องยังเป็น 12');
+  await p.getByTestId('nav-stats').click();
+  assert.match(await p.getByTestId('stats-goal').locator('xpath=..').innerText(), /12\s*ข้อต่อวัน/);
+  await p.waitForFunction(() => document.getAnimations().every(a => a.playState !== 'running' || a.effect.getComputedTiming().iterations === Infinity));
+  await rec.shot(p, 'stats');
+  assert.deepStrictEqual(rec.errors(), []);
+});
+
 (async () => {
   let server;
   if (process.env.BASE_URL) base = process.env.BASE_URL;

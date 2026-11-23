@@ -3,7 +3,7 @@
 // ตำแหน่งของแต่ละที่อยู่ในช่อง map ของ js/data/places.js ({at: จุดอาคาร (ปลายเส้นชี้), lb: จุดกลางป้าย, cat: จุดเท้าแมว}) · อาคารวาดใน SITE ของไฟล์นี้
 // เพิ่มสถานที่ใหม่: ต้องมีทั้งฉากใน SCENES ช่อง map และอาคารใน SITE (ชุดทดสอบตรวจ) · แปลงว่าง LOTS คือที่ที่เผื่อไว้ เมืองจริงจะมีของแบบนั้นตรงนั้น
 // ภาพนิ่งแคชต่อ (ฤดู · ที่ที่ล็อก · เทศกาล) ส่วนขยับวาดทุกเฟรม: รถไฟ ไม้กั้นทางข้ามรถไฟ ธงปลาคาร์ป แมว ของตกตามฤดู แสงตามเวลา · ปิดแอนิเมชันในระบบ = นิ่ง
-// ห่อใน IIFE ส่งออก window.TownMap · placeAsk() ท้ายไฟล์ต่อแผนที่เข้ากับข้อมูลของแอป · ต้นแบบ/พรีวิวคือ docs/town-map.html (โหลดไฟล์นี้)
+// ห่อใน IIFE ส่งออก window.TownMap · placeAsk() ท้ายไฟล์ต่อแผนที่เข้ากับข้อมูลของแอป · ต้นแบบเดิม docs/town-map.html ลบแล้ว (git b3e20b8)
 (() => {
 'use strict';
 const W = 160, H = 340;
@@ -253,7 +253,6 @@ function mount(cv, o) { let raf = 0; const loop = now => { if (!cv.isConnected) 
 // ---------- หน้าต่าง "ไปเที่ยวที่ไหนดี": แผนที่ + ป้ายเป็นปุ่ม HTML (ตัวหนังสือจริง) + เส้นชี้ + กล่องข้อมูล ----------
 // a: {places, at, has(p), count(p), go(id), rb(s), icon(k, s), cat: {coat, acc} | null, emoji, season(), tod(), date()} · host = ใส่ในกล่องที่ให้ (พรีวิว) แทนหน้าต่างลอย
 const MARKS = [['ふじさん', 56, 22], ['ねこがわ', 116, 131], ['たんぼ', 11, 238]];
-const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 function ask(a, host) {
   if (!host && document.querySelector('.cov')) return;
   const ov = host ? null : document.createElement('div'), d = document.createElement('div'); d.className = 'cdl tmd'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'ไปเที่ยวที่ไหนดี'); if (ov) { ov.className = 'cov'; d.setAttribute('aria-modal', 'true') }

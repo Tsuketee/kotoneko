@@ -1,6 +1,5 @@
 // Service worker: ทำให้แอปเปิดได้ตอนออฟไลน์
-// ⚠️ ทุกครั้งที่แก้ไฟล์แล้วจะปล่อยเวอร์ชันใหม่ ให้เพิ่มเลข VERSION ไม่งั้นเครื่องผู้ใช้จะยังเห็นไฟล์เก่า
-const VERSION = 'v169';
+const VERSION = 'v183';
 const CACHE = 'kotoneko-' + VERSION;
 const FILES = [
   './',
@@ -29,11 +28,17 @@ const FILES = [
   'js/data/cloud-config.js',
   'js/level.js',
   'js/core.js',
+  'js/srs.js',
   'js/learn.js',
+  'js/quiz.js',
+  'js/mistakes.js',
+  'js/kanachart.js',
   'js/dialogue.js',
   'js/write.js',
   'js/pixelcat.js',
   'js/pet.js',
+  'js/onboard.js',
+  'js/rewards.js',
   'js/place.js',
   'js/town.js',
   'js/profile.js',
@@ -41,7 +46,9 @@ const FILES = [
   'js/grammar.js',
   'js/stats.js',
   'js/cloud.js',
+  'js/cloud-sync.js',
   'js/packs.js',
+  'js/buy.js',
   'js/main.js',
   'manifest.webmanifest',
   'img/home.jpg',
@@ -69,6 +76,5 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (new URL(e.request.url).origin !== location.origin) return; // คำขอไปคลาวด์ (Supabase) ห้ามแคช ให้ไปเน็ตตรงๆ
-  // หน้าแอปที่มี ?… ต่อท้าย (เช่นกลับจากหน้าชำระเงิน ?paid=n4) ใช้ index.html ตัวเดียวกันในแคช
   e.respondWith(caches.match(e.request, { ignoreSearch: e.request.mode === 'navigate' }).then(hit => hit || fetch(e.request)));
 });
