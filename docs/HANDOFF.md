@@ -59,7 +59,7 @@
 | 12 | ✅ `tests/e2e.js` เหลือแค่ตัวรัน · ข้อทดสอบ 67 ข้อแยกเป็น `tests/e2e/` data main pet places cloud packs device + `harness.js` (ชื่อข้อครบเดิม) · test-count นับชุด e2e รวมกัน · featuremap/determinism อ่านทุกไฟล์ในชุด | ต่ำ |
 | 13 | ✅ `pet.js` → `onboard.js` (ตั้งค่าครั้งแรก) + `rewards.js` (ภารกิจ ความสนิท เหรียญ) · ย้ายทั้งคำสั่งด้วย parser ตรวจแล้วบรรทัดครบไม่ซ้ำ · v181 | กลาง |
 | 14 | ✅ `learn.js` → `srs.js` (ทบทวนเว้นระยะ) + `quiz.js` (เลือกข้อ/ตอบ/บันทึก) + `mistakes.js` (หน้าผิดบ่อย) + `kanachart.js` (ตารางคานะ) · บรรทัดครบไม่ซ้ำ · v182 | กลาง |
-| 15 | `cloud.js` (sync/auth) · `packs.js` (buy) | กลาง |
+| 15 | ✅ `cloud.js` → `cloud-sync.js` (ซิงก์) · auth กับ API อยู่ `cloud.js` ต่อ (ESLint ให้เรียกเน็ตได้แค่ `cloud.js`) · `packs.js` → `buy.js` (ซื้อ + ขอคืนเงิน) · บรรทัดครบไม่ซ้ำ · v183 | กลาง |
 | 16 | แยก `pixelcat.js` เริ่มจากฉาก 7 สถานที่ (เทียบภาพทุกพิกเซล) | สูง |
 | 17 | (ไม่บังคับ) แยก `town.js` · `style.css` | กลาง |
 
