@@ -4,7 +4,8 @@
 
 ## สถานะ
 - **PR [Tsuketee/kotoneko#28](https://github.com/Tsuketee/kotoneko/pull/28) merge แล้ว** (main = v167 · `e0e76a4`)
-- **งานหลัง merge อยู่ใน branch เดิม ยังไม่มี PR**: v168–v169 + hook/test/เอกสารรายการปิด session ก–ง (ดูตารางด้านล่าง) · ถ้าเจ้าของสั่ง ให้เปิด PR ใหม่จาก `claude/beautiful-hamilton-o3aobm` (branch นี้ merge main แล้ว ไม่มี conflict · push แบบ force ถูกปฏิเสธ จึงใช้ merge แทน rebase)
+- **PR [Tsuketee/kotoneko#29](https://github.com/Tsuketee/kotoneko/pull/29) เปิดแล้ว ยังไม่ merge**: งานหลัง merge (v168–v169 + hook + เอกสาร) จาก branch `claude/beautiful-hamilton-o3aobm` (merge main แล้ว ไม่มี conflict) · CI ตอนเปิด PR ยังรันอยู่ ([run #35](https://github.com/Tsuketee/kotoneko/actions/runs/45107804725)) รอบก่อนหน้าผ่าน ([run #33](https://github.com/Tsuketee/kotoneko/actions/runs/45107201970)) · **เช็กผล CI ของ PR #29 ก่อนทำอย่างอื่น**
+- ถ้า PR #29 merge แล้ว ให้เริ่ม branch ใหม่จาก main ล่าสุด · push แบบ force ถูกระบบปฏิเสธ ถ้าต้องตามให้ทัน main ให้ใช้ `git merge origin/main`
 - **`npm run check` ล่าสุด ผ่านทั้ง 12 ขั้น**: type · lint (0) · schema 9/9 · data (0 จุด) · determinism · featuremap · version · test-count · unit 12/12 · hooks 19/19 · e2e 60/60 · flows 8/8
 
 ## เริ่ม session ใหม่ต้องทำก่อน
@@ -36,7 +37,7 @@
 | (ไม่ต้องเพิ่ม VERSION) | ข1–ข3 hook: `prompt-start.js` (UserPromptSubmit) · `approval-gate.js` (PreToolUse ask) · `stop-check.js` บล็อกเมื่อไฟล์/ข้อมูลเปลี่ยนผิดขอบเขต หรือไม่แนบผล test · กติกาคำใน `tools/hooks/gate-rules.js` · ข2(ข) ทุกไฟล์ใน `js/data/` ต้องมีใน NOTICE.md · ง1–ง4 ลบบรรทัด CLAUDE.md ที่ตัวตรวจครอบแล้ว |
 
 ## รอเจ้าของตัดสิน
-1. **เปิด PR ใหม่** ของงานหลัง merge (v168–v169 + hook) หรือไม่
+1. **merge PR #29** (หลัง CI ผ่าน) · ตั้ง branch protection ถ้ายังไม่ได้ตั้ง (Settings → Branches → require "npm run check" และ "เพิ่มเลข VERSION แล้ว")
 2. **ตรวจ hook ใหม่ใน session ถัดไป** (เริ่มทำงานตั้งแต่ session ใหม่): ชื่อช่อง `prompt` (UserPromptSubmit) และ `last_assistant_message` (Stop) มาจากสรุปเอกสาร Claude Code ไม่ใช่ข้อความตรง ถ้า `test-results/turn-start.json` ไม่ถูกสร้าง หรือไม่มีการตรวจแนบผล test แปลว่าชื่อช่องไม่ตรง (hook ไม่บล็อกผิดๆ เพราะถ้าไม่มีข้อมูลจะไม่ตัดสิน)
 3. **แผน "ถอนวัชพืช" 17 ข้อ** (ส่งในแชท 2026-11-23 · ยังไม่ได้แก้อะไร) — ต้องอนุมัติทีละข้อ · ทำทีละข้อ แต่ละข้อจบด้วย `npm run check` + verify-app ผ่าน แล้ว commit แยก · ดิฉันแนะนำเริ่ม 1–10 (เสี่ยงต่ำ–กลาง) · คำถามค้าง: ร่างเก่าใน `docs/` ลบหรือเก็บ · จะแยก `pixelcat.js` (ข้อ 16 เสี่ยงสูง) ไหม · Prettier ไหม
 4. เรื่องเดิม: ลองบน iPad จริง (นิ้ว/Pencil/กันฝ่ามือ · โหมดส่วนตัว · เสียงอ่าน · ปุ่มคำแปล) · กติการ้านค้า/ลายขน/เครื่องประดับ (`docs/PET_PIXEL.md`)
