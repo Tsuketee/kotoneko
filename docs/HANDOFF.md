@@ -56,7 +56,7 @@
 
 ## งานถัดไปที่แนะนำ (เมื่อเจ้าของสั่ง)
 1. ตัดสินข้อ 1 แล้วทำให้ flows ผ่าน 7/7
-2. lint ~~กลุ่ม ก (`any` 4 จุดใน `stripe-webhook`)~~ ✅ v155 → ~~กลุ่ม ข (18 จุด รวม `packs.js:90,92` ที่เขียนทับฟังก์ชันของ `cloud.js`)~~ ✅ v156 → ค → จ → ง ตาม `docs/LINT_PLAN.md`
+2. lint ~~กลุ่ม ก (`any` 4 จุดใน `stripe-webhook`)~~ ✅ v155 → ~~กลุ่ม ข (18 จุด รวม `packs.js:90,92` ที่เขียนทับฟังก์ชันของ `cloud.js`)~~ ✅ v156 → ~~ค~~ ✅ v157 → จ → ง ตาม `docs/LINT_PLAN.md`
 3. อัปเดต actions ใน CI (`checkout` `setup-node` `upload-artifact` @v4 ใช้ Node 20 ที่ GitHub เลิกรองรับ · ยังรันได้)
 4. TypeScript ระยะ 1 ตาม `docs/TYPESCRIPT_PLAN.md`
 

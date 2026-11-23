@@ -8,7 +8,7 @@
 |---|---|---|---|
 | `no-unused-vars` | 63 | `catch (e)` ที่ไม่ใช้ `e` 53 · กำหนดค่าแล้วไม่ได้ใช้ 6 · พารามิเตอร์ไม่ได้ใช้ 4 | ง (53) · ข (10) |
 | `no-empty` | 38 | `catch (e) {}` ว่างทั้งหมด (cloud 12 · packs 10 · core 3 · learn 3 · profile 3 · อื่นๆ ไฟล์ละ 1) | ง |
-| `no-useless-escape` | 12 | `js/stats.js` ทั้งหมด | ค |
+| `no-useless-escape` | ~~12~~ 0 ✅ | แก้แล้ว v157 | ค |
 | `no-restricted-globals` | 9 | localStorage นอกชั้นเก็บข้อมูล: `grammar.js:4,5` `learn.js:28,79` `pet.js:29` `place.js:24` `profile.js:11,14,14` | จ |
 | `@typescript-eslint/no-explicit-any` | ~~4~~ 0 ✅ | แก้แล้ว v155 | ก |
 | `no-misleading-character-class` | 3 | regex ตรวจอิโมจิใน `tests/e2e.js:63,457,458` | ข |
@@ -29,8 +29,8 @@
 - ตัวแปรที่ไม่ได้ใช้ 10 จุด: `core.js:60` (`ic` บังชื่อ `ic()` ของไฟล์เดียวกัน) `cloud.js:91` `pixelcat.js:107,109,478,813,1434,1582` `town.js:241` `tests/e2e.js:1651` · ลบ หรือใช้ให้ถูก
 - `tests/e2e.js:63,457,458` regex อิโมจิ: ใช้ `\p{Extended_Pictographic}` แทนการรวม `️` ในวงเล็บเหลี่ยม · `:223` `:671` แก้ตามที่กฎบอก
 
-### ค · escape เกินใน `stats.js` (12 · แก้แบบกลไก)
-ลบ `\` ที่ไม่จำเป็นใน regex แล้วรัน e2e ข้อ "ส่งออก/นำเข้า"
+### ค · escape เกินใน `stats.js` (12 · แก้แบบกลไก) ✅ v157 · เหลือ 97 error
+ทำแล้ว: `\"` 12 จุดอยู่ใน template literal ของ `creditsHtml()` (ไม่ใช่ regex) ลบ `\` ออก · เปิดแอปเทียบผลของ `creditsHtml()` ก่อนและหลังแก้ได้ข้อความเดียวกันทุกตัวอักษร · e2e "เครดิต KanjiVG:" และ "ส่งออก/นำเข้า:" ผ่าน
 
 ### จ · localStorage นอกชั้นเก็บข้อมูล (9 · เปลี่ยนโครง)
 เพิ่มฟังก์ชันอ่าน/เขียนใน `core.js` (เช่น `readJSON(key, fallback)` `writeJSON(key, value)`) แล้วให้ `grammar` `learn` `pet` `place` `profile` เรียกผ่านฟังก์ชันนี้ · ต้องรัน flows ทุกข้อและ e2e ข้อซิงก์/ส่งออก
