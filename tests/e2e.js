@@ -1917,6 +1917,8 @@ test('PWA: manifest ถูกต้องและ service worker ติดต�
   await ctx.setOffline(true);
   await p.reload();
   assert((await p.locator('#app').innerText()).length > 10, 'ออฟไลน์แล้วหน้าว่าง');
+  await p.goto(base + '?paid=n4');
+  assert((await p.locator('#app').innerText()).length > 10, 'ออฟไลน์แล้วเปิดหน้าแอปที่มี ?… ต่อท้าย (เช่นกลับจากหน้าชำระเงิน ?paid=n4) ไม่ได้ · sw.js ต้องใช้ index.html ในแคชตัวเดียวกัน (ignoreSearch)');
   await ctx.setOffline(false);
 });
 
