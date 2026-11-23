@@ -43,6 +43,7 @@ const FILES = [
   'js/place.js',
   'js/town.js',
   'js/profile.js',
+  'js/koban.js',
   'js/shop.js',
   'js/grammar.js',
   'js/stats.js',

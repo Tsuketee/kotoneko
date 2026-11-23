@@ -1,9 +1,23 @@
-// ร้านค้า (tab shop · v74 · เจ้าของให้แทนหมวด Certificate ในตัวอย่าง UI): ไว้สุ่มหรือแลกของแต่งสัตว์เลี้ยง/ห้องด้วยแต้มจากการเรียน
-// ยังเป็นหน้า "เร็วๆ นี้" · ระดับเสียเงิน N4/N3 อยู่ในแท็บเรียน ไม่ปนกับร้านนี้ · กติกา: docs/PET_PIXEL.md หัวข้อ "กติกาการออกแบบที่ test ตรวจไม่ได้"
-function shopHtml(){const p=M.pet,cat=(p.sp||0)===0&&!!window.PixelCat,nc=cat?Object.keys(PixelCat._t.COATS).length-1:0;
- const box=(i,n,d)=>`<div class="shb"><span class="pmi">${icx(i,22)}</span><div><b>${n}</b><div class="st">${d}</div></div></div>`;
- return `<h1>ร้านค้า</h1><div class="st">สุ่มหรือแลกของแต่งสัตว์เลี้ยงด้วยแต้มจากการเรียน ไม่ใช้เงินจริง</div>
-<div class="card shc"><span class="bd b1">เร็วๆ นี้</span><b>ร้านกำลังจัดของอยู่</b><div class="st">เรียนสะสมแต้มไว้ก่อนได้เลย เปิดร้านเมื่อไหร่${p.name}จะบอกนะ</div></div>
-${box('gift','ตู้สุ่ม','สุ่มของแต่งชิ้นใหม่ให้'+p.name+'และห้อง')}${box('swap','แลกของ','เลือกแลกชิ้นที่อยากได้ตรงๆ')}
-<h2>ของที่จะมีในร้าน</h2><div class="card pfx shl">${cat?`<div>${icx('sparkle',18)} ลายขนแมว ${nc} แบบ</div><div>${icx('bow',18)} เครื่องประดับ ผ้าพันคอ และโบว์</div>`:''}<div>${icx('home',18)} ของแต่งห้อง เช่น โคมกระดาษ</div></div>
-<button class="mer" onclick="goCol()"><span class="pmi">${icx('paw',22)}</span><span class="mrt"><b>ดูคลังสะสมของ${p.name}</b><span class="st">ของที่มีแล้วและที่ยังล็อกอยู่</span></span><span aria-hidden="true">›</span></button>`}
+// ร้านค้า (tab shop) ต้นแบบ ค "ร้านแบบรายการ + ตู้กับข้าว": ร้านมีแค่ซื้อ (รายการเรียงตามหมวด) · ใส่/ถอดของที่คลังสะสมในโปรไฟล์
+// อาหารซื้อด้วย Energy เก็บเข้าตู้กับข้าว แล้วป้อนจากการ์ดหน้าแรก · ถุงโชคดีเปิดแล้วโชว์ของชิ้นใหญ่ · ห้ามมีราคาเงินจริง
+const shItem=id=>KBI.find(x=>x.id===id);
+const shThumb=it=>it.t==='room'?`<span class="shic">${icx('home',30)}</span>`:`<canvas class="pfth" data-coat="${it.t==='coat'?it.k:(M.pet.coat||'cream')}" data-acc="${it.t==='acc'?it.k:'none'}" width="48" height="48" aria-hidden="true"></canvas>`;
+function shopHtml(){const p=M.pet,inv=kbInv(),pool=kbPool();
+ let h=`<h1>ร้านค้า</h1><div class="shw"><span data-testid="shop-koban">${icx('koban',20,'kb-i')} <b>${kbBal()}</b> โคบัง</span><span data-testid="shop-energy">${icx('bolt',20,'hl-i')} <b>${p.energy}</b> Energy</span></div>`;
+ h+=`<h2>ตลาดอาหาร <small>ใช้ Energy</small></h2><div class="shrl">`+FOOD.map(f=>{const n=inv['food:'+f.k]||0;return `<div class="shr" data-testid="food-${f.k}"><span class="pmi">${icx('rice',22)}</span><div class="shrt"><b>${f.n}</b><span class="st">สนิท +${f.b} · หิวลด ${f.h} · ในตู้ ${n}</span></div><button class="pcl" ${p.energy<f.e||n>=FMAX?'disabled':''} onclick="fbuy('${f.k}')">${icx('bolt',14)} ${f.e}</button></div>`}).join('')+'</div>';
+ h+=`<h2>ของแต่ง <small>ใช้โคบัง</small></h2><div class="shbag"><span class="pmi">${icx('gift',24)}</span><div><b>ถุงโชคดี 福袋</b><div class="st" data-testid="shop-bag-odds">${pool.length?`สุ่ม 1 จาก ${pool.length} ชิ้นที่ยังไม่มี · โอกาสแต่ละชิ้น 1/${pool.length}`:'สะสมครบแล้ว'}</div></div><button class="pcl" data-testid="shop-bag" ${!pool.length||kbBal()<KB.bag?'disabled':''} onclick="shBag()">${icx('koban',16)} ${KB.bag}</button></div>`;
+ [['coat','ลายขน'],['acc','เครื่องประดับ'],['room','ของแต่งห้อง']].filter(([t])=>t==='room'||kbCat()).forEach(([t,n])=>{
+  h+=`<div class="pfk">${n}</div><div class="shrl">`+KBI.filter(it=>it.t===t&&kbFits(it)).map(it=>{const own=kbOwns(it.id);
+   const end=own?`<span class="pzg">${icx('ok',14)} มีแล้ว</span>`:it.goal?`<span class="st">${icx('medal',14,'m3')} แม่น ${pmast()}/${it.goal}</span>`:`<button class="pcl" data-testid="shop-buy-${it.id}" ${kbBal()<it.p?'disabled':''} onclick="shBuy('${it.id}')">${icx('koban',14)} ${it.p}</button>`;
+   return `<div class="shr${own?' got':''}" data-testid="shop-item-${it.id}"><span class="pft3">${shThumb(it)}</span><div class="shrt"><b>${kbName(it)}${it.r?' <span class="bd b3">หายาก</span>':''}</b><span class="st">${it.goal?'ได้จากเป้าการเรียน ซื้อไม่ได้':own?'ใส่ได้ที่คลังสะสม':''}</span></div>${end}</div>`}).join('')+'</div>'});
+ return h+`<button class="mer" onclick="goCol()"><span class="pmi">${icx('paw',22)}</span><span class="mrt"><b>ใส่ของที่คลังสะสม</b><span class="st">แตะของที่มีแล้วเพื่อใส่หรือถอด</span></span><span aria-hidden="true">›</span></button>`}
+function shopMount(){if(!window.PixelCat)return;const T=PixelCat._t,tm=pdark()?'dark':'light';
+ document.querySelectorAll('.pfth,.shbig').forEach(c=>{try{T.draw(c.getContext('2d'),T.frame('sit',0,tm,c.dataset.coat,c.dataset.acc||'none'))}catch(e){console.warn('วาดตัวอย่างไม่ได้',e)}})}
+function shAsk(html,yes,ok){const o=document.createElement('div');o.className='cov';o.innerHTML=`<div class="cdl" role="dialog" aria-modal="true">${html}<div class="btns" style="margin-top:14px">${yes?'<button class="sec" data-x="1">ยกเลิก</button>':''}<button class="g" data-s="1" data-testid="shop-confirm">${yes||'เยี่ยมเลย'}</button></div></div>`;
+ o.onclick=e=>{const b=e.target.closest('button');if(e.target===o||(b&&b.dataset.x))return o.remove();if(b&&b.dataset.s){o.remove();if(ok)ok()}};document.body.appendChild(o);shopMount();return o}
+function shBuy(id){const it=shItem(id);shAsk(`<h2 style="margin-top:0">แลก${kbName(it)}</h2><p>ใช้ ${it.p} โคบัง เหลือ ${kbBal()-it.p} โคบัง</p>`,'แลกเลย',()=>{if(kbSpend(id,it.p)){render();toast(icx('gift',16)+' ได้'+kbName(it)+'แล้ว ใส่ได้ที่คลังสะสม')}})}
+function shBag(){const pool=kbPool();shAsk(`<h2 style="margin-top:0">เปิดถุงโชคดี 福袋</h2><p>ใช้ ${KB.bag} โคบัง สุ่มจาก ${pool.length} ชิ้นที่ยังไม่มี</p><p class="st">โอกาสได้แต่ละชิ้น 1/${pool.length} (${(100/pool.length).toFixed(1)}%) · ไม่มีของซ้ำ</p><div class="shbl">${pool.map(it=>`<span>${kbName(it)}</span>`).join('')}</div>`,'เปิดถุง',()=>{const it=kbBag();if(!it)return;render();
+ shAsk(`<div class="shrev"><span class="shpop">${it.t==='room'?`<span class="shic big">${icx('home',60)}</span>`:`<canvas class="shbig" data-coat="${it.t==='coat'?it.k:(M.pet.coat||'cream')}" data-acc="${it.t==='acc'?it.k:'none'}" width="48" height="48" aria-hidden="true"></canvas>`}</span><h2>ได้${kbName(it)}!</h2><div class="st">${KBT[it.t]}${it.r?' · หายาก':''} · ใส่ได้ที่คลังสะสม</div></div>`,'')})}
+// ใส่/ถอดจากคลังสะสม (โปรไฟล์)
+function colWear(id){const it=id==='coat:cream'?{t:'coat',k:'cream'}:shItem(id),p=M.pet;if(!it||!kbOwns(id))return;
+ if(it.t==='coat')p.coat=it.k;else if(it.t==='acc')p.acc=p.acc===it.k?'none':it.k;else{const r=p.room||[];p.room=r.includes(it.k)?r.filter(x=>x!==it.k):[...r,it.k]}saveM();render()}
