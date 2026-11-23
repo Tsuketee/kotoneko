@@ -145,7 +145,7 @@ h2{font-size:16px;margin:20px 0 10px}
 .dr{display:flex;gap:8px;margin:12px 0;align-items:flex-start}.dr.r{flex-direction:row-reverse}.dr>div:last-child{min-width:0;max-width:78%}.dr.r>div:last-child{display:flex;flex-direction:column;align-items:flex-end}
 .dn{font-size:12px;color:var(--mut);margin-bottom:3px}
 .db{background:var(--card);border:1px solid var(--bd);border-radius:4px 16px 16px 16px;padding:9px 13px}.dr.r .db{border-radius:16px 4px 16px 16px;background:var(--ac);color:var(--onac);border-color:var(--ac)}.dr.r .db rt{color:var(--onac);opacity:.85}
-.dj{font-size:18px;line-height:2}.dro{font-size:12px;opacity:.7;margin-top:2px}
+.dj{font-size:18px;line-height:2}.dro{font-size:12px;opacity:.7;margin-top:2px}.dtr{font-size:14px;opacity:.8;margin-top:4px;line-height:1.5}
 .dnav{display:flex;gap:10px;margin:18px 0}.dnav button{flex:1;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font-size:15px}.dnav button:disabled{opacity:.35}
 #credits a{color:var(--ac)}
 .ft a{color:inherit;text-decoration:underline}

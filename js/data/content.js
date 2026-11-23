@@ -1,7 +1,7 @@
 // เนื้อหาคำศัพท์และบทสนทนาที่เขียนเองทั้งหมด (ไม่ได้คัดลอกจากหนังสือเล่มใด) ใช้เชิงพาณิชย์ได้
 // W = คำที่เขียนด้วยคันจิ (ใช้เฉพาะคันจิ 105 ตัวใน kanji-n5.js)
 // V = คำศัพท์เขียนด้วยคะนะล้วน (รวมคำยืมคะตะคะนะ)
-// D = บทสนทนา รูปแบบ ฟุริงะนะ: {漢字|かんじ}
+// D = บทสนทนา รูปแบบ ฟุริงะนะ: {漢字|かんじ} · แถวบทพูด ผู้พูด|ประโยค|คำแปลไทย (คำแปลไม่บังคับในรูปแบบ แต่ npm run validate:data ต้องการ)
 // รูปแบบแถว W:  คำ|วิธีอ่าน|ความหมาย|หมวด      แถว V: คำ|ความหมาย|หมวด
 // แหล่งที่มา (NOTICE.md): ค่าเริ่มต้นของทุกรายการ · รายการที่ต่างออกไปใส่ |แหล่งที่มา ต่อท้ายแถว W/V หรือต่อท้ายหัวบทสนทนา @หมวด|ชื่อบท|แหล่งที่มา
 const SRC_CONTENT='เขียนเอง';
@@ -9,7 +9,7 @@ const parseW=raw=>raw.trim().split('\n').map(l=>{const[k,o,m,c,src]=l.split('|')
 const parseV=raw=>raw.trim().split('\n').map(l=>{const[k,m,c,src]=l.split('|');return src?{k,o:k,u:'-',m,c,s:'b',src}:{k,o:k,u:'-',m,c,s:'b'}});
 const DT={1:'ทักทาย',2:'แนะนำตัว',3:'ซื้อของ',4:'เวลาและนัดหมาย',5:'ร้านอาหาร',6:'ถามทาง',7:'ครอบครัวและเพื่อน',8:'วันหยุด',9:'โทรศัพท์และชวน',10:'อากาศ'};
 const parseD=raw=>{const o=[],cnt={};let g=null;raw.trim().split('\n').forEach(l=>{l=l.trim();if(!l)return;
- if(l[0]==='@'){const[n,t,src]=l.slice(1).split('|');const lv=+n;cnt[lv]=(cnt[lv]||0)+1;g=src?{l:lv,p:cnt[lv],t,turns:[],src}:{l:lv,p:cnt[lv],t,turns:[]};o.push(g)}else{const i=l.indexOf('|');g.turns.push([l.slice(0,i),l.slice(i+1)])}});return o};
+ if(l[0]==='@'){const[n,t,src]=l.slice(1).split('|');const lv=+n;cnt[lv]=(cnt[lv]||0)+1;g=src?{l:lv,p:cnt[lv],t,turns:[],src}:{l:lv,p:cnt[lv],t,turns:[]};o.push(g)}else{const i=l.indexOf('|'),r=l.slice(i+1),m=/^(.*)\|([^{}|]*)$/.exec(r);g.turns.push(m?[l.slice(0,i),m[1],m[2]]:[l.slice(0,i),r])}});return o};
 
 const W=parseW(`
 一つ|ひとつ|หนึ่งอัน|ตัวเลขและเวลา
