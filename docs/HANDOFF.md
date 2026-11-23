@@ -1,4 +1,4 @@
-# ส่งต่องาน · session 2026-11-22 → 23 (branch `claude/beautiful-hamilton-o3aobm` · v137–v167)
+# ส่งต่องาน · session 2026-11-22 → 23 (branch `claude/beautiful-hamilton-o3aobm` · v137–v169 · PR #28 merge แล้ว · PR #29 รอ merge)
 
 อ่านไฟล์นี้ก่อนเริ่ม session ใหม่ แล้วอ่าน `CLAUDE.md` และ `FEATURE_MAP.md` · งานแมวพิกเซล/แผนที่อยู่ใน `docs/PET_PIXEL.md`
 
