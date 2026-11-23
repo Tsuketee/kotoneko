@@ -37,4 +37,3 @@ function initCv(){const sh=document.querySelector('.sheet'),cv=[...document.quer
  sh.onpointerup=sh.onpointercancel=sh.onlostpointercapture=e=>{if(e.pointerType==='pen')pen=e.timeStamp;if(d===e.pointerId){d=null;ep=null;tk=null;cv.forEach((c,k)=>dirty.add(k));sched()}};
  sh.oncontextmenu=e=>e.preventDefault();sh.onselectstart=e=>e.preventDefault();sh.ondragstart=e=>e.preventDefault();document.onselectstart=e=>e.preventDefault();
  cv.forEach((c,k)=>draw(c,k));addArrows()}
-function undo(){if(st[lc])st[lc].pop();render()}
