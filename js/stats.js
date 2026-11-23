@@ -12,6 +12,8 @@ function creditsHtml(){return `<h2>เกี่ยวกับและเคร
 const PK=[...new Set([DS.a.key,...Object.values(LKEY).flatMap(o=>Object.values(o)),MK])]; // ความคืบหน้าทุกระดับ (ไม่ใช่แค่ระดับที่เปิดอยู่)
 // อ่านความคืบหน้าทุก key ใน PK วิธีเดียว ใช้ทั้งส่งออกไฟล์และซิงก์คลาวด์ (js/cloud.js)
 function snapshot(){const d={};PK.forEach(k=>{const v=readJSON(k);if(v!==undefined)d[k]=v});return d}
+// เขียนความคืบหน้าวิธีเดียว: all=true (ดึงจากคลาวด์) key ใน PK ที่ไม่มีใน d ถูกลบ · all=false (นำเข้าไฟล์) เขียนเฉพาะ key ที่มี · เขียนไม่ได้ = false
+function writeProg(d,all){let ok=true;PK.forEach(k=>{const v=d[k];if(v&&typeof v==='object'&&!Array.isArray(v))ok=writeJSON(k,v)&&ok;else if(all)ok=writeStr(k,null)&&ok});return ok}
 function exportProg(){const data=snapshot();
  const o={app:'kanji-app',format:1,exported:new Date().toISOString(),data},b=new Blob([JSON.stringify(o)],{type:'application/json'}),a=document.createElement('a');
  a.href=URL.createObjectURL(b);a.download='kanji-progress-'+dstr(new Date())+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('ส่งออกแล้วค่ะ')}
@@ -20,6 +22,6 @@ function importProg(el){const f=el.files[0];el.value='';if(!f)return;const r=new
   if(!o||o.app!=='kanji-app'||o.format!==1||!o.data||typeof o.data!=='object')return toast('ไม่ใช่ไฟล์สำรองของแอปนี้');
   const ks=PK.filter(k=>o.data[k]&&typeof o.data[k]==='object'&&!Array.isArray(o.data[k]));if(!ks.length)return toast('ไม่พบข้อมูลในไฟล์');
   if(!confirm('นำเข้าจะเขียนทับความคืบหน้าปัจจุบันในเครื่องนี้ ต้องการทำต่อไหมคะ?'))return;
-  try{ks.forEach(k=>localStorage.setItem(k,JSON.stringify(o.data[k])))}catch{return toast('บันทึกไม่สำเร็จ')}
+  if(!writeProg(o.data,false))return toast('บันทึกไม่สำเร็จ')
   location.reload()};
  r.onerror=()=>toast('อ่านไฟล์ไม่สำเร็จ');r.readAsText(f)}

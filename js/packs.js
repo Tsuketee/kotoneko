@@ -48,7 +48,7 @@ async function packFetch(l) {
   const r = await sb('/rest/v1/content_packs?select=version,data&level=eq.' + l);
   if (!r || !r.length) { const e = new Error('no entitlement'); e.noEnt = true; throw e }
   const p = r[0].data; packParse(p);   // ตรวจก่อนเก็บ แพ็กเสียจะไม่ถูกบันทึก
-  try { localStorage.setItem(PACKK(l), JSON.stringify(p)) } catch (e) { throw new Error('พื้นที่ในเครื่องไม่พอ', { cause: e }) }
+  if (!writeJSON(PACKK(l), p)) throw new Error('พื้นที่ในเครื่องไม่พอ');
   return p;
 }
 async function packCheck() {
@@ -71,7 +71,7 @@ async function packCheck() {
     for (const l of PAID) {
       const p = packLocal(l), allowed = ent.includes(l) || (admin && ver[l]);
       if (p && !allowed) {   // ถูกถอนสิทธิ์: ลบแพ็กออกจากเครื่อง
-        localStorage.removeItem(PACKK(l));
+        writeStr(PACKK(l), null);
         if (LV === l) return lvGo('n5', 'บัญชีนี้ไม่มีสิทธิ์ ' + LEVELS[l].n + ' แล้ว จึงกลับมาที่ N5 ค่ะ');
       } else if (p && ver[l] > p.version) {   // มีเวอร์ชันใหม่: ดาวน์โหลดไว้ ใช้เมื่อเปิดแอปครั้งถัดไป
         try { await packFetch(l); if (LV === l) toast('อัปเดตเนื้อหา ' + LEVELS[l].n + ' แล้ว จะใช้เมื่อเปิดแอปครั้งถัดไปค่ะ') } catch (e) { console.warn('ดาวน์โหลดแพ็ก ' + l + ' รุ่นใหม่ไม่ได้ จะลองใหม่ครั้งหน้า', e) }

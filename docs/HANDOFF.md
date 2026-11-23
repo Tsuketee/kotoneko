@@ -54,7 +54,7 @@
 | 7 | ✅ ขั้น version: `apple-touch-icon-vN.png` เปลี่ยนหน้าตาแต่ชื่อเดิม (เทียบไฟล์กับฐาน) → ไม่ผ่าน · e2e "ไอคอน:" มีไฟล์เดียว ชื่อตรงกันใน index.html sw.js tools/icon.html · hooks 20 ข้อ · ลบ comment `make-icons.js:2` `index.html:12` · v176 | ต่ำ |
 | 8 | ✅ `esc` ตัวเดียวใน `js/core.js` (รวม `esc` ของ `cloud.js` `town.js` และ `pesc` ของ `profile.js`) · e2e "ความปลอดภัย:" ห้ามมีตัวแปลง HTML ในไฟล์อื่น + ชื่อที่มีแท็กไม่กลายเป็น HTML · v177 | ต่ำ–กลาง |
 | 9 | ✅ อ่านความคืบหน้าวิธีเดียว `snapshot()` ย้ายไป `js/stats.js` ข้าง `PK` · ส่งออกไฟล์และซิงก์ใช้ตัวเดียวกัน · e2e "ส่งออก/นำเข้า:" ตรวจไฟล์ = snapshot และห้ามมีตัวอ่านซ้ำ · v178 | กลาง |
-| 10 | เขียนความคืบหน้าเหลือวิธีเดียว (`applyData` `importProg` `packs.js` ×2) + ESLint ให้ localStorage แค่ `level.js` | กลาง |
+| 10 | ✅ เขียนความคืบหน้าวิธีเดียว `writeProg(d, all)` ใน `js/stats.js` (แทน `applyData` และการเขียนใน `importProg`) · `packs.js` ใช้ `writeJSON`/`writeStr` · ESLint ให้แตะ localStorage ได้แค่ `js/level.js` · e2e "ที่เก็บข้อมูล:" · v179 | กลาง |
 | 11 | `pet-grid.js` ใช้ `js/pixelcat.js` จริง · ร่างเก่าใน `docs/` | กลาง |
 | 12 | แยก `tests/e2e.js` ตามฟีเจอร์ | ต่ำ |
 | 13–15 | แยก `pet.js` (rewards, onboard) · `learn.js` (srs, quiz, kana, mistakes) · `cloud.js` (sync/auth) · `packs.js` (buy) | กลาง |

@@ -161,11 +161,11 @@
 ## 17. สำรองข้อมูล (ส่งออก/นำเข้า)
 - **หน้า**: `tab='me' meView='backup'`
 - **เข้าถึง**: โปรไฟล์ → "สำรองข้อมูล"
-- **ไฟล์หลัก**: `js/stats.js` (`exportProg` `importProg` · รายการ key `PK` `:12`), `js/level.js` (`LKEY`)
+- **ไฟล์หลัก**: `js/stats.js` (`exportProg` `importProg` · รายการ key `PK` · อ่าน/เขียนความคืบหน้าวิธีเดียว `snapshot()` `writeProg()` ใช้ร่วมกับซิงก์คลาวด์), `js/level.js` (`LKEY` · ไฟล์เดียวที่แตะ localStorage ได้)
 - **selector**: `button:text-is("ส่งออก")` · input ไฟล์ `#imp`
 - **flow ที่ต้องไม่พัง**: ส่งออกได้ไฟล์ JSON ที่มีทุก key ความคืบหน้า → นำเข้าแล้วข้อมูลกลับมาครบ · ไฟล์ผิดรูปแบบขึ้น "ไม่ใช่ไฟล์…"
 - **key ความคืบหน้า**: `ka1` `kn5` `kw1` `kv1` `kg1` `kn_meta` · N4 `kn4` `kw4` `kv4` `kg4` · N3 `kn3` `kw3` `kv3` `kg3` · key ใหม่ต้องเพิ่มใน `PK` หรือ `LKEY` ถึงจะถูกส่งออกและซิงก์ · ไม่ใช่ความคืบหน้า: `kn_level` `kn_pack_<ระดับ>` `kn_packs` `kn_cloud` `kn_auth` `kn_pkce` `kn_theme`
-- **test**: `e2e.js "ส่งออก/นำเข้า:"`
+- **test**: `e2e.js "ส่งออก/นำเข้า:"` `e2e.js "ที่เก็บข้อมูล:"`
 
 ## 18. บัญชีและซิงก์คลาวด์
 - **หน้า**: `tab='me' meView='acct'`

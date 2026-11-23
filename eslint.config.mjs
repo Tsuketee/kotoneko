@@ -10,7 +10,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-const STORAGE_LAYER = ['js/core.js', 'js/level.js', 'js/stats.js', 'js/cloud.js', 'js/packs.js'];
+const STORAGE_LAYER = ['js/level.js'];
 const API_LAYER = ['js/cloud.js'];
 const NO_STORAGE = ['localStorage', 'sessionStorage', 'indexedDB'].map(name => ({ name, message: 'เข้าถึงที่เก็บข้อมูลได้เฉพาะไฟล์ชั้นเก็บข้อมูล (' + STORAGE_LAYER.join(' ') + ') ให้เรียกผ่าน readJSON/writeJSON/readStr/writeStr ใน js/level.js' }));
 const NO_NET = ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource'].map(name => ({ name, message: 'เรียกเน็ตได้เฉพาะชั้น API (' + API_LAYER.join(' ') + ')' }));

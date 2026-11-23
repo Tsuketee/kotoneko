@@ -613,6 +613,27 @@ test('เป้าหมายต่อวัน: พิมพ์เองได
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('ที่เก็บข้อมูล: เขียนความคืบหน้าวิธีเดียว writeProg (ดึงจากคลาวด์ลบ key ที่ไม่มี · นำเข้าไฟล์เขียนเฉพาะที่มี) · เขียนไม่ได้แจ้งผู้ใช้และไม่โหลดหน้าใหม่ · PK ใช้แค่ใน js/stats.js', async (b, base) => {
+  const users = fs.readdirSync(path.join(ROOT, 'js')).filter(x => x.endsWith('.js') && /\bPK\b/.test(fs.readFileSync(path.join(ROOT, 'js', x), 'utf8').replace(/\/\/.*$/gm, '')));
+  assert.deepStrictEqual(users, ['stats.js'], 'อ่าน/เขียนความคืบหน้าทุก key ต้องผ่าน snapshot()/writeProg() ใน js/stats.js');
+  const p = await fresh(b, base);
+  const r = await p.evaluate(() => {
+    localStorage.setItem('kw1', JSON.stringify({ a: { b: 1 } })); localStorage.setItem('kv1', JSON.stringify({ x: { b: 2 } }));
+    const ok1 = writeProg({ kw1: { c: { b: 3 } }, kv1: [1, 2] }, false), part = [localStorage.getItem('kw1'), localStorage.getItem('kv1')];
+    const ok2 = writeProg({ kw1: { d: { b: 4 } }, kn_meta: JSON.parse(localStorage.getItem('kn_meta')) }, true), all = [localStorage.getItem('kw1'), localStorage.getItem('kv1')];
+    return { ok1, part, ok2, all };
+  });
+  assert.deepStrictEqual(r, { ok1: true, part: ['{"c":{"b":3}}', '{"x":{"b":2}}'], ok2: true, all: ['{"d":{"b":4}}', null] }, 'นำเข้าไฟล์ไม่ลบ key อื่นและข้ามค่าที่ไม่ใช่ object · ดึงจากคลาวด์ลบ key ที่ไม่มี');
+  // นำเข้าไฟล์ตอนที่เก็บข้อมูลเต็ม: แจ้ง "บันทึกไม่สำเร็จ" และอยู่หน้าเดิม
+  const f = path.join(require('os').tmpdir(), 'kanji-e2e-quota-' + Date.now() + '.json');
+  fs.writeFileSync(f, JSON.stringify({ app: 'kanji-app', format: 1, data: { kw1: { z: { b: 5 } } } }));
+  await p.evaluate(() => { goMe('backup'); Storage.prototype.setItem = () => { throw new DOMException('ทดสอบ: เต็ม', 'QuotaExceededError') }; window.__same = 1; });
+  p.on('dialog', d => d.accept());
+  await p.setInputFiles('#imp', f);
+  await p.getByTestId('toast').filter({ hasText: 'บันทึกไม่สำเร็จ' }).waitFor();
+  assert.strictEqual(await p.evaluate(() => window.__same), 1, 'เขียนไม่ได้ต้องไม่โหลดหน้าใหม่');
+});
+
 test('ส่งออก/นำเข้า: ข้อมูลกลับมาครบ และไฟล์ผิดรูปแบบถูกปฏิเสธ', async (b, base) => {
   const p = await fresh(b, base);
   await p.evaluate(() => localStorage.setItem('kw1', JSON.stringify({ 'テスト': { b: 3, w: 0, d: 1 } })));

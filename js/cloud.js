@@ -90,9 +90,6 @@ const canon = v => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']' : v && 
 // ไม่นับ pet.lastTs (เวลาที่เปิดหน้าแรกล่าสุด เปลี่ยนทุกครั้งที่เปิดแอป) ไม่งั้นแค่เปิดแอปก็กลายเป็น "มีของใหม่" แล้วส่งขึ้น/ถามซ้ำไม่จบ
 function chash(o) { let x = o; if (o && o[MK] && o[MK].pet && 'lastTs' in o[MK].pet) { const pet = { ...o[MK].pet }; delete pet.lastTs; x = { ...o, [MK]: { ...o[MK], pet } } } const s = canon(x); let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) } return (h >>> 0).toString(36) + '.' + s.length }
 const hasPet = d => !!(d && d[MK] && d[MK].pet && d[MK].pet.name);
-function applyData(d) {
-  PK.forEach(k => { if (d[k] && typeof d[k] === 'object' && !Array.isArray(d[k])) localStorage.setItem(k, JSON.stringify(d[k])); else localStorage.removeItem(k) });
-}
 function sumOf(d) {
   let lr = 0; for (const k in DS) lr += Object.values((d && d[DS[k].key]) || {}).filter(v => v && v.b >= MASTERY).length;
   const days = (d && d[MK] && d[MK].days) || {}, tot = Object.values(days).reduce((a, b) => a + (+b || 0), 0), last = Object.keys(days).sort().pop();
@@ -138,7 +135,7 @@ async function push(local, lh, rev, opt) {
   done(r[0].rev, lh); return 'pushed';
 }
 function pull(row) {
-  applyData(row.data || {});
+  if (!writeProg(row.data || {}, true)) throw new Error('พื้นที่ในเครื่องไม่พอ ดึงข้อมูลจากคลาวด์ไม่สำเร็จ');
   done(row.rev, chash(snapshot()));
   writeStr('kn_pulled', '1', true);
   location.reload();
