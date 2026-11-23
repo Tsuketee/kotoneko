@@ -1401,6 +1401,28 @@ test('สัตว์เลี้ยงปลอบหลังตอบผิ�
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('แมวพิกเซล: แตะแมวทุกแบบไม่เพิ่มความสนิท Energy หรือภารกิจ (กดรัวเก็บแต้มไม่ได้)', async (b, base) => {
+  const p = await fresh(b, base);
+  await p.evaluate(() => { PixelCat._t.setJit(false); PixelCat._t.setNow(new Date('2026-11-22T12:00:00').getTime()); pens(); M.pet.bond = 0; M.pet.energy = 0; saveM(); render(); });
+  await p.waitForTimeout(300);
+  const rewards = () => p.evaluate(() => { const s = JSON.parse(localStorage.getItem('kn_meta')); return { bond: M.pet.bond, energy: M.pet.energy, d: JSON.stringify(M.pet.d), days: JSON.stringify(M.days), unclaimed: punclaimed(), saved: [s.pet.bond, s.pet.energy, JSON.stringify(s.pet.d)] }; });
+  const before = await rewards();
+  const reset = (o = {}) => p.evaluate(o => Object.assign(PixelCat._t.cat, { mode: 'sit', x: 52, t: 0, dur: 1e9, pose: null, tol: 0, cool: 0, lv: 0, then: null, pend: null }, o), o);
+  const box = await p.locator('#petcv').boundingBox(), sc = box.width / 160, tap = (x, y) => p.mouse.click(box.x + (52 + x) * sc, box.y + (41 + y) * sc);
+  const modes = new Set();
+  const seen = () => p.evaluate(() => PixelCat._t.cat.mode).then(m => modes.add(m));
+  // แตะหัวรัวจนแมวเดินหนี แล้วแตะต่อระหว่างพัก
+  await reset(); for (let i = 0; i < 15; i++) { await tap(24, 20); await seen(); }
+  // ทุกโซนทีละครั้ง (หลังพักครบ) · กดค้างที่หัว · แตะตอนหลับ · ปุ่ม Enter บนฉาก
+  for (const [x, y] of [[24, 20], [24, 38], [42, 32]]) for (let i = 0; i < 3; i++) { await reset(); await p.evaluate(() => { const { step } = PixelCat._t; for (let k = 0; k < 40; k++) step(50); }); await reset(); await tap(x, y); await seen(); }
+  await reset(); await p.mouse.move(box.x + 76 * sc, box.y + 61 * sc); await p.mouse.down(); await p.waitForTimeout(900); await p.mouse.up(); await seen();
+  await reset({ mode: 'curl' }); await tap(24, 26); await seen();
+  await reset(); await p.locator('#petcv').focus(); await p.keyboard.press('Enter'); await seen();
+  for (const m of ['pet', 'notice', 'annoy', 'sblink', 'wake']) assert(modes.has(m), 'ต้องได้ลองท่าตอบการแตะ ' + m + ' · ได้ ' + [...modes].join(' '));
+  assert.deepStrictEqual(await rewards(), before, 'ห้ามผูกการแตะแมวกับความสนิท Energy หรือภารกิจ (กดรัวเก็บแต้มได้)');
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('แมวพิกเซล: หน้าหลักวาดฉากห้อง, เหตุการณ์เรียกท่าอารมณ์, แตะแยกโซนและมาตรวัดความทน, เปลี่ยนท่าไม่ค้าง, กระต่ายยังเป็นอิโมจิ', async (b, base) => {
   const p = await fresh(b, base);
   await p.evaluate(() => { PixelCat._t.setJit(false); PixelCat._t.setNow(new Date('2026-11-22T12:00:00').getTime()); });
