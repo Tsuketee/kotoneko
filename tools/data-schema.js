@@ -8,6 +8,8 @@ const KANJI1 = /^\p{Script=Han}$/u;                       // คันจิ 1 �
 const KATA = /^[ァ-ヺー]+$/u;                 // คาตากานะ + ー
 const HIRA_KUN = /^[ぁ-ゖ.-]+$/u;                 // ฮิรางานะ + . (แยกโอกุริงานะ) + - (หน่วยคำต่อหน้า/หลัง)
 const KANA = /^[ぁ-ゖァ-ヺー]+$/u;    // ฮิรางานะหรือคาตากานะ (+ ー)
+const KANA_PHRASE = /^[ぁ-ゖァ-ヺー、。！？]+$/u;   // คำอ่านคำศัพท์: คานะ + เครื่องหมายวรรคตอนญี่ปุ่นของวลี (เจ้าของอนุมัติ 2026-11-23)
+const HAS_KANA = /[ぁ-ゖァ-ヺ]/u;
 const THAI = /[ก-๛]/u;
 const SEP = /[・/]/u;                                      // ตัวคั่นหลายคำอ่านในช่องเดียว
 const NONE = '-';                                          // ไม่มีคำอ่านแบบนี้
@@ -31,7 +33,7 @@ const Kanji = z.object({
 
 const Vocab = z.object({
   word: z.string().trim().min(1, 'คำว่าง'),
-  reading: z.string().regex(KANA, 'คำอ่านต้องเป็นคานะเท่านั้น'),
+  reading: z.string().regex(KANA_PHRASE, 'คำอ่านต้องเป็นคานะเท่านั้น (อนุญาต 、。！？ ของวลี)').regex(HAS_KANA, 'คำอ่านต้องมีคานะ'),
   meaning: thai,
   beyondLevel: z.boolean().optional(),
   source,
@@ -73,7 +75,7 @@ function records(app, level = 'N5') {
   const vocab = [
     ...app.W.map((w, i) => ({ file: 'js/data/content.js', label: `W แถว ${i + 1} ${w.k}`, rec: { word: w.k, reading: w.o, meaning: w.m, source: w.src || app.SRC_CONTENT } })),
     ...app.V.map((v, i) => ({ file: 'js/data/content.js', label: `V แถว ${i + 1} ${v.k}`, rec: { word: v.k, reading: v.o, meaning: v.m, source: v.src || app.SRC_CONTENT } })),
-    ...Object.entries(app.EX).flatMap(([k, xs]) => xs.map(([word, reading, meaning, , src], j) => ({ file: 'js/data/examples.js', label: `${k} ตัวอย่างที่ ${j + 1} ${word}`, rec: { word, reading, meaning, source: src || app.SRC_EX } }))),
+    ...Object.entries(app.EX).flatMap(([k, xs]) => xs.map(([word, reading, meaning, , src, flag], j) => ({ file: 'js/data/examples.js', label: `${k} ตัวอย่างที่ ${j + 1} ${word}`, rec: { word, reading, meaning, source: src || app.SRC_EX, ...(flag ? { beyondLevel: flag === 'เกินระดับ' } : {}) } }))),
   ];
   const dialogues = app.D.map((d, i) => {
     const m = /\((สุภาพ|กันเอง)\)\s*$/u.exec(d.t || '');

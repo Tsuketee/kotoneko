@@ -32,11 +32,13 @@ test('แหล่งที่มาเป็นตำราที่ห้า�
   assert.deepStrictEqual(rules(Kanji, { ...K, source: 'KANJIDIC2 (EDRDG) · ความหมายไทยเขียนเอง' }), []);
 });
 const W = { word: '日本', reading: 'にほん', meaning: 'ญี่ปุ่น', source: 'เขียนเอง' }, set = new Set(['日', '本', '時']);
-test('คำศัพท์: ถูกต้องผ่าน · คำอ่านมีคันจิ/ตัวโรมัน/เครื่องหมายไม่ผ่าน · ความหมายไม่ใช่ไทยไม่ผ่าน', () => {
+test('คำศัพท์: ถูกต้องผ่าน · คำอ่านมีคันจิ/ตัวโรมัน/เครื่องหมายอื่นนอกจาก 、。！？ ไม่ผ่าน · ความหมายไม่ใช่ไทยไม่ผ่าน', () => {
   assert.deepStrictEqual(rules(Vocab, W), []);
   has(rules(Vocab, { ...W, reading: '日ほん' }), 'คานะ');
   has(rules(Vocab, { ...W, reading: 'nihon' }), 'คานะ');
-  has(rules(Vocab, { ...W, reading: 'じゃあ、また' }), 'คานะ');
+  assert.deepStrictEqual(rules(Vocab, { ...W, reading: 'じゃあ、またね！' }), [], 'วลีมี 、。！？ ได้');
+  has(rules(Vocab, { ...W, reading: 'じゃあ,また' }), 'คานะ');
+  has(rules(Vocab, { ...W, reading: '、。' }), 'ต้องมีคานะ');
   has(rules(Vocab, { ...W, meaning: '300' }), 'ภาษาไทย');
   has(rules(Vocab, { ...W, source: '' }), 'แหล่งที่มา');
 });
@@ -45,6 +47,9 @@ test('คำศัพท์: คันจินอกชุดไม่ผ่า
   has(rules(VocabLevel(set), { ...W, word: '日曜日' }), '曜');
   assert.deepStrictEqual(rules(VocabLevel(set), { ...W, word: '日曜日', beyondLevel: true }), []);
   assert.deepStrictEqual(rules(VocabLevel(set), { ...W, word: '時々' }), []);
+  const ex = require('../tools/data-schema.js').records({ K: [], SV: {}, W: [], V: [], D: [], EX: { '日': [['日曜日', 'にちようび', 'วันอาทิตย์', 'o', '', 'เกินระดับ'], ['曜日', 'ようび', 'วัน', 'o']] }, SRC_EX: 'เขียนเอง' }).vocab;
+  assert.deepStrictEqual(ex.map(v => v.rec.beyondLevel), [true, undefined], 'examples.js ช่องสุดท้าย เกินระดับ → beyondLevel');
+  assert.deepStrictEqual(ex.map(v => rules(VocabLevel(set), v.rec).length), [0, 1]);
   const out = validate({ kanji: [], vocab: [{ file: 'f', label: 'x', rec: { ...W, word: '港', source: undefined } }], dialogues: [] });
   has(out.map(e => e.rule), 'แหล่งที่มา'); has(out.map(e => e.rule), '港');
 });
