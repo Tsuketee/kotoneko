@@ -96,12 +96,47 @@ test('ข้อมูล: ไฟล์ที่ index.html โหลดและ
   const srcs = [...html.matchAll(/(?:src|href)="((?:js|css|icons)\/[^"]+|manifest\.webmanifest)"/g)].map(m => m[1]);
   srcs.forEach(s => { assert(fs.existsSync(path.join(ROOT, s)), 'ไม่พบไฟล์ ' + s); assert(sw.includes(`'${s}'`), 'sw.js ไม่ได้แคช ' + s); });
   assert(/const VERSION = 'v\d+'/.test(sw));
-  const order = [...html.matchAll(/<script src="(js\/[^"]+)"/g)].map(m => m[1]);
-  assert.strictEqual(order[order.length - 1], 'js/main.js', 'main.js ต้องโหลดท้ายสุด');
-  assert(order.indexOf('js/core.js') > order.indexOf('js/data/content.js'), 'core.js ต้องโหลดหลังไฟล์ข้อมูล');
-  assert(order.indexOf('js/core.js') < order.indexOf('js/learn.js'), 'core.js ต้องโหลดก่อนไฟล์ตรรกะ');
   assert(!fs.existsSync(path.join(ROOT, 'js/app.js')), 'js/app.js ถูกแยกแล้ว ไม่ควรมีอีก');
-  fs.readdirSync(path.join(ROOT, 'js')).filter(f => f.endsWith('.js')).forEach(f => assert(order.includes('js/' + f), 'index.html ไม่ได้โหลด js/' + f));
+});
+
+// ทุกไฟล์เป็น <script> ธรรมดาที่ใช้ตัวแปร global ร่วมกัน: ลำดับโหลดผิดหรือชื่อซ้ำข้ามไฟล์ทำให้ค่าถูกทับเงียบๆ
+const scriptOrder = html => [...html.matchAll(/<script src="(js\/[^"]+)"/g)].map(m => m[1]);
+function scriptOrderProblems(order, onDisk) {
+  const bad = [], at = f => order.indexOf(f), data = order.filter(f => f.startsWith('js/data/')), logic = order.filter(f => !f.startsWith('js/data/') && !['js/level.js', 'js/core.js', 'js/main.js'].includes(f));
+  onDisk.forEach(f => { const n = order.filter(x => x === f).length; if (n !== 1) bad.push(`index.html โหลด ${f} ${n} ครั้ง (ต้อง 1)`); });
+  data.forEach(f => { if (at(f) > at('js/level.js')) bad.push(`${f} ต้องโหลดก่อน js/level.js (level.js สลับข้อมูลเป็นแพ็กระดับที่เลือก)`); });
+  if (!(at('js/level.js') < at('js/core.js'))) bad.push('js/level.js ต้องโหลดก่อน js/core.js (core.js สร้าง DS จากข้อมูลที่ level.js เลือกแล้ว)');
+  logic.forEach(f => { if (at(f) < at('js/core.js')) bad.push(`${f} ต้องโหลดหลัง js/core.js`); });
+  if (order[order.length - 1] !== 'js/main.js') bad.push('js/main.js ต้องโหลดท้ายสุด');
+  return bad;
+}
+function topLevelDuplicates(files) {
+  const ts = require('typescript'), seen = new Map(), dup = [];
+  const names = n => ts.isIdentifier(n) ? [n.text] : (n.elements || []).flatMap(e => e.name ? names(e.name) : []);
+  for (const [f, src] of files) {
+    const sf = ts.createSourceFile(f, src, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+    for (const s of sf.statements) {
+      const ns = ts.isFunctionDeclaration(s) || ts.isClassDeclaration(s) ? (s.name ? [s.name.text] : []) : ts.isVariableStatement(s) ? s.declarationList.declarations.flatMap(d => names(d.name)) : [];
+      const where = f + ':' + (sf.getLineAndCharacterOfPosition(s.getStart()).line + 1);
+      ns.forEach(n => { if (seen.has(n)) dup.push(`${n} ประกาศซ้ำ ${seen.get(n)} และ ${where}`); else seen.set(n, where); });
+    }
+  }
+  return dup;
+}
+test('โครงสร้าง: ลำดับ <script> ข้อมูล → level → core → ตรรกะ → main · ทุกไฟล์ใน js/ โหลดครั้งเดียว · ชื่อระดับบนสุดไม่ซ้ำข้ามไฟล์', async () => {
+  const order = scriptOrder(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'));
+  const onDisk = ['js', 'js/data'].flatMap(d => fs.readdirSync(path.join(ROOT, d)).filter(f => f.endsWith('.js')).map(f => d + '/' + f));
+  assert.deepStrictEqual(scriptOrderProblems(order, onDisk), []);
+  assert.deepStrictEqual(topLevelDuplicates(order.map(f => [f, fs.readFileSync(path.join(ROOT, f), 'utf8')])), []);
+  // ตัวตรวจต้องจับลำดับผิดและชื่อซ้ำได้จริง
+  const swap = (a, x, y) => a.map(f => f === x ? y : f === y ? x : f);
+  assert.match(scriptOrderProblems(swap(order, 'js/level.js', 'js/core.js'), onDisk).join(), /level\.js ต้องโหลดก่อน js\/core\.js/);
+  assert.match(scriptOrderProblems(swap(order, 'js/data/places.js', 'js/level.js'), onDisk).join(), /places\.js ต้องโหลดก่อน js\/level\.js/);
+  assert.match(scriptOrderProblems(swap(order, 'js/learn.js', 'js/core.js'), onDisk).join(), /learn\.js ต้องโหลดหลัง js\/core\.js/);
+  assert.match(scriptOrderProblems(swap(order, 'js/main.js', 'js/packs.js'), onDisk).join(), /main\.js ต้องโหลดท้ายสุด/);
+  assert.match(scriptOrderProblems(order.filter(f => f !== 'js/shop.js'), onDisk).join(), /js\/shop\.js 0 ครั้ง/);
+  assert.match(scriptOrderProblems([...order, 'js/shop.js'], onDisk).join(), /js\/shop\.js 2 ครั้ง/);
+  assert.deepStrictEqual(topLevelDuplicates([['a.js', 'function x(){}\nconst {y, z: [w]} = o;'], ['b.js', 'let q = 1;\nfunction w(){}\nvar x;']]), ['w ประกาศซ้ำ a.js:2 และ b.js:2', 'x ประกาศซ้ำ a.js:1 และ b.js:3']);
 });
 
 // ---------- การใช้งานหลัก ----------
