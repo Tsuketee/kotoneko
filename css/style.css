@@ -323,3 +323,27 @@ details.ft summary::after{content:'▾';font-size:10px}details.ft[open] summary:
 body,button,input,select,textarea{font-family:var(--ff)}
 h1,h2,.hi,.big,.btns button,.pnm b,.pzm b,.rt b,.kp b,.pfd,.scgo,.cdl h2,#nav button{font-family:var(--fd)}
 h1,h2,.hi{font-weight:700;letter-spacing:.005em}.pfd span{font-family:var(--ff)}.pzm b,.pnm b,.big,.btns button{font-weight:600}
+/* ร้านค้า (โคบัง) */
+.kb-i{color:var(--m3)}
+.shw{display:flex;gap:10px;margin:10px 0}.shw>span{flex:1;display:flex;align-items:center;gap:6px;justify-content:center;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px;font-size:14px;color:var(--mut)}.shw b{color:var(--fg);font-size:18px;font-variant-numeric:tabular-nums}
+.card.shp{min-height:0;display:flex;align-items:center;gap:16px;padding:14px 16px;text-align:left;position:relative}
+.shcv{width:144px;height:144px;image-rendering:pixelated;image-rendering:crisp-edges;flex:none;background:color-mix(in srgb,var(--ac) 8%,var(--card));border-radius:16px}
+.shro{position:absolute;left:104px;top:96px;color:var(--ac);background:var(--card);border-radius:12px;padding:4px}
+.sha{display:grid;gap:8px;flex:1;min-width:0}.sha b{font-family:var(--fd);font-size:18px}.sha .bd{justify-self:start;margin:0}.sha button{min-height:44px;border-radius:12px;font:inherit;font-weight:700;padding:8px 14px;border:0}.sha .g{background:var(--ok);color:var(--onac)}.sha .sec{background:var(--bg);color:var(--fg);border:1px solid var(--bd)}.sha button:disabled{opacity:.45}
+.shbag{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:10px 0;border-radius:16px;border:2px dashed var(--m3);background:color-mix(in srgb,var(--m3) 7%,var(--card))}.shbag>div{flex:1;min-width:0}.shbag b{font-family:var(--fd)}.shbag .pcl:disabled{opacity:.45}
+.seg.shs{margin:12px 0}.seg.shs button{flex:1;min-height:44px}
+button.pfi{font:inherit;color:var(--fg);cursor:pointer}.pfi.sel{box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 45%,transparent)}
+.shic{display:grid;place-items:center;width:64px;height:64px;color:var(--ac)}
+.shbl{display:flex;flex-wrap:wrap;gap:6px}.shbl span{font-size:12.5px;padding:3px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--bd)}
+.shf .pzm{cursor:default}.shf .pcl:disabled{opacity:.45}
+/* ต้นแบบ ข: ตู้สะสม + แผ่นล่าง + สมุดโคบัง */
+.card.shwal{min-height:0;padding:14px 16px;text-align:left;margin:12px 0}.shwt{display:flex;align-items:center;gap:12px}.shwt>div{flex:1;min-width:0}.shwt b{font-family:var(--fd);font-size:26px;font-variant-numeric:tabular-nums}
+.shlog{list-style:none;margin:10px 0 0;padding:10px 0 0;border-top:1px solid var(--bd);display:grid;gap:6px;font-size:14px}.shlog li{display:flex;justify-content:space-between;gap:10px}.shlog b{color:var(--ok)}.shlog b.neg{color:var(--err)}
+.pfk span{float:right;font-size:12.5px}
+.shbagt{border:2px dashed var(--m3);background:color-mix(in srgb,var(--m3) 8%,var(--card))}.shbagt .shic{color:var(--m3)}
+.shsh{align-items:flex-end;padding-bottom:0}.cdl.shsd{border-radius:22px 22px 0 0;max-width:640px;padding:10px 18px calc(18px + env(safe-area-inset-bottom,0px));animation:shup .22s ease-out}.shsd h2{margin:6px 0}
+.shgrab{display:block;width:44px;height:5px;border-radius:3px;background:var(--bd);margin:0 auto 6px}
+.shsv{display:flex;align-items:center;gap:16px}.shic.big{width:144px;height:144px}
+.shsd .btns button{flex:1;min-height:48px}.shsd .btns button:disabled{opacity:.45}
+@keyframes shup{from{transform:translateY(40px);opacity:.4}}
+@media (prefers-reduced-motion:reduce){.cdl.shsd{animation:none}}
