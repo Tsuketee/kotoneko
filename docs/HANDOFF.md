@@ -1,17 +1,21 @@
-# ส่งต่องาน · session 2026-11-22 → 23 (branch `claude/beautiful-hamilton-o3aobm` · v137–v169 · PR #28 merge แล้ว · PR #29 รอ merge)
+# ส่งต่องาน · ถึง 2026-11-23 (main = v185 · ทุก PR merge แล้ว)
 
 อ่านไฟล์นี้ก่อนเริ่ม session ใหม่ แล้วอ่าน `CLAUDE.md` และ `FEATURE_MAP.md` · งานแมวพิกเซล/แผนที่อยู่ใน `docs/PET_PIXEL.md`
 
-## สถานะ
-- **PR [Tsuketee/kotoneko#28](https://github.com/Tsuketee/kotoneko/pull/28) merge แล้ว** (main = v167 · `e0e76a4`)
-- **PR [Tsuketee/kotoneko#29](https://github.com/Tsuketee/kotoneko/pull/29) เปิดแล้ว ยังไม่ merge**: งานหลัง merge (v168–v169 + hook + เอกสาร) จาก branch `claude/beautiful-hamilton-o3aobm` (merge main แล้ว ไม่มี conflict) · CI ตอนเปิด PR ยังรันอยู่ ([run #35](https://github.com/Tsuketee/kotoneko/actions/runs/45107804725)) รอบก่อนหน้าผ่าน ([run #33](https://github.com/Tsuketee/kotoneko/actions/runs/45107201970)) · **เช็กผล CI ของ PR #29 ก่อนทำอย่างอื่น**
-- ถ้า PR #29 merge แล้ว ให้เริ่ม branch ใหม่จาก main ล่าสุด · push แบบ force ถูกระบบปฏิเสธ ถ้าต้องตามให้ทัน main ให้ใช้ `git merge origin/main`
-- **`npm run check` ล่าสุด ผ่านทั้ง 12 ขั้น**: type · lint (0) · schema 9/9 · data (0 จุด) · determinism · featuremap · version · test-count · unit 12/12 · hooks 19/19 · e2e 60/60 · flows 8/8
+## สถานะ (ตรวจ 2026-11-23 หลัง merge ทั้งหมด)
+- **main = v185** (`8a0d27f`) · PR [#28](https://github.com/Tsuketee/kotoneko/pull/28) (v137–v167) · [#29](https://github.com/Tsuketee/kotoneko/pull/29) (v168–v169 + hook) · #30 #31 (แผนถอนวัชพืช v170–v185 จาก session `claude/check-pr-29-ci-x8a185`) **merge ครบแล้ว** · ไม่มี PR ค้าง
+- **`npm run check` บน main ผ่านทั้ง 12 ขั้น**: type · lint 0 · schema 9/9 · data 0 จุด · determinism · featuremap · version · test-count · unit 12/12 · hooks 20/20 · e2e 67/67 · flows 9/9
+- งานใหม่ให้เริ่ม branch จาก main ล่าสุด · push แบบ force ถูกระบบปฏิเสธ ถ้าต้องตามให้ทัน main ให้ใช้ `git merge origin/main`
+
+## ⚠️ hook ของโปรเจกต์ไม่ทำงานถ้า session ไม่ได้เปิดที่โฟลเดอร์ kotoneko
+- พบ 2026-11-23: session ที่เปิดหลาย repo จะเริ่มที่ `/home/user` (มี `kotoneko` และ `kotoneko-content`) Claude Code จึงไม่โหลด `kotoneko/.claude/settings.json` · **hook ทุกตัว (lint หลังแก้ไฟล์ · Stop · SessionStart · UserPromptSubmit · approval-gate) ไม่เคยทำงานจริงใน session แบบนี้** (ไม่มี `test-results/session-base.json` และ `turn-start.json` · `CLAUDE_PROJECT_DIR` ว่าง) · ที่ผ่านมาตรวจได้เฉพาะตอนรันเองและใน `tests/hooks.js`
+- ทางแก้ให้เจ้าของเลือก: (ก) เปิด session ที่มี repo kotoneko อย่างเดียว · (ข) ใส่ hook ไว้ในการตั้งค่าระดับผู้ใช้/สภาพแวดล้อม โดยชี้ path ไปที่ `kotoneko/tools/hooks/` · ยังไม่ได้ตัดสิน
+- ระหว่างนี้ให้รัน `npm run check` เองก่อนจบงานทุกครั้ง และอ่าน "รอเจ้าของตัดสิน" ด้วยตัวเอง (hook ขอบเขตงานจะไม่ถาม)
 
 ## เริ่ม session ใหม่ต้องทำก่อน
 1. `npm ci` (container ใหม่ไม่มี `node_modules`) · Chromium ของ Playwright มีในเครื่องแล้ว
 2. `git fetch origin main` ก่อนรัน check (ขั้น version/test-count เทียบกับ `origin/main` ถ้าค้างเก่าจะเทียบผิดฐาน · session นี้เคยเจอ origin/main ค้างที่ v34)
-3. hook ทำงานเอง (`.claude/settings.json`): หลังแก้ไฟล์ = lint/type ของไฟล์นั้น · ข้อความเจ้าของมี "เสนอแผนก่อน/ยังไม่ต้องแก้" หรือจะแก้ `js/data/` โดยไม่มีคำอนุมัติ = ขอให้เจ้าของกดอนุญาต · ก่อนจบ turn = ต้องรัน `npm run check` กับโค้ดล่าสุด และข้อความสุดท้ายต้องมีผล test · เรียก `/verify-app` ก่อนบอกว่าเสร็จ
+3. hook (`.claude/settings.json` · **ทำงานเฉพาะ session ที่เปิดที่โฟลเดอร์ kotoneko** ดู ⚠️ ด้านบน): หลังแก้ไฟล์ = lint/type ของไฟล์นั้น · ข้อความเจ้าของมี "เสนอแผนก่อน/ยังไม่ต้องแก้" หรือจะแก้ `js/data/` โดยไม่มีคำอนุมัติ = ขอให้เจ้าของกดอนุญาต · ก่อนจบ turn = ต้องรัน `npm run check` กับโค้ดล่าสุด และข้อความสุดท้ายต้องมีผล test · เรียก `/verify-app` ก่อนบอกว่าเสร็จ
 
 ## งานที่ทำใน session นี้
 | เวอร์ชัน | งาน |
@@ -37,8 +41,8 @@
 | (ไม่ต้องเพิ่ม VERSION) | ข1–ข3 hook: `prompt-start.js` (UserPromptSubmit) · `approval-gate.js` (PreToolUse ask) · `stop-check.js` บล็อกเมื่อไฟล์/ข้อมูลเปลี่ยนผิดขอบเขต หรือไม่แนบผล test · กติกาคำใน `tools/hooks/gate-rules.js` · ข2(ข) ทุกไฟล์ใน `js/data/` ต้องมีใน NOTICE.md · ง1–ง4 ลบบรรทัด CLAUDE.md ที่ตัวตรวจครอบแล้ว |
 
 ## รอเจ้าของตัดสิน
-1. **merge PR #29** (หลัง CI ผ่าน) · ตั้ง branch protection ถ้ายังไม่ได้ตั้ง (Settings → Branches → require "npm run check" และ "เพิ่มเลข VERSION แล้ว")
-2. **ตรวจ hook ใหม่ใน session ถัดไป** (เริ่มทำงานตั้งแต่ session ใหม่): ชื่อช่อง `prompt` (UserPromptSubmit) และ `last_assistant_message` (Stop) มาจากสรุปเอกสาร Claude Code ไม่ใช่ข้อความตรง ถ้า `test-results/turn-start.json` ไม่ถูกสร้าง หรือไม่มีการตรวจแนบผล test แปลว่าชื่อช่องไม่ตรง (hook ไม่บล็อกผิดๆ เพราะถ้าไม่มีข้อมูลจะไม่ตัดสิน)
+1. **hook ไม่ทำงานใน session ที่เปิดหลาย repo** (ดูหัวข้อ ⚠️ ด้านบน) · ตั้ง branch protection ถ้ายังไม่ได้ตั้ง (Settings → Branches → require "npm run check" และ "เพิ่มเลข VERSION แล้ว")
+2. **ตรวจ hook ใหม่เมื่อมี session ที่โหลด hook ได้**: ชื่อช่อง `prompt` (UserPromptSubmit) และ `last_assistant_message` (Stop) มาจากสรุปเอกสาร Claude Code · ถ้า `test-results/turn-start.json` ไม่ถูกสร้าง แปลว่า hook ไม่ถูกโหลดหรือชื่อช่องไม่ตรง
 3. **แผน "ถอนวัชพืช" 17 ข้อ: ทำครบแล้ว (2026-11-23 · v170–v185 · เจ้าของอนุมัติทั้งหมด)** ดูตารางด้านล่าง · เจ้าของตัดสิน 2026-11-23: `style.css` ไม่แยก · ไม่ใช้ Prettier
 4. เรื่องเดิม: ลองบน iPad จริง (นิ้ว/Pencil/กันฝ่ามือ · โหมดส่วนตัว · เสียงอ่าน · ปุ่มคำแปล) · กติการ้านค้า/ลายขน/เครื่องประดับ (`docs/PET_PIXEL.md`)
 
@@ -75,4 +79,4 @@
 - 404/403/409 ใน console ของ e2e ที่ URL `https://sb.test/` มาจาก Supabase จำลองที่ตั้งใจตอบแบบนั้น
 
 ## ข้อความเริ่ม session ใหม่
-> อ่าน `docs/HANDOFF.md` ก่อน รัน `npm ci` และ `git fetch origin main` แล้วถามผมเรื่องที่ค้างในหัวข้อ "รอเจ้าของตัดสิน"
+> อ่าน `docs/HANDOFF.md` ก่อน รัน `npm ci` และ `git fetch origin main` แล้วถามผมเรื่องที่ค้างในหัวข้อ "รอเจ้าของตัดสิน" (เริ่มจากเรื่อง hook ไม่ทำงาน)
