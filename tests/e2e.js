@@ -60,7 +60,7 @@ test('ข้อมูล: คำคันจิใช้เฉพาะคัน
         kj(l).forEach(c => ok.has(c) || tbad.push('คันจิเกิน N5 ในบทพูด นิสัย ' + i + ': ' + c));
       });
     });
-    const EMO = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}\uFE0F]/u;
+    const EMO = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}]|\uFE0F/u;
     TR.forEach((t, i) => { if (!P[t.i]) tbad.push('นิสัย ' + i + ' ไม่มีไอคอน ' + t.i); [t.n, ...Object.values(t.s).flat()].forEach(l => { if (EMO.test(l)) tbad.push('ห้ามมีอิโมจิในบทพูด (ใช้ไอคอนเส้นแทน) นิสัย ' + i + ': ' + l); }); });
     const gbad = [];
     G.forEach((g, i) => {
@@ -220,7 +220,7 @@ test('สถานที่: ทุกฉากใช้สีจาก token (�
   const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8'), js = fs.readFileSync(path.join(ROOT, 'js/data/places.js'), 'utf8');
   const used = new Set([...js.matchAll(/\bf-([a-z]-[a-z0-9]+)/g)].map(m => m[1]));
   [...new Set([...js.matchAll(/\b(s-[a-z]-[a-z0-9]+)/g)].map(m => m[1]))].forEach(c => assert(css.includes('.' + c + '{'), 'ไม่มีสไตล์เส้น ' + c));
-  const blk = re => (css.match(re) || [, ''])[1];
+  const blk = re => (css.match(re) || ['', ''])[1];
   const lt = blk(/ฉากสถานที่[\s\S]*?\n:root\{([^}]*)\}/), dk = blk(/ฉากสถานที่[\s\S]*?:root\[data-theme="dark"\]\{([^}]*)\}/);
   used.forEach(t => { assert(lt.includes('--' + t + ':'), 'ไม่มีสีโหมดสว่าง ' + t); assert(dk.includes('--' + t + ':'), 'ไม่มีสีโหมดมืด ' + t) });
   [lt, dk].forEach(B => { const m = B.match(/[^;{\s]--[a-z]+-[a-z0-9]+:/); assert(!m, 'ลืม ; ก่อน token (token ถัดไปจะใช้ไม่ได้ทั้งตัว): ' + (m && m[0])) }); // v120 เคยต่อ token ท้าย --sc-gop:.22 ที่ไม่มี ; แล้วสีทั้งฉากหาย
@@ -454,7 +454,7 @@ test('ธีม A และไอคอนเส้น: ตัวแปรสี
     }
   }
   const p = await fresh(b, base);
-  const emo = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}\uFE0F]/u, bad = [];
+  const emo = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}]|\uFE0F/u, bad = [];
   const scan = async (label) => { const t = (await p.evaluate(() => document.getElementById('app').innerText + document.getElementById('nav').innerText)).replace(/[\u{1F431}\u{1F430}\u{1F436}]/gu, ''); const m = t.match(new RegExp(emo.source, 'gu')) || []; if (m.length) bad.push(label + ': ' + m.join('')); };
   await p.evaluate(() => { M.pet.energy = 100; }); await scan('home');
   for (const t of ['learn', 'mis', 'stats', 'shop', 'me']) { await p.evaluate(t => goTab(t), t); await scan(t); }
@@ -668,7 +668,7 @@ test('ซิงก์: สองเครื่องแก้พร้อมก
   // รอบสอง: เลือกของคลาวด์
   db.row = { ...db.row, rev: 4, data: { ...db.row.data, kv1: { 'cloud2': { b: 2, w: 0, d: 1 } } } };
   await p.evaluate(() => localStorage.setItem('kv1', JSON.stringify({ 'local2': { b: 1, w: 0, d: 1 } })));
-  r = p.evaluate(() => cloudSync(true)).catch(() => 'pulled');
+  void p.evaluate(() => cloudSync(true)).catch(() => 'pulled');
   await p.waitForSelector('.cov');
   await Promise.all([p.waitForNavigation(), p.locator('.cov button:text-is("ใช้ของคลาวด์")').click()]);
   await p.waitForSelector('.toast');
@@ -1649,7 +1649,7 @@ test('แมวพิกเซล: กล่องกระดาษในห้
   assert(r.tapStay, 'แตะในกล่องแล้วไม่ออก (ลืมตา)'); assert(r.leave === 'boxhide' && r.leaveBox, 'หนีไปหลบในกล่อง');
   assert(r.shy > r.energy * 2.5, 'ขี้อายมุดกล่องบ่อยกว่า ' + [r.shy, r.energy]);
   // ภาพจริงบนผืนผ้าใบ: อยู่ในกล่องแล้วไม่เห็นขา/หางใต้กล่อง (แถว 87–89 เหมือนตอนแมวอยู่ที่อื่น) แต่เห็นหัวเหนือขอบกล่อง
-  const px = await p.evaluate(async () => { const T = PixelCat._t, { cat, BOX } = T, c = document.getElementById('petcv'); T.setBox(true); T.setTod('day'); render(); const c2 = document.getElementById('petcv');
+  const px = await p.evaluate(async () => { const T = PixelCat._t, { cat, BOX } = T; T.setBox(true); T.setTod('day'); render(); const c2 = document.getElementById('petcv');
     const grab = async st => { Object.assign(cat, st); await new Promise(r => setTimeout(r, 250)); return [...c2.getContext('2d').getImageData(0, 0, 160, 90).data] };
     const inb = await grab({ mode: 'box', t: 0, dur: 1e9, x: BOX.cx, dy: BOX.dy, bz: false, then: 'sit' }), away = await grab({ mode: 'sit', t: 0, dur: 1e9, x: 114, dy: 0, then: null });
     let below = 0, head = 0; for (let y = 87; y < 90; y++) for (let x = 50; x < 95; x++) { const i = (y * 160 + x) * 4; if (inb.slice(i, i + 3).join() !== away.slice(i, i + 3).join()) below++ }

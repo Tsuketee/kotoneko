@@ -238,14 +238,14 @@ function tripCat(c, T, cat, now) { const walk = T.k < 1, g = PixelCat.frame(walk
   if (T.arr) { const t = (now - T.arr) / 900; if (t < 1) [[-9, -18], [8, -20], [-4, -24], [5, -15]].forEach(([dx, dy], i) => { const up = Math.round(t * 6), on = ((now / 120 | 0) + i) % 2; if (on) { dot(c, T.pos[0] + dx, T.pos[1] + dy - up, '#ffd34a'); dot(c, T.pos[0] + dx + 1, T.pos[1] + dy - up, '#fff3b0') } }) } }
 // แสงตามเวลา: ย้อมทั้งภาพตาม PixelCat.tod() (รุ่งเช้า/พลบค่ำอุ่น กลางคืนน้ำเงินเข้ม) แล้วเปิดไฟหน้าต่าง ตู้แช่ร้าน สถานี โคม
 const TINT = { dawn: ['rgba(255,196,160,.42)', .5], dusk: ['rgba(255,160,110,.5)', .8], night: ['rgba(52,62,120,.7)', 1] };
-function light(c, td, L, ms) { const T = TINT[td]; if (!T) return; c.save(); c.globalCompositeOperation = 'multiply'; c.fillStyle = T[0]; c.fillRect(0, 0, W, H); c.restore();
+function light(c, td, L) { const T = TINT[td]; if (!T) return; c.save(); c.globalCompositeOperation = 'multiply'; c.fillStyle = T[0]; c.fillRect(0, 0, W, H); c.restore();
   L.forEach(([x, y, w, h, k], i) => { if (T[1] < 1 && (i * 7) % 10 > T[1] * 10) return; if (k === 2 || w * h > 6) { c.globalAlpha = .28; blob(c, x + w / 2, y + h / 2, w / 2 + 2.5, h / 2 + 2, C.glow); c.globalAlpha = 1 } rect(c, x, y, w, h, k === 1 ? '#ffb27a' : C.lamp) }) }
 // ---------- วาดแผนที่ลงผืนผ้าใบ · o: {season(), tod(), date(), here, locked[], places[{id, map}], cat: {coat, acc} | null} ----------
 const RMQ = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 function paint(cv, o, now) { const c = cv.getContext('2d'), se = o.season(), d = o.date(), P = !RMQ.matches, ms = d.getTime(), fest = festOf(d), B = base(se, o.locked, fest), td = o.tod();
   c.drawImage(B.v, 0, 0); const span = P ? train(c, ms) : null; c.drawImage(B.o, 0, 0); if (P) crossing(c, span, ms); if (fest === 'koi') koi(c, ms, P);
   if (o.trip) tripDraw(c, o.trip, now);
-  light(c, td, B.L, ms);
+  light(c, td, B.L);
   const q = o.places.find(p => p.id === o.here), PC = o.cat && window.PixelCat && PixelCat.frame;
   if (PC && o.trip) tripCat(c, o.trip, o.cat, now); else if (PC && q) sprite(c, PixelCat.frame('sit', 0, 'light', o.cat.coat, o.cat.acc || 'none'), q.map.cat[0], q.map.cat[1], P ? Math.round(Math.sin(now / 300)) : 0);
   if (P && window.PixelCat && PixelCat.fall) PixelCat.fall(c, se, [0, 36, W, H - 36], se === 'winter' ? 50 : 20, ms) }

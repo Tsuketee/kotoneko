@@ -48,7 +48,7 @@ async function packFetch(l) {
   const r = await sb('/rest/v1/content_packs?select=version,data&level=eq.' + l);
   if (!r || !r.length) { const e = new Error('no entitlement'); e.noEnt = true; throw e }
   const p = r[0].data; packParse(p);   // ตรวจก่อนเก็บ แพ็กเสียจะไม่ถูกบันทึก
-  try { localStorage.setItem(PACKK(l), JSON.stringify(p)) } catch (e) { throw new Error('พื้นที่ในเครื่องไม่พอ') }
+  try { localStorage.setItem(PACKK(l), JSON.stringify(p)) } catch (e) { throw new Error('พื้นที่ในเครื่องไม่พอ', { cause: e }) }
   return p;
 }
 async function packCheck() {
@@ -86,10 +86,8 @@ function packsClear() {
   PS = {}; RR = null; try { localStorage.removeItem(PSK) } catch (e) {}
   if (LV !== 'n5') lvGo('n5', 'ออกจากระบบแล้ว กลับมาที่ N5 ค่ะ');
 }
-const _cloudForget = cloudForget;
-cloudForget = function () { _cloudForget(); packsClear() };
-const _cloudVerify = cloudVerify;
-cloudVerify = async function () { await _cloudVerify(); if (cloudIn()) packCheck() };
+CLOUD_HOOKS.forget.push(packsClear);
+CLOUD_HOOKS.verified.push(packCheck);
 
 // ---------- ส่วนบัญชี (เรียกจาก js/cloud.js): ขอคืนเงิน + ผู้ดูแล ----------
 const packAcctHtml = () => refundHtml() + packAdminHtml();

@@ -88,7 +88,7 @@ async function cloudToken() {
 // เรียง key ก่อนแปลงเป็นข้อความ เพื่อให้ข้อมูลเดียวกันได้ค่าเดียวกันเสมอ (ฐานข้อมูล jsonb สลับลำดับ key ได้)
 const canon = v => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']' : v && typeof v === 'object' ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}' : JSON.stringify(v);
 // ไม่นับ pet.lastTs (เวลาที่เปิดหน้าแรกล่าสุด เปลี่ยนทุกครั้งที่เปิดแอป) ไม่งั้นแค่เปิดแอปก็กลายเป็น "มีของใหม่" แล้วส่งขึ้น/ถามซ้ำไม่จบ
-function chash(o) { let x = o; if (o && o[MK] && o[MK].pet && 'lastTs' in o[MK].pet) { const { lastTs, ...pet } = o[MK].pet; x = { ...o, [MK]: { ...o[MK], pet } } } const s = canon(x); let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) } return (h >>> 0).toString(36) + '.' + s.length }
+function chash(o) { let x = o; if (o && o[MK] && o[MK].pet && 'lastTs' in o[MK].pet) { const pet = { ...o[MK].pet }; delete pet.lastTs; x = { ...o, [MK]: { ...o[MK], pet } } } const s = canon(x); let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) } return (h >>> 0).toString(36) + '.' + s.length }
 function snapshot() { const d = {}; PK.forEach(k => { try { const v = localStorage.getItem(k); if (v) d[k] = JSON.parse(v) } catch (e) {} }); return d }
 const hasPet = d => !!(d && d[MK] && d[MK].pet && d[MK].pet.name);
 function applyData(d) {
@@ -165,7 +165,10 @@ async function cloudSend() {
   catch (e) { CU.err = e.status === 429 ? 'ขอรหัสถี่เกินไป รอสักครู่แล้วลองใหม่นะคะ' : 'ส่งรหัสไม่สำเร็จ: ' + e.message }
   CU.busy = false; render();
 }
-async function cloudVerify() {
+// ไฟล์ที่โหลดหลัง cloud.js (เช่น js/packs.js) ลงทะเบียนงานที่ต้องทำต่อ: forget = หลังลืมสถานะเข้าสู่ระบบ · verified = หลังกดยืนยันรหัสอีเมล (เรียกเฉพาะเมื่อเข้าสู่ระบบอยู่)
+const CLOUD_HOOKS = { forget: [], verified: [] };
+async function cloudVerify() { await cloudVerifyCode(); if (cloudIn()) CLOUD_HOOKS.verified.forEach(f => f()) }
+async function cloudVerifyCode() {
   const el = document.getElementById('ccd'), token = el ? el.value.replace(/\D/g, '') : '';
   if (token.length < 6) { CU.err = 'กรอกรหัสตัวเลขจากอีเมลให้ครบนะคะ'; return render() }
   CU = { ...CU, busy: true, err: '' }; render();
@@ -179,7 +182,7 @@ async function cloudVerify() {
   } catch (e) { CU.busy = false; CU.err = /expired|invalid/i.test(e.message) || e.status === 403 ? 'รหัสไม่ถูกต้องหรือหมดอายุแล้ว' : 'ยืนยันไม่สำเร็จ: ' + e.message }
   render();
 }
-function cloudForget() { CS = {}; csave() }
+function cloudForget() { CS = {}; csave(); CLOUD_HOOKS.forget.forEach(f => f()) }
 async function cloudLogout() {
   if (!confirm('ออกจากระบบ? ความคืบหน้ายังอยู่ในเครื่องนี้ แต่จะไม่ซิงก์จนกว่าจะเข้าสู่ระบบอีกครั้ง')) return;
   await cloudSync(false, { quiet: true });
