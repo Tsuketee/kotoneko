@@ -48,7 +48,7 @@
 | 1 | ✅ ลบโค้ดตาย `goalHtml` `undo` (v170) · ลบ npm script `test` `test:unit` `test:e2e` (README ใช้ `npm run check`) · ไม่ลบ `pvars` (`pline` ยังใช้ · เจ้าของตัดออก 2026-11-23) · เป้ารายวันเหลือตัวเดียว `M.goal` พิมพ์เองได้ 1–200 (v171 · เจ้าของเลือก) · ลบ CSS `.gl` | ต่ำ |
 | 2 | ✅ ลบ comment `sw.js:2` (ขั้น version ครอบ) และ `sw.js:71` (เพิ่ม e2e "PWA:" ออฟไลน์เปิด `?paid=n4` ได้ · v172) · `pet-lines.js:11` เก็บไว้ (กฎห้ามใช้ผลงานผู้อื่นตรวจได้แค่รายชื่อต้องห้าม · เจ้าของเลือก 2026-11-23) | ต่ำ |
 | 3 | ✅ e2e "โครงสร้าง:" ลำดับ `<script>` (data → level → core → ตรรกะ → main) · ทุกไฟล์ใน `js/` `js/data/` โหลดครั้งเดียว · ชื่อระดับบนสุดไม่ซ้ำข้ามไฟล์ (อ่านด้วย TypeScript parser) · `pet-lines.js:11` ของข้อ 2 เก็บไว้ตามเดิม (เจ้าของเลือก) | ต่ำ |
-| 4 | test กันซูม iPad (`main.js:2` `style.css:5`) | ต่ำ |
+| 4 | ✅ e2e "iPad กันซูม": meta viewport · html `touch-action:pan-y` ไม่เลื่อน/เด้งแนวนอน · gesture* และสองนิ้วถูกกัน นิ้วเดียวเลื่อนได้ · ช่องเขียน `none` · ฉากแมว `manipulation` (comment เดิมเขียนผิดว่า none) · ลบ comment `main.js:2` `style.css:5` · v173 | ต่ำ |
 | 5 | test แตะแมวไม่เพิ่มความสนิท/Energy (`pixelcat.js:1553`) | ต่ำ |
 | 6 | กติกาการออกแบบที่ test ไม่ได้ → `docs/PET_PIXEL.md` (`pixelcat.js:634,1165,1464` `profile.js:4` `shop.js:2`) | ต่ำ |
 | 7 | test ชื่อไฟล์ไอคอน + hash ภาพ (`tools/make-icons.js:2`) | ต่ำ |

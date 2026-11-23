@@ -21,8 +21,8 @@ const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
 const SEED = { goal: 20, days: {}, pet: { name: 'ทดสอบ', sp: 0, energy: 0, bond: 0, d: null, trait: 0, min: 10, lv: 'N5', goal: 'x' } };
 
-async function fresh(browser, base, { seed = true, viewport } = {}) {
-  const ctx = await browser.newContext({ viewport: viewport || { width: 820, height: 1100 }, acceptDownloads: true, serviceWorkers: 'block' });
+async function fresh(browser, base, { seed = true, viewport, hasTouch = false } = {}) {
+  const ctx = await browser.newContext({ viewport: viewport || { width: 820, height: 1100 }, acceptDownloads: true, serviceWorkers: 'block', hasTouch });
   const page = await ctx.newPage();
   page.errors = [];
   page.on('pageerror', e => page.errors.push(e.message));
@@ -1937,6 +1937,28 @@ test('iPad แนวตั้งและแนวนอน: หน้าหล�
       assert(over <= 0, `${t} ${vp.width}px เกิน ${over}px`);
     }
   }
+});
+
+test('iPad กันซูม: เลื่อนได้แค่ขึ้นลง · หยิกซูม/สองนิ้ว/แตะสองทีไม่ซูม · นิ้วเดียวยังเลื่อนได้ · ช่องเขียนรับนิ้วเอง · ฉากแมวแตะสองทีไม่ซูม', async (b, base) => {
+  const meta = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8').match(/<meta name="viewport" content="([^"]+)"/);
+  assert(meta && /maximum-scale=1\b/.test(meta[1]) && /user-scalable=no/.test(meta[1]), 'meta viewport ต้องมี maximum-scale=1 และ user-scalable=no: ' + (meta && meta[1]));
+  const p = await fresh(b, base, { hasTouch: true });
+  const css = await p.evaluate(() => { const h = getComputedStyle(document.documentElement), bd = getComputedStyle(document.body); return { ta: h.touchAction, ox: h.overflowX, ob: h.overscrollBehaviorX, box: bd.overflowX, bob: bd.overscrollBehaviorX }; });
+  assert.deepStrictEqual(css, { ta: 'pan-y', ox: 'hidden', ob: 'none', box: 'clip', bob: 'none' }, 'html ต้อง touch-action:pan-y (Safari ไม่สนใจ user-scalable=no · กันแตะสองทีแล้วซูมและเลื่อนด้านข้าง) และไม่เด้ง/เลื่อนแนวนอน');
+  const ev = await p.evaluate(() => {
+    const r = {};
+    for (const t of ['gesturestart', 'gesturechange', 'gestureend']) { const e = new Event(t, { cancelable: true, bubbles: true }); document.body.dispatchEvent(e); r[t] = e.defaultPrevented; }
+    const move = n => { const e = new TouchEvent('touchmove', { touches: [...Array(n)].map((_, i) => new Touch({ identifier: i, target: document.body, clientX: 100 + i * 60, clientY: 300 })), cancelable: true, bubbles: true }); document.body.dispatchEvent(e); return e.defaultPrevented; };
+    r.twoFingers = move(2); r.oneFinger = move(1);
+    return r;
+  });
+  assert.deepStrictEqual(ev, { gesturestart: true, gesturechange: true, gestureend: true, twoFingers: true, oneFinger: false }, 'js/main.js ต้องกันท่าหยิกซูมของ Safari (gesture*) และนิ้วสองนิ้ว แต่นิ้วเดียวต้องเลื่อนหน้าได้');
+  assert.strictEqual(await p.getByTestId('pet-canvas').evaluate(e => getComputedStyle(e).touchAction), 'manipulation', 'ฉากแมวต้อง touch-action:manipulation: แตะสองทีไม่ซูม แต่ลากนิ้วบนฉากแล้วหน้ายังเลื่อนได้');
+  await p.evaluate(() => openDs('k'));
+  await p.getByTestId('mode-write').click();
+  const tas = await p.getByTestId('write-canvas').evaluateAll(cs => [...new Set(cs.map(c => getComputedStyle(c).touchAction))]);
+  assert.deepStrictEqual(tas, ['none'], 'ช่องเขียนต้องรับนิ้ว/ปากกาเอง (touch-action:none) ไม่งั้นลากแล้วหน้าเลื่อนแทนการวาด');
+  assert.deepStrictEqual(p.errors, []);
 });
 
 test('PWA: manifest ถูกต้องและ service worker ติดตั้งแล้วแอปเปิดออฟไลน์ได้', async (b, base) => {
