@@ -68,7 +68,7 @@
 ## 6. แท็บเรียน: เส้นทางเรียน
 - **หน้า**: `tab='learn' view='path'`
 - **เข้าถึง**: แถบล่าง "เรียน" (แตะซ้ำกลับหน้ารวม)
-- **ไฟล์หลัก**: `js/learn.js` (`renderPath` `:72`, `renderLv` `:75`)
+- **ไฟล์หลัก**: `js/learn.js` (`renderPath` `renderLv`)
 - **data-testid**: `path-kana` `path-n5` `path-n4` `path-n3` การ์ดในเส้นทางเรียน · `section-k` `section-w` `section-v` `section-d` `section-g` การ์ดหมวดในหน้า N5 · `nav-back` ปุ่มกลับ
 - **selector (e2e เดิม)**: `#app .path .pc` (4 ใบ: คานะ N5 N4 N3) · `.pc.big1` คานะ · `.path .pc:has-text("N5")` · `#app .big` เรียนต่อ · `.top .bk` ปุ่มกลับ · `#nav .on` แท็บที่เลือก
 - **flow ที่ต้องไม่พัง**: เรียนต่อ → หมวดล่าสุด (ค่าเริ่มต้นคันจิ) · ปุ่มกลับในหมวดย่อย → หน้ารวม (ไม่ใช่หน้าแรก) · การ์ด N5 → หน้าหมวดของระดับ (`view='n5'`)
@@ -77,7 +77,7 @@
 ## 7. การ์ดคำ (คานะ · คันจิ · คำคันจิ · คำศัพท์)
 - **หน้า**: `tab='learn' view='s' mode='card'` · `ds` = `a` คานะ, `k` คันจิ, `w` คำคันจิ, `v` คำศัพท์
 - **เข้าถึง**: เรียน → การ์ดหมวด (หรือ `openDs('<ds>')`)
-- **ไฟล์หลัก**: `js/learn.js` (`renderLearn` `:82`, `pick1` `:20`), ข้อมูล `js/data/kanji-n5.js` `content.js` `kana.js` `examples.js` `mnemonics.js`
+- **ไฟล์หลัก**: `js/learn.js` (`renderLearn`), `js/quiz.js` (`pick1` `pick` `rec`), ข้อมูล `js/data/kanji-n5.js` `content.js` `kana.js` `examples.js` `mnemonics.js`
 - **data-testid**: `learn-progress` ("เจอแล้ว x/y · จำได้แม่น z") · `study-card` การ์ด (แตะเพื่อพลิก) · `study-term` ตัวอักษร/คำที่ถาม · `card-answer` คำอ่านและความหมายหลังพลิก · `grade-know` "จำได้" · `grade-unsure` "ยังไม่แน่ใจ" · แถบโหมด `mode-chart` `mode-card` `mode-quiz` `mode-write`
 - **selector (e2e เดิม)**: `#app .card` (แตะเพื่อพลิก) · `button:text-is("จำได้")` · คำอ่าน `#app .d`
 - **flow ที่ต้องไม่พัง**: เปิดการ์ด → พลิก → "จำได้" → บันทึกใน key ของชุดข้อมูล · คันจิที่ไม่มีอ่านแบบออน (ช่อง `-`) ต้องแสดงคำอ่านผ่าน `rd()`/`rds()` ไม่ขึ้น `-`
@@ -86,7 +86,7 @@
 ## 8. ควิซ
 - **หน้า**: `mode='quiz'` ในหมวดเดียวกับการ์ด
 - **เข้าถึง**: ในหมวด → แถบโหมด "ควิซ" · เลือกแบบคำถาม ตอบคำอ่าน/ตอบความหมาย
-- **ไฟล์หลัก**: `js/learn.js`
+- **ไฟล์หลัก**: `js/quiz.js` (`mkch` `pick` `rec`), `js/learn.js`
 - **data-testid**: `quiz-card` · `study-term` · `quiz-choice` ตัวเลือก (หลังตอบมี `data-result="correct"` ที่ข้อถูก และ `"wrong"` ที่ข้อผิดที่กด) · `quiz-next` ปุ่มข้อต่อไป (ขึ้นเมื่อตอบผิด · ตอบถูกไปข้อต่อไปเองใน 0.7 วินาที)
 - **selector (e2e เดิม)**: `.ch button` ตัวเลือก
 - **flow ที่ต้องไม่พัง**: ทุกชุดข้อมูลมีตัวเลือก ≥ 2 และกดตอบได้ · ตอบผิดวนกลับมา (`js/learn.js:54`) · ผิดตั้งแต่ 2 ครั้งขึ้นรายการผิดบ่อย
@@ -95,7 +95,7 @@
 ## 9. ตารางคานะ
 - **หน้า**: `ds='a' mode='chart'`
 - **เข้าถึง**: เรียน → การ์ดคานะ → แถบโหมด "ตาราง" → สลับ ฮิระงะนะ/คะตะคะนะ
-- **ไฟล์หลัก**: `js/learn.js` (`chartHtml` `:88`), `js/data/kana.js`, `js/data/mnemonics.js`
+- **ไฟล์หลัก**: `js/kanachart.js` (`chartHtml`), `js/data/kana.js`, `js/data/mnemonics.js`
 - **data-testid**: `kana-cell` ช่องตัวอักษร (ตัวอักษรใน `<b>` คำอ่านโรมันใน `<span>`) · `mode-chart` · สลับชุดด้วย `getByRole('group', {name: 'ชุดตัวอักษร'})`
 - **flow ที่ต้องไม่พัง**: ฮิระงะนะและคะตะคะนะแสดงครบชุดละ 104 ตัว (พื้นฐาน 46 · เสียงขุ่น/กึ่งขุ่น 25 · เสียงควบ 33) ไม่ซ้ำ มีคำอ่านทุกตัว
 - **test**: `flows.js` 04-kana-chart
@@ -103,7 +103,7 @@
 ## 10. ฝึกเขียน
 - **หน้า**: `mode='write'`
 - **เข้าถึง**: ในหมวด → แถบโหมด "เขียน"
-- **ไฟล์หลัก**: `js/write.js` (`initCv` ช่องวาด), `js/learn.js:89`, ลำดับขีด `js/data/strokes.js` (KanjiVG · CC BY-SA)
+- **ไฟล์หลัก**: `js/write.js` (`initCv` ช่องวาด), `js/learn.js` (`renderLearn` โหมดเขียน), ลำดับขีด `js/data/strokes.js` (KanjiVG · CC BY-SA)
 - **data-testid**: `write-prompt` คำอ่าน/ความหมาย · `write-sheet` แผ่นเขียน · `write-canvas` ช่องเขียน 16 ช่อง · `write-pen` `write-eraser` เครื่องมือ · `write-guide` ซ่อน/แสดงเส้นนำ · `write-next` ตัวต่อไป
 - **selector (e2e เดิม)**: `.sheet` · `canvas[data-c]` ช่องเขียน · `#app .wi .d` คำอ่าน
 - **flow ที่ต้องไม่พัง**: วาดด้วยนิ้ว/Apple Pencil ตามเส้นจาง · ซ่อนเส้นนำได้ · ยางลบ · เครดิต KanjiVG ต้องอยู่ในหน้าเครดิต
@@ -112,7 +112,7 @@
 ## 11. ทบทวนแบบเว้นระยะ
 - **หน้า**: ทำงานเบื้องหลังการ์ด/ควิซ
 - **เข้าถึง**: —
-- **ไฟล์หลัก**: `js/learn.js` (`srsNext` `:11` · Leitner ขั้น 0–8 ห่างสุด 150 วัน)
+- **ไฟล์หลัก**: `js/srs.js` (`srsNext` · Leitner ขั้น 0–8 ห่างสุด 150 วัน)
 - **flow ที่ต้องไม่พัง**: ตอบถูกขึ้นขั้น · ตอบผิดลดครึ่ง · ข้อที่ถึงกำหนดขึ้นก่อน
 - **test**: `e2e.js "ทบทวนแบบเว้นระยะ:"` · `flows.js` 03-srs
 
@@ -137,7 +137,7 @@
 ## 14. ความคืบหน้า (ภาพรวม · ผิดบ่อย)
 - **หน้า**: `tab='stats'` · `tab='mis'`
 - **เข้าถึง**: แถบล่าง "ความคืบหน้า" → สลับ ภาพรวม/ผิดบ่อย
-- **ไฟล์หลัก**: `js/stats.js` (`statsHtml`), `js/learn.js` (`renderMis` `:29`)
+- **ไฟล์หลัก**: `js/stats.js` (`statsHtml`), `js/mistakes.js` (`renderMis`)
 - **data-testid**: `stats-goal` ปุ่มเปลี่ยนเป้าหมายต่อวัน · `mistake-item` แถวในหน้าผิดบ่อย ("ผิด n") · สลับหน้าด้วย `getByRole('tab', {name: 'ผิดบ่อย'})`
 - **selector (e2e เดิม)**: `.pgs button:text-is("ภาพรวม")` / `("ผิดบ่อย")` · `.pgs .on`
 - **flow ที่ต้องไม่พัง**: กราฟ 14 วันล่าสุด · เปลี่ยนเป้าหมายต่อวันแล้วจำ (หน้าต่างเดียวกับหน้าแรก) · แถบล่างเน้น "ความคืบหน้า" ทั้งสองหน้า

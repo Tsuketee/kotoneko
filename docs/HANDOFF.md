@@ -58,7 +58,7 @@
 | 11 | ✅ `tests/pet-grid.js` เปิดแอปจริงและใช้ `js/pixelcat.js` (ตาราง 2 ภาพ + จำลองฉาก 30 นาทีผ่าน + ฉากกลางวัน/กลางคืน) · ESLint เลิกอ่าน `docs/pixel-cat10.html` · ลบร่างเก่า 9 ไฟล์ใน `docs/` (เจ้าของสั่ง · ดูได้จาก git `b3e20b8`) · v180 | กลาง |
 | 12 | ✅ `tests/e2e.js` เหลือแค่ตัวรัน · ข้อทดสอบ 67 ข้อแยกเป็น `tests/e2e/` data main pet places cloud packs device + `harness.js` (ชื่อข้อครบเดิม) · test-count นับชุด e2e รวมกัน · featuremap/determinism อ่านทุกไฟล์ในชุด | ต่ำ |
 | 13 | ✅ `pet.js` → `onboard.js` (ตั้งค่าครั้งแรก) + `rewards.js` (ภารกิจ ความสนิท เหรียญ) · ย้ายทั้งคำสั่งด้วย parser ตรวจแล้วบรรทัดครบไม่ซ้ำ · v181 | กลาง |
-| 14 | `learn.js` (srs, quiz, kana, mistakes) | กลาง |
+| 14 | ✅ `learn.js` → `srs.js` (ทบทวนเว้นระยะ) + `quiz.js` (เลือกข้อ/ตอบ/บันทึก) + `mistakes.js` (หน้าผิดบ่อย) + `kanachart.js` (ตารางคานะ) · บรรทัดครบไม่ซ้ำ · v182 | กลาง |
 | 15 | `cloud.js` (sync/auth) · `packs.js` (buy) | กลาง |
 | 16 | แยก `pixelcat.js` เริ่มจากฉาก 7 สถานที่ (เทียบภาพทุกพิกเซล) | สูง |
 | 17 | (ไม่บังคับ) แยก `town.js` · `style.css` | กลาง |

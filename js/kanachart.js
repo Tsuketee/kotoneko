@@ -1,0 +1,6 @@
+// ตารางคานะ (โหมดตาราง ฮิระงะนะ/คะตะคะนะ) · แยกจาก js/learn.js (ถอนวัชพืชข้อ 14)
+function chartHtml(){const sc=ks==='k'?'k':'h',G={b:'พื้นฐาน',d:'เสียงขุ่น・กึ่งขุ่น',y:'เสียงควบ'},R={};K.filter(x=>x.sc===sc).forEach(x=>{(R[x.c]=R[x.c]||[]).push(x)});
+ const tint=x=>{const r=S[x.k];return!r?'':r.w>=2?'background:color-mix(in srgb,var(--err) 28%,transparent)':r.b>=MASTERY?'background:color-mix(in srgb,var(--ok) 28%,transparent)':r.b>=1?'background:color-mix(in srgb,var(--hlt) 30%,transparent)':''};
+ let h='';
+ for(const g in G){h+=`<div class="kt">${G[g]}</div>`;Object.keys(R).filter(c=>R[c][0].g===g).forEach(c=>{const cols=g==='y'?3:5;h+=`<div class="kr" style="grid-template-columns:repeat(${cols},1fr)">${R[c].map((x,i)=>`<div class="kc" data-testid="kana-cell" style="grid-column:${(c==='や/ヤ'||c==='わ/ワ')?[1,3,5][i]:i+1};${tint(x)}" data-t="${x.k}" onclick="speak(this.dataset.t)"><b>${x.k}</b><span>${x.o}</span></div>`).join('')}</div>`})}
+ return h+`<div class="lg"><i style="background:color-mix(in srgb,var(--ok) 55%,transparent)"></i>แม่นแล้ว<i style="background:color-mix(in srgb,var(--hlt) 55%,transparent)"></i>กำลังเรียน<i style="background:color-mix(in srgb,var(--err) 55%,transparent)"></i>ผิดบ่อย</div>`}

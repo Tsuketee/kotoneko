@@ -1,47 +1,10 @@
-// การเรียน: เลือกข้อ/ทบทวนแบบเว้นระยะ, การ์ด/ควิซ/ตารางคานะ, เสียงอ่าน, ที่ตอบผิดบ่อย, แผนที่การเรียนและสถิติรายชุด
-// ระบบทบทวนแบบเว้นระยะ (Leitner แบบมีขั้น 0-8)
-// IV[b] = ช่วงห่างก่อนทบทวนครั้งถัดไป เมื่อตอบถูกจนอยู่ขั้น b : 10 นาที, 1, 3, 7, 16, 35, 75, 150 วัน
-const IV=[0,600000,86400000,259200000,604800000,1382400000,3024000000,6480000000,12960000000];
-const MASTERY=4; // ขั้นที่นับว่า "จำได้แม่น" = ช่วงห่าง 7 วันขึ้นไป (ผ่านการทบทวนถูกต่อเนื่องมาแล้วหลายวัน)
-const RELEARN=30000; // ตอบผิด: ให้เจออีกครั้งใน 30 วินาที
-// คืนสถานะใหม่ของข้อหนึ่งหลังตอบ (ฟังก์ชันล้วน ทดสอบได้) s = {b: ขั้น, w: จำนวนครั้งที่ผิด, d: เวลาครบกำหนดทบทวน}
-// - ตอบถูกตอนครบกำหนด (หรือข้อใหม่): ขึ้น 1 ขั้น และนัดทบทวนตามช่วงห่างของขั้นนั้น (ขั้น 3 ขึ้นไปสุ่มเยื้อง ±10% ไม่ให้ทบทวนกระจุกวันเดียว)
-// - ตอบถูกตอนยังไม่ครบกำหนด (เช่นโหมดฝึกสุ่ม): ไม่ขยับขั้น ไม่ได้เลื่อนนัด เพราะยังไม่ได้พิสูจน์ว่าจำได้นานพอ
-// - ตอบผิด: ลดขั้นลงครึ่งหนึ่ง (ไม่ล้างเป็น 0) เพราะส่วนใหญ่ยังจำได้บางส่วน แล้วให้เจออีกใน 30 วินาที
-function srsNext(s,ok,now=Date.now(),rnd=Math.random){s=s?{...s}:{b:0};
- if(ok){if(s.d===undefined||s.d<=now){s.b=Math.min(IV.length-1,s.b+1);s.d=now+(s.b>=3?Math.round(IV[s.b]*(.9+rnd()*.2)):IV[s.b]);if(s.b>=MASTERY)s.w=0}}
- else{s.b=Math.floor(s.b/2);s.w=(s.w||0)+1;s.d=now+RELEARN}
- return s}
-const pool=()=>K.filter(x=>(ds!=='a'||ks==='all'||x.sc===ks)&&(cat==='ทั้งหมด'||(cat==='ผิดบ่อย'?(S[x.k]&&S[x.k].w>=2):x.c===cat)));
+// การเรียน: หน้ารวมเส้นทางเรียน หน้าเรียน 4 โหมด เสียงอ่าน ตัวอย่าง/เคล็ดจำ · SRS อยู่ js/srs.js · ควิซ js/quiz.js · ผิดบ่อย js/mistakes.js · ตารางคานะ js/kanachart.js
 // คำอ่าน: ออน ・ คุน โดยข้ามช่องที่เป็น '-' (เช่น 込 畑 ของ N3 เป็นคันจิที่ญี่ปุ่นคิดเอง จึงไม่มีอ่านแบบออน)
 // คุนในข้อมูลแยกโอกุริงานะด้วย . (ひと.つ) แสดงบนจอเป็น ひと(つ) · แพ็กที่ยังใช้วงเล็บแสดงตามเดิม
 const kunShow=u=>u&&u.replace(/\.([^・/]+)/g,'($1)');
 const rds=x=>[x.o,kunShow(x.u)].filter(v=>v&&v!=='-');
 const rd=x=>rds(x).join(' ・ ');
-const sh=a=>a.map(v=>[Math.random(),v]).sort((p,q)=>p[0]-q[0]).map(v=>v[1]);
-function pick1(){const p=pool(),n=Date.now();
- const due=p.filter(x=>S[x.k]&&S[x.k].d<=n).sort((a,b)=>S[a.k].d-S[b.k].d);
- // อยู่ที่สถานที่ไหน (js/place.js) เอาคำในหมวดของที่นั้นขึ้นก่อน ทั้งข้อที่ถึงเวลาทบทวนและข้อใหม่
- const pc=typeof placeCats==='function'?placeCats():null,pf=a=>pc&&a.find(x=>pc.includes(x.c));
- if(due.length)return pf(due)||due[0];
- const nw=p.filter(x=>!S[x.k]);if(nw.length){const pn=pc&&nw.filter(x=>pc.includes(x.c)),L=pn&&pn.length?pn:nw;return mode==='quiz'?L[Math.floor(Math.random()*L.length)]:L[0]}
- return prac?sh(p)[0]:null}
 function go(){st=[];ci=0;cur=null;ch=null;ans=null;fl=false;render()}
-function allMis(){const o=[];for(const k in DS){const s=readJSON(DS[k].key,{})||{};DS[k].d.forEach(x=>{const r=s[x.k];if(r&&r.w>=1)o.push({k,x,w:r.w})})}return o.sort((a,b)=>b.w-a.w)}
-function renderMis(){const L=allMis();let h=progHead()+`<div class="st" style="margin-top:12px">รวมทุกแท็บ · ผิดตั้งแต่ 2 ครั้งถือว่าผิดบ่อย · ตอบถูกต่อเนื่องแล้วจะหลุดจากรายการเอง</div>`;
- if(!L.length)h+=`<div class="card" style="margin-top:12px"><div class="k">${ic(P.star,72)}</div><div class="d">ยังไม่มีข้อที่ตอบผิด<br>ไปฝึกก่อนแล้วกลับมาดูนะคะ</div></div>`;
- else{const bs=Object.keys(DN).filter(k=>L.some(o=>o.k===k&&o.w>=2));
-  if(bs.length)h+=`<div class="btns" style="margin:12px 0;flex-wrap:wrap">${bs.map(k=>`<button onclick="goMis('${k}')">ฝึก${DN[k]} (${L.filter(o=>o.k===k&&o.w>=2).length})</button>`).join('')}</div>`;
-  h+=`<div class="card" style="text-align:left;min-height:0;padding:6px 14px;margin-top:12px">${L.slice(0,50).map(o=>`<div class="mi" data-testid="mistake-item"><span class="mk">${o.x.k}</span><span class="mt"><b>${rd(o.x)}</b><br>${o.x.m}</span><span class="mw">ผิด ${o.w}</span></div>`).join('')}</div>`}
- document.getElementById('app').innerHTML=h}
-function goMis(k){tab='learn';nv(k);mode='card';cat='ผิดบ่อย';go()}
-function rec(ok){const nw=!S[cur.k];S[cur.k]=srsNext(S[cur.k],ok);save();tick();pbadge();if(ok){ptrack('rev');if(ds==='k'&&M.pet&&M.pet.d){M.pet.d.lk=cur.k;saveM()}}if(nw)ptrack('neu')} // lk = คันจิที่ตอบถูกล่าสุดวันนี้ ({kanji} ในบทพูด)
-function grade(ok){rec(ok);go()}
-let cmf=''; // ประโยคปลอบของข้อที่เพิ่งตอบผิด (เลือกครั้งเดียวตอนตอบ ไม่เปลี่ยนตอนวาดหน้าซ้ำ)
-function pick(i){if(ans!==null)return;ans=i;rec(ch[i].ok);cmf=pcomfort(cur.k,ch[i].ok);render();if(ch[i].ok){const c0=cur;setTimeout(()=>{if(cur===c0&&ans!==null)go()},700)}}
-function mkch(){const f=x=>(ds==='a'||qt==='read')?rd(x):x.m;const c=f(cur);
- const o=sh(K.filter(x=>x.k!==cur.k&&f(x)!==c)).filter((x,i,a)=>a.findIndex(y=>f(y)===f(x))===i).slice(0,3);
- ch=sh([{t:c,ok:true},...o.map(x=>({t:f(x),ok:false}))])}
 function nv(i){if(i==='d'||i==='m'||i==='n5'||i==='g'){view=i}else{view='s';ds=i;K=DS[i].d;CATS=['ทั้งหมด',...new Set(K.map(x=>x.c))];cat='ทั้งหมด';S=load();mode=i==='a'?'chart':'card';wi=0;ci=0;st=[];prac=0;cur=null;ch=null;ans=null;fl=false}render()}
 const EXT={o:['ออน','on'],k:['คุน','kun'],s:['พิเศษ','sp']};
 function exHtml(c){if(ds!=='k'||!EX[c.k])return'';return `<div class="ex"><div class="exh">ตัวอย่างการใช้</div>${EX[c.k].map(e=>`<div class="er" data-t="${e[1]}" onclick="event.stopPropagation();speak(this.dataset.t)"><span class="et ${EXT[e[3]][1]}">${EXT[e[3]][0]}</span><span class="ew">${e[0]}</span><span class="ed"><b>${e[1]}</b> ${e[2]}</span></div>`).join('')}</div>`}
@@ -61,11 +24,6 @@ function modeBar(){const L=MODES.filter(m=>m[0]!=='chart'||ds==='a'),m=MODES.fin
  if(ds==='a')h+=mode==='chart'?seg('ชุดตัวอักษร',[['h','ฮิระงะนะ'],['k','คะตะคะนะ']],ks==='k'?'k':'h',v=>`ks='${v}';go()`):seg('ชุดตัวอักษร',[['h','ฮิระงะนะ'],['k','คะตะคะนะ'],['all','ทั้งสองแบบ']],ks,v=>`ks='${v}';wi=0;go()`);
  if(mode==='quiz'&&ds!=='a')h+=seg('แบบคำถาม',[['read','ตอบคำอ่าน'],['mean','ตอบความหมาย']],qt,v=>`qt='${v}';go()`);
  return h+`</div><div class="mhint">${m[3]}</div>`}
-function chartHtml(){const sc=ks==='k'?'k':'h',G={b:'พื้นฐาน',d:'เสียงขุ่น・กึ่งขุ่น',y:'เสียงควบ'},R={};K.filter(x=>x.sc===sc).forEach(x=>{(R[x.c]=R[x.c]||[]).push(x)});
- const tint=x=>{const r=S[x.k];return!r?'':r.w>=2?'background:color-mix(in srgb,var(--err) 28%,transparent)':r.b>=MASTERY?'background:color-mix(in srgb,var(--ok) 28%,transparent)':r.b>=1?'background:color-mix(in srgb,var(--hlt) 30%,transparent)':''};
- let h='';
- for(const g in G){h+=`<div class="kt">${G[g]}</div>`;Object.keys(R).filter(c=>R[c][0].g===g).forEach(c=>{const cols=g==='y'?3:5;h+=`<div class="kr" style="grid-template-columns:repeat(${cols},1fr)">${R[c].map((x,i)=>`<div class="kc" data-testid="kana-cell" style="grid-column:${(c==='や/ヤ'||c==='わ/ワ')?[1,3,5][i]:i+1};${tint(x)}" data-t="${x.k}" onclick="speak(this.dataset.t)"><b>${x.k}</b><span>${x.o}</span></div>`).join('')}</div>`})}
- return h+`<div class="lg"><i style="background:color-mix(in srgb,var(--ok) 55%,transparent)"></i>แม่นแล้ว<i style="background:color-mix(in srgb,var(--hlt) 55%,transparent)"></i>กำลังเรียน<i style="background:color-mix(in srgb,var(--err) 55%,transparent)"></i>ผิดบ่อย</div>`}
 function pathHtml(sts){const m=Object.fromEntries(sts),L=['k','w','v'],A=m.a||{lr:0,t:0,due:0},t5=L.reduce((a,k)=>a+m[k].t,0),l5=L.reduce((a,k)=>a+m[k].lr,0),d5=L.reduce((a,k)=>a+m[k].due,0),pa=A.t?A.lr/A.t:0,p5=t5?l5/t5:0;
  return `<div class="path"><div class="pc big1" data-testid="path-kana" onclick="openDs('a')"><div class="pn">1</div><div class="pb"><div class="pg">あ ア</div><b>${DS.a.n}</b>${pa>=.8?'<span class="bd b2">ผ่านแล้ว</span>':'<span class="bd b1">เริ่มที่นี่</span>'}<div class="st">ก่อนเริ่ม · เรียนทีละแถว 5 ตัว มีตารางและเสียงอ่าน</div><div class="st">พื้นฐาน ${A.lr}/${A.t} จำได้แม่น${A.due?' · ทบทวน '+A.due:''}</div><div class="bar"><i style="width:${pa*100}%"></i></div></div></div>
  ${['n5','n4','n3'].map(l=>l!==LV?lvCard(l):`<div class="pc" data-testid="path-${l}" onclick="openLv()"><div class="pn">2</div><div class="pb"><b>${LEVELS[LV].n}</b>${LV!=='n5'?'<span class="bd b1">กำลังเรียน</span>':''}${p5>=.8?'<span class="bd b2">ผ่านแล้ว</span>':pa>=.8?'<span class="bd b3">พร้อมแล้ว</span>':''}<div class="st">คำศัพท์ · คันจิ · บทสนทนา · ไวยากรณ์ · ซ้อมสอบ</div><div class="st">${l5}/${t5} จำได้แม่น${d5?' · ทบทวน '+d5:''}</div><div class="bar"><i style="width:${p5*100}%"></i></div></div><div class="pg2">${LEVELS[LV].g}</div></div>`).join('')}</div>`}
