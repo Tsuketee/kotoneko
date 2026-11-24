@@ -1,5 +1,5 @@
 // e2e: ระดับ N4/N3 แพ็กเสียเงิน การซื้อ และคืนเงิน (Stripe จำลอง) · รันผ่าน node tests/e2e.js [คำในชื่อข้อ]
-const { assert, fs, path, ROOT, SEED, test, mockCloud, cloudPage, login, FAKE_PACK, FAKE_PACK_N3, learnHub } = require('./harness');
+const { assert, fs, path, ROOT, SEED, test, snap, mockCloud, cloudPage, login, FAKE_PACK, FAKE_PACK_N3, learnHub } = require('./harness');
 
 test('ระดับ N4: ยังไม่เข้าสู่ระบบ การ์ดล็อก กดแล้วพาไปเข้าสู่ระบบ ไม่ดาวน์โหลดอะไร', async (b, base) => {
   const db = mockCloud(), p = await cloudPage(b, base, db);
@@ -137,6 +137,32 @@ test('ผู้ดูแล: เห็นส่วนอัปโหลด อ�
   fs.unlinkSync(f); fs.unlinkSync(bad);
   db.admin = false; await p.evaluate(() => packCheck().then(() => render()));
   assert(!(await p.locator('#cloud').innerText()).includes('ผู้ดูแล'));
+  assert.deepStrictEqual(p.errors, []);
+});
+
+test('ผู้ดูแล: โหมดทดสอบ ปลดล็อกทุกสถานที่ในแผนที่ (เก็บถาวร ซิงก์ได้) · คืนสถานที่ที่ล็อกไว้เดิมได้ · ผู้ใช้ทั่วไปและคนที่ยังไม่เข้าสู่ระบบไม่เห็นปุ่ม', async (b, base) => {
+  const db = mockCloud(); db.admin = true; const p = await cloudPage(b, base, db);
+  await p.evaluate(() => goMe('acct'));
+  assert.strictEqual(await p.getByTestId('dbg-unlock-places').count(), 0, 'ยังไม่เข้าสู่ระบบต้องไม่เห็น');
+  await login(p); await p.waitForFunction(() => PS.t && !cloudBusy);
+  await p.evaluate(() => { M.place = { at: 'room', got: ['station'] }; saveM(); render(); });
+  const locked = await p.evaluate(() => PLACES.filter(x => !plHas(x)).map(x => x.id));
+  assert(locked.length >= 3, 'ต้องมีที่ที่ยังล็อกอยู่ก่อนทดสอบ ' + locked);
+  await p.getByTestId('dbg-unlock-places').click();
+  await p.waitForSelector('.toast:has-text("ปลดล็อกทุกสถานที่แล้ว")');
+  assert.deepStrictEqual(await p.evaluate(() => PLACES.filter(x => !plHas(x)).map(x => x.id)), []);
+  assert.deepStrictEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('kn_meta')).place.got.sort()), await p.evaluate(() => PLACES.filter(x => !x.free).map(x => x.id).sort()), 'ต้องบันทึกลงเครื่อง (ซิงก์ขึ้นคลาวด์พร้อมข้อมูลอื่น)');
+  await p.evaluate(() => goTab('home')); await p.locator('.scgo').click(); await p.waitForSelector('.tmp');
+  assert.strictEqual(await p.locator('.tmp.tlk').count(), 0, 'แผนที่ต้องไม่มีป้ายล็อก');
+  await snap(p, 'map-unlocked');
+  await p.locator('.cdl button:text-is("ปิด")').click(); await p.evaluate(() => goMe('acct'));
+  await p.getByTestId('dbg-restore-places').click();
+  await p.waitForSelector('.toast:has-text("คืนสถานที่ที่ล็อกไว้เดิมแล้ว")');
+  assert.deepStrictEqual(await p.evaluate(() => plState().got), ['station']);
+  assert.strictEqual(await p.getByTestId('dbg-restore-places').count(), 0, 'คืนแล้วปุ่มคืนค่าต้องหาย');
+  db.admin = false; await p.evaluate(() => packCheck().then(() => render()));
+  assert.strictEqual(await p.getByTestId('dbg-unlock-places').count(), 0, 'ผู้ใช้ทั่วไปต้องไม่เห็น');
+  assert.strictEqual(await p.evaluate(() => { PS.admin = false; dbgPlaces(true); return PLACES.filter(x => !plHas(x)).length > 0; }), true, 'เรียกฟังก์ชันตรงๆ โดยไม่ใช่ผู้ดูแลต้องไม่ปลดล็อก');
   assert.deepStrictEqual(p.errors, []);
 });
 
