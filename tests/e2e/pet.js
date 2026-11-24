@@ -120,6 +120,28 @@ test('สัตว์เลี้ยงปลอบหลังตอบผิ�
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('แมวพิกเซล: setRand(seed) ตรึงตัวสุ่ม · จำลองซ้ำด้วย seed เดิมได้ท่าเรียงเหมือนเดิมทุกครั้ง · seed ต่างกันได้ต่างกัน · setRand(null) คืนตัวสุ่มจริง', async (b, base) => {
+  const p = await fresh(b, base);
+  await p.waitForTimeout(300);
+  const r = await p.evaluate(() => {
+    const T = PixelCat._t, s0 = JSON.stringify(T.cat), native = Math.random;
+    T.setJit(false); T.setNow(new Date('2026-11-22T12:00:00').getTime());
+    const run = seed => {
+      T.setRand(seed); const c = JSON.parse(s0); for (const k of Object.keys(T.cat)) if (!(k in c)) delete T.cat[k]; Object.assign(T.cat, c, { mode: 'sit', t: 0, dur: 100 });
+      const seq = []; for (let i = 0; i < 12000; i++) { T.step(50); if (seq[seq.length - 1] !== T.cat.mode) seq.push(T.cat.mode); } return seq.join(' ');
+    };
+    const a = run(7), a2 = run(7), c = run(8), draws = (T.setRand(3), [Math.random(), Math.random()]), again = (T.setRand(3), [Math.random(), Math.random()]);
+    T.setRand(null);
+    return { a, a2, c, n: a.split(' ').length, draws, again, restored: Math.random === native };
+  });
+  assert(r.n > 20, 'จำลอง 10 นาทีต้องเปลี่ยนท่าหลายครั้ง ' + r.n);
+  assert.strictEqual(r.a2, r.a, 'seed เดิมต้องได้ท่าเรียงเหมือนเดิม');
+  assert.notStrictEqual(r.c, r.a, 'seed ต่างกันต้องได้ผลต่างกัน');
+  assert.deepStrictEqual(r.again, r.draws); assert(r.draws.every(x => x >= 0 && x < 1) && r.draws[0] !== r.draws[1]);
+  assert(r.restored, 'setRand(null) ต้องคืน Math.random เดิม');
+  assert.deepStrictEqual(p.errors, []);
+});
+
 test('แมวพิกเซล: แตะแมวทุกแบบไม่เพิ่มความสนิท Energy หรือภารกิจ (กดรัวเก็บแต้มไม่ได้)', async (b, base) => {
   const p = await fresh(b, base);
   await p.evaluate(() => { PixelCat._t.setJit(false); PixelCat._t.setNow(new Date('2026-11-22T12:00:00').getTime()); pens(); M.pet.bond = 0; M.pet.energy = 0; saveM(); render(); });
