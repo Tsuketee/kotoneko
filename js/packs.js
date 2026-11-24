@@ -96,7 +96,7 @@ const packAcctHtml = () => refundHtml() + packAdminHtml();
 function packAdminHtml() {
   if (!PS.admin) return '';
   const v = Object.entries(PS.ver || {}).map(([l, n]) => (LEVELS[l] ? LEVELS[l].n : l) + ' v' + n).join(' · ') || 'ยังไม่มีแพ็กบนเซิร์ฟเวอร์';
-  return `<div class="st" style="margin-top:14px;border-top:1px solid var(--bd);padding-top:12px"><b>ผู้ดูแล</b> · แพ็กบนเซิร์ฟเวอร์: ${v}</div><div class="btns" style="margin-top:8px"><button onclick="document.getElementById('pku').click()">อัปโหลดแพ็กเนื้อหา</button></div><input id="pku" type="file" accept="application/json,.json" style="display:none" onchange="packUpload(this)">${refundAdminHtml()}`;
+  return `<div class="st" style="margin-top:14px;border-top:1px solid var(--bd);padding-top:12px"><b>ผู้ดูแล</b> · แพ็กบนเซิร์ฟเวอร์: ${v}</div><div class="btns" style="margin-top:8px"><button onclick="document.getElementById('pku').click()">อัปโหลดแพ็กเนื้อหา</button></div><input id="pku" type="file" accept="application/json,.json" style="display:none" onchange="packUpload(this)">${dbgPlacesHtml()}${refundAdminHtml()}`;
 }
 // คำขอคืนเงินทั้งหมด: รายการที่รอคืน + สรุปเหตุผล (คืนเงินจริงทำใน Stripe แล้ว webhook เปลี่ยนสถานะให้เอง)
 function refundAdminHtml() {

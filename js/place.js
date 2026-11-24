@@ -30,6 +30,22 @@ function plCheck() {
   PLACES.forEach(p => { if (!plHas(p) && p.unlock && plCount(p.unlock.cats) >= p.unlock.n) { st.got.push(p.id); nw = p } });
   if (nw) { plSave(st); toast(icx('sparkle', 16) + ' ได้ตั๋วไป' + nw.n + 'แล้ว! แตะตั๋ว "ไปเที่ยว" บนการ์ดเจ้าตัวน้อยได้เลย') }
 }
+// โหมดทดสอบของผู้ดูแล (หน้าบัญชี · เห็นเฉพาะบัญชีที่ is_admin() ของเซิร์ฟเวอร์ตอบว่าใช่ = PS.admin ใน js/packs.js): ปลดล็อกทุกสถานที่โดยไม่ต้องเรียนถึงเกณฑ์
+// จำรายการเดิมไว้ใน M.dbgPlaces ให้คืนค่าได้ · คืนแล้วที่ที่ถึงเกณฑ์จริงจะปลดล็อกกลับเองตอน plCheck · ถ้าอยู่ในที่ที่กลับไปล็อก จะกลับบ้าน
+function dbgPlaces(on) {
+  if (!PS.admin) return;
+  const st = plState();
+  if (on) {
+    if (!Array.isArray(M.dbgPlaces)) M.dbgPlaces = st.got.slice();
+    st.got = PLACES.filter(p => !p.free).map(p => p.id);
+  } else {
+    if (!Array.isArray(M.dbgPlaces)) return;
+    st.got = M.dbgPlaces.filter(id => PLACES.some(p => p.id === id)); delete M.dbgPlaces;
+    if (!placeOf(st.at).free && !st.got.includes(st.at)) st.at = 'room';
+  }
+  plSave(st); toast(icx('sparkle', 16) + (on ? ' ปลดล็อกทุกสถานที่แล้ว (โหมดทดสอบ)' : ' คืนสถานที่ที่ล็อกไว้เดิมแล้ว')); render();
+}
+const dbgPlacesHtml = () => `<div class="st" style="margin-top:14px;border-top:1px solid var(--bd);padding-top:12px"><b>โหมดทดสอบ</b> · ลองฟีเจอร์โดยไม่ต้องเรียนให้ถึงเกณฑ์ (เห็นเฉพาะผู้ดูแล)</div><div class="btns" style="margin-top:8px"><button data-testid="dbg-unlock-places" onclick="dbgPlaces(true)"${PLACES.every(plHas) ? ' disabled' : ''}>ปลดล็อกทุกสถานที่</button>${Array.isArray(M.dbgPlaces) ? '<button class="sec" data-testid="dbg-restore-places" onclick="dbgPlaces(false)">คืนสถานที่ที่ล็อกไว้เดิม</button>' : ''}</div>`;
 // ประโยคในกล่องคำพูด: ถ้าไม่ใช่ห้อง ทุกชั่วโมงคู่จะใช้ประโยคประจำสถานที่แทนประโยคตามช่วงเวลา (ประโยคเหตุการณ์สำคัญยังขึ้นตามเดิม)
 function plSay(say, generic) {
   const at = plState().at, L = PLACE_LINES[at];
