@@ -47,7 +47,7 @@ function placeHero(say, pet, size, px) {
 <div class="pzb scb ${p.bub === 'r' && !px ? 'r' : ''}">${say}</div>
 ${px ? '' : `<div class="scp" style="left:${p.pet[0]}%;top:${p.pet[1]}%"><span class="pet" style="font-size:${size}px">${pet}</span></div>`}
 ${px ? '' : tk}</div>
-<div class="st scl${px ? ' px' : ''}"><span><span class="scj">${rb(p.jp)}</span> ${p.n}${p.cats.length ? ' · ทบทวนคำหมวด' + p.note + 'ก่อน' : ' · ' + p.note}</span>${px ? tk : ''}</div>`;
+<div class="st scl${px ? ' px' : ''}"><span><span class="scj">${rb(p.jp)}</span> ${p.n}${p.cats.length ? ' · ทบทวนคำหมวด' + p.note + 'ก่อน' : ' · ' + p.note}</span>${p.id === 'konbini' && typeof kbnOpen === 'function' ? `<button class="scgo scin" data-testid="place-shop" onclick="kbnOpen()">${icx('shop', 18)}<span>เข้าร้าน</span></button>` : ''}${px ? tk : ''}</div>`;
 }
 // หน้าต่างเลือกที่เที่ยว placeAsk() เป็นแผนที่เมืองพิกเซล อยู่ใน js/town.js
 // ---------- หน้าต่าง "ไปเที่ยว": ต่อแผนที่เมือง (window.TownMap ใน js/town.js) เข้ากับข้อมูลของแอป · ย้ายจาก js/town.js (ถอนวัชพืชข้อ 17) ----------

@@ -362,3 +362,11 @@ button.pfi{font:inherit;color:var(--fg);cursor:pointer}button.pfi:disabled{curso
 @keyframes bgopen{to{transform:scale(1.35);opacity:0}}
 @keyframes bgflash{0%{opacity:0;transform:scale(.4)}50%{opacity:1}100%{opacity:0;transform:scale(1.4)}}
 @media (prefers-reduced-motion:reduce){.cdl.shsd,.shpop{animation:none}}
+
+/* ร้านสะดวกซื้อในฉาก (ต้นแบบ) */
+.scin{position:static;margin-left:auto}.scl.px .scin+.scgo{margin-left:8px}
+.kbhd{display:grid;gap:2px}.kbclerk{font-family:var(--fd);font-size:20px;color:var(--ac)}
+.kbnight{margin:8px 0 0;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--hlt) 22%,var(--card));font-size:14px}
+.kbg{display:grid;gap:8px}.kbi{position:relative;display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;border-radius:14px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font:inherit;text-align:left;cursor:pointer}.kbi:disabled{opacity:.5}
+.kbt{flex:1;min-width:0;display:grid}.kbj{font-size:12.5px;color:var(--mut)}.kbp{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}.kbp s{color:var(--mut);font-weight:400}
+.kbst{display:inline-block;font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px;background:#ffd84a;color:#5a3d2b}.kbtag{position:absolute;left:4px;top:4px;transform:rotate(-8deg)}

@@ -13,7 +13,10 @@ const KBI=[
  {id:'room:plant',t:'room',k:'plant',n:'ต้นไม้กระถางใหญ่',p:120,soon:1},{id:'room:rug',t:'room',k:'rug',n:'พรมลายคลื่น',p:150,soon:1}];
 const KBT={coat:'ลายขน',acc:'เครื่องประดับ',room:'ของแต่งห้อง'};
 // อาหาร: e = ราคา Energy · b = ความสนิทที่ได้ · h = ความหิวที่ลด · รูปพิกเซลอยู่ใน FOODART (js/shop.js)
-const FOOD=[{k:'milk',n:'นมอุ่นๆ',e:15,b:4,h:20},{k:'katsuo',n:'ข้าวโรยปลาโอแห้ง',e:20,b:6,h:25},{k:'dango',n:'ดังโงะ 3 สี',e:20,b:6,h:20},{k:'tamago',n:'ไข่ม้วนทามาโกะยากิ',e:25,b:8,h:30},{k:'onigiri',n:'ข้าวปั้นปลา',e:30,b:10,h:40},{k:'fish',n:'ปลาย่าง',e:45,b:16,h:60},{k:'udon',n:'อุด้งร้อน',e:55,b:20,h:80},{k:'sushi',n:'ซูชิมื้อพิเศษ',e:70,b:26,h:100}];
+const FOOD=[{k:'milk',n:'นมอุ่นๆ',e:15,b:4,h:20},{k:'katsuo',n:'ข้าวโรยปลาโอแห้ง',e:20,b:6,h:25},{k:'dango',n:'ดังโงะ 3 สี',e:20,b:6,h:20},{k:'tamago',n:'ไข่ม้วนทามาโกะยากิ',e:25,b:8,h:30},{k:'onigiri',n:'ข้าวปั้นปลา',e:30,b:10,h:40},{k:'fish',n:'ปลาย่าง',e:45,b:16,h:60},{k:'udon',n:'อุด้งร้อน',e:55,b:20,h:80},{k:'sushi',n:'ซูชิมื้อพิเศษ',e:70,b:26,h:100},
+ {k:'catcan',jp:'ねこかん',n:'อาหารแมวกระป๋อง',e:20,b:6,h:40,src:'konbini',fresh:0},{k:'treat',jp:'ねこのおやつ',n:'ขนมแมวเลีย',e:10,b:4,h:10,src:'konbini',fresh:0},
+ {k:'kegg',jp:'ゆでたまご',n:'ไข่ต้ม',e:15,b:5,h:25,src:'konbini',fresh:1,warm:0},{k:'konigiri',jp:'おにぎり',n:'ข้าวปั้นแซลมอน',e:25,b:8,h:35,src:'konbini',fresh:1,warm:0,art:'onigiri'},
+ {k:'chicken',jp:'サラダチキン',n:'อกไก่นึ่ง',e:35,b:12,h:50,src:'konbini',fresh:1,warm:1},{k:'oden',jp:'おでん',n:'โอเด้ง (ไข่ + หัวไชเท้า)',e:40,b:14,h:50,src:'konbini',fresh:1,warm:1,season:[9,10,11,0,1]}];
 const FMAX=9;
 const kbCat=()=>(M.pet.sp||0)===0&&!!window.PixelCat;
 const kbFits=it=>it.t==='room'||kbCat();
@@ -50,10 +53,10 @@ function kbBag(){const pool=kbPool(),c=kbBagPrice();if(!pool.length||c>kbBal())r
 // ---------- ความหิว 0 (อิ่ม) – 100 (หิวมาก) เพิ่มชั่วโมงละ 4 · ไม่ทำให้ความสนิทลด · หิวน้อยกว่า 10 = อิ่มแล้วไม่กิน ----------
 function phg(p){if(p.hg==null)return 50;return Math.max(0,Math.min(100,Math.round(p.hg+(Date.now()-(p.ht||Date.now()))/36e5*4)))}
 const phgN=h=>h<10?'อิ่มแปล้':h<45?'อิ่มกำลังดี':h<75?'เริ่มหิวแล้ว':'หิวมาก';
-const pfoodN=p=>FOOD.reduce((a,f)=>a+((p.food||{})[f.k]||0),0);
+const pfoodN=p=>Object.values(p.food||{}).reduce((a,n)=>a+(+n||0),0);
 function fbuy(k){const p=M.pet,f=FOOD.find(x=>x.k===k);if(!f)return false;p.food=p.food||{};const n=p.food[k]||0;
  if(n>=FMAX||p.energy<f.e)return false;p.energy-=f.e;p.food[k]=n+1;saveM();toast(icx('rice',16)+' เก็บ'+f.n+'เข้าตู้กับข้าวแล้ว (มี '+(n+1)+')');return true}
-function pfood(k){const p=M.pet,f=FOOD.find(x=>x.k===k);if(!f)return false;p.food=p.food||{};const h=phg(p);
+function pfood(k){const p=M.pet,base=k.replace(/~$/,''),f=FOOD.find(x=>x.k===base),dsc=k!==base;if(!f)return false;p.food=p.food||{};const h=phg(p);
  if(!(p.food[k]>0)){pcue('beg');toast(IC.rice+' '+pline(p,'hungry',false));return false}
  if(h<10){toast(IC.rice+' '+p.name+'อิ่มแล้ว ไว้มื้อหน้านะ');return false}
- p.food[k]--;p.hg=Math.max(0,h-f.h);p.ht=Date.now();pbond(f.b);pcue('eat',2600);toast(IC.rice+' '+f.n+' · สนิท +'+f.b+' · '+pline(p,'feed',false));saveM();render();return true}
+ const bb=dsc?Math.round(f.b*.8):f.b;p.food[k]--;p.hg=Math.max(0,h-f.h);p.ht=Date.now();pbond(bb);pcue('eat',2600);toast(IC.rice+' '+f.n+(dsc?' (ลดราคา)':'')+' · สนิท +'+bb+' · '+pline(p,'feed',false));saveM();render();return true}

@@ -45,6 +45,7 @@ const FILES = [
   'js/profile.js',
   'js/koban.js',
   'js/shop.js',
+  'js/konbini.js',
   'js/grammar.js',
   'js/stats.js',
   'js/cloud.js',

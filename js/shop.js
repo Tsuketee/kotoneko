@@ -17,7 +17,7 @@ function shopHtml(){const p=M.pet,L=kbL(),pool=kbPool(),price=kbBagPrice();
    const tag={on:'ใส่อยู่',own:'มีแล้ว',soon:'เร็วๆ นี้',goal:`${icx('medal',12,'m3')} แม่น ${it.goal}`,buy:`${icx('koban',12,'kb-i')} ${it.p}`}[s];
    return `<button class="pfi shi${s==='on'?' on':''}${s==='buy'||s==='goal'||s==='soon'?' pfo':''}" data-testid="shop-item-${it.id}" onclick="shSheet('${it.id}')"><span class="pft3">${shThumb(it)}${s==='buy'||s==='goal'?icx('lock',16,'pfl'):''}</span><b>${kbName(it)}</b><span>${tag}</span></button>`}).join('')+'</div>'});
  const fd=p.food||{};
- h+=`<div class="pfk">อาหาร <span>ใช้ Energy · ในตู้กับข้าว ${pfoodN(p)} ชิ้น</span></div><div class="pfg">`+FOOD.map(f=>`<button class="pfi shi" data-testid="food-item-${f.k}" onclick="shFood('${f.k}')"><span class="pft3">${foodImg(f,'fdth')}</span><b>${f.n}</b><span>${icx('bolt',12,'hl-i')} ${f.e} · ในตู้ ${fd[f.k]||0}</span></button>`).join('')+'</div>';
+ h+=`<div class="pfk">อาหาร <span>ใช้ Energy · ในตู้กับข้าว ${pfoodN(p)} ชิ้น</span></div><div class="pfg">`+FOOD.filter(f=>!f.src).map(f=>`<button class="pfi shi" data-testid="food-item-${f.k}" onclick="shFood('${f.k}')"><span class="pft3">${foodImg(f,'fdth')}</span><b>${f.n}</b><span>${icx('bolt',12,'hl-i')} ${f.e} · ในตู้ ${fd[f.k]||0}</span></button>`).join('')+'</div>';
  return h+`<button class="mer" onclick="goCol()"><span class="pmi">${icx('paw',22)}</span><span class="mrt"><b>ใส่ของที่คลังสะสม</b><span class="st">ลายขนและเครื่องประดับที่แลกแล้ว แตะเพื่อใส่หรือถอด</span></span><span aria-hidden="true">›</span></button>`}
 // รูปอาหารแบบพิกเซล 32×32 (ออกแบบ 2026-11-24 · เส้นขอบโทนเดียวกับแมว แสงจากซ้ายบน): ตารางละ 32 แถว อักษรละ 1 พิกเซลตามชุดสี FPAL · '.' = โปร่งใส
 // แก้รูป: เปลี่ยนอักษรในตาราง หรือเพิ่มสีใน FPAL (อักษรใหม่ 1 ตัว) · ทุกชนิดใน FOOD ต้องมีตาราง 32×32 (test "อาหาร: รูปพิกเซล")
@@ -280,7 +280,7 @@ const FOODART={milk:[
   '................................',
   '................................']};
 const FOODPX=Object.fromEntries(Object.entries(FOODART).map(([k,rows])=>[k,g=>rows.forEach((r,y)=>[...r].forEach((ch,x)=>{if(ch!=='.'){g.fillStyle=FPAL[ch];g.fillRect(x,y,1,1)}}))]));
-function foodDraw(c){const g=c.getContext('2d');g.clearRect(0,0,32,32);if(FOODPX[c.dataset.food])FOODPX[c.dataset.food](g)}
+function foodDraw(c){const g=c.getContext('2d'),f=FOOD.find(x=>x.k===c.dataset.food)||{},k=f.art||c.dataset.food;g.clearRect(0,0,32,32);if(FOODPX[k])return FOODPX[k](g);g.fillStyle='#c9b8a6';g.fillRect(5,22,22,4);g.fillStyle='#e7dccd';g.fillRect(8,12,16,10)}
 function shDraw(root){(root||document).querySelectorAll('canvas[data-food]').forEach(foodDraw);if(!window.PixelCat)return;const T=PixelCat._t,tm=pdark()?'dark':'light';
  (root||document).querySelectorAll('canvas[data-coat]').forEach(c=>{try{T.draw(c.getContext('2d'),T.frame('sit',0,tm,c.dataset.coat,c.dataset.acc||'none'))}catch(e){console.warn('วาดตัวอย่างไม่ได้',c.dataset.coat,e)}})}
 function shopMount(){shDraw()}
@@ -309,6 +309,6 @@ function shBagGo(){const it=kbBag();shClose();if(!it)return;render();
  document.body.appendChild(a);setTimeout(()=>{a.remove();show()},1500)}
 // ---------- หน้าต่างให้อาหาร (ปุ่ม "ให้อาหาร" บนการ์ดหน้าแรก) ----------
 function feedOpen(){const p=M.pet,fd=p.food||{},none=!pfoodN(p),h=phg(p);if(none){pcue('beg');toast(IC.rice+' '+pline(p,'hungry',false))}
- shOpen(`<h2>ให้อาหาร${p.name}</h2><div class="st">${p.name}${phgN(h)} · ความหิว ${h}/100</div>${none?'<p class="shnote">ตู้กับข้าวว่าง ซื้ออาหารด้วย Energy ที่ร้านค้า</p>':''}<div class="fdg">`+FOOD.map(f=>{const n=fd[f.k]||0;
-  return `<button class="fdi" data-testid="feed-${f.k}" ${n?'':'disabled'} onclick="if(pfood('${f.k}'))shClose()">${foodImg(f,'fdpx','food-img-'+f.k)}<b>${f.n}</b><span class="fdn">×${n}</span><span class="st">สนิท +${f.b} · หิวลด ${f.h}</span></button>`}).join('')+
+ shOpen(`<h2>ให้อาหาร${p.name}</h2><div class="st">${p.name}${phgN(h)} · ความหิว ${h}/100</div>${none?'<p class="shnote">ตู้กับข้าวว่าง ซื้ออาหารด้วย Energy ที่ร้านค้า</p>':''}<div class="fdg">`+FOOD.flatMap(f=>[[f,f.k],[f,f.k+'~']]).filter(([f,key])=>!f.src&&!key.endsWith('~')||(fd[key]||0)>0).map(([f,key])=>{const n=fd[key]||0,dsc=key.endsWith('~');
+  return `<button class="fdi" data-testid="feed-${key}" ${n?'':'disabled'} onclick="if(pfood('${key}'))shClose()">${foodImg(f,'fdpx','food-img-'+key)}<b>${f.n}${dsc?' <span class="kbst">ลดราคา</span>':''}</b><span class="fdn">×${n}</span><span class="st">สนิท +${dsc?Math.round(f.b*.8):f.b} · หิวลด ${f.h}</span></button>`}).join('')+
   `</div><div class="btns"><button class="sec" data-x="1" data-testid="feed-close">ปิด</button><button class="g" data-testid="feed-go-shop" onclick="shClose();goTab('shop')">ซื้ออาหารที่ร้าน</button></div>`,{tid:'feed-dialog'})}
