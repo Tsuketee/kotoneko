@@ -185,6 +185,40 @@ test('.claude/settings.json: approval-gate.js รับทั้งการแ�
 });
 for (const d of [gDirty, gClean]) fs.rmSync(d, { recursive: true, force: true });
 
+// ---------- session ที่เปิดหลาย repo (เริ่มที่โฟลเดอร์แม่ของ kotoneko) ไม่โหลด .claude/settings.json ของ kotoneko ----------
+// tools/hooks/install-parent.js เขียน <โฟลเดอร์แม่>/.claude/settings.json ที่เรียก hook ชุดเดียวกันด้วย path เต็ม (setup script ของสภาพแวดล้อม cloud เรียกทุกครั้งที่สร้างเครื่องใหม่)
+const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-parent-')), proj = path.join(parent, 'kotoneko');
+fs.mkdirSync(proj); execFileSync('git', ['init', '-q'], { cwd: proj }); fs.writeFileSync(path.join(proj, 'app.js'), '1\n');
+const install = (...a) => spawnSync('node', [path.join(ROOT, 'tools/hooks/install-parent.js'), '--parent', parent, '--project', proj, ...a], { encoding: 'utf8' });
+const PS = path.join(parent, '.claude/settings.json');
+const scripts = s => Object.entries(s.hooks).flatMap(([ev, list]) => list.flatMap(h => h.hooks.map(x => `${ev} ${h.matcher || ''} ${(x.command.match(/tools\/hooks\/[\w-]+\.js/) || [''])[0]}`))).sort();
+test('install-parent: เขียน hook ครบทุกตัวของ .claude/settings.json (event matcher สคริปต์เดียวกัน) ด้วย path เต็มที่มีไฟล์อยู่จริง', () => {
+  const r = install(); assert.strictEqual(r.status, 0, r.stderr);
+  const gen = JSON.parse(fs.readFileSync(PS, 'utf8')), own = JSON.parse(fs.readFileSync(path.join(ROOT, '.claude/settings.json'), 'utf8'));
+  assert.deepStrictEqual(scripts(gen), scripts(own));
+  for (const list of Object.values(gen.hooks)) for (const h of list) for (const x of h.hooks) {
+    const f = x.command.match(/"([^"]+\/tools\/hooks\/[\w-]+\.js)"/)[1];
+    assert(path.isAbsolute(f) && fs.existsSync(f), x.command);
+  }
+});
+test('install-parent: hook ที่เขียนไว้ทำงานกับ repo kotoneko เมื่อ Claude Code ตั้ง CLAUDE_PROJECT_DIR เป็นโฟลเดอร์แม่ · ข้ามเมื่อ session เปิดที่ kotoneko เอง (hook ของ repo ทำงานแล้ว ไม่รันซ้ำ)', () => {
+  const gen = JSON.parse(fs.readFileSync(PS, 'utf8')), cmd = gen.hooks.UserPromptSubmit[0].hooks[0].command, tf = path.join(proj, TURN);
+  let r = spawnSync('sh', ['-c', cmd], { input: JSON.stringify({ prompt: 'ทดสอบจากโฟลเดอร์แม่' }), env: { ...process.env, CLAUDE_PROJECT_DIR: parent }, encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.strictEqual(JSON.parse(fs.readFileSync(tf, 'utf8')).prompt, 'ทดสอบจากโฟลเดอร์แม่'); assert(!fs.existsSync(path.join(parent, TURN)), 'ต้องไม่เขียนลงโฟลเดอร์แม่');
+  fs.rmSync(tf);
+  r = spawnSync('sh', ['-c', cmd], { input: JSON.stringify({ prompt: 'ซ้ำ' }), env: { ...process.env, CLAUDE_PROJECT_DIR: proj }, encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, r.stderr); assert(!fs.existsSync(tf), 'session ที่เปิดที่ kotoneko ต้องไม่รัน hook ซ้ำ');
+});
+test('install-parent --check: ไฟล์ตั้งค่าของโฟลเดอร์แม่ไม่มี หรือขาด hook ตัวใดตัวหนึ่ง → ไม่ผ่านและบอกตัวที่ขาด · ครบ → ผ่าน · คีย์อื่นในไฟล์เดิมไม่หาย', () => {
+  assert.strictEqual(install('--check').status, 0);
+  const gen = JSON.parse(fs.readFileSync(PS, 'utf8')); gen.hooks.Stop = []; gen.model = 'คงไว้'; fs.writeFileSync(PS, JSON.stringify(gen));
+  let r = install('--check'); assert.strictEqual(r.status, 1); assert.match(r.stderr, /Stop/); assert.match(r.stderr, /stop-check\.js/);
+  assert.strictEqual(install().status, 0); assert.strictEqual(install('--check').status, 0); assert.strictEqual(JSON.parse(fs.readFileSync(PS, 'utf8')).model, 'คงไว้');
+  fs.rmSync(PS); r = install('--check'); assert.strictEqual(r.status, 1); assert.match(r.stderr, /ไม่มีไฟล์/);
+});
+fs.rmSync(parent, { recursive: true, force: true });
+
 // ---------- tests/check-version.js: ต้องเพิ่ม VERSION เมื่อไฟล์ที่ผู้ใช้โหลดเปลี่ยนเท่านั้น ----------
 const vt = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-ver-'));
 const vgit = (...a) => execFileSync('git', a, { cwd: vt, stdio: 'pipe', encoding: 'utf8' });
