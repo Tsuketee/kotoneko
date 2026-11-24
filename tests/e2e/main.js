@@ -488,3 +488,13 @@ test('แถบล่าง 5 หมวด: หน้าแรก เรีย�
   for (const n of ['หน้าแรก', 'เรียน', 'ความคืบหน้า', 'ร้านค้า', 'โปรไฟล์']) { await p.locator(`#nav button:has-text("${n}")`).click(); assert(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + ' ล้นจอแนวนอน'); }
   assert.deepStrictEqual(p.errors, []);
 });
+
+test('หลักฐาน: snap(p, ชื่อ, { animations: true }) ถ่ายกลางอนิเมชันได้ (ลงไฟล์ใน test-results/e2e/ และ summary) · ค่าเริ่มต้นรอให้อนิเมชันจบก่อนถ่าย', async (b) => {
+  const p = await (await b.newContext()).newPage();
+  await p.setContent('<style>@keyframes f{from{opacity:0}to{opacity:1}}body{margin:0;background:#fff}div{width:80px;height:80px;background:#f00;animation:f 60s linear forwards}</style><div></div>');
+  await p.waitForTimeout(200);
+  const mid = await snap(p, 'anim-mid', { animations: true }), end = await snap(p, 'anim-end');
+  assert.match(mid, /-anim-mid\.png$/); assert.match(end, /-anim-end\.png$/);
+  const img = f => fs.readFileSync(path.join(ROOT, 'test-results/e2e', f));
+  assert(!img(mid).equals(img(end)), 'ภาพกลางอนิเมชัน (ยังจางเกือบขาว) ต้องต่างจากภาพที่รอให้อนิเมชันจบ (แดงเต็ม)');
+});
