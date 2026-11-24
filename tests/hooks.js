@@ -123,6 +123,37 @@ test('ก่อนจบ turn: โค้ดเปลี่ยนแต่ข้�
   assert.strictEqual(stop({}), null);
   const r = stop({ last_assistant_message: 'เสร็จแล้วค่ะ', stop_hook_active: true }); assert.strictEqual(r.decision, undefined); assert.match(r.systemMessage, /ผล test/);
 });
+const EV = 'ผ่านทั้งหมด 3 ข้อ';
+const transcript = rows => { const f = path.join(os.tmpdir(), 'kn-tr-' + process.pid + '.jsonl'); fs.writeFileSync(f, rows.map(r => JSON.stringify(r)).join('\n') + '\n'); return f; };
+const prompt = text => ({ type: 'user', message: { role: 'user', content: text } });
+const sent = files => ({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', name: 'SendUserFile', input: { files } }] } });
+const toolResult = { type: 'user', message: { role: 'user', content: [{ type: 'tool_result', content: 'ok' }] } };
+test('ก่อนจบ turn: แก้ css/ หรือ js/ (นอก js/data/) แต่ข้อความสุดท้ายไม่อ้างภาพใน test-results/ และไม่ได้ส่งภาพ → บล็อก · อ้างภาพแล้ว → จบได้', () => {
+  fs.mkdirSync(path.join(tmp, 'css'), { recursive: true });
+  turnStart('ทำต่อเลย'); fs.writeFileSync(path.join(tmp, 'css/a.css'), 'a{}\n'); check(true);
+  const r = stop({ last_assistant_message: EV }); assert.strictEqual(r.decision, 'block'); assert.match(r.reason, /ภาพหน้าจอ/); assert.match(r.reason, /test-results\//);
+  assert.strictEqual(stop({ last_assistant_message: EV + ' · ภาพ `test-results/e2e/09-shop-end-p1.png`' }), null);
+  assert.match(stop({ last_assistant_message: EV + ' · ภาพ shot.png' }).reason, /ภาพหน้าจอ/, 'ต้องเป็นภาพใน test-results/');
+  turnStart('ทำต่อเลย'); fs.writeFileSync(path.join(tmp, 'js/ui.js'), 'let u = 1;\n'); check(true);
+  assert.match(stop({ last_assistant_message: EV }).reason, /ภาพหน้าจอ/);
+  const w = stop({ last_assistant_message: EV, stop_hook_active: true }); assert.strictEqual(w.decision, undefined); assert.match(w.systemMessage, /ภาพหน้าจอ/);
+});
+test('ก่อนจบ turn: ส่งภาพให้เจ้าของ (SendUserFile) หลังข้อความล่าสุดของเจ้าของ = มีภาพแล้ว · ส่งก่อนข้อความล่าสุด หรือส่งไฟล์ที่ไม่ใช่ภาพ = ยังไม่มี', () => {
+  turnStart('ทำต่อเลย'); fs.writeFileSync(path.join(tmp, 'js/ui.js'), 'let u = 2;\n'); check(true);
+  assert.strictEqual(stop({ last_assistant_message: EV, transcript_path: transcript([prompt('ทำต่อเลย'), toolResult, sent(['test-results/flows/09-shop-end-p1.png'])]) }), null);
+  assert.match(stop({ last_assistant_message: EV, transcript_path: transcript([sent(['a.png']), prompt('ทำต่อเลย'), toolResult]) }).reason, /ภาพหน้าจอ/);
+  assert.match(stop({ last_assistant_message: EV, transcript_path: transcript([prompt('ทำต่อเลย'), sent(['report.md'])]) }).reason, /ภาพหน้าจอ/);
+  assert.match(stop({ last_assistant_message: EV, transcript_path: path.join(tmp, 'ไม่มีไฟล์.jsonl') }).reason, /ภาพหน้าจอ/);
+});
+test('ก่อนจบ turn: แก้ไฟล์ที่ไม่ใช่หน้าจอ (โค้ดนอก js/ css/ หรือ js/data/ ที่อนุมัติแล้ว) → ไม่ต้องมีภาพ · turn-start รุ่นเก่าที่ไม่มีลายนิ้วมือหน้าจอ → ไม่ตรวจภาพ', () => {
+  turnStart('ทำต่อเลย'); fs.writeFileSync(path.join(tmp, 'app.js'), 'let a = 12;\n'); check(true);
+  assert.strictEqual(stop({ last_assistant_message: EV }), null);
+  turnStart('อนุมัติ แก้ข้อมูลได้'); fs.writeFileSync(path.join(tmp, 'js/data/k.js'), 'const K=4;\n'); check(true);
+  assert.strictEqual(stop({ last_assistant_message: EV }), null);
+  turnStart('ทำต่อเลย'); const t = JSON.parse(fs.readFileSync(path.join(tmp, TURN), 'utf8')); delete t.ui; fs.writeFileSync(path.join(tmp, TURN), JSON.stringify(t));
+  fs.writeFileSync(path.join(tmp, 'css/a.css'), 'b{}\n'); check(true);
+  assert.strictEqual(stop({ last_assistant_message: EV }), null);
+});
 
 fs.rmSync(tmp, { recursive: true, force: true });
 
