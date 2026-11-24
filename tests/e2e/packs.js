@@ -148,6 +148,7 @@ test('ผู้ดูแล: โหมดทดสอบ ปลดล็อก�
   await p.evaluate(() => { M.place = { at: 'room', got: ['station'] }; saveM(); render(); });
   const locked = await p.evaluate(() => PLACES.filter(x => !plHas(x)).map(x => x.id));
   assert(locked.length >= 3, 'ต้องมีที่ที่ยังล็อกอยู่ก่อนทดสอบ ' + locked);
+  await p.getByTestId('dbg-unlock-places').scrollIntoViewIfNeeded(); await snap(p, 'acct-test-mode');
   await p.getByTestId('dbg-unlock-places').click();
   await p.waitForSelector('.toast:has-text("ปลดล็อกทุกสถานที่แล้ว")');
   assert.deepStrictEqual(await p.evaluate(() => PLACES.filter(x => !plHas(x)).map(x => x.id)), []);

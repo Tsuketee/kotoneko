@@ -199,7 +199,8 @@
 - **ไฟล์หลัก**: `js/level.js` (สลับข้อมูลเป็นแพ็กก่อน `core.js` · เปลี่ยนระดับ = โหลดหน้าใหม่), `js/packs.js` (`lvSwitch` `packStart` · ลบแพ็กเมื่อออกจากระบบและตรวจสิทธิ์หลังยืนยันรหัส ผ่าน `CLOUD_HOOKS` ของ `js/cloud.js`), `js/buy.js` (`buyAsk` `buyGo` `buyWatch` ซื้อ · `refundAsk` `refundSend` ขอคืนเงิน), `supabase/functions/checkout` `stripe-webhook`, `docs/PAYMENT.md`
 - **selector**: `.pc.lk0:has-text("N4")` · `.cdl` · `button:text-is("ไปหน้าชำระเงิน")` · `button:text-is("ไว้ก่อน")` · คำขอคืนเงิน `input[value=price|content|other]`
 - **flow ที่ต้องไม่พัง**: ไม่ได้เข้าสู่ระบบ → การ์ดล็อกพาไปหน้าบัญชี ไม่ดาวน์โหลดอะไร · เข้าสู่ระบบแต่ไม่มีสิทธิ์ → ยังล็อก · มีสิทธิ์ → ดาวน์โหลด สลับระดับ ความคืบหน้าแยก key กลับ N5 ได้ · ถูกถอนสิทธิ์/ออกจากระบบ → ลบแพ็กกลับ N5 · แพ็กเสีย → เปิดเป็น N5 ไม่มี error · ซื้อ: เห็นราคา → ยืนยัน → Stripe → กลับมารอ webhook จนปลดล็อก · มีสิทธิ์แล้วจ่ายซ้ำไม่ได้ · คืนเงินภายใน 7 วันต้องเลือกเหตุผล
-- **test**: `e2e.js "ระดับ N"` `e2e.js "ผู้ดูแล:"` `e2e.js "ซื้อ"` `e2e.js "ขอคืนเงิน"` `e2e.js "schema.sql:"` · `tests/payment.mjs` ทั้งไฟล์
+- **โหมดทดสอบของผู้ดูแล** (หน้าบัญชี ใต้ส่วนอัปโหลดแพ็ก · เห็นเฉพาะบัญชีในตาราง `admins` ที่ `is_admin()` ตอบว่าใช่ = `PS.admin` · ไม่ใส่อีเมลในโค้ดเพราะ repo เป็น public): `dbg-unlock-places` ปลดล็อกทุกสถานที่ในแผนที่ (`dbgPlaces` ใน `js/place.js` · จำรายการเดิมใน `M.dbgPlaces`) · `dbg-restore-places` คืนสถานที่ที่ล็อกไว้เดิม (อยู่ในที่ที่กลับไปล็อก = กลับบ้าน)
+- **test**: `e2e.js "ระดับ N"` `e2e.js "ผู้ดูแล:"` `e2e.js "ผู้ดูแล: โหมดทดสอบ"` `e2e.js "ซื้อ"` `e2e.js "ขอคืนเงิน"` `e2e.js "schema.sql:"` · `tests/payment.mjs` ทั้งไฟล์
 
 ## 20. หน้าเว็บแยก: แนะนำแอป · นโยบายความเป็นส่วนตัว · ข้อกำหนด
 - **หน้า**: `about.html` · `privacy.html` · `terms.html`
