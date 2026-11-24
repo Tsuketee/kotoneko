@@ -362,3 +362,44 @@ button.pfi{font:inherit;color:var(--fg);cursor:pointer}button.pfi:disabled{curso
 @keyframes bgopen{to{transform:scale(1.35);opacity:0}}
 @keyframes bgflash{0%{opacity:0;transform:scale(.4)}50%{opacity:1}100%{opacity:0;transform:scale(1.4)}}
 @media (prefers-reduced-motion:reduce){.cdl.shsd,.shpop{animation:none}}
+/* ร้านค้าแบบสมุดเมนู (2026-11-24): พื้นหลังห้องแมว วอลเปเปอร์ลายจุด + พื้นไม้ · สมุดกระดาษครีม เส้นด้ายเย็บ แท็บแฟ้ม */
+:root{--wp1:#f7e6cf;--wp2:#efd6b6;--wood1:#c99766;--wood2:#b58252;--paper:#fff9ee;--paper2:#f4e6cf;--stitch:#d6b48c;--book:#8a5a3c;--tab:#e8cfae;--coin:#f3c74b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--wp1:#2a221d;--wp2:#342a23;--wood1:#4a3526;--wood2:#3c2b1f;--paper:#2f2722;--paper2:#3a3029;--stitch:#6d5643;--book:#a06d4a;--tab:#46382e;--coin:#efc45a}}
+:root[data-theme="dark"]{--wp1:#2a221d;--wp2:#342a23;--wood1:#4a3526;--wood2:#3c2b1f;--paper:#2f2722;--paper2:#3a3029;--stitch:#6d5643;--book:#a06d4a;--tab:#46382e;--coin:#efc45a}
+body[data-tab="shop"]{background:radial-gradient(circle at 12px 12px,var(--wp2) 2.5px,transparent 3px) 0 0/24px 24px,linear-gradient(var(--wp1),var(--wp1));background-attachment:fixed}
+body[data-tab="shop"]::after{content:"";position:fixed;left:0;right:0;bottom:0;height:120px;z-index:-1;background:repeating-linear-gradient(90deg,var(--wood1) 0 58px,var(--wood2) 58px 60px),var(--wood1);box-shadow:inset 0 6px 0 var(--wood2)}
+.shtop{display:flex;align-items:center;gap:8px}.shtop h1{margin:0;flex:1}
+.shchip{display:inline-flex;align-items:center;gap:5px;min-height:40px;padding:4px 12px 4px 8px;border-radius:999px;background:var(--paper);border:2px solid var(--book);color:var(--fg);font:inherit}.shchip b{font-family:var(--fd);font-variant-numeric:tabular-nums}
+.shlogb{padding:4px 9px;cursor:pointer}.shsub{margin:6px 0 10px}
+.shbook{margin:14px 0 8px}
+.shtabs{display:flex;gap:4px;padding-left:12px}
+.shtabs button{min-height:44px;padding:8px 18px 10px;border:3px solid var(--book);border-bottom:0;border-radius:16px 16px 0 0;background:var(--tab);color:var(--fg);font:inherit;font-family:var(--fd);font-weight:600;font-size:16px;margin-bottom:-3px;cursor:pointer}
+.shtabs button.on{background:var(--paper);position:relative;z-index:1}
+.shpaper{position:relative;background:var(--paper);border:3px solid var(--book);border-radius:20px;padding:10px 14px 16px;outline:2px dashed var(--stitch);outline-offset:-10px;box-shadow:0 6px 0 color-mix(in srgb,var(--book) 35%,transparent)}
+.shnote{font-size:12.5px;color:var(--mut);text-align:right;padding:4px 8px 0}
+.shrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:8px 4px 10px;border-bottom:2px solid var(--paper2)}.shrow:last-of-type{border-bottom:0}
+.shcell{display:grid;justify-items:center;align-content:start;gap:2px;padding:6px 2px;border:0;border-radius:14px;background:transparent;color:var(--fg);font:inherit;cursor:pointer;min-width:0}
+.shcell:active{transform:scale(.97)}.shcell.on .shart::after{content:"";position:absolute;inset:-4px;border:2px solid var(--ac);border-radius:50%}
+.shcell b{font-size:12.5px;font-weight:600;line-height:1.25;text-align:center}
+.shart{position:relative;display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:radial-gradient(ellipse 50% 18% at 50% 82%,color-mix(in srgb,var(--book) 22%,transparent),transparent 70%)}
+.shart .fdth,.shart .pfth{width:76px;height:76px}.shart .shic{width:76px;height:76px}
+.shclo{width:76px;height:58px}.shc1{fill:#c9a27a}.shc2{fill:none;stroke:#e6cba8;stroke-width:3;stroke-linecap:round}.shc3{fill:#a57c55}.shc4 rect{fill:#7a5236}.shc4 path{stroke:#7a5236}
+.shpr{display:inline-flex;align-items:center;gap:4px;font-family:var(--fd);font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}
+.shcoin{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--coin);color:#6b4a12}.shcoin .ic2{width:13px;height:13px}.shcoin.en{background:color-mix(in srgb,var(--hlt) 70%,var(--paper))}
+.shown{font-size:12.5px;font-weight:700;color:var(--ok)}.shsoon{font-size:12.5px;color:var(--mut)}
+.shcnt{position:absolute;right:2px;bottom:6px;font-size:12px;font-weight:700;padding:0 6px;border-radius:8px;background:var(--ac);color:var(--onac)}
+
+/* ร้านสะดวกซื้อในแมพ (js/konbini.js): ใช้สมุดเมนูของหน้าร้าน + ตะกร้า + แคชเชียร์ */
+.scin{position:static;margin-left:auto}.scl.px .scin+.scgo{margin-left:8px}
+.kbhd{display:grid;gap:2px}.kbclerk{font-family:var(--fd);font-size:20px;color:var(--ac)}
+.kbnight{margin:8px 0 0;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--hlt) 22%,var(--card));font-size:13.5px}
+.kbj{font-size:12px;color:var(--mut)}
+.kbst{display:inline-block;font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px;background:#ffd84a;color:#5a3d2b;vertical-align:middle}.kbst.warm{background:#ffb48a}
+.kbtag{position:absolute;left:-2px;top:2px;transform:rotate(-10deg)}
+.shpr s{color:var(--mut);font-weight:400;font-size:12.5px;margin-right:2px}
+.shcell:disabled{opacity:.45;cursor:default}
+.kbbar{position:sticky;bottom:0;display:flex;align-items:center;gap:10px;justify-content:space-between;margin-top:12px;padding:10px;border-radius:14px;background:var(--paper);border:2px solid var(--book);z-index:2}
+.kbbt{min-width:0;font-size:14px}.kbchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.kbchip{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;padding:2px 2px 2px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--bd)}.kbchip button{width:28px;height:28px;border-radius:50%;border:0;background:var(--card);color:var(--fg);font:inherit;font-weight:700}
+.kbbar .g{flex:none;min-height:44px;border:0;border-radius:12px;background:var(--ok);color:var(--onac);font:inherit;font-weight:700;padding:8px 14px}.kbbar .g:disabled{opacity:.45}
+.kbreg{display:flex;align-items:center;gap:14px;color:var(--ac)}
