@@ -650,9 +650,10 @@ let SNOWF=null;const SNOWP={11:.35,0:.5,1:.45},
   let h=(d.getFullYear()*372+d.getMonth()*31+d.getDate())*2654435761>>>0;h^=h>>>15;h=Math.imul(h,2246822519)>>>0;h^=h>>>13;return(h>>>0)/4294967296<pr},
  falling=(se,ms)=>se==='spring'||se==='autumn'||(se==='winter'&&snowDay(ms)); // วันนี้มีของตกไหม (กลีบ/ใบตกทุกวันของฤดู)
 // กล่องกระดาษในห้อง (v118 · รายงานข้อ 11 กล่องหลบ): โผล่มาบางวัน ราว 40% (ของใหม่ให้แมวไปดมแล้วมุดเข้าไปนั่ง) สุ่มกำหนดตามวันที่ · _t.setBox(true/false) ตรึงไว้ทดสอบ/พรีวิว
-let BOXF=null;const BOXP=.4,BOX={x0:58,x1:86,top:74,cx:48,dy:6},
+// PARCEL = มีกล่องพัสดุจากร้านออนไลน์ที่ส่งถึงแล้ว (js/netshop.js nsSync → PixelCat.parcel) วางกล่องในห้องทุกวันจนกว่าจะเปิด
+let BOXF=null,PARCEL=false;const BOXP=.4,BOX={x0:58,x1:86,top:74,cx:48,dy:6},
  boxDay=(ms=NOW??Date.now())=>{if(BOXF!=null)return BOXF;const d=new Date(ms);let h=(d.getFullYear()*389+d.getMonth()*37+d.getDate()*7+3)*2246822519>>>0;h^=h>>>13;h=Math.imul(h,3266489917)>>>0;h^=h>>>16;return(h>>>0)/4294967296<BOXP},
- boxOn=()=>PLACE==='room'&&boxDay(),bkey=()=>boxOn()?'|box':''; // bkey ต่อท้ายรหัสแคชของฉาก
+ boxOn=()=>PLACE==='room'&&(PARCEL||boxDay()),bkey=()=>boxOn()?'|box':''; // bkey ต่อท้ายรหัสแคชของฉาก
 // ของที่ตกลงมาตามฤดู: กลีบซากุระ ใบเมเปิล หิมะ · เส้นทางคิดจากนาฬิกาฉากล้วน (ไม่เก็บสถานะ เปิดกี่ครั้งก็ตรงกัน) · ปิดแอนิเมชัน = ไม่มี
 // R = [x, y, กว้าง, สูง] ช่วงที่ตก · ok(x,y) = วาดเฉพาะจุดที่ผ่าน (หน้าต่าง: เฉพาะพิกเซลที่เป็นฟ้า ไม่ทับกรอบ ม่าน เมฆ)
 const FALLC={spring:[['#f7c4d2','#ec9fb5'],['#b98399','#9c6a80']],autumn:[['#e8735a','#c9533f','#f0a05a'],['#93473a','#76382e','#a0663e']],winter:[['#ffffff','#eef3f8'],['#dde5f0','#b8c4d6']]};
@@ -1102,9 +1103,9 @@ function cue(k,ms=1800){if(cv&&cv.isConnected)doAct(k,ms);else pending={k,ms,t:D
 addEventListener('resize',fit);
 document.addEventListener('visibilitychange',()=>{last=performance.now();sLast=''});
 // frame/fall ใช้ในแผนที่เมือง (js/town.js): frame = ภาพแมวหนึ่งเฟรมเป็นตาราง 48×48 สี (ไม่ต้อง mount) · fall = ของตกตามฤดูลงผืนผ้าใบใดก็ได้ (หิมะเฉพาะวันที่หิมะตก)
-window.PixelCat={mount,unmount:stop,cue,act:doAct,poke,greet,say,tod,season:()=>season(),coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
+window.PixelCat={mount,unmount:stop,cue,act:doAct,parcel:v=>{v=!!v;if(PARCEL!==v){PARCEL=v;sLast=''}},poke,greet,say,tod,season:()=>season(),coats:Object.keys(COATS),poses:KEYS,places:Object.keys(SCENES),
  frame:(k,f,tm,coat,acc)=>frame(k,f,tm,COATS[coat]?coat:'cream',acc||'none'),fall:(c,se,R,n,ms=Date.now(),sk='light')=>fall(c,{P:true,ms,sk},se,R,n),
- _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},setSeason:v=>{SEAS=v;sLast=''},sniffGo,novel,circleSteps,setBox:v=>{BOXF=v;sLast=''},setChrono:v=>{CHR=v},setJit:v=>{JITF=v!==false},setRand:v=>{Math.random=v==null?RAND0:mb32(v>>>0)},boxDay,BOX,setBoxSeen:v=>{BOX_SEEN=v?boxKey():''},leave,poke,decide,catPose,setSnow:v=>{SNOWF=v;sLast=''},setLat:d=>{LAT=d*Math.PI/180;MOON=moonAt(NOW??Date.now());for(const k in bgC)delete bgC[k];sLast=''},latOf,lat:()=>LAT*180/Math.PI,snowDay,season,fall,moonAt,moonKey,moonIdx,moonBmp,moonGlow,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
+ _t:{step,cat,sceneBg,sceneFg,SW,SH,CY,bbox,bubblePos:()=>bub&&bub.style.transform,seen:SEEN,setReadMs:v=>{RMS=v},talking,XMIN,XMAX,frame,draw,W,H,COATS,KEYS,IDLE_NAMES,setPlaying:v=>{playing=v},setPart:v=>{PART=v},dayPart,setTod:v=>{TOD=v},setTrait:i=>{PS=PERS[i]||{}},PERS,setFam:(n,ms=0)=>{FAM=n;AT_MS=ms},wary,PLW,slowBlink,zoneAt,tolLv,headAt,fxs:()=>FXS,TOL,TOLK,palOf:(id,sk)=>palOf(SCENES[id],sk),layer,scenes:SCENES,trainX,birdAt,shishiA,setNow:v=>{NOW=v;sLast=''},setSeason:v=>{SEAS=v;sLast=''},sniffGo,novel,circleSteps,setBox:v=>{BOXF=v;sLast=''},boxOn:()=>boxOn(),setChrono:v=>{CHR=v},setJit:v=>{JITF=v!==false},setRand:v=>{Math.random=v==null?RAND0:mb32(v>>>0)},boxDay,BOX,setBoxSeen:v=>{BOX_SEEN=v?boxKey():''},leave,poke,decide,catPose,setSnow:v=>{SNOWF=v;sLast=''},setLat:d=>{LAT=d*Math.PI/180;MOON=moonAt(NOW??Date.now());for(const k in bgC)delete bgC[k];sLast=''},latOf,lat:()=>LAT*180/Math.PI,snowDay,season,fall,moonAt,moonKey,moonIdx,moonBmp,moonGlow,DUR,bflyAt,baskX,sunSkew,BIRD_ON,TRAIN_T,hunt,birdSeen,trainSeen,goTo,sceneW,
   // ตัวช่วยวาดสำหรับร่างท่าในหน้าพรีวิว/ไฟล์ร่างใน docs/ (เพิ่มท่าร่างลง POSES แล้วเรียก frame ได้) แอปไม่ได้ใช้
   POSES,lib:{sitCat,sdBox,sdEll,sdCap,smin,ear,earPts,headMat,tail,P,put,bean,eyeClosed,eyeSleepy,eyeHappy,mouth,blush,zz,bowPart,RAMP,EYE,IRIS,NOSE,FX,fr,get ACC(){return ACC},get IDLE(){return IDLE}}}};
 })();

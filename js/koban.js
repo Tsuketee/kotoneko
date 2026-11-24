@@ -3,15 +3,17 @@
 // สมุดโคบัง M.kbl = [[คีย์, จำนวน, เวลา ms, เหตุผล]] · ยอดคงเหลือและของที่มี (คีย์ buy:/bag:<รหัส>) คำนวณจากสมุด · คีย์ซ้ำไม่บันทึก จึงไม่มีทางได้ซ้ำ
 // กติกาที่เจ้าของเลือก 2026-11-23: FEATURE_MAP.md ข้อ 15 และ docs/PET_PIXEL.md หัวข้อ "กติกาการออกแบบที่ test ตรวจไม่ได้"
 const KB={mast:2,claim:5,all3:5,s7:30,s30:100,bag:150,keep:300,days:40};
-// t = ชนิด (coat ลายขน · acc เครื่องประดับ · room ของแต่งห้อง) · p = ราคาโคบัง · goal = ได้เมื่อจำได้แม่นครบ (ซื้อไม่ได้) · r = หายาก · soon = ยังไม่ได้วาดในฉาก ซื้อไม่ได้
+// t = ชนิด (coat ลายขน · acc เครื่องประดับ · room ของแต่งห้อง · toy ของเล่นวางในห้อง) · p = ราคาโคบัง · goal = ได้เมื่อจำได้แม่นครบ (ซื้อไม่ได้) · r = หายาก · soon = ยังไม่ได้วาดในฉาก ซื้อไม่ได้
 const KBI=[
  {id:'coat:orange',t:'coat',k:'orange',p:200},{id:'coat:silver',t:'coat',k:'silver',p:200},{id:'coat:white',t:'coat',k:'white',p:200},
  {id:'coat:black',t:'coat',k:'black',p:200},{id:'coat:tuxedo',t:'coat',k:'tuxedo',p:200},{id:'coat:korat',t:'coat',k:'korat',p:200},
  {id:'coat:siamese',t:'coat',k:'siamese',p:300,r:1},{id:'coat:calico',t:'coat',k:'calico',goal:250,r:1},
  {id:'acc:scarf',t:'acc',k:'scarf',n:'ผ้าพันคอ',p:120},{id:'acc:bow',t:'acc',k:'bow',n:'โบว์',p:120},
  {id:'room:daruma',t:'room',k:'daruma',n:'ตุ๊กตาดารุมะ',p:80,soon:1},{id:'room:poster',t:'room',k:'poster',n:'โปสเตอร์ภูเขา',p:100,soon:1},
- {id:'room:plant',t:'room',k:'plant',n:'ต้นไม้กระถางใหญ่',p:120,soon:1},{id:'room:rug',t:'room',k:'rug',n:'พรมลายคลื่น',p:150,soon:1}];
-const KBT={coat:'ลายขน',acc:'เครื่องประดับ',room:'ของแต่งห้อง'};
+ {id:'room:plant',t:'room',k:'plant',n:'ต้นไม้กระถางใหญ่',p:120,soon:1},{id:'room:rug',t:'room',k:'rug',n:'พรมลายคลื่น',p:150,soon:1},
+ {id:'toy:ball',t:'toy',k:'ball',n:'ลูกบอลกระดิ่ง',p:60,soon:1},{id:'toy:wand',t:'toy',k:'wand',n:'ไม้ตกแมวขนนก',p:80,soon:1},
+ {id:'toy:tunnel',t:'toy',k:'tunnel',n:'อุโมงค์ผ้า',p:140,soon:1},{id:'toy:tower',t:'toy',k:'tower',n:'คอนโดแมวไม้',p:220,soon:1}];
+const KBT={coat:'ลายขน',acc:'เครื่องประดับ',room:'ของแต่งห้อง',toy:'ของเล่น'};
 // อาหาร: e = ราคา Energy · b = ความสนิทที่ได้ · h = ความหิวที่ลด · รูปพิกเซลอยู่ใน FOODART (js/shop.js)
 const FOOD=[{k:'milk',n:'นมอุ่นๆ',e:15,b:4,h:20},{k:'katsuo',n:'ข้าวโรยปลาโอแห้ง',e:20,b:6,h:25},{k:'dango',n:'ดังโงะ 3 สี',e:20,b:6,h:20},{k:'tamago',n:'ไข่ม้วนทามาโกะยากิ',e:25,b:8,h:30},{k:'onigiri',n:'ข้าวปั้นปลา',e:30,b:10,h:40},{k:'fish',n:'ปลาย่าง',e:45,b:16,h:60},{k:'udon',n:'อุด้งร้อน',e:55,b:20,h:80},{k:'sushi',n:'ซูชิมื้อพิเศษ',e:70,b:26,h:100},
  // ร้านสะดวกซื้อในแมพ (js/konbini.js): src = ที่ขาย · c = หมวด · fresh = ของสด ลดราคาตอนดึกได้ · warm = ให้พนักงานอุ่นได้ · art = ใช้รูปของชนิดอื่น
@@ -22,10 +24,14 @@ const FOOD=[{k:'milk',n:'นมอุ่นๆ',e:15,b:4,h:20},{k:'katsuo',n:'�
  {k:'fudon',jp:'れいとううどん',n:'อุด้งแช่แข็ง',e:45,b:16,h:70,src:'konbini',c:'frozen',warm:1,art:'udon'},{k:'ffish',jp:'やきざかな',n:'ปลาย่างแช่แข็ง',e:45,b:16,h:60,src:'konbini',c:'frozen',warm:1,art:'fish'},
  {k:'bento',jp:'さけべんとう',n:'ข้าวกล่องแซลมอน',e:55,b:20,h:80,src:'konbini',c:'frozen',warm:1,fresh:1},
  {k:'kmilk',jp:'ねこようミルク',n:'นมสำหรับแมว',e:15,b:4,h:20,src:'konbini',c:'sweet',art:'milk'},{k:'pudding',jp:'ねこようプリン',n:'พุดดิ้งสำหรับแมว',e:20,b:6,h:15,src:'konbini',c:'sweet',fresh:1},
- {k:'ice',jp:'ねこようアイス',n:'ไอติมสำหรับแมว',e:20,b:5,h:10,src:'konbini',c:'sweet'}];
+ {k:'ice',jp:'ねこようアイス',n:'ไอติมสำหรับแมว',e:20,b:5,h:10,src:'konbini',c:'sweet'},
+ // ร้านออนไลน์ (js/netshop.js): อาหารแมวสูตรต่างประเทศ ไม่ปรุงรส · from = สูตรของประเทศ · ราคารวมค่าส่งจึงแพงกว่าอาหารในแมพ (เจ้าของตอบ 2026-11-24)
+ {k:'jerky',n:'อกไก่อบแห้ง',from:'สูตรอเมริกา',e:25,b:6,h:15,src:'net'},{k:'pate',n:'ปาเต้ทูน่า',from:'สูตรฝรั่งเศส',e:35,b:10,h:35,src:'net'},
+ {k:'stew',n:'สตูว์ไก่ฟักทอง',from:'สูตรอิตาลี',e:40,b:12,h:45,src:'net'},{k:'lamb',n:'เนื้อแกะบด',from:'สูตรนิวซีแลนด์',e:50,b:16,h:55,src:'net'},
+ {k:'salmon',n:'แซลมอนนึ่ง',from:'สูตรนอร์เวย์',e:60,b:20,h:70,src:'net'}];
 const FMAX=9;
 const kbCat=()=>(M.pet.sp||0)===0&&!!window.PixelCat;
-const kbFits=it=>it.t==='room'||kbCat();
+const kbFits=it=>it.t==='room'||it.t==='toy'||kbCat();
 const kbItem=id=>id==='coat:cream'?{id,t:'coat',k:'cream'}:KBI.find(x=>x.id===id);
 const kbName=it=>it.t==='coat'?(window.PixelCat&&PixelCat._t.COATS[it.k]?PixelCat._t.COATS[it.k].name:it.k):it.n;
 // ---------- สมุดโคบัง ----------
@@ -60,8 +66,6 @@ function kbBag(){const pool=kbPool(),c=kbBagPrice();if(!pool.length||c>kbBal())r
 function phg(p){if(p.hg==null)return 50;return Math.max(0,Math.min(100,Math.round(p.hg+(Date.now()-(p.ht||Date.now()))/36e5*4)))}
 const phgN=h=>h<10?'อิ่มแปล้':h<45?'อิ่มกำลังดี':h<75?'เริ่มหิวแล้ว':'หิวมาก';
 const pfoodN=p=>Object.values(p.food||{}).reduce((a,n)=>a+(+n||0),0);
-function fbuy(k){const p=M.pet,f=FOOD.find(x=>x.k===k);if(!f)return false;p.food=p.food||{};const n=p.food[k]||0;
- if(n>=FMAX||p.energy<f.e)return false;p.energy-=f.e;p.food[k]=n+1;saveM();toast(icx('rice',16)+' เก็บ'+f.n+'เข้าตู้กับข้าวแล้ว (มี '+(n+1)+')');return true}
 // กองในตู้กับข้าว: <ชนิด> ปกติ · ~ ซื้อตอนลดราคา (ความสนิท ×0.8) · ^ พนักงานอุ่นให้แล้ว (ความสนิท +2)
 const foodBond=(f,key)=>Math.round(f.b*(key.includes('~')?.8:1))+(key.includes('^')?2:0);
 function pfood(k){const p=M.pet,base=k.replace(/[~^]+$/,''),f=FOOD.find(x=>x.k===base);if(!f)return false;p.food=p.food||{};const h=phg(p);

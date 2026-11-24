@@ -368,8 +368,10 @@ test('ร้านค้า: จอคอมพิวเตอร์ในห้
   await cat(p, 'old');
   assert.strictEqual(await p.locator('[data-testid^="shop-item-coat:"]').count(), 8, 'ลายขน 8 แบบ (ไม่นับลายเริ่มต้น)');
   assert.strictEqual(await p.locator('[data-testid^="food-item-"]').count(), 8, 'อาหารญี่ปุ่น 8 เมนู');
-  assert.match(await p.getByTestId('shop-item-coat:orange').innerText(), /ส้มลายเสือ[\s\S]*200[\s\S]*ย้ายไปศาลเจ้า/);
-  assert.match(await p.getByTestId('food-item-udon').innerText(), /อุด้งร้อน[\s\S]*55[\s\S]*ย้ายไปแมพ/);
+  for (const [id, want] of [['shop-item-coat:orange', ['ส้มลายเสือ', '200', 'ย้ายไปศาลเจ้า']], ['food-item-udon', ['อุด้งร้อน', '55', 'ย้ายไปแมพ']]]) {
+    const tx = await p.getByTestId(id).innerText();
+    assert(want.every(w => tx.includes(w)), id + ': ' + tx);
+  }
   await snap(p, 'pc-old');
   await p.getByTestId('nav-home').click();
   assert.strictEqual(await p.evaluate(() => document.body.dataset.tab), 'home', 'ออกจากร้านแล้วพื้นหลังกลับเป็นปกติ');

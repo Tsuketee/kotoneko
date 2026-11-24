@@ -403,3 +403,32 @@ body[data-tab="shop"]::after{content:"";position:fixed;left:0;right:0;bottom:0;h
 .kbchip{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;padding:2px 2px 2px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--bd)}.kbchip button{width:28px;height:28px;border-radius:50%;border:0;background:var(--card);color:var(--fg);font:inherit;font-weight:700}
 .kbbar .g{flex:none;min-height:44px;border:0;border-radius:12px;background:var(--ok);color:var(--onac);font:inherit;font-weight:700;padding:8px 14px}.kbbar .g:disabled{opacity:.45}
 .kbreg{display:flex;align-items:center;gap:14px;color:var(--ac)}
+
+/* ร้านออนไลน์ (js/netshop.js): จอคอมพิวเตอร์ในห้องแมว · หน้าเว็บย้อนยุค ขอบดำหนา ปุ่มเงา 2px · สีจาก token สองโหมด */
+:root{--pcb:#3a3f4b;--pcb2:#2a2e37;--pcs:#f4f1ea;--pci:#2b2b2b;--pct:#2a5db0;--pcu:#e6e1d3;--pcsd:#ece6d6;--pcy:#ffd84d;--pcg:#7bd88f;--pcl:#111111;--pcmv:#a05a00;--pcmap:#bfe3a8;--pcrd:#8a8a8a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pcb:#15171c;--pcb2:#0b0c0f;--pcs:#26231f;--pci:#efe8dc;--pct:#3a63a8;--pcu:#312d28;--pcsd:#2d2925;--pcy:#a8862a;--pcg:#3e8a55;--pcl:#000000;--pcmv:#f0b25a;--pcmap:#3d5a35;--pcrd:#5a5a5a}}
+:root[data-theme="dark"]{--pcb:#15171c;--pcb2:#0b0c0f;--pcs:#26231f;--pci:#efe8dc;--pct:#3a63a8;--pcu:#312d28;--pcsd:#2d2925;--pcy:#a8862a;--pcg:#3e8a55;--pcl:#000000;--pcmv:#f0b25a;--pcmap:#3d5a35;--pcrd:#5a5a5a}
+.nspc{margin:14px 0 8px;background:var(--pcb);border-radius:18px;padding:14px 14px 28px;box-shadow:0 8px 0 var(--pcb2);position:relative}.nspc::after{content:"";position:absolute;left:50%;bottom:9px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--pcg)}
+.nswin{background:var(--pcs);color:var(--pci);border:3px solid var(--pcl);text-align:left}
+.nstb{display:flex;align-items:center;gap:8px;background:var(--pct);color:#fff;padding:5px 10px;font:700 14px/1.3 ui-monospace,"Noto Sans Thai",monospace}.nstb i{margin-left:auto;display:flex;gap:4px}.nstb i b{width:16px;height:14px;background:var(--pcu);border:2px solid var(--pcl)}
+.nsurl{padding:4px 8px;border-bottom:2px solid var(--pcl);background:var(--pcu);font:12px ui-monospace,monospace}.nsurl span{display:block;background:var(--pcs);border:2px solid var(--pcl);padding:2px 6px}
+.nsbd{display:grid;grid-template-columns:150px minmax(0,1fr);min-height:520px}
+.nsside{display:flex;flex-direction:column;gap:4px;border-right:2px solid var(--pcl);background:var(--pcsd);padding:8px 6px}.nsside hr{width:100%;border:0;border-top:2px dashed var(--pcl);margin:6px 0}
+.nsside button{min-height:44px;text-align:left;border:2px solid transparent;background:none;color:var(--pci);font:inherit;font-size:14px;padding:6px;display:flex;align-items:center;gap:6px;cursor:pointer}.nsside button.on,.nsside button[aria-pressed="true"]{border-color:var(--pcl);background:var(--pcy);color:#111}.nsside button:disabled{opacity:.5}
+.nsmain{padding:10px;min-width:0}.nsh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;border-bottom:3px double var(--pcl);padding-bottom:4px;margin-bottom:4px;font:800 16px ui-monospace,"Noto Sans Thai",monospace}.nsh .st{font:12px var(--fb,inherit);color:var(--mut)}
+.nsrow{display:flex;align-items:center;gap:8px;border-bottom:1px dotted var(--pcl);padding:4px 0}
+.nsrb{flex:1;min-width:0;display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;background:none;border:0;color:var(--pci);font:inherit;text-align:left;padding:4px 0;cursor:pointer}
+.nsth{display:grid;place-items:center;width:52px;height:52px}.nsth .fdth,.nsth .pfth{width:48px;height:48px}.nsth .shic{width:48px;height:48px}
+.nsnm b{display:block;font-size:15px}.nssub{font-size:12.5px;color:var(--mut)}.nsmv{color:var(--pcmv)}.nssoon{color:var(--pcmv);font-weight:700}.nsship{color:var(--pct);font-weight:700}
+.nspr{font-weight:800;display:flex;align-items:center;gap:3px;white-space:nowrap;font-variant-numeric:tabular-nums}.nsprb{font-size:20px;margin:6px 0}
+.nsbtn{min-height:44px;min-width:44px;border:2px solid var(--pcl);background:var(--pcy);box-shadow:2px 2px 0 var(--pcl);font:inherit;font-size:13px;padding:4px 10px;color:#111;cursor:pointer}.nsbtn.g{background:var(--pcg)}.nsbtn:disabled{background:var(--pcu);color:var(--mut);box-shadow:none}
+.nsships{display:grid;gap:6px;margin:10px 0}.nsship-b{display:grid;text-align:left;border:2px solid var(--pcl);background:var(--pcs);color:var(--pci);font:inherit;padding:8px;min-height:44px}.nsship-b span{font-size:12.5px;color:var(--mut)}.nsship-b.on{box-shadow:inset 0 0 0 3px var(--pct)}
+.nstot{display:flex;gap:16px;flex-wrap:wrap;font-size:16px}.nstot b{font-variant-numeric:tabular-nums}.nsact{display:flex;justify-content:space-between;gap:8px;margin-top:8px}
+.nsord{border:2px solid var(--pcl);padding:8px;margin:8px 0}.nsh2{display:flex;justify-content:space-between}
+.nsmap{position:relative;height:96px;border:2px solid var(--pcl);background:var(--pcmap);margin:6px 0;overflow:hidden}.nsrd{position:absolute;left:0;right:0;top:46px;height:16px;background:var(--pcrd);border-block:2px solid var(--pcl)}
+.nswh,.nshm{position:absolute;top:10px;font-size:11px;background:var(--pcs);border:2px solid var(--pcl);padding:1px 4px}.nswh{left:4px}.nshm{right:4px}.nstr{position:absolute;top:34px;width:44px}
+.nst1{fill:#e55}.nst2{fill:#c33}.nst3{fill:#fff}.nst4{fill:#222}.nsb1{fill:#d6a868}.nsb2{fill:#b4884f}.nsb3{fill:#ebc98f}.nsb4{fill:#efe3c6}
+.nsboxes{display:flex;gap:12px;flex-wrap:wrap}.nsbx{display:grid;justify-items:center;gap:2px;font-size:12px;text-align:center;max-width:90px}
+.nswin .shsv,.nswin .btns,.nsbody{padding:0 12px}.nswin .btns{padding-bottom:12px}.nsbody{text-align:center}.nsbody .nsboxes{justify-content:center}.nsbig{width:96px;margin:10px auto 0}
+.nspop{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin:8px 0 2px;min-height:44px;background:var(--pcs);color:var(--pci);border:3px solid var(--pcl);box-shadow:3px 3px 0 var(--pcl);padding:4px 10px;font:inherit;font-weight:600;font-size:14px;cursor:pointer}.nspop svg{width:28px;flex:none}
+@media (max-width:560px){.nsbd{grid-template-columns:1fr}.nsside{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:2px solid var(--pcl)}.nsside hr{display:none}}
