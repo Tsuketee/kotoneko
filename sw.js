@@ -1,5 +1,5 @@
 // Service worker: ทำให้แอปเปิดได้ตอนออฟไลน์
-const VERSION = 'v187';
+const VERSION = 'v188';
 const CACHE = 'kotoneko-' + VERSION;
 const FILES = [
   './',
