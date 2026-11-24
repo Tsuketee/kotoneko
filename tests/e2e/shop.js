@@ -231,3 +231,21 @@ test('สมุดโคบัง: ยาวเกิน 300 รายการ�
   assert((await p.getByTestId('shop-item-acc:bow').innerText()).includes('มีแล้ว'));
   assert.deepStrictEqual(p.errors, []);
 });
+
+test('อาหาร: รูปพิกเซลครบทุกชนิด ตารางละ 32×32 ใช้แต่สีที่มีในชุดสี และวาดลงหน้าต่างให้อาหารจริง', async (b, base) => {
+  const p = await open(b, base, { pet: { food: { milk: 1, onigiri: 1, fish: 1, sushi: 1 } } });
+  const bad = await p.evaluate(() => FOOD.flatMap(f => {
+    const rows = FOODART[f.k];
+    if (!rows) return [f.k + ': ไม่มีรูป'];
+    if (rows.length !== 32) return [f.k + ': มี ' + rows.length + ' แถว'];
+    return rows.flatMap((r, y) => [...(r.length !== 32 ? [f.k + ' แถว ' + y + ': กว้าง ' + r.length] : []), ...[...r].filter(ch => ch !== '.' && !FPAL[ch]).map(ch => f.k + ' แถว ' + y + ': ไม่มีสี "' + ch + '"')]);
+  }));
+  assert.deepStrictEqual(bad, []);
+  await p.getByTestId('pet-feed').click();
+  for (const k of ['milk', 'onigiri', 'fish', 'sushi']) {
+    const drawn = await p.getByTestId('food-img-' + k).evaluate(c => { const d = c.getContext('2d').getImageData(0, 0, 32, 32).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 200) n++; return n; });
+    assert(drawn > 250, k + ' วาดได้ ' + drawn + ' พิกเซล');
+  }
+  await snap(p, 'feed-dialog-art');
+  assert.deepStrictEqual(p.errors, []);
+});
