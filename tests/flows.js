@@ -340,6 +340,42 @@ test('08-goal', 'เป้าหมายต่อวัน: คำตอบต�
   assert.deepStrictEqual(rec.errors(), []);
 });
 
+// ---------- 9. ร้านค้าโคบัง + ตู้กับข้าว ----------
+test('09-shop', 'ร้านค้า: รับภารกิจได้ Energy และโคบัง → ประวัติโคบังบอกที่มา → ซื้อนมด้วย Energy เข้าตู้กับข้าว → หน้าแรกกดให้อาหาร เลือกจากรูปอาหาร → ความสนิทเพิ่ม ของในตู้ลด', async b => {
+  const p = await open(b);
+  await onboard(p, '5 ข้อ');
+  await openKanji(p);
+  await p.getByTestId('mode-quiz').click();
+  for (let i = 0; i < 5; i++) { const r = await answer(p, true); if (i < 4) await nextTerm(p, r.k); }
+  await p.getByTestId('toast').filter({ hasText: 'ทบทวนให้ถูก สำเร็จ' }).waitFor();
+  await p.getByTestId('nav-home').click();
+  await p.getByTestId('mission-claim-rev').click();
+  await p.getByTestId('mission-claim-neu').click();
+  assert.strictEqual(await p.getByTestId('pet-energy').getAttribute('aria-valuenow'), '40');
+  await p.getByTestId('nav-shop').click();
+  assert.match(await p.getByTestId('shop-koban').innerText(), /^10$/);
+  await p.getByTestId('shop-log-toggle').click();
+  assert.strictEqual((await p.getByTestId('shop-log').innerText()).match(/รับภารกิจ/g).length, 2);
+  await rec.shot(p, 'shop');
+  await p.getByTestId('food-item-milk').click();
+  await p.getByTestId('food-buy').click();
+  assert.match(await p.getByTestId('shop-sheet').innerText(), /ในตู้ 1/);
+  await p.getByTestId('shop-sheet-close').click();
+  await p.getByTestId('nav-home').click();
+  assert.match(await p.getByTestId('pet-bond').innerText(), /4 \/ 120/);
+  await p.getByTestId('pet-feed').click();
+  await p.getByTestId('food-img-milk').waitFor();
+  await rec.shot(p, 'feed-dialog');
+  await p.getByTestId('feed-milk').click();
+  await p.getByTestId('feed-dialog').waitFor({ state: 'detached' });
+  assert.match(await p.getByTestId('pet-bond').innerText(), /8 \/ 120/);
+  await p.getByTestId('pet-feed').click();
+  assert.match(await p.getByTestId('feed-milk').innerText(), /×0/);
+  assert(await p.getByTestId('feed-milk').isDisabled());
+  await rec.shot(p, 'after-feed');
+  assert.deepStrictEqual(rec.errors(), []);
+});
+
 (async () => {
   let server;
   if (process.env.BASE_URL) base = process.env.BASE_URL;
