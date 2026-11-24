@@ -7,15 +7,16 @@
 - **`npm run check` บน main ผ่านทั้ง 12 ขั้น**: type · lint 0 · schema 9/9 · data 0 จุด · determinism · featuremap · version · test-count · unit 12/12 · hooks 20/20 · e2e 67/67 · flows 9/9
 - งานใหม่ให้เริ่ม branch จาก main ล่าสุด · push แบบ force ถูกระบบปฏิเสธ ถ้าต้องตามให้ทัน main ให้ใช้ `git merge origin/main`
 
-## ⚠️ hook ของโปรเจกต์ไม่ทำงานถ้า session ไม่ได้เปิดที่โฟลเดอร์ kotoneko
-- พบ 2026-11-23: session ที่เปิดหลาย repo จะเริ่มที่ `/home/user` (มี `kotoneko` และ `kotoneko-content`) Claude Code จึงไม่โหลด `kotoneko/.claude/settings.json` · **hook ทุกตัว (lint หลังแก้ไฟล์ · Stop · SessionStart · UserPromptSubmit · approval-gate) ไม่เคยทำงานจริงใน session แบบนี้** (ไม่มี `test-results/session-base.json` และ `turn-start.json` · `CLAUDE_PROJECT_DIR` ว่าง) · ที่ผ่านมาตรวจได้เฉพาะตอนรันเองและใน `tests/hooks.js`
-- ทางแก้ให้เจ้าของเลือก: (ก) เปิด session ที่มี repo kotoneko อย่างเดียว · (ข) ใส่ hook ไว้ในการตั้งค่าระดับผู้ใช้/สภาพแวดล้อม โดยชี้ path ไปที่ `kotoneko/tools/hooks/` · ยังไม่ได้ตัดสิน
-- ระหว่างนี้ให้รัน `npm run check` เองก่อนจบงานทุกครั้ง และอ่าน "รอเจ้าของตัดสิน" ด้วยตัวเอง (hook ขอบเขตงานจะไม่ถาม)
+## hook ใน session ที่เปิดหลาย repo (แก้แล้ว 2026-11-24 · B1)
+- session ที่เปิดหลาย repo เริ่มที่ `/home/user` จึงไม่โหลด `kotoneko/.claude/settings.json` (พบ 2026-11-23 · hook ไม่เคยทำงานใน session แบบนี้จนถึง 2026-11-24)
+- ทางแก้: setup script ของสภาพแวดล้อม cloud "Kotoneko" (เจ้าของอนุมัติ 2026-11-24) รัน `npm ci` ใน kotoneko และ `node kotoneko/tools/hooks/install-parent.js` ทุกครั้งที่สร้างเครื่องใหม่ → เขียน `/home/user/.claude/settings.json` ที่เรียก hook ชุดเดียวกันด้วย path เต็ม และตั้ง `CLAUDE_PROJECT_DIR` เป็น kotoneko (session ที่เปิดที่ kotoneko เองจะข้าม ไม่รันซ้ำ)
+- **มีผลหลัง merge เข้า main** (setup script ข้ามถ้ายังไม่มี `install-parent.js` บน main) · ทดสอบแล้วในเครื่อง 2026-11-24 ด้วย `claude -p` ที่ `/home/user`: SessionStart/UserPromptSubmit เขียน `kotoneko/test-results/` และ Stop ได้ช่อง `last_assistant_message` `transcript_path` จริง · **ยังไม่ได้ทดสอบบนเครื่องใหม่จริงที่ setup script รันเอง**
+- เริ่ม session ใหม่ให้ตรวจ: `node kotoneko/tools/hooks/install-parent.js --check` (จาก `/home/user`) และมี `kotoneko/test-results/session-base.json` · ถ้าไม่มี แปลว่า hook ไม่ถูกโหลด ให้รันคำสั่งติดตั้งเอง แล้วบอกเจ้าของ
 
 ## เริ่ม session ใหม่ต้องทำก่อน
-1. `npm ci` (container ใหม่ไม่มี `node_modules`) · Chromium ของ Playwright มีในเครื่องแล้ว
+1. `npm ci` (setup script ของสภาพแวดล้อมรันให้แล้วตั้งแต่ 2026-11-24 · ถ้าไม่มี `node_modules` ให้รันเอง) · Chromium ของ Playwright มีในเครื่องแล้ว
 2. `git fetch origin main` ก่อนรัน check (ขั้น version/test-count เทียบกับ `origin/main` ถ้าค้างเก่าจะเทียบผิดฐาน · session นี้เคยเจอ origin/main ค้างที่ v34)
-3. hook (`.claude/settings.json` · **ทำงานเฉพาะ session ที่เปิดที่โฟลเดอร์ kotoneko** ดู ⚠️ ด้านบน): หลังแก้ไฟล์ = lint/type ของไฟล์นั้น · ข้อความเจ้าของมี "เสนอแผนก่อน/ยังไม่ต้องแก้" หรือจะแก้ `js/data/` โดยไม่มีคำอนุมัติ = ขอให้เจ้าของกดอนุญาต · ก่อนจบ turn = ต้องรัน `npm run check` กับโค้ดล่าสุด และข้อความสุดท้ายต้องมีผล test · เรียก `/verify-app` ก่อนบอกว่าเสร็จ
+3. hook (`.claude/settings.json` · session หลาย repo ใช้ไฟล์ที่ `install-parent.js` เขียน ดูหัวข้อด้านบน): หลังแก้ไฟล์ = lint/type ของไฟล์นั้น · ข้อความเจ้าของมี "เสนอแผนก่อน/ยังไม่ต้องแก้" หรือจะแก้ `js/data/` โดยไม่มีคำอนุมัติ = ขอให้เจ้าของกดอนุญาต · คำสั่ง git ที่ทับไฟล์ในเครื่อง (checkout -- · reset --hard · restore · clean -f · stash ตอนมีไฟล์ค้าง) = ขอให้เจ้าของกดอนุญาต · ก่อนจบ turn = ต้องรัน `npm run check` กับโค้ดล่าสุด ข้อความสุดท้ายต้องมีผล test และถ้าแก้ `js/` (นอก `js/data/`) หรือ `css/` ต้องอ้างภาพใน `test-results/` หรือส่งภาพให้เจ้าของ · เรียก `/verify-app` ก่อนบอกว่าเสร็จ
 
 ## งานที่ทำใน session นี้
 | เวอร์ชัน | งาน |
@@ -41,8 +42,8 @@
 | (ไม่ต้องเพิ่ม VERSION) | ข1–ข3 hook: `prompt-start.js` (UserPromptSubmit) · `approval-gate.js` (PreToolUse ask) · `stop-check.js` บล็อกเมื่อไฟล์/ข้อมูลเปลี่ยนผิดขอบเขต หรือไม่แนบผล test · กติกาคำใน `tools/hooks/gate-rules.js` · ข2(ข) ทุกไฟล์ใน `js/data/` ต้องมีใน NOTICE.md · ง1–ง4 ลบบรรทัด CLAUDE.md ที่ตัวตรวจครอบแล้ว |
 
 ## รอเจ้าของตัดสิน
-1. **hook ไม่ทำงานใน session ที่เปิดหลาย repo** (ดูหัวข้อ ⚠️ ด้านบน) · ตั้ง branch protection ถ้ายังไม่ได้ตั้ง (Settings → Branches → require "npm run check" และ "เพิ่มเลข VERSION แล้ว")
-2. **ตรวจ hook ใหม่เมื่อมี session ที่โหลด hook ได้**: ชื่อช่อง `prompt` (UserPromptSubmit) และ `last_assistant_message` (Stop) มาจากสรุปเอกสาร Claude Code · ถ้า `test-results/turn-start.json` ไม่ถูกสร้าง แปลว่า hook ไม่ถูกโหลดหรือชื่อช่องไม่ตรง
+1. **hook ใน session ที่เปิดหลาย repo**: แก้แล้ว รอยืนยันบนเครื่องใหม่หลัง merge (ดูหัวข้อด้านบน) · ตั้ง branch protection ถ้ายังไม่ได้ตั้ง (Settings → Branches → require "npm run check" และ "เพิ่มเลข VERSION แล้ว")
+2. ✅ ชื่อช่อง `prompt` (UserPromptSubmit) และ `last_assistant_message` `transcript_path` (Stop) ยืนยันแล้ว 2026-11-24 จากข้อมูลจริงที่ hook ได้รับ
 3. **แผน "ถอนวัชพืช" 17 ข้อ: ทำครบแล้ว (2026-11-23 · v170–v185 · เจ้าของอนุมัติทั้งหมด)** ดูตารางด้านล่าง · เจ้าของตัดสิน 2026-11-23: `style.css` ไม่แยก · ไม่ใช้ Prettier
 4. เรื่องเดิม: ลองบน iPad จริง (นิ้ว/Pencil/กันฝ่ามือ · โหมดส่วนตัว · เสียงอ่าน · ปุ่มคำแปล) · กติการ้านค้า/ลายขน/เครื่องประดับ (`docs/PET_PIXEL.md`)
 
@@ -79,4 +80,4 @@
 - 404/403/409 ใน console ของ e2e ที่ URL `https://sb.test/` มาจาก Supabase จำลองที่ตั้งใจตอบแบบนั้น
 
 ## ข้อความเริ่ม session ใหม่
-> อ่าน `docs/HANDOFF.md` ก่อน รัน `npm ci` และ `git fetch origin main` แล้วถามผมเรื่องที่ค้างในหัวข้อ "รอเจ้าของตัดสิน" (เริ่มจากเรื่อง hook ไม่ทำงาน)
+> อ่าน `docs/HANDOFF.md` ก่อน ตรวจว่า hook ถูกโหลด (`node kotoneko/tools/hooks/install-parent.js --check`) รัน `git fetch origin main` แล้วถามผมเรื่องที่ค้างในหัวข้อ "รอเจ้าของตัดสิน"
