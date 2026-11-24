@@ -1,4 +1,4 @@
-// ร้านค้า (tab shop): ตู้สะสมแบบเห็นของทุกชิ้นในหน้าเดียว · แตะของแล้วแผ่นล่างลองใส่และแลกด้วยโคบัง · แลกแล้วไปใส่ที่คลังสะสม (js/profile.js colWear)
+// ร้านค้า (tab shop): สมุดเมนูแบ่งแท็บ · แตะของแล้วแผ่นล่างลองใส่และแลกด้วยโคบัง · แลกแล้วไปใส่ที่คลังสะสม (js/profile.js colWear)
 // ถุงโชคดี: หน้าต่างบอกรายชื่อและโอกาสก่อนจ่าย → อนิเมชันเปิดถุง → หน้าต่างโชว์ของที่ได้ · อาหารซื้อด้วย Energy เข้าตู้กับข้าว · ห้ามมีราคาเงินจริง
 // กติกาและราคา: js/koban.js · แบบที่เจ้าของเลือก (2026-11-23): FEATURE_MAP.md ข้อ 15
 let shLog=false;
@@ -6,18 +6,29 @@ function shState(it){if(it.soon)return'soon';if(kbOwns(it.id)){const p=M.pet,on=
 const shCv=(it,cls,tid)=>`<canvas class="${cls}"${tid?` data-testid="${tid}"`:''} data-coat="${it.t==='coat'?it.k:(M.pet.coat||'cream')}" data-acc="${it.t==='acc'?it.k:(tid?(M.pet.acc||'none'):'none')}" width="48" height="48" ${tid?`role="img" aria-label="${M.pet.name}ลองใส่${kbName(it)}"`:'aria-hidden="true"'}></canvas>`;
 const shThumb=(it,big)=>it.t==='room'?`<span class="shic${big?' big':''}">${icx('home',big?56:30)}</span>`:shCv(it,big?'shcv':'pfth',big?'shop-preview':'');
 const foodImg=(f,cls,tid)=>`<canvas class="${cls}" data-food="${f.k}"${tid?` data-testid="${tid}"`:''} width="32" height="32" role="img" aria-label="${f.n}"></canvas>`;
-function shopHtml(){const p=M.pet,L=kbL(),pool=kbPool(),price=kbBagPrice();
- let h=`<h1>ร้านค้า</h1><div class="st">แลกของแต่งด้วยโคบังจากการเรียน ซื้ออาหารด้วย Energy ไม่ใช้เงินจริง</div>
-<div class="card shwal"><div class="shwt"><span class="shkb">${icx('koban',30,'kb-i')}</span><div><div class="shbal"><b data-testid="shop-koban">${kbBal()}</b> โคบัง <span class="shen">${icx('bolt',16,'hl-i')} ${p.energy} Energy</span></div><div class="st">จำได้แม่น +${KB.mast}/ข้อ · รับภารกิจ +${KB.claim} · ครบ 3 อย่าง +${KB.all3} · ติดกัน 7/30 วัน +${KB.s7}/+${KB.s30}</div></div><button class="mnl" data-testid="shop-log-toggle" aria-expanded="${shLog}" onclick="shLog=!shLog;render()">${shLog?'ซ่อน':'ประวัติ'}</button></div>`;
- if(shLog)h+=`<ol class="shlog" data-testid="shop-log">${L.slice(-10).reverse().map(r=>`<li><span>${esc(r[3])}</span><b class="${r[1]<0?'neg':''}">${r[1]>0?'+':''}${r[1]}</b></li>`).join('')||'<li><span>ยังไม่มีรายการ เรียนให้จำได้แม่นหรือรับภารกิจเพื่อรับโคบัง</span></li>'}</ol>`;
- h+=`</div><button class="shbag" data-testid="shop-bag-open" ${pool.length?'':'disabled'} onclick="shBagAsk()"><span class="shbi">${icx('gift',26)}</span><span class="shbt"><b>ถุงโชคดี 福袋</b><span class="st">${pool.length?`สุ่ม 1 ชิ้นจาก ${pool.length} ชิ้นที่ยังไม่มี · โอกาสแต่ละชิ้น 1/${pool.length} · ไม่มีของซ้ำ`:'สะสมครบแล้ว ไม่มีของให้สุ่มเพิ่ม'}</span></span>${pool.length?`<span class="shbp">${icx('koban',16)} ${price}</span>`:''}</button>`;
- [['coat','ลายขน'],['acc','เครื่องประดับ'],['room','ของแต่งห้อง']].filter(([t])=>t==='room'||kbCat()).forEach(([t,n])=>{
-  const items=[...(t==='coat'?[kbItem('coat:cream')]:[]),...KBI.filter(it=>it.t===t)],got=items.filter(it=>!it.soon&&kbOwns(it.id)).length;
-  h+=`<div class="pfk">${n}${t==='room'?' <span>เร็วๆ นี้</span>':` <span>มีแล้ว ${got}/${items.length}</span>`}</div><div class="pfg">`+items.map(it=>{const s=shState(it);
-   const tag={on:'ใส่อยู่',own:'มีแล้ว',soon:'เร็วๆ นี้',goal:`${icx('medal',12,'m3')} แม่น ${it.goal}`,buy:`${icx('koban',12,'kb-i')} ${it.p}`}[s];
-   return `<button class="pfi shi${s==='on'?' on':''}${s==='buy'||s==='goal'||s==='soon'?' pfo':''}" data-testid="shop-item-${it.id}" onclick="shSheet('${it.id}')"><span class="pft3">${shThumb(it)}${s==='buy'||s==='goal'?icx('lock',16,'pfl'):''}</span><b>${kbName(it)}</b><span>${tag}</span></button>`}).join('')+'</div>'});
- const fd=p.food||{};
- h+=`<div class="pfk">อาหาร <span>ใช้ Energy · ในตู้กับข้าว ${pfoodN(p)} ชิ้น</span></div><div class="pfg">`+FOOD.map(f=>`<button class="pfi shi" data-testid="food-item-${f.k}" onclick="shFood('${f.k}')"><span class="pft3">${foodImg(f,'fdth')}</span><b>${f.n}</b><span>${icx('bolt',12,'hl-i')} ${f.e} · ในตู้ ${fd[f.k]||0}</span></button>`).join('')+'</div>';
+// หน้าร้านแบบสมุดเมนู (เจ้าของส่งภาพตัวอย่าง 2026-11-24 · ใช้แค่แนวหน้าตา): แท็บ อาหาร / ลายขน / ของแต่ง · ตาราง 3 ช่องมีเส้นชั้นวางคั่นแถว · ราคาใต้รูป
+// ของที่ซื้อไม่ได้ (ได้จากเป้าการเรียน หรือยังไม่ได้วาด) แสดงเป็นฝาครอบอาหารติดแม่กุญแจ
+let shTab='food';
+function shT(t){shTab=t;render()}
+const SHCLOCHE=`<svg class="shclo" viewBox="0 0 64 48" aria-hidden="true"><path class="shc1" d="M6 40a26 24 0 0 1 52 0z"/><path class="shc2" d="M12 36a20 18 0 0 1 14-16"/><rect class="shc1" x="28" y="10" width="8" height="6" rx="3"/><rect class="shc3" x="2" y="40" width="60" height="5" rx="2.5"/><g class="shc4"><rect x="25" y="27" width="14" height="10" rx="2"/><path d="M28 27v-3a4 4 0 0 1 8 0v3" fill="none" stroke-width="2.4"/></g></svg>`;
+function shCell(it){const s=shState(it),lock=s==='goal'||s==='soon';
+ const pr={on:'<span class="shown">ใส่อยู่</span>',own:'<span class="shown">มีแล้ว</span>',soon:'<span class="shsoon">เร็วๆ นี้</span>',goal:`<span class="shpr">${icx('medal',14,'m3')} แม่น ${it.goal}</span>`,buy:`<span class="shpr">${it.p} <span class="shcoin">${icx('koban',14)}</span></span>`}[s];
+ return `<button class="shcell${s==='on'?' on':''}" data-testid="shop-item-${it.id}" onclick="shSheet('${it.id}')" aria-label="${kbName(it)} ${s==='buy'?it.p+' โคบัง':s==='own'?'มีแล้ว':s==='on'?'ใส่อยู่':s==='goal'?'ได้จากเป้าการเรียน':'เร็วๆ นี้'}"><span class="shart">${lock?SHCLOCHE:shThumb(it)}</span><b>${kbName(it)}</b>${pr}</button>`}
+function shFoodCell(f){const n=(M.pet.food||{})[f.k]||0;return `<button class="shcell" data-testid="food-item-${f.k}" onclick="shFood('${f.k}')" aria-label="${f.n} ${f.e} Energy ในตู้ ${n}"><span class="shart">${foodImg(f,'fdth')}${n?`<span class="shcnt">×${n}</span>`:''}</span><b>${f.n}</b><span class="shpr">${f.e} <span class="shcoin en">${icx('bolt',13)}</span></span></button>`}
+function shopHtml(){const p=M.pet,L=kbL(),pool=kbPool(),price=kbBagPrice(),cat=kbCat();
+ const tabs=[['food','อาหาร'],...(cat?[['coat','ลายขน']]:[]),['deco','ของแต่ง']];if(!tabs.some(t=>t[0]===shTab))shTab='food';
+ let h=`<div class="shtop"><h1>ร้านค้า</h1><span class="shchip" title="โคบัง">${icx('koban',20,'kb-i')}<b data-testid="shop-koban">${kbBal()}</b></span><span class="shchip" title="Energy">${icx('bolt',18,'hl-i')}<b>${p.energy}</b></span><button class="shchip shlogb" data-testid="shop-log-toggle" aria-expanded="${shLog}" aria-label="ประวัติโคบัง" onclick="shLog=!shLog;render()">${icx('doc',18)}</button></div>
+<div class="st shsub">แลกของแต่งด้วยโคบังจากการเรียน ซื้ออาหารด้วย Energy ไม่ใช้เงินจริง</div>`;
+ if(shLog)h+=`<div class="card shwal"><div class="st">จำได้แม่น +${KB.mast}/ข้อ · รับภารกิจ +${KB.claim} · ครบ 3 อย่าง +${KB.all3} · ติดกัน 7/30 วัน +${KB.s7}/+${KB.s30}</div><ol class="shlog" data-testid="shop-log">${L.slice(-10).reverse().map(r=>`<li><span>${esc(r[3])}</span><b class="${r[1]<0?'neg':''}">${r[1]>0?'+':''}${r[1]}</b></li>`).join('')||'<li><span>ยังไม่มีรายการ เรียนให้จำได้แม่นหรือรับภารกิจเพื่อรับโคบัง</span></li>'}</ol></div>`;
+ h+=`<button class="shbag" data-testid="shop-bag-open" ${pool.length?'':'disabled'} onclick="shBagAsk()"><span class="shbi">${icx('gift',26)}</span><span class="shbt"><b>ถุงโชคดี 福袋</b><span class="st">${pool.length?`สุ่ม 1 ชิ้นจาก ${pool.length} ชิ้นที่ยังไม่มี · โอกาสแต่ละชิ้น 1/${pool.length} · ไม่มีของซ้ำ`:'สะสมครบแล้ว ไม่มีของให้สุ่มเพิ่ม'}</span></span>${pool.length?`<span class="shbp">${icx('koban',16)} ${price}</span>`:''}</button>`;
+ // เนื้อหาแท็บ
+ let cells,note;
+ if(shTab==='food'){cells=FOOD.map(shFoodCell);note=`ใช้ Energy · ในตู้กับข้าว ${pfoodN(p)} ชิ้น`}
+ else if(shTab==='coat'){const it=[kbItem('coat:cream'),...KBI.filter(x=>x.t==='coat')];cells=it.map(shCell);note=`มีแล้ว ${it.filter(x=>kbOwns(x.id)).length}/${it.length}`}
+ else{const it=[...(cat?KBI.filter(x=>x.t==='acc'):[]),...KBI.filter(x=>x.t==='room')];cells=it.map(shCell);note=cat?'เครื่องประดับ · ของแต่งห้อง (เร็วๆ นี้)':'ของแต่งห้อง (เร็วๆ นี้)'}
+ const rows=[];for(let i=0;i<cells.length;i+=3)rows.push(cells.slice(i,i+3));
+ h+=`<div class="shbook"><div class="shtabs" role="tablist">${tabs.map(([t,n])=>`<button role="tab" data-testid="shop-tab-${t}" aria-selected="${shTab===t}" class="${shTab===t?'on':''}" onclick="shT('${t}')">${n}</button>`).join('')}</div>
+<div class="shpaper" role="tabpanel"><div class="shnote">${note}</div>${rows.map(r=>`<div class="shrow">${r.join('')}</div>`).join('')}</div></div>`;
  return h+`<button class="mer" onclick="goCol()"><span class="pmi">${icx('paw',22)}</span><span class="mrt"><b>ใส่ของที่คลังสะสม</b><span class="st">ลายขนและเครื่องประดับที่แลกแล้ว แตะเพื่อใส่หรือถอด</span></span><span aria-hidden="true">›</span></button>`}
 // รูปอาหารแบบพิกเซล 32×32 (ออกแบบ 2026-11-24 · เส้นขอบโทนเดียวกับแมว แสงจากซ้ายบน): ตารางละ 32 แถว อักษรละ 1 พิกเซลตามชุดสี FPAL · '.' = โปร่งใส
 // แก้รูป: เปลี่ยนอักษรในตาราง หรือเพิ่มสีใน FPAL (อักษรใหม่ 1 ตัว) · ทุกชนิดใน FOOD ต้องมีตาราง 32×32 (test "อาหาร: รูปพิกเซล")
