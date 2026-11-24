@@ -143,7 +143,7 @@ test('ถุงโชคดี: ก่อนจ่ายบอกรายชื
   await snap(p, 'bag-ask');
   await p.getByTestId('shop-bag-confirm').click();
   await p.getByTestId('bag-anim').waitFor();
-  await p.waitForTimeout(400); await p.screenshot({ path: 'test-results/e2e/bag-anim-mid.png' });
+  await p.waitForTimeout(400); await snap(p, 'bag-anim-mid', { animations: true });
   await p.getByTestId('bag-reveal').waitFor();
   const got = (await p.getByTestId('bag-reveal-name').innerText()).trim();
   assert(names.includes(got), got);
