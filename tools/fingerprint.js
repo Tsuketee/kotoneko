@@ -6,10 +6,11 @@ const STAMP = path.join('test-results', 'check-stamp.json');
 const BASE = path.join('test-results', 'session-base.json');
 const TURN = path.join('test-results', 'turn-start.json');   // ข้อความล่าสุดของเจ้าของ + ลายนิ้วมือตอนเริ่ม turn (tools/hooks/prompt-start.js)
 
-// only = นับเฉพาะไฟล์ที่ขึ้นต้นด้วยค่านี้ (เช่น 'js/data/')
+// only = นับเฉพาะไฟล์ที่ขึ้นต้นด้วยค่านี้ (เช่น 'js/data/') หรือฟังก์ชันเลือกไฟล์ (เช่น isUi ใน tools/hooks/gate-rules.js)
 function fingerprint(root, only = '') {
   const out = execFileSync('git', ['ls-files', '-z', '-co', '--exclude-standard'], { cwd: root, encoding: 'utf8', maxBuffer: 64 << 20 });
-  const files = [...new Set(out.split('\0').filter(f => f && f.startsWith(only) && !f.startsWith('test-results/') && !f.endsWith('.md')))].sort();
+  const keep = typeof only === 'function' ? only : f => f.startsWith(only);
+  const files = [...new Set(out.split('\0').filter(f => f && keep(f) && !f.startsWith('test-results/') && !f.endsWith('.md')))].sort();
   const h = crypto.createHash('sha1');
   for (const f of files) {
     h.update(f + '\0');
