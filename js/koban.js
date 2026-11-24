@@ -13,7 +13,7 @@ const KBI=[
  {id:'room:plant',t:'room',k:'plant',n:'ต้นไม้กระถางใหญ่',p:120,soon:1},{id:'room:rug',t:'room',k:'rug',n:'พรมลายคลื่น',p:150,soon:1}];
 const KBT={coat:'ลายขน',acc:'เครื่องประดับ',room:'ของแต่งห้อง'};
 // อาหาร: e = ราคา Energy · b = ความสนิทที่ได้ · h = ความหิวที่ลด · รูปพิกเซลอยู่ใน FOODART (js/shop.js)
-const FOOD=[{k:'milk',n:'นมอุ่นๆ',e:15,b:4,h:20},{k:'katsuo',n:'ข้าวโรยปลาโอแห้ง',e:20,b:6,h:25},{k:'onigiri',n:'ข้าวปั้นปลา',e:30,b:10,h:40},{k:'fish',n:'ปลาย่าง',e:45,b:16,h:60},{k:'sushi',n:'ซูชิมื้อพิเศษ',e:70,b:26,h:100}];
+const FOOD=[{k:'milk',n:'นมอุ่นๆ',e:15,b:4,h:20},{k:'katsuo',n:'ข้าวโรยปลาโอแห้ง',e:20,b:6,h:25},{k:'dango',n:'ดังโงะ 3 สี',e:20,b:6,h:20},{k:'tamago',n:'ไข่ม้วนทามาโกะยากิ',e:25,b:8,h:30},{k:'onigiri',n:'ข้าวปั้นปลา',e:30,b:10,h:40},{k:'fish',n:'ปลาย่าง',e:45,b:16,h:60},{k:'udon',n:'อุด้งร้อน',e:55,b:20,h:80},{k:'sushi',n:'ซูชิมื้อพิเศษ',e:70,b:26,h:100}];
 const FMAX=9;
 const kbCat=()=>(M.pet.sp||0)===0&&!!window.PixelCat;
 const kbFits=it=>it.t==='room'||kbCat();
