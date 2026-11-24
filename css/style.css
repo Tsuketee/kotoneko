@@ -388,3 +388,18 @@ body[data-tab="shop"]::after{content:"";position:fixed;left:0;right:0;bottom:0;h
 .shcoin{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--coin);color:#6b4a12}.shcoin .ic2{width:13px;height:13px}.shcoin.en{background:color-mix(in srgb,var(--hlt) 70%,var(--paper))}
 .shown{font-size:12.5px;font-weight:700;color:var(--ok)}.shsoon{font-size:12.5px;color:var(--mut)}
 .shcnt{position:absolute;right:2px;bottom:6px;font-size:12px;font-weight:700;padding:0 6px;border-radius:8px;background:var(--ac);color:var(--onac)}
+
+/* ร้านสะดวกซื้อในแมพ (js/konbini.js): ใช้สมุดเมนูของหน้าร้าน + ตะกร้า + แคชเชียร์ */
+.scin{position:static;margin-left:auto}.scl.px .scin+.scgo{margin-left:8px}
+.kbhd{display:grid;gap:2px}.kbclerk{font-family:var(--fd);font-size:20px;color:var(--ac)}
+.kbnight{margin:8px 0 0;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--hlt) 22%,var(--card));font-size:13.5px}
+.kbj{font-size:12px;color:var(--mut)}
+.kbst{display:inline-block;font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px;background:#ffd84a;color:#5a3d2b;vertical-align:middle}.kbst.warm{background:#ffb48a}
+.kbtag{position:absolute;left:-2px;top:2px;transform:rotate(-10deg)}
+.shpr s{color:var(--mut);font-weight:400;font-size:12.5px;margin-right:2px}
+.shcell:disabled{opacity:.45;cursor:default}
+.kbbar{position:sticky;bottom:0;display:flex;align-items:center;gap:10px;justify-content:space-between;margin-top:12px;padding:10px;border-radius:14px;background:var(--paper);border:2px solid var(--book);z-index:2}
+.kbbt{min-width:0;font-size:14px}.kbchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.kbchip{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;padding:2px 2px 2px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--bd)}.kbchip button{width:28px;height:28px;border-radius:50%;border:0;background:var(--card);color:var(--fg);font:inherit;font-weight:700}
+.kbbar .g{flex:none;min-height:44px;border:0;border-radius:12px;background:var(--ok);color:var(--onac);font:inherit;font-weight:700;padding:8px 14px}.kbbar .g:disabled{opacity:.45}
+.kbreg{display:flex;align-items:center;gap:14px;color:var(--ac)}

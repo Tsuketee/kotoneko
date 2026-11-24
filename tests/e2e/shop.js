@@ -245,13 +245,13 @@ test('สมุดโคบัง: ยาวเกิน 300 รายการ�
 test('อาหาร: รูปพิกเซลครบทั้ง 8 ชนิด (นม ข้าวโรยปลาโอแห้ง ดังโงะ ไข่ม้วน ข้าวปั้น ปลาย่าง อุด้ง ซูชิ) ตารางละ 32×32 ใช้แต่สีที่มีในชุดสี และวาดลงหน้าต่างให้อาหารจริง', async (b, base) => {
   const p = await open(b, base, { pet: { food: { milk: 1, katsuo: 1, dango: 1, tamago: 1, onigiri: 1, fish: 1, udon: 1, sushi: 1 } } });
   const bad = await p.evaluate(() => FOOD.flatMap(f => {
-    const rows = FOODART[f.k];
+    const rows = FOODART[f.art || f.k];
     if (!rows) return [f.k + ': ไม่มีรูป'];
     if (rows.length !== 32) return [f.k + ': มี ' + rows.length + ' แถว'];
     return rows.flatMap((r, y) => [...(r.length !== 32 ? [f.k + ' แถว ' + y + ': กว้าง ' + r.length] : []), ...[...r].filter(ch => ch !== '.' && !FPAL[ch]).map(ch => f.k + ' แถว ' + y + ': ไม่มีสี "' + ch + '"')]);
   }));
   assert.deepStrictEqual(bad, []);
-  assert.deepStrictEqual(await p.evaluate(() => FOOD.map(f => [f.k, f.n, f.e, f.b, f.h])), [['milk', 'นมอุ่นๆ', 15, 4, 20], ['katsuo', 'ข้าวโรยปลาโอแห้ง', 20, 6, 25], ['dango', 'ดังโงะ 3 สี', 20, 6, 20], ['tamago', 'ไข่ม้วนทามาโกะยากิ', 25, 8, 30], ['onigiri', 'ข้าวปั้นปลา', 30, 10, 40], ['fish', 'ปลาย่าง', 45, 16, 60], ['udon', 'อุด้งร้อน', 55, 20, 80], ['sushi', 'ซูชิมื้อพิเศษ', 70, 26, 100]], 'อาหาร 8 ชนิดเรียงตามราคา');
+  assert.deepStrictEqual(await p.evaluate(() => FOOD.filter(f => !f.src).map(f => [f.k, f.n, f.e, f.b, f.h])), [['milk', 'นมอุ่นๆ', 15, 4, 20], ['katsuo', 'ข้าวโรยปลาโอแห้ง', 20, 6, 25], ['dango', 'ดังโงะ 3 สี', 20, 6, 20], ['tamago', 'ไข่ม้วนทามาโกะยากิ', 25, 8, 30], ['onigiri', 'ข้าวปั้นปลา', 30, 10, 40], ['fish', 'ปลาย่าง', 45, 16, 60], ['udon', 'อุด้งร้อน', 55, 20, 80], ['sushi', 'ซูชิมื้อพิเศษ', 70, 26, 100]], 'อาหาร 8 ชนิดเรียงตามราคา');
   await p.getByTestId('pet-feed').click();
   for (const k of ['milk', 'katsuo', 'dango', 'tamago', 'onigiri', 'fish', 'udon', 'sushi']) {
     const drawn = await p.getByTestId('food-img-' + k).evaluate(c => { const d = c.getContext('2d').getImageData(0, 0, 32, 32).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 200) n++; return n; });

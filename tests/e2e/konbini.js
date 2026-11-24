@@ -30,7 +30,7 @@ const MENU = {
 test('คอนบินิ: เข้าร้านจากฉาก · แท็บ ขนมทานเล่น/อาหารรองท้อง/อาหารแช่แข็ง/ของหวาน · แถวละ 3 ช่อง · แตะใส่ตะกร้า (×จำนวน) · เอาออกได้ · Energy ไม่พอหยิบเพิ่มไม่ได้', async (b, base) => {
   const away = await open(b, base, { at: 'room' });
   assert.strictEqual(await away.getByTestId('place-shop').count(), 0, 'อยู่ที่อื่นไม่มีปุ่มเข้าร้าน');
-  const p = await open(b, base, { pet: { energy: 60 } });
+  const p = await open(b, base, { pet: { energy: 70 } });
   await enter(p);
   assert((await p.getByTestId('kbn-sheet').innerText()).includes('いらっしゃいませ'));
   const tabs = () => p.evaluate(() => [...document.querySelectorAll('[data-testid^="kbn-tab-"]')].map(e => [e.dataset.testid.slice(8), e.innerText.trim(), e.getAttribute('aria-selected')]));
@@ -54,11 +54,11 @@ test('คอนบินิ: เข้าร้านจากฉาก · แ�
   await p.getByTestId('kbn-item-kegg').click();
   assert.match(await p.getByTestId('kbn-item-kegg').innerText(), /×2/);
   assert.strictEqual(await total(p), 35 + 15 + 15);
-  assert(await p.getByTestId('kbn-item-chicken').isDisabled(), 'Energy 60 เหลือ -5 หยิบอกไก่อีกชิ้นไม่ได้');
+  assert(await p.getByTestId('kbn-item-chicken').isDisabled(), 'Energy 70 ใช้ไป 65 หยิบอกไก่ (35) อีกชิ้นไม่ได้');
   await p.getByTestId('kbn-cart-dec-kegg').click();
   assert.strictEqual(await total(p), 50);
   assert.match(await p.getByTestId('kbn-basket').innerText(), /2 ชิ้น/);
-  assert.strictEqual((await kmeta(p)).pet.energy, 60, 'ยังไม่จ่าย Energy ไม่ลด');
+  assert.strictEqual((await kmeta(p)).pet.energy, 70, 'ยังไม่จ่าย Energy ไม่ลด');
   // ออกจากร้านแล้วตะกร้าว่าง
   await p.getByTestId('kbn-close').click();
   await enter(p);
