@@ -7,6 +7,7 @@
 - **ไปหน้าต่างๆ ใน test**: คลิกแถบล่าง `#nav button:has-text("<ชื่อแท็บ>")` หรือเรียกฟังก์ชัน global ตรงๆ เช่น `goTab('learn')` `openDs('k')` `goMe('backup')`
 - **data-testid**: test ใหม่ใช้ `page.getByTestId('<ชื่อ>')` หรือ role/ข้อความที่ผู้ใช้เห็น (`getByRole` `getByText`) เท่านั้น ห้ามใช้ class และห้ามเรียกฟังก์ชันภายในแอป ตัวอย่างอยู่ใน `tests/flows.js` · selector แบบ class ด้านล่างเป็นของ `tests/e2e.js` รุ่นเดิม · เปลี่ยนชื่อหรือลบ data-testid ต้องแก้ test และไฟล์นี้ด้วย
 - **บรรทัด test**: อ้างข้อในชุด e2e (`tests/e2e.js` รันทุกไฟล์ใน `tests/e2e/` แยกตามหมวด: data main pet places cloud packs device · ส่วนกลางใน `harness.js`) ด้วยคำในชื่อข้อ `e2e.js "<คำ>"` (รันได้ด้วย `node tests/e2e.js "<คำ>"`) ห้ามใช้เลขบรรทัด · อ้าง `tests/flows.js` ด้วยรหัสข้อ เช่น 05-write-pen · `tests/check-feature-map.js` ตรวจว่าทุกข้อที่อ้างมีอยู่จริง
+- **ตัวเลขเกม** (ราคาอาหาร ความสนิท ความหิว กติกาโคบัง ราคาของ ตู้กับข้าวชนิดละ ค่าถุงคอนบินิ) ในข้อ 3, 5.1 และ 15: `tests/check-feature-map.js` เทียบกับ `KB` `KBI` `FOOD` `FMAX` (`js/koban.js`) และ `KBN_BAG` (`js/konbini.js`) · แก้ตัวเลขในโค้ดต้องแก้ไฟล์นี้ด้วย · เปลี่ยนถ้อยคำประโยคที่มีตัวเลข ต้องแก้ `NUMS` ในตัวตรวจตาม
 - **หลักฐาน**: ทุกข้อ test เก็บภาพหน้าจอและ console log ไว้ใน `test-results/<ชุด>/` (สรุปใน `summary.md`) · ตรวจก่อนบอกว่าเสร็จด้วย skill `verify-app`
 - **ทุกข้อ test** เก็บ JavaScript error ของหน้าไว้ใน `p.errors` และส่วนใหญ่ปิดท้ายด้วย `assert.deepStrictEqual(p.errors, [])`
 - **ข้อห้ามที่ test ยังตรวจไม่ได้** (ย้ายมาจาก CLAUDE.md เดิม):
