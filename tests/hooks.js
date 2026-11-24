@@ -159,4 +159,46 @@ test('ไอคอน: apple-touch-icon-vN.png เปลี่ยนหน้า
   r = ver(); assert.strictEqual(r.status, 0, r.stderr); reset();
 });
 fs.rmSync(vt, { recursive: true, force: true });
+
+// ---------- tests/check-feature-map.js: ตัวเลขเกม (อาหาร โคบัง ราคา) ใน FEATURE_MAP.md ต้องตรงกับ KB KBI FOOD FMAX KBN_BAG ในโค้ด ----------
+const fmDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-fm-'));
+const FM = fs.readFileSync(path.join(ROOT, 'FEATURE_MAP.md'), 'utf8');
+const fmCheck = (from, to) => {
+  const s = from ? FM.replace(from, to) : FM;
+  assert(!from || s !== FM, 'ไม่เจอข้อความ "' + from + '" ใน FEATURE_MAP.md');
+  fs.writeFileSync(path.join(fmDir, 'FEATURE_MAP.md'), s);
+  return spawnSync('node', [path.join(ROOT, 'tests/check-feature-map.js'), path.join(fmDir, 'FEATURE_MAP.md')], { encoding: 'utf8' });
+};
+const fmBad = (from, to, re) => { const r = fmCheck(from, to); assert.strictEqual(r.status, 1, `"${from}" → "${to}" ต้องไม่ผ่าน: ${r.stdout}`); assert.match(r.stderr, re, from); };
+test('FEATURE_MAP: ตัวเลขเกมตรงกับโค้ด → ผ่าน', () => {
+  const r = fmCheck(); assert.strictEqual(r.status, 0, r.stderr); assert.match(r.stdout, /ตัวเลขเกม/);
+});
+test('FEATURE_MAP: ราคา Energy / ความสนิท / ความหิวของอาหารไม่ตรง FOOD → ไม่ผ่าน และบอกชื่ออาหารกับค่าในโค้ด', () => {
+  fmBad('ปลาย่าง 45 (+16 −60)', 'ปลาย่าง 40 (+16 −60)', /ปลาย่าง.*45/);
+  fmBad('นม 15 (สนิท +4 หิว −20)', 'นม 15 (สนิท +5 หิว −20)', /นม.*\+4/);
+  fmBad('ซูชิ 70 (+26 −100)', 'ซูชิ 70 (+26 −90)', /ซูชิ.*100/);
+  fmBad('· ซูชิ 70 (+26 −100)', '', /อาหาร.*8/);
+});
+test('FEATURE_MAP: กติกาโคบังไม่ตรง KB → ไม่ผ่าน', () => {
+  fmBad('จำได้แม่นข้อใหม่ +2', 'จำได้แม่นข้อใหม่ +3', /KB\.mast = 2/);
+  fmBad('รับภารกิจ +5', 'รับภารกิจ +10', /KB\.claim = 5/);
+  fmBad('+20 Energy +2 ความสนิท +5 โคบัง', '+20 Energy +2 ความสนิท +6 โคบัง', /KB\.claim = 5/);
+  fmBad('สตรีค 7 วัน +30', 'สตรีค 7 วัน +35', /KB\.s7 = 30/);
+  fmBad('30 วัน +100', '30 วัน +150', /KB\.s30 = 100/);
+  fmBad('ยาวเกิน 300 รายการ', 'ยาวเกิน 500 รายการ', /KB\.keep = 300/);
+});
+test('FEATURE_MAP: ราคาของในร้านโคบังไม่ตรง KBI / KB.bag → ไม่ผ่าน', () => {
+  fmBad('ลายขน 200', 'ลายขน 180', /ลายขน.*200/);
+  fmBad('หายาก วิเชียรมาศ 300', 'หายาก วิเชียรมาศ 350', /coat:siamese.*300/);
+  fmBad('ครบ 250 ข้อ', 'ครบ 200 ข้อ', /coat:calico.*250/);
+  fmBad('เครื่องประดับ 120', 'เครื่องประดับ 100', /เครื่องประดับ.*120/);
+  fmBad('ของแต่งห้อง 80–150', 'ของแต่งห้อง 80–200', /ของแต่งห้อง.*80–150/);
+  fmBad('ถุงโชคดีราคา 150', 'ถุงโชคดีราคา 120', /KB\.bag = 150/);
+});
+test('FEATURE_MAP: ตู้กับข้าวชนิดละ / ค่าถุงคอนบินิไม่ตรง FMAX / KBN_BAG → ไม่ผ่าน · ประโยคที่มีตัวเลขหายไป → ไม่ผ่านและบอกให้แก้ตัวตรวจ', () => {
+  fmBad('(ชนิดละไม่เกิน 9)', '(ชนิดละไม่เกิน 10)', /FMAX = 9/);
+  fmBad('(ถุง 1 Energy)', '(ถุง 2 Energy)', /KBN_BAG = 1/);
+  fmBad('สตรีค 7 วัน +30', 'สตรีคเจ็ดวันได้สามสิบ', /หาไม่เจอ.*tests\/check-feature-map\.js/);
+});
+fs.rmSync(fmDir, { recursive: true, force: true });
 console.log(`\nผ่านทั้งหมด ${n} ข้อ`);
