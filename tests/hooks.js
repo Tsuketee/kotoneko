@@ -157,6 +157,34 @@ test('ก่อนจบ turn: แก้ไฟล์ที่ไม่ใช่�
 
 fs.rmSync(tmp, { recursive: true, force: true });
 
+// ---------- ก่อนรันคำสั่ง git ที่ทับไฟล์ในเครื่อง (approval-gate.js · PreToolUse Bash) · เคยเกิด 2026-11-24: git stash + git checkout <sha> -- . ไฟล์ในเครื่องถูกแทนด้วยไฟล์รุ่นเก่า ----------
+const repo = () => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-git-')); const g = (...a) => execFileSync('git', a, { cwd: d, stdio: 'pipe' }); g('init', '-q'); fs.writeFileSync(path.join(d, 'a.js'), '1\n'); g('add', '.'); g('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base'); return d; };
+const gDirty = repo(), gClean = repo();
+const bash = (command, cwd = gClean) => hook('approval-gate.js', { tool_name: 'Bash', tool_input: { command }, cwd });
+const askedWhy = r => asked(r) && r.hookSpecificOutput.permissionDecisionReason;
+test('ก่อนรัน git ที่ทับไฟล์ในเครื่อง (checkout <ref> -- . · checkout -- <ไฟล์> · checkout -f · reset --hard · restore · clean -f · switch --discard-changes) → ขอให้เจ้าของอนุญาต แม้ไม่มีไฟล์ค้างและไม่มี turn-start', () => {
+  for (const c of ['git checkout abc123 -- .', 'git checkout -- a.js', 'git checkout .', 'git checkout -f main', 'git reset --hard', 'git reset --hard origin/main', 'git restore a.js', 'git restore --worktree --staged a.js', 'git clean -fd', 'git clean -xdf', 'git switch --discard-changes main', 'git status && git checkout 1234abc -- .', 'cd /x; git -C /y reset --hard HEAD~1', 'GIT_PAGER=cat git -c core.x=1 reset --hard']) {
+    const why = askedWhy(bash(c)); assert(why, c); assert.match(why, /ทับไฟล์ในเครื่อง/, c); assert.match(why, /commit/, c);
+  }
+});
+test('ก่อนรัน git stash (ไม่ระบุคำสั่งย่อย · push · save): มีไฟล์ค้าง → ขออนุญาต · ไม่มีไฟล์ค้าง → ไม่ถาม · ดูที่ -C <โฟลเดอร์> ถ้ามี · stash list/show/pop → ไม่ถาม', () => {
+  assert.strictEqual(bash('git stash'), null, 'ไม่มีไฟล์ค้าง');
+  fs.writeFileSync(path.join(gDirty, 'a.js'), '2\n');
+  for (const c of ['git stash', 'git stash -u', 'git stash push -m x', 'git stash save x']) assert(askedWhy(bash(c, gDirty)), c);
+  assert(askedWhy(bash(`git -C "${gDirty}" stash`, gClean)), '-C ชี้ไป repo ที่มีไฟล์ค้าง');
+  assert.strictEqual(bash(`git -C "${gClean}" stash`, gDirty), null, '-C ชี้ไป repo ที่ไม่มีไฟล์ค้าง');
+  for (const c of ['git stash list', 'git stash show -p', 'git stash pop']) assert.strictEqual(bash(c, gDirty), null, c);
+});
+test('คำสั่งที่ไม่ทับไฟล์ในเครื่อง (status diff log add commit push fetch checkout <branch> checkout -b reset --soft restore --staged clean -n) และข้อความในเครื่องหมายคำพูด → ไม่ถาม', () => {
+  for (const c of ['git status', 'git diff --stat', 'git log --oneline -3', 'git add -A && git commit -qm "ย้อน git checkout -- . ไม่ได้"', 'git push -u origin x', 'git fetch -q origin main', 'git checkout main', 'git checkout -b new', 'git switch main', 'git reset --soft HEAD~1', 'git reset HEAD a.js', 'git restore --staged a.js', 'git clean -n', 'npm run check', 'echo "git reset --hard"', "grep -n 'git stash' docs/x.md"]) assert.strictEqual(bash(c, gDirty), null, c);
+});
+test('.claude/settings.json: approval-gate.js รับทั้งการแก้ไฟล์และ Bash', () => {
+  const s = JSON.parse(fs.readFileSync(path.join(ROOT, '.claude/settings.json'), 'utf8'));
+  const m = s.hooks.PreToolUse.filter(h => h.hooks.some(x => x.command.includes('approval-gate.js'))).map(h => h.matcher).join('|').split('|');
+  for (const t of ['Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'Bash']) assert(m.includes(t), t);
+});
+for (const d of [gDirty, gClean]) fs.rmSync(d, { recursive: true, force: true });
+
 // ---------- tests/check-version.js: ต้องเพิ่ม VERSION เมื่อไฟล์ที่ผู้ใช้โหลดเปลี่ยนเท่านั้น ----------
 const vt = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-ver-'));
 const vgit = (...a) => execFileSync('git', a, { cwd: vt, stdio: 'pipe', encoding: 'utf8' });
