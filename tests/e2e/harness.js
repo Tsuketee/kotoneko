@@ -2,7 +2,8 @@
 const http = require('http'), fs = require('fs'), path = require('path'), assert = require('assert');
 let rec = null;
 // ภาพหน้าจอระหว่างข้อ (เช่นตอนเปิดคำแปล) · ภาพตอนจบข้อถ่ายให้อัตโนมัติ: snap(p, 'translation-on') → test-results/e2e/<ข้อ>-translation-on.png
-const snap = (p, step) => rec.shot(p, step); // หลักฐานทุกข้อ: test-results/e2e/ (ภาพหน้าจอ + console log + summary.md)
+// ภาพกลางอนิเมชัน: snap(p, 'bag-anim-mid', { animations: true })
+const snap = (p, step, o) => rec.shot(p, step, o); // หลักฐานทุกข้อ: test-results/e2e/ (ภาพหน้าจอ + console log + summary.md)
 const ROOT = path.join(__dirname, '..', '..');
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 

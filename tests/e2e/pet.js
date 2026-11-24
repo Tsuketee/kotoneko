@@ -120,6 +120,31 @@ test('สัตว์เลี้ยงปลอบหลังตอบผิ�
   assert.deepStrictEqual(p.errors, []);
 });
 
+test('แมวพิกเซล: setRand(seed) ตรึงตัวสุ่ม · เปิดหน้าใหม่แล้วจำลองด้วย seed เดิมได้ท่าเรียงเหมือนเดิมทุกครั้ง (แม้รอนานไม่เท่ากัน) · seed ต่างกันได้ต่างกัน · setRand(null) คืนตัวสุ่มจริง', async (b, base) => {
+  const sim = async (seed, wait) => {
+    const p = await fresh(b, base);
+    await p.waitForTimeout(wait);
+    const r = await p.evaluate(seed => {
+      const T = PixelCat._t, { cat } = T, native = Math.random;
+      T.setJit(false); T.setNow(new Date('2026-11-22T12:00:00').getTime()); T.setBox(false); T.setFam(99, 0); T.setPart('day'); T.setRand(seed);
+      Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52, dir: 1, target: 52, then: null, tol: 0, cool: 0, pend: null, str: 0 });
+      const seq = []; for (let i = 0; i < 12000; i++) { T.step(50); if (seq[seq.length - 1] !== cat.mode) seq.push(cat.mode); }
+      const draws = (T.setRand(3), [Math.random(), Math.random()]), again = (T.setRand(3), [Math.random(), Math.random()]);
+      T.setRand(null);
+      return { seq: seq.join(' '), n: seq.length, draws, again, restored: Math.random === native };
+    }, seed);
+    assert.deepStrictEqual(p.errors, []);
+    await p.close();
+    return r;
+  };
+  const a = await sim(7, 300), a2 = await sim(7, 1200), c = await sim(8, 300);
+  assert(a.n > 20, 'จำลอง 10 นาทีต้องเปลี่ยนท่าหลายครั้ง ' + a.n);
+  assert.strictEqual(a2.seq, a.seq, 'seed เดิมต้องได้ท่าเรียงเหมือนเดิม');
+  assert.notStrictEqual(c.seq, a.seq, 'seed ต่างกันต้องได้ผลต่างกัน');
+  assert.deepStrictEqual(a.again, a.draws); assert(a.draws.every(x => x >= 0 && x < 1) && a.draws[0] !== a.draws[1]);
+  assert(a.restored, 'setRand(null) ต้องคืน Math.random เดิม');
+});
+
 test('แมวพิกเซล: แตะแมวทุกแบบไม่เพิ่มความสนิท Energy หรือภารกิจ (กดรัวเก็บแต้มไม่ได้)', async (b, base) => {
   const p = await fresh(b, base);
   await p.evaluate(() => { PixelCat._t.setJit(false); PixelCat._t.setNow(new Date('2026-11-22T12:00:00').getTime()); pens(); M.pet.bond = 0; M.pet.energy = 0; saveM(); render(); });
@@ -133,7 +158,7 @@ test('แมวพิกเซล: แตะแมวทุกแบบไม่
   // แตะหัวรัวจนแมวเดินหนี แล้วแตะต่อระหว่างพัก
   await reset(); for (let i = 0; i < 15; i++) { await tap(24, 20); await seen(); }
   // ทุกโซนทีละครั้ง (หลังพักครบ) · กดค้างที่หัว · แตะตอนหลับ · ปุ่ม Enter บนฉาก
-  for (const [x, y] of [[24, 20], [24, 38], [42, 32]]) for (let i = 0; i < 3; i++) { await reset(); await p.evaluate(() => { const { step } = PixelCat._t; for (let k = 0; k < 40; k++) step(50); }); await reset(); await tap(x, y); await seen(); }
+  for (const [x, y] of [[24, 20], [24, 38], [42, 32]]) for (let i = 0; i < 3; i++) { await reset(); await p.evaluate(() => { PixelCat._t.setRand(1); const { step } = PixelCat._t; for (let k = 0; k < 40; k++) step(50); }); await reset(); await tap(x, y); await seen(); }
   await reset(); await p.mouse.move(box.x + 76 * sc, box.y + 61 * sc); await p.mouse.down(); await p.waitForTimeout(900); await p.mouse.up(); await seen();
   await reset({ mode: 'curl' }); await tap(24, 26); await seen();
   await reset(); await p.locator('#petcv').focus(); await p.keyboard.press('Enter'); await seen();
@@ -154,7 +179,7 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   await p.evaluate(() => { const c = PixelCat._t.cat; Object.assign(c, { mode: 'sit', t: 0, dur: 1e9 }); M.pet.food = { onigiri: 1 }; M.pet.hg = 80; M.pet.ht = Date.now(); pfood('onigiri'); });
   assert.deepStrictEqual(await T(), ['pose', 'eat']);
   // ตู้กับข้าวว่าง → ขออาหาร (รายงานพฤติกรรมข้อ 12): เดินหางตั้งมากลางฉาก เงยหน้ามอง ニャー แล้วถูหัวคราง (ไม่ใช่ท่าเศร้า) · หลับอยู่ตื่นก่อน
-  const begSim = (o) => p.evaluate(o => { const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'sit', x: 5, t: 0, dur: 1e9, then: null, pend: null, pose: null, tol: 0, cool: 0, lv: 0, after: null }, o); M.pet.food = {}; pfeed(); document.querySelectorAll('.cov').forEach(e => e.remove());
+  const begSim = (o) => p.evaluate(o => { PixelCat._t.setRand(1); const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'sit', x: 5, t: 0, dur: 1e9, then: null, pend: null, pose: null, tol: 0, cool: 0, lv: 0, after: null }, o); M.pet.food = {}; pfeed(); document.querySelectorAll('.cov').forEach(e => e.remove());
     const r = { first: cat.mode, up: false }; for (let i = 0; i < 800 && !(cat.mode === 'pose' && cat.pose === 'curious'); i++) { step(50); if (cat.mode === 'walk' && cat.then === 'beg') r.up = true }
     r.pose = [cat.mode, cat.pose]; r.x = Math.round(cat.x); r.say = document.querySelector('.scn.px .scb').textContent; for (let j = 0; j < 40 && cat.mode !== 'pet'; j++) step(50); r.after = cat.mode; return r }, o);
   let bg = await begSim({});
@@ -192,17 +217,17 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   assert(at('leave') >= 5 && at('leave') <= 9, 'แตะรัวราว 6–10 ครั้งถึงเดินหนี: ' + seq.join(' '));
   assert(s.say.includes('ぷいっ'), s.say);
   // เดินหนีไปอีกฝั่ง → เลียขน → พัก 15–20 วิ ระหว่างพักแตะแล้วแค่ … ไม่เพิ่มมาตรวัด · พักครบ มาตรวัดกลับเป็น 0
-  const lv3 = await p.evaluate(() => { const { step, cat } = PixelCat._t, x0 = cat.x; let i = 0; for (; i < 600 && !(cat.mode === 'groom' && cat.cool > 0); i++) step(50); return { x0, x: cat.x, m: cat.mode, cool: cat.cool, tol: cat.tol } });
+  const lv3 = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat } = PixelCat._t, x0 = cat.x; let i = 0; for (; i < 600 && !(cat.mode === 'groom' && cat.cool > 0); i++) step(50); return { x0, x: cat.x, m: cat.mode, cool: cat.cool, tol: cat.tol } });
   assert.strictEqual(lv3.m, 'groom', 'เดินหนีแล้วต้องเลียขน'); assert(lv3.x - lv3.x0 > 40, 'ต้องเดินไปอีกฝั่ง ' + JSON.stringify(lv3)); assert(lv3.cool >= 14000 && lv3.cool <= 20000);
   const box2 = await p.locator('#petcv').boundingBox(); await p.mouse.click(box2.x + (Math.round(lv3.x) + 24) * sc, box2.y + (41 + 20) * sc);
   s = await st(); assert.strictEqual(s.m, 'groom', 'ระหว่างพักแตะแล้วไม่เปลี่ยนท่า'); assert(s.fx.includes('dots')); assert(s.tol <= lv3.tol, 'ระหว่างพักไม่เพิ่มมาตรวัด');
-  s = await p.evaluate(() => { const { step, cat } = PixelCat._t; for (let i = 0; i < 420; i++) step(50); return { cool: cat.cool, tol: cat.tol } });
+  s = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat } = PixelCat._t; for (let i = 0; i < 420; i++) step(50); return { cool: cat.cool, tol: cat.tol } });
   assert.deepStrictEqual(s, { cool: 0, tol: 0 });
   // มาตรวัดลดเองตามเวลา (0.2 ต่อวิ): ลูบช้าๆ ไม่ทำให้แมวรำคาญ
-  s = await p.evaluate(() => { const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, tol: 5 }); for (let i = 0; i < 200; i++) step(50); return cat.tol });
+  s = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, tol: 5 }); for (let i = 0; i < 200; i++) step(50); return cat.tol });
   assert(Math.abs(s - 3) < .05, 'มาตรวัดหลัง 10 วิ ' + s);
   // ปิดแอนิเมชันในระบบ: ไม่มีเอฟเฟกต์ แต่ท่าถูกลูบยังจบกลับไปนั่งได้
-  s = await p.evaluate(() => { const { step, cat, setPlaying, fxs } = PixelCat._t; setPlaying(false); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, tol: 0, cool: 0 }); const n0 = fxs().length; PixelCat.poke('head'); const r = [cat.mode, fxs().length - n0]; for (let i = 0; i < 60; i++) step(50); r.push(cat.mode); setPlaying(true); return r });
+  s = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat, setPlaying, fxs } = PixelCat._t; setPlaying(false); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, tol: 0, cool: 0 }); const n0 = fxs().length; PixelCat.poke('head'); const r = [cat.mode, fxs().length - n0]; for (let i = 0; i < 60; i++) step(50); r.push(cat.mode); setPlaying(true); return r });
   assert.deepStrictEqual(s, ['pet', 0, 'sit']);
   // กดค้างที่หัว ~0.65 วิ = กะพริบตาช้าตอบ (Humphrey 2020) ใจเย็นลง · ระหว่างกดมีวงแหวน · ยกนิ้วหลังจากนั้นไม่กลายเป็นลูบหัว · ลูบครบ 3 ครั้งมีคำแนะนำครั้งเดียว
   await reset({ tol: 3 }); await p.mouse.move(box.x + 76 * sc, box.y + 61 * sc); await p.mouse.down(); await p.waitForTimeout(250);
@@ -216,23 +241,23 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   assert.strictEqual((await T())[0], 'wake');
   await p.evaluate(() => { PixelCat._t.setTod(null); render() });
   // จำลอง 30 นาทีในแอป: ไม่ออกนอกขอบ ผ่านทุกสถานะ ทุกท่าวาดได้ทั้งสองโหมด
-  const sim = await p.evaluate(() => { const { step, cat, XMIN, XMAX, frame, KEYS, setPart } = PixelCat._t, seen = new Set(); let out = 0, legFirst = 0; setPart('tw'); Object.assign(cat, { mode: 'sit', t: 0, dur: 100 });
+  const sim = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat, XMIN, XMAX, frame, KEYS, setPart } = PixelCat._t, seen = new Set(); let out = 0, legFirst = 0; setPart('tw'); Object.assign(cat, { mode: 'sit', t: 0, dur: 100 });
     let prev = ''; for (let i = 0; i < 36000; i++) { step(50); seen.add(cat.mode); if (cat.x < XMIN || cat.x > XMAX) out++; const g = cat.mode === 'groom' ? cat.gk : ''; if (g === 'groomLeg' && prev !== 'groomLeg' && prev !== 'groom') legFirst++; prev = g || (cat.mode === 'groom' ? prev : ''); } setPart(null); if (legFirst) seen.add('LEG-FIRST');
     let bad = []; for (const tm of ['light', 'dark']) for (const k of KEYS) { const g = frame(k, 0, tm); if (!g.some(r => r.some(Boolean))) bad.push(tm + k) } return { seen: [...seen], out, bad }; });
   assert.strictEqual(sim.out, 0); assert.deepStrictEqual(sim.bad, []);
   for (const m of ['sit', 'walk', 'run', 'skid', 'groom', 'loaf', 'curl', 'wake', 'nap', 'pose', 'sblink']) assert(sim.seen.includes(m), 'ไม่ผ่านสถานะ ' + m); // sblink = กะพริบตาช้าเอง (ร่าง 3)
   assert(!sim.seen.includes('LEG-FIRST'), 'เลียขาต้องต่อจากเลียแขนเสมอ (ไล่จากหัวลงหาง)');
   // ที่นอนมีเฉพาะห้อง: ไปเที่ยวที่อื่นแมวไม่เดินไปขดหลับ แต่งีบหมอบตรงที่อยู่ (กลางคืนก็เช่นกัน)
-  const away = await p.evaluate(() => { const { step, cat, setPart } = PixelCat._t, seen = new Set(); M.place = { at: 'garden', got: [] }; render(); setPart('night'); Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 80 });
+  const away = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat, setPart } = PixelCat._t, seen = new Set(); M.place = { at: 'garden', got: [] }; render(); setPart('night'); Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 80 });
     for (let i = 0; i < 24000; i++) { step(50); seen.add(cat.mode) } setPart(null); M.place = { at: 'room', got: [] }; render(); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9 }); return [...seen] });
   assert(away.includes('nap') && !away.includes('curl') && !away.includes('loaf'), 'นอกห้องต้องงีบอยู่กับที่ ไม่ขดนอน: ' + away.join(' '));
   // น้ำหนักตามช่วงเวลา: เช้า/เย็นวิ่งดีดบ่อยกว่าเที่ยง กลางคืนเข้านอนบ่อยกว่ากลางวัน
-  const freq = await p.evaluate(() => { const { step, cat, setPart } = PixelCat._t, out = {}; for (const part of ['tw', 'noon', 'night', 'day']) { setPart(part); let run = 0, bed = 0, last = ''; Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52 }); for (let i = 0; i < 72000; i++) { step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') run++; if (cat.mode === 'curl') bed++; last = cat.mode } } out[part] = { run, bed } } setPart(null); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9 }); return out });
+  const freq = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat, setPart } = PixelCat._t, out = {}; for (const part of ['tw', 'noon', 'night', 'day']) { setPart(part); let run = 0, bed = 0, last = ''; Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52 }); for (let i = 0; i < 72000; i++) { step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') run++; if (cat.mode === 'curl') bed++; last = cat.mode } } out[part] = { run, bed } } setPart(null); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9 }); return out });
   assert(freq.tw.run > freq.noon.run, 'เช้า/เย็นต้องวิ่งดีดบ่อยกว่าเที่ยง ' + JSON.stringify(freq));
   assert(freq.night.bed > freq.day.bed, 'กลางคืนต้องเข้านอนบ่อยกว่ากลางวัน ' + JSON.stringify(freq));
   // นิสัยกำหนดพฤติกรรม (v63 · Feline Five): จำลองนิสัยละ 6 ชม. ตอนกลางวัน
   // พลังล้นวิ่งพล่านบ่อยกว่าขี้เซา · ขี้เซางีบนานกว่าพลังล้น · ปากแข็งเดินมานั่งใกล้ๆ เองบ่อยกว่าขี้อาย · ขี้อายไปแอบหลังของฝั่งขวาบ่อยกว่า · ทนลูบ: ปากแข็ง < พลังล้น < ขี้เซา
-  const per = await p.evaluate(() => { const { step, cat, setTrait, setPart, setTod, XMAX } = PixelCat._t, out = {}; setPart('day'); setTod('day');
+  const per = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat, setTrait, setPart, setTod, XMAX } = PixelCat._t, out = {}; setPart('day'); setTod('day');
     for (const i of [0, 2, 3, 4]) { setTrait(i); const o = out[i] = { zoom: 0, nap: 0, come: 0, hide: 0, pets: 0 }; let last = ''; Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52, then: null, tol: 0, cool: 0, pend: null });
       for (let k = 0; k < 432000; k++) { step(50); if (cat.mode !== last) { if (cat.mode === 'run' && last !== 'skid') o.zoom++; if (cat.mode === 'turnOut' && cat.then === 'come') o.come++; last = cat.mode } if (cat.mode === 'nap') o.nap += 50; if (cat.mode === 'sit' && cat.x >= XMAX - 6) o.hide += 50 }
       Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, tol: 0, cool: 0, then: null, lv: 0 }); while (cat.then !== 'leave' && o.pets < 40) { PixelCat.poke('head'); o.pets++ } }
@@ -246,7 +271,7 @@ test('แมวพิกเซล: หน้าหลักวาดฉากห
   assert(per[3].come > per[2].come * 1.5, 'ปากแข็งต้องเดินมาหาเองบ่อยกว่าขี้อาย ' + PJ); assert(per[2].hide > per[0].hide * 1.3, 'ขี้อายต้องไปแอบหลังของบ่อยกว่า ' + PJ);
   assert(per[3].pets < per[0].pets && per[0].pets < per[4].pets, 'ความทนลูบต้องต่างกันตามนิสัย ' + PJ);
   // ทักทายตามเวลาที่หายไป: ไม่ถึง 30 นาทีไม่ทำอะไร · 30 นาที–4 ชม. หลับอยู่ปล่อยหลับ · 4 ชม.ขึ้นไป ตื่นแล้วเดินหางตั้งมา ดีใจ + ฟอง ニャー
-  const gr = await p.evaluate(() => { const { step, cat } = PixelCat._t, r = {};
+  const gr = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat } = PixelCat._t, r = {};
     Object.assign(cat, { mode: 'sit', x: 10, t: 0, dur: 1e9, then: null }); PixelCat.greet(10 * 60e3); r.short = cat.mode;
     Object.assign(cat, { mode: 'curl', t: 0, dur: 1e9 }); PixelCat.greet(2 * 3600e3); r.midAsleep = cat.mode;
     Object.assign(cat, { mode: 'curl', x: 10, t: 0, dur: 1e9 }); PixelCat.greet(6 * 3600e3); r.longAsleep = cat.mode; let up = false, i = 0;
@@ -334,7 +359,7 @@ test('แมวพิกเซล: ตื่นแล้วหาว/ยืด�
     return out });
   assert.deepStrictEqual(bad, []);
   // ตื่นนอน 200 รอบ: หาวราวครึ่งหนึ่ง ยืดตัวราว 60% ยืดตัวต้องหันข้างก่อน (turnOut) และจบด้วยเดิน/วิ่ง/หันกลับมานั่ง ไม่ออกนอกขอบ
-  const wk = await p.evaluate(() => { const { step, cat, setPart, XMIN, XMAX } = PixelCat._t; setPart('day'); const r = { yawn: 0, stretch: 0, out: 0, badIn: [], badOut: [] };
+  const wk = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat, setPart, XMIN, XMAX } = PixelCat._t; setPart('day'); const r = { yawn: 0, stretch: 0, out: 0, badIn: [], badOut: [] };
     for (let i = 0; i < 200; i++) { Object.assign(cat, { mode: 'wake', t: 0, dur: 10, x: 30 + (i % 5) * 20, then: null, after: null, pend: null, str: 0, wk: 0, tol: 0, cool: 0, lv: 0 }); const seen = [];
       for (let k = 0; k < 400; k++) { step(50); if (seen[seen.length - 1] !== cat.mode) seen.push(cat.mode); if (cat.x < XMIN || cat.x > XMAX) r.out++ }
       if (seen.includes('yawn')) r.yawn++; const j = seen.indexOf('stretch'); if (j >= 0) { r.stretch++; if (seen[j - 1] !== 'turnOut') r.badIn.push(seen.join(' ')); if (!['walk', 'run', 'turnIn', 'hind'].includes(seen[j + 1])) r.badOut.push(seen.join(' ')) } }
@@ -342,11 +367,11 @@ test('แมวพิกเซล: ตื่นแล้วหาว/ยืด�
   assert.strictEqual(wk.out, 0); assert.deepStrictEqual([wk.badIn, wk.badOut], [[], []], 'ลำดับยืดตัวผิด');
   assert(wk.yawn > 60 && wk.yawn < 140, 'ตื่นแล้วหาวราวครึ่งหนึ่ง ' + JSON.stringify(wk)); assert(wk.stretch > 85 && wk.stretch < 155, 'ตื่นแล้วยืดตัวราว 60% ' + JSON.stringify(wk));
   // หายไปนาน 4 ชม.ขึ้นไป แมวหลับอยู่: ตื่น → ยืดตัว → เดินหางตั้งมาทัก (Eriksson 2017 แมวยืดตัวมากขึ้นตอนเจ้าของกลับมาหลังหายไปนาน)
-  const gs = await p.evaluate(() => { const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'curl', x: 12, t: 0, dur: 1e9, then: null, str: 0 }); PixelCat.greet(6 * 3600e3); const seen = [];
+  const gs = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat } = PixelCat._t; Object.assign(cat, { mode: 'curl', x: 12, t: 0, dur: 1e9, then: null, str: 0 }); PixelCat.greet(6 * 3600e3); const seen = [];
     for (let i = 0; i < 400 && cat.mode !== 'walk'; i++) { step(50); if (seen[seen.length - 1] !== cat.mode) seen.push(cat.mode) } return [seen.join(' '), cat.then] });
   assert(/^wake turnOut stretch (hind )?walk$/.test(gs[0]) && gs[1] === 'greet', 'ตื่นแล้วยืดตัว (บางทียืดขาหลังต่อ) แล้วเดินมาทัก ' + gs);
   // ถึงเบาะในห้อง: นวด ふみふみ ราว 30% (ร่าง 1) → หมอบ → ขด · ที่อื่นไม่มีเบาะจึงไม่นวด
-  const kn = await p.evaluate(() => { const { step, cat } = PixelCat._t; let n = 0, chain = true, say = '';
+  const kn = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat } = PixelCat._t; let n = 0, chain = true, say = '';
     for (let i = 0; i < 300; i++) { Object.assign(cat, { mode: 'turnIn', t: 0, dur: 10, x: 12, then: 'sleep', pend: null }); if (!n) document.querySelector('.scn.px .scb').classList.remove('on'); step(50); // ฟองนวดขึ้นเมื่อไม่ได้พูดอยู่
       if (cat.mode === 'knead') { n++; if (!say) say = document.querySelector('.scn.px .scb').textContent; step(4000); if (cat.mode !== 'loaf') chain = false } else if (cat.mode !== 'loaf') chain = false }
     Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return { n, chain, say } });
@@ -361,7 +386,7 @@ test('แมวพิกเซล: ตื่นแล้วหาว/ยืด�
   // น้ำหนักตามสถานที่ (จำลองกลางวัน/เช้าเย็นที่ละ 1 ชม.): คาเฟ่/สถานีไม่วิ่งดีด สวนเดินไกลกว่าห้อง · ช่วงปรับตัวในคาเฟ่ แอบหลังของมากขึ้น เลียขนน้อยลง
   // ใช้ตัวสุ่มแบบกำหนด seed (mulberry32) ในช่วงจำลองนี้ ผลจึงเหมือนเดิมทุกรอบ ไม่สุ่มตก (จำลอง 1 ชม. แบบสุ่มจริง สวน/ห้องแกว่ง 0.9–1.4 เท่า) · seed 1–20: ครั้งที่ออกเดิน สวน/ห้อง 1.09–1.6 สถานี/ห้อง 0.57–0.9 เกณฑ์จึงตั้งที่ 1.05 และ 0.95 (ทุก seed ผ่าน)
   // นาฬิกาของฉากตรึงไว้ (setNow/setTod) ไม่ให้นก รถไฟ ผีเสื้อ แดด ตามเวลาจริงของเครื่องมาทำให้ผลจำลองเปลี่ยนไปตามเวลาที่รันชุดทดสอบ
-  const pw = await p.evaluate(seed => { const { step, cat, setPart, setFam, setTrait, XMAX, setNow, setTod, setSeason, setJit } = PixelCat._t, out = {}, R0 = Math.random; let a = seed >>> 0; setJit(false); setNow(0); setTod('dawn'); setSeason('summer'); // ปี 1970 = มกราคม (หน้าหนาว) ตรึงฤดูให้ผลเหมือนก่อนมีฤดู
+  const pw = await p.evaluate(seed => { PixelCat._t.setRand(1); const { step, cat, setPart, setFam, setTrait, XMAX, setNow, setTod, setSeason, setJit } = PixelCat._t, out = {}, R0 = Math.random; let a = seed >>> 0; setJit(false); setNow(0); setTod('dawn'); setSeason('summer'); // ปี 1970 = มกราคม (หน้าหนาว) ตรึงฤดูให้ผลเหมือนก่อนมีฤดู
     Math.random = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296 }; setTrait(-1); setPart('tw');
     for (const [id, fam] of [['room', 99], ['garden', 99], ['cafe', 99], ['station', 99], ['cafe', 1]]) { M.place = { at: id, got: PLACES.map(q => q.id), fam: {} }; render(); const o = out[id + fam] = { zoom: 0, walk: 0, hide: 0, groom: 0 }; let last = '';
       Object.assign(cat, { mode: 'sit', t: 0, dur: 100, x: 52, then: null, tol: 0, cool: 0, pend: null, str: 0 });
@@ -393,7 +418,7 @@ test('แมวพิกเซล: ท่าที่ใช้ของในฉ
   // ตัวช่วย: ตรึงนาฬิกาของฉาก ตั้งสถานที่ แมวนั่งว่างที่ x แล้วเดินเวลาทีละ 50 ms เก็บลำดับโหมด · Math.random คงที่ให้ผลแน่นอน
   // v109: นาฬิกาฉากในข้อนี้อยู่ปี 1970 (เดือนมกราคม = หน้าหนาว ไม่มีผีเสื้อ) จึงตรึงฤดูเป็นหน้าร้อนทั้งข้อ (ทุกอย่างในฉากมีครบ) · ข้อ "ฉากตามฤดู" ตรวจผลของฤดูแยก
   await p.evaluate(() => { PixelCat._t.setSeason('summer'); PixelCat._t.setJit(false); });
-  const run = (o) => p.evaluate(o => { const T = PixelCat._t, { step, cat } = T, R0 = Math.random; Math.random = () => o.rnd;
+  const run = (o) => p.evaluate(o => { PixelCat._t.setRand(1); const T = PixelCat._t, { step, cat } = T, R0 = Math.random; Math.random = () => o.rnd;
     try { T.setTod(o.tod); T.setNow(o.ms); M.place = { at: o.at, got: PLACES.map(q => q.id), fam: {} }; render(); T.setFam(o.fam || 99, 0); // render() ติดตั้งแมวใหม่และนับวันที่อยู่ที่นั้น จึงตั้งช่วงปรับตัวทีหลัง
       document.querySelector('.scn.px .scb').classList.remove('on'); Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: o.x, dir: 1, then: null, after: null, pend: null, str: 0, wk: 0, hunt: 0, tol: 0, cool: 0, lv: 0, pose: null });
       if (o.call) T[o.call](...(o.args || []));
@@ -409,7 +434,7 @@ test('แมวพิกเซล: ท่าที่ใช้ของในฉ
   const bn = await run({ at: 'room', tod: 'night', ms: B * 4 + 1000, x: 20, rnd: .5, n: 60 });
   assert.strictEqual(bn.seen, 'sit', 'กลางคืนไม่มีนก ' + bn.seen);
   // หลับลึก (ขดนอน) ไม่สนใจนก
-  const bs = await p.evaluate(B => { const T = PixelCat._t; T.setNow(B * 5 + 1000); Object.assign(T.cat, { mode: 'curl', t: 0, dur: 1e9 }); for (let i = 0; i < 40; i++) T.step(50); return T.cat.mode }, B);
+  const bs = await p.evaluate(B => { PixelCat._t.setRand(1); const T = PixelCat._t; T.setNow(B * 5 + 1000); Object.assign(T.cat, { mode: 'curl', t: 0, dur: 1e9 }); for (let i = 0; i < 40; i++) T.step(50); return T.cat.mode }, B);
   assert.strictEqual(bs, 'curl');
   // สถานี: รถไฟเข้าจอ · วันแรก (ระวังตัว) สะดุ้ง「ビクッ！」 · ชินแล้วส่วนใหญ่แค่หันมอง
   const tw = await run({ at: 'station', tod: 'day', ms: TR * 3 + 200, x: 50, fam: 1, rnd: .5, n: 6 });
@@ -422,7 +447,7 @@ test('แมวพิกเซล: ท่าที่ใช้ของในฉ
   assert(/crouch pounce pin turnIn pose/.test(hu.seen) && hu.out === 0, 'ลำดับซุ่ม ' + JSON.stringify(hu)); assert(hu.jump >= 12 && hu.jump <= 20, 'กระโจนไปข้างหน้า ' + hu.jump);
   assert(hu.w.hunt > 0, 'สวนมีผีเสื้อต้องมีตัวเลือกซุ่ม');
   // ทุกจุดเริ่มในสวน: ตอนหมอบต้องหันเข้าหาผีเสื้อเสมอ (เคยพลาด: แมวอยู่ใกล้เกินแล้วหมอบหันหลังให้ผีเสื้อ)
-  const face = await p.evaluate(bm => { const T = PixelCat._t, c = T.cat, bad = []; T.setNow(bm);
+  const face = await p.evaluate(bm => { PixelCat._t.setRand(1); const T = PixelCat._t, c = T.cat, bad = []; T.setNow(bm);
     for (let x = T.XMIN; x <= T.XMAX; x += 4) { Object.assign(c, { mode: 'sit', t: 0, dur: 1e9, x, dir: 1, then: null, hunt: 0, str: 0, pend: null }); T.hunt();
       for (let i = 0; i < 400 && c.mode !== 'crouch'; i++) T.step(50); const b = T.bflyAt({ ms: bm, P: true, td: 'day' }); if (c.mode !== 'crouch' || (b.x > c.x + 24 ? 1 : -1) !== c.dir) bad.push([x, c.mode, c.dir, Math.round(c.x), b.x]) }
     return bad }, bm);
@@ -432,7 +457,7 @@ test('แมวพิกเซล: ท่าที่ใช้ของในฉ
   assert(bk.ks.endsWith('bask') && Math.abs(bk.x - 80) <= 1 && bk.w.bask > 0, 'อาบแดด ' + JSON.stringify(bk));
   const bkn = await run({ at: 'room', tod: 'night', ms: 0, x: 10, rnd: .5, n: 1 }); assert(!('bask' in bkn.w), 'กลางคืนไม่อาบแดด');
   await p.evaluate(() => Object.assign(PixelCat._t.cat, { mode: 'bask', t: 0, dur: 1e9, x: 80 })); await p.waitForTimeout(150); // ท่าของเฟรมถูกเลือกตอนวาด (paint) จึงรอให้วาดก่อน
-  const k = await p.evaluate(() => { const T = PixelCat._t, a = T.cat.k; Object.assign(T.cat, { t: 0, dur: 100 }); T.step(150); return [a, T.cat.mode] });
+  const k = await p.evaluate(() => { PixelCat._t.setRand(1); const T = PixelCat._t, a = T.cat.k; Object.assign(T.cat, { t: 0, dur: 100 }); T.step(150); return [a, T.cat.mode] });
   assert.strictEqual(k[0], 'bask'); assert(['yawn', 'turnOut', 'groom', 'sit', 'stretch'].includes(k[1]), 'ตื่นจากอาบแดด ' + k[1]);
   const heart = await p.evaluate(() => JSON.stringify(PixelCat._t.frame('bask', 1, 'light', 'cream', 'none')).includes('#ef7d92')); assert(!heart, 'นอนอาบแดดไม่มีหัวใจลอย');
   await p.evaluate(() => { const T = PixelCat._t; T.setNow(null); T.setTod(null); T.setSeason(null); T.setFam(99, 0); M.place = { at: 'room', got: [] }; render(); Object.assign(T.cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }) });
@@ -457,13 +482,13 @@ test('แมวพิกเซล: ยืดขาหลังต่อจาก
     return out });
   assert.deepStrictEqual(bad, []);
   // ยืดตัวจบแล้วยืดขาหลังต่อราวครึ่งหนึ่ง แล้วเดิน/วิ่ง/หันกลับมานั่ง
-  const hd = await p.evaluate(() => { const { step, cat } = PixelCat._t; let n = 0; const after = new Set();
+  const hd = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat } = PixelCat._t; let n = 0; const after = new Set();
     for (let i = 0; i < 200; i++) { Object.assign(cat, { mode: 'stretch', t: 0, dur: 10, x: 50, target: 50, then: 'sit', run: false, dir: 1 }); step(50);
       if (cat.mode === 'hind') { n++; step(4000); after.add(cat.mode) } }
     Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: 52, then: null }); return { n, after: [...after] } });
   assert(hd.n > 65 && hd.n < 135, 'ยืดขาหลังราวครึ่งหนึ่ง ' + JSON.stringify(hd)); assert(hd.after.every(m => ['turnIn', 'walk', 'run', 'sit', 'pose', 'groom'].includes(m)), 'หลังยืดขาหลัง ' + hd.after);
   // เดินไปดมของ: ทุกสถานที่ จมูกแตะของใน poi (ห่างไม่เกิน 2 px) และหันหน้าเข้าหาของ · ไม่ออกนอกขอบ · ดมแล้วกลับมานั่ง (บางทีเอียงคอสงสัย)
-  const sn = await p.evaluate(() => { const T = PixelCat._t, { step, cat, XMIN, XMAX } = T, cv = document.createElement('canvas'), out = { bad: [], n: 0, out: 0, end: new Set() }, R0 = Math.random; let a = 11;
+  const sn = await p.evaluate(() => { PixelCat._t.setRand(1); const T = PixelCat._t, { step, cat, XMIN, XMAX } = T, cv = document.createElement('canvas'), out = { bad: [], n: 0, out: 0, end: new Set() }, R0 = Math.random; let a = 11;
     Math.random = () => (a = (a * 1103515245 + 12345) % 2147483648) / 2147483648;
     for (const pl of Object.keys(T.scenes)) { PixelCat.mount(cv, { place: pl, coat: 'cream' }); const P = T.scenes[pl].poi;
       for (let i = 0; i < 25; i++) { Object.assign(cat, { mode: 'sit', t: 0, dur: 1e9, x: XMIN + (i * 37) % (XMAX - XMIN), then: null, str: 0, hunt: 0, sniff: 0, bs: 0 }); T.sniffGo(); let hit = false;
@@ -474,7 +499,7 @@ test('แมวพิกเซล: ยืดขาหลังต่อจาก
   assert.deepStrictEqual(sn.bad, []); assert.strictEqual(sn.out, 0); assert(sn.n >= 165, 'ไปดมครบเกือบทุกครั้ง ' + sn.n);
   assert(sn.end.every(m => m === 'sit' || m === 'pose') && sn.end.includes('pose'), 'ดมแล้วนั่ง/สงสัย ' + sn.end);
   // ถึงเบาะ: ดมเบาะราว 40% → หมุนตัว 1–2 รอบ (สลับทิศ) → หันหน้า → นวด/หมอบ → ขด
-  const bd = await p.evaluate(() => { const { step, cat } = PixelCat._t; const r = { sniff: 0, circle: 0, bad: [] };
+  const bd = await p.evaluate(() => { PixelCat._t.setRand(1); const { step, cat } = PixelCat._t; const r = { sniff: 0, circle: 0, bad: [] };
     for (let i = 0; i < 300; i++) { Object.assign(cat, { mode: 'halt', t: 0, dur: 10, x: 12, dir: i % 2 ? 1 : -1, then: 'sleep', bs: 0, pend: null }); const seen = [], dirs = new Set();
       for (let k = 0; k < 200 && !['loaf', 'knead'].includes(cat.mode); k++) { step(50); if (seen[seen.length - 1] !== cat.mode) seen.push(cat.mode); if (cat.mode === 'circle') dirs.add(PixelCat._t.catPose()[0].slice(-1)) }
       const j = seen.join(' ');
@@ -495,7 +520,7 @@ test('แมวพิกเซล: ยืดขาหลังต่อจาก
 test('แมวพิกเซล: กล่องกระดาษในห้องบางวัน · ดมกล่องใหม่ · มุดกล่องโผล่หัว · หนีไปหลบในกล่อง (v118)', async (b, base) => {
   const p = await fresh(b, base);
   await p.waitForTimeout(200);
-  const r = await p.evaluate(() => { const T = PixelCat._t, { step, cat, BOX } = T, cv = document.createElement('canvas'), out = {}, at = s => new Date(s).getTime(), R0 = Math.random; let a = 3;
+  const r = await p.evaluate(() => { PixelCat._t.setRand(1); const T = PixelCat._t, { step, cat, BOX } = T, cv = document.createElement('canvas'), out = {}, at = s => new Date(s).getTime(), R0 = Math.random; let a = 3;
     // กล่องโผล่ราว 40% ของวัน คงที่ทั้งวัน
     const days = []; for (let d = at('2026-11-01T12:00:00'); d < at('2027-03-01T12:00:00'); d += 864e5) days.push(d);
     out.days = [days.filter(d => T.boxDay(d)).length, days.length]; out.same = days.every(d => T.boxDay(d) === T.boxDay(d + 9 * 36e5) && T.boxDay(d) === T.boxDay(d - 11 * 36e5));

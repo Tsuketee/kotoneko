@@ -123,8 +123,101 @@ test('ก่อนจบ turn: โค้ดเปลี่ยนแต่ข้�
   assert.strictEqual(stop({}), null);
   const r = stop({ last_assistant_message: 'เสร็จแล้วค่ะ', stop_hook_active: true }); assert.strictEqual(r.decision, undefined); assert.match(r.systemMessage, /ผล test/);
 });
+const EV = 'ผ่านทั้งหมด 3 ข้อ';
+const transcript = rows => { const f = path.join(os.tmpdir(), 'kn-tr-' + process.pid + '.jsonl'); fs.writeFileSync(f, rows.map(r => JSON.stringify(r)).join('\n') + '\n'); return f; };
+const prompt = text => ({ type: 'user', message: { role: 'user', content: text } });
+const sent = files => ({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', name: 'SendUserFile', input: { files } }] } });
+const toolResult = { type: 'user', message: { role: 'user', content: [{ type: 'tool_result', content: 'ok' }] } };
+test('ก่อนจบ turn: แก้ css/ หรือ js/ (นอก js/data/) แต่ข้อความสุดท้ายไม่อ้างภาพใน test-results/ และไม่ได้ส่งภาพ → บล็อก · อ้างภาพแล้ว → จบได้', () => {
+  fs.mkdirSync(path.join(tmp, 'css'), { recursive: true });
+  turnStart('ทำต่อเลย'); fs.writeFileSync(path.join(tmp, 'css/a.css'), 'a{}\n'); check(true);
+  const r = stop({ last_assistant_message: EV }); assert.strictEqual(r.decision, 'block'); assert.match(r.reason, /ภาพหน้าจอ/); assert.match(r.reason, /test-results\//);
+  assert.strictEqual(stop({ last_assistant_message: EV + ' · ภาพ `test-results/e2e/09-shop-end-p1.png`' }), null);
+  assert.match(stop({ last_assistant_message: EV + ' · ภาพ shot.png' }).reason, /ภาพหน้าจอ/, 'ต้องเป็นภาพใน test-results/');
+  turnStart('ทำต่อเลย'); fs.writeFileSync(path.join(tmp, 'js/ui.js'), 'let u = 1;\n'); check(true);
+  assert.match(stop({ last_assistant_message: EV }).reason, /ภาพหน้าจอ/);
+  const w = stop({ last_assistant_message: EV, stop_hook_active: true }); assert.strictEqual(w.decision, undefined); assert.match(w.systemMessage, /ภาพหน้าจอ/);
+});
+test('ก่อนจบ turn: ส่งภาพให้เจ้าของ (SendUserFile) หลังข้อความล่าสุดของเจ้าของ = มีภาพแล้ว · ส่งก่อนข้อความล่าสุด หรือส่งไฟล์ที่ไม่ใช่ภาพ = ยังไม่มี', () => {
+  turnStart('ทำต่อเลย'); fs.writeFileSync(path.join(tmp, 'js/ui.js'), 'let u = 2;\n'); check(true);
+  assert.strictEqual(stop({ last_assistant_message: EV, transcript_path: transcript([prompt('ทำต่อเลย'), toolResult, sent(['test-results/flows/09-shop-end-p1.png'])]) }), null);
+  assert.match(stop({ last_assistant_message: EV, transcript_path: transcript([sent(['a.png']), prompt('ทำต่อเลย'), toolResult]) }).reason, /ภาพหน้าจอ/);
+  assert.match(stop({ last_assistant_message: EV, transcript_path: transcript([prompt('ทำต่อเลย'), sent(['report.md'])]) }).reason, /ภาพหน้าจอ/);
+  assert.match(stop({ last_assistant_message: EV, transcript_path: path.join(tmp, 'ไม่มีไฟล์.jsonl') }).reason, /ภาพหน้าจอ/);
+});
+test('ก่อนจบ turn: แก้ไฟล์ที่ไม่ใช่หน้าจอ (โค้ดนอก js/ css/ หรือ js/data/ ที่อนุมัติแล้ว) → ไม่ต้องมีภาพ · turn-start รุ่นเก่าที่ไม่มีลายนิ้วมือหน้าจอ → ไม่ตรวจภาพ', () => {
+  turnStart('ทำต่อเลย'); fs.writeFileSync(path.join(tmp, 'app.js'), 'let a = 12;\n'); check(true);
+  assert.strictEqual(stop({ last_assistant_message: EV }), null);
+  turnStart('อนุมัติ แก้ข้อมูลได้'); fs.writeFileSync(path.join(tmp, 'js/data/k.js'), 'const K=4;\n'); check(true);
+  assert.strictEqual(stop({ last_assistant_message: EV }), null);
+  turnStart('ทำต่อเลย'); const t = JSON.parse(fs.readFileSync(path.join(tmp, TURN), 'utf8')); delete t.ui; fs.writeFileSync(path.join(tmp, TURN), JSON.stringify(t));
+  fs.writeFileSync(path.join(tmp, 'css/a.css'), 'b{}\n'); check(true);
+  assert.strictEqual(stop({ last_assistant_message: EV }), null);
+});
 
 fs.rmSync(tmp, { recursive: true, force: true });
+
+// ---------- ก่อนรันคำสั่ง git ที่ทับไฟล์ในเครื่อง (approval-gate.js · PreToolUse Bash) · เคยเกิด 2026-11-24: git stash + git checkout <sha> -- . ไฟล์ในเครื่องถูกแทนด้วยไฟล์รุ่นเก่า ----------
+const repo = () => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-git-')); const g = (...a) => execFileSync('git', a, { cwd: d, stdio: 'pipe' }); g('init', '-q'); fs.writeFileSync(path.join(d, 'a.js'), '1\n'); g('add', '.'); g('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base'); return d; };
+const gDirty = repo(), gClean = repo();
+const bash = (command, cwd = gClean) => hook('approval-gate.js', { tool_name: 'Bash', tool_input: { command }, cwd });
+const askedWhy = r => asked(r) && r.hookSpecificOutput.permissionDecisionReason;
+test('ก่อนรัน git ที่ทับไฟล์ในเครื่อง (checkout <ref> -- . · checkout -- <ไฟล์> · checkout -f · reset --hard · restore · clean -f · switch --discard-changes) → ขอให้เจ้าของอนุญาต แม้ไม่มีไฟล์ค้างและไม่มี turn-start', () => {
+  for (const c of ['git checkout abc123 -- .', 'git checkout -- a.js', 'git checkout .', 'git checkout -f main', 'git reset --hard', 'git reset --hard origin/main', 'git restore a.js', 'git restore --worktree --staged a.js', 'git clean -fd', 'git clean -xdf', 'git switch --discard-changes main', 'git status && git checkout 1234abc -- .', 'cd /x; git -C /y reset --hard HEAD~1', 'GIT_PAGER=cat git -c core.x=1 reset --hard']) {
+    const why = askedWhy(bash(c)); assert(why, c); assert.match(why, /ทับไฟล์ในเครื่อง/, c); assert.match(why, /commit/, c);
+  }
+});
+test('ก่อนรัน git stash (ไม่ระบุคำสั่งย่อย · push · save): มีไฟล์ค้าง → ขออนุญาต · ไม่มีไฟล์ค้าง → ไม่ถาม · ดูที่ -C <โฟลเดอร์> ถ้ามี · stash list/show/pop → ไม่ถาม', () => {
+  assert.strictEqual(bash('git stash'), null, 'ไม่มีไฟล์ค้าง');
+  fs.writeFileSync(path.join(gDirty, 'a.js'), '2\n');
+  for (const c of ['git stash', 'git stash -u', 'git stash push -m x', 'git stash save x']) assert(askedWhy(bash(c, gDirty)), c);
+  assert(askedWhy(bash(`git -C "${gDirty}" stash`, gClean)), '-C ชี้ไป repo ที่มีไฟล์ค้าง');
+  assert.strictEqual(bash(`git -C "${gClean}" stash`, gDirty), null, '-C ชี้ไป repo ที่ไม่มีไฟล์ค้าง');
+  for (const c of ['git stash list', 'git stash show -p', 'git stash pop']) assert.strictEqual(bash(c, gDirty), null, c);
+});
+test('คำสั่งที่ไม่ทับไฟล์ในเครื่อง (status diff log add commit push fetch checkout <branch> checkout -b reset --soft restore --staged clean -n) และข้อความในเครื่องหมายคำพูด → ไม่ถาม', () => {
+  for (const c of ['git status', 'git diff --stat', 'git log --oneline -3', 'git add -A && git commit -qm "ย้อน git checkout -- . ไม่ได้"', 'git push -u origin x', 'git fetch -q origin main', 'git checkout main', 'git checkout -b new', 'git switch main', 'git reset --soft HEAD~1', 'git reset HEAD a.js', 'git restore --staged a.js', 'git clean -n', 'npm run check', 'echo "git reset --hard"', "grep -n 'git stash' docs/x.md"]) assert.strictEqual(bash(c, gDirty), null, c);
+});
+test('.claude/settings.json: approval-gate.js รับทั้งการแก้ไฟล์และ Bash', () => {
+  const s = JSON.parse(fs.readFileSync(path.join(ROOT, '.claude/settings.json'), 'utf8'));
+  const m = s.hooks.PreToolUse.filter(h => h.hooks.some(x => x.command.includes('approval-gate.js'))).map(h => h.matcher).join('|').split('|');
+  for (const t of ['Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'Bash']) assert(m.includes(t), t);
+});
+for (const d of [gDirty, gClean]) fs.rmSync(d, { recursive: true, force: true });
+
+// ---------- session ที่เปิดหลาย repo (เริ่มที่โฟลเดอร์แม่ของ kotoneko) ไม่โหลด .claude/settings.json ของ kotoneko ----------
+// tools/hooks/install-parent.js เขียน <โฟลเดอร์แม่>/.claude/settings.json ที่เรียก hook ชุดเดียวกันด้วย path เต็ม (setup script ของสภาพแวดล้อม cloud เรียกทุกครั้งที่สร้างเครื่องใหม่)
+const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-parent-')), proj = path.join(parent, 'kotoneko');
+fs.mkdirSync(proj); execFileSync('git', ['init', '-q'], { cwd: proj }); fs.writeFileSync(path.join(proj, 'app.js'), '1\n');
+const install = (...a) => spawnSync('node', [path.join(ROOT, 'tools/hooks/install-parent.js'), '--parent', parent, '--project', proj, ...a], { encoding: 'utf8' });
+const PS = path.join(parent, '.claude/settings.json');
+const scripts = s => Object.entries(s.hooks).flatMap(([ev, list]) => list.flatMap(h => h.hooks.map(x => `${ev} ${h.matcher || ''} ${(x.command.match(/tools\/hooks\/[\w-]+\.js/) || [''])[0]}`))).sort();
+test('install-parent: เขียน hook ครบทุกตัวของ .claude/settings.json (event matcher สคริปต์เดียวกัน) ด้วย path เต็มที่มีไฟล์อยู่จริง', () => {
+  const r = install(); assert.strictEqual(r.status, 0, r.stderr);
+  const gen = JSON.parse(fs.readFileSync(PS, 'utf8')), own = JSON.parse(fs.readFileSync(path.join(ROOT, '.claude/settings.json'), 'utf8'));
+  assert.deepStrictEqual(scripts(gen), scripts(own));
+  for (const list of Object.values(gen.hooks)) for (const h of list) for (const x of h.hooks) {
+    const f = x.command.match(/"([^"]+\/tools\/hooks\/[\w-]+\.js)"/)[1];
+    assert(path.isAbsolute(f) && fs.existsSync(f), x.command);
+  }
+});
+test('install-parent: hook ที่เขียนไว้ทำงานกับ repo kotoneko เมื่อ Claude Code ตั้ง CLAUDE_PROJECT_DIR เป็นโฟลเดอร์แม่ · ข้ามเมื่อ session เปิดที่ kotoneko เอง (hook ของ repo ทำงานแล้ว ไม่รันซ้ำ)', () => {
+  const gen = JSON.parse(fs.readFileSync(PS, 'utf8')), cmd = gen.hooks.UserPromptSubmit[0].hooks[0].command, tf = path.join(proj, TURN);
+  let r = spawnSync('sh', ['-c', cmd], { input: JSON.stringify({ prompt: 'ทดสอบจากโฟลเดอร์แม่' }), env: { ...process.env, CLAUDE_PROJECT_DIR: parent }, encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.strictEqual(JSON.parse(fs.readFileSync(tf, 'utf8')).prompt, 'ทดสอบจากโฟลเดอร์แม่'); assert(!fs.existsSync(path.join(parent, TURN)), 'ต้องไม่เขียนลงโฟลเดอร์แม่');
+  fs.rmSync(tf);
+  r = spawnSync('sh', ['-c', cmd], { input: JSON.stringify({ prompt: 'ซ้ำ' }), env: { ...process.env, CLAUDE_PROJECT_DIR: proj }, encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, r.stderr); assert(!fs.existsSync(tf), 'session ที่เปิดที่ kotoneko ต้องไม่รัน hook ซ้ำ');
+});
+test('install-parent --check: ไฟล์ตั้งค่าของโฟลเดอร์แม่ไม่มี หรือขาด hook ตัวใดตัวหนึ่ง → ไม่ผ่านและบอกตัวที่ขาด · ครบ → ผ่าน · คีย์อื่นในไฟล์เดิมไม่หาย', () => {
+  assert.strictEqual(install('--check').status, 0);
+  const gen = JSON.parse(fs.readFileSync(PS, 'utf8')); gen.hooks.Stop = []; gen.model = 'คงไว้'; fs.writeFileSync(PS, JSON.stringify(gen));
+  let r = install('--check'); assert.strictEqual(r.status, 1); assert.match(r.stderr, /Stop/); assert.match(r.stderr, /stop-check\.js/);
+  assert.strictEqual(install().status, 0); assert.strictEqual(install('--check').status, 0); assert.strictEqual(JSON.parse(fs.readFileSync(PS, 'utf8')).model, 'คงไว้');
+  fs.rmSync(PS); r = install('--check'); assert.strictEqual(r.status, 1); assert.match(r.stderr, /ไม่มีไฟล์/);
+});
+fs.rmSync(parent, { recursive: true, force: true });
 
 // ---------- tests/check-version.js: ต้องเพิ่ม VERSION เมื่อไฟล์ที่ผู้ใช้โหลดเปลี่ยนเท่านั้น ----------
 const vt = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-ver-'));
@@ -159,4 +252,46 @@ test('ไอคอน: apple-touch-icon-vN.png เปลี่ยนหน้า
   r = ver(); assert.strictEqual(r.status, 0, r.stderr); reset();
 });
 fs.rmSync(vt, { recursive: true, force: true });
+
+// ---------- tests/check-feature-map.js: ตัวเลขเกม (อาหาร โคบัง ราคา) ใน FEATURE_MAP.md ต้องตรงกับ KB KBI FOOD FMAX KBN_BAG ในโค้ด ----------
+const fmDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-fm-'));
+const FM = fs.readFileSync(path.join(ROOT, 'FEATURE_MAP.md'), 'utf8');
+const fmCheck = (from, to) => {
+  const s = from ? FM.replace(from, to) : FM;
+  assert(!from || s !== FM, 'ไม่เจอข้อความ "' + from + '" ใน FEATURE_MAP.md');
+  fs.writeFileSync(path.join(fmDir, 'FEATURE_MAP.md'), s);
+  return spawnSync('node', [path.join(ROOT, 'tests/check-feature-map.js'), path.join(fmDir, 'FEATURE_MAP.md')], { encoding: 'utf8' });
+};
+const fmBad = (from, to, re) => { const r = fmCheck(from, to); assert.strictEqual(r.status, 1, `"${from}" → "${to}" ต้องไม่ผ่าน: ${r.stdout}`); assert.match(r.stderr, re, from); };
+test('FEATURE_MAP: ตัวเลขเกมตรงกับโค้ด → ผ่าน', () => {
+  const r = fmCheck(); assert.strictEqual(r.status, 0, r.stderr); assert.match(r.stdout, /ตัวเลขเกม/);
+});
+test('FEATURE_MAP: ราคา Energy / ความสนิท / ความหิวของอาหารไม่ตรง FOOD → ไม่ผ่าน และบอกชื่ออาหารกับค่าในโค้ด', () => {
+  fmBad('ปลาย่าง 45 (+16 −60)', 'ปลาย่าง 40 (+16 −60)', /ปลาย่าง.*45/);
+  fmBad('นม 15 (สนิท +4 หิว −20)', 'นม 15 (สนิท +5 หิว −20)', /นม.*\+4/);
+  fmBad('ซูชิ 70 (+26 −100)', 'ซูชิ 70 (+26 −90)', /ซูชิ.*100/);
+  fmBad('· ซูชิ 70 (+26 −100)', '', /อาหาร.*8/);
+});
+test('FEATURE_MAP: กติกาโคบังไม่ตรง KB → ไม่ผ่าน', () => {
+  fmBad('จำได้แม่นข้อใหม่ +2', 'จำได้แม่นข้อใหม่ +3', /KB\.mast = 2/);
+  fmBad('รับภารกิจ +5', 'รับภารกิจ +10', /KB\.claim = 5/);
+  fmBad('+20 Energy +2 ความสนิท +5 โคบัง', '+20 Energy +2 ความสนิท +6 โคบัง', /KB\.claim = 5/);
+  fmBad('สตรีค 7 วัน +30', 'สตรีค 7 วัน +35', /KB\.s7 = 30/);
+  fmBad('30 วัน +100', '30 วัน +150', /KB\.s30 = 100/);
+  fmBad('ยาวเกิน 300 รายการ', 'ยาวเกิน 500 รายการ', /KB\.keep = 300/);
+});
+test('FEATURE_MAP: ราคาของในร้านโคบังไม่ตรง KBI / KB.bag → ไม่ผ่าน', () => {
+  fmBad('ลายขน 200', 'ลายขน 180', /ลายขน.*200/);
+  fmBad('หายาก วิเชียรมาศ 300', 'หายาก วิเชียรมาศ 350', /coat:siamese.*300/);
+  fmBad('ครบ 250 ข้อ', 'ครบ 200 ข้อ', /coat:calico.*250/);
+  fmBad('เครื่องประดับ 120', 'เครื่องประดับ 100', /เครื่องประดับ.*120/);
+  fmBad('ของแต่งห้อง 80–150', 'ของแต่งห้อง 80–200', /ของแต่งห้อง.*80–150/);
+  fmBad('ถุงโชคดีราคา 150', 'ถุงโชคดีราคา 120', /KB\.bag = 150/);
+});
+test('FEATURE_MAP: ตู้กับข้าวชนิดละ / ค่าถุงคอนบินิไม่ตรง FMAX / KBN_BAG → ไม่ผ่าน · ประโยคที่มีตัวเลขหายไป → ไม่ผ่านและบอกให้แก้ตัวตรวจ', () => {
+  fmBad('(ชนิดละไม่เกิน 9)', '(ชนิดละไม่เกิน 10)', /FMAX = 9/);
+  fmBad('(ถุง 1 Energy)', '(ถุง 2 Energy)', /KBN_BAG = 1/);
+  fmBad('สตรีค 7 วัน +30', 'สตรีคเจ็ดวันได้สามสิบ', /หาไม่เจอ.*tests\/check-feature-map\.js/);
+});
+fs.rmSync(fmDir, { recursive: true, force: true });
 console.log(`\nผ่านทั้งหมด ${n} ข้อ`);

@@ -30,10 +30,10 @@ function recorder(browser, suite) {
   return {
     dir,
     begin(id, name) { cur = { id, name, ctx: [], pages: [], log: [], shots: [], t0: Date.now() }; return cur; },
-    // ภาพหน้าจอระหว่างข้อ ตั้งชื่อตามขั้น เช่น shot(p, 'quiz-wrong')
-    async shot(p, step) {
+    // ภาพหน้าจอระหว่างข้อ ตั้งชื่อตามขั้น เช่น shot(p, 'quiz-wrong') · { animations: true } = ถ่ายกลางอนิเมชันตามที่เห็นตอนนั้น (ไม่เร่งให้จบ)
+    async shot(p, step, { animations = false } = {}) {
       const f = file(cur, step);
-      await p.screenshot({ path: path.join(dir, f), timeout: 10000, animations: 'disabled' });
+      await p.screenshot({ path: path.join(dir, f), timeout: 10000, animations: animations ? 'allow' : 'disabled' });
       cur.shots.push(f);
       return f;
     },
