@@ -1,4 +1,4 @@
-# ส่งต่องาน · ถึง 2026-11-23 (main = v185 · ทุก PR merge แล้ว)
+# ส่งต่องาน · ถึง 2026-11-24 (main = v187 · branch `claude/approval-corrections-list-dl8hr0` = v188 รอ merge)
 
 อ่านไฟล์นี้ก่อนเริ่ม session ใหม่ แล้วอ่าน `CLAUDE.md` และ `FEATURE_MAP.md` · งานแมวพิกเซล/แผนที่อยู่ใน `docs/PET_PIXEL.md`
 
@@ -18,7 +18,21 @@
 2. `git fetch origin main` ก่อนรัน check (ขั้น version/test-count เทียบกับ `origin/main` ถ้าค้างเก่าจะเทียบผิดฐาน · session นี้เคยเจอ origin/main ค้างที่ v34)
 3. hook (`.claude/settings.json` · session หลาย repo ใช้ไฟล์ที่ `install-parent.js` เขียน ดูหัวข้อด้านบน): หลังแก้ไฟล์ = lint/type ของไฟล์นั้น · ข้อความเจ้าของมี "เสนอแผนก่อน/ยังไม่ต้องแก้" หรือจะแก้ `js/data/` โดยไม่มีคำอนุมัติ = ขอให้เจ้าของกดอนุญาต · คำสั่ง git ที่ทับไฟล์ในเครื่อง (checkout -- · reset --hard · restore · clean -f · stash ตอนมีไฟล์ค้าง) = ขอให้เจ้าของกดอนุญาต · ก่อนจบ turn = ต้องรัน `npm run check` กับโค้ดล่าสุด ข้อความสุดท้ายต้องมีผล test และถ้าแก้ `js/` (นอก `js/data/`) หรือ `css/` ต้องอ้างภาพใน `test-results/` หรือส่งภาพให้เจ้าของ · เรียก `/verify-app` ก่อนบอกว่าเสร็จ
 
-## งานที่ทำใน session นี้
+## งานที่ทำ 2026-11-24 (branch `claude/approval-corrections-list-dl8hr0` · v188 · เจ้าของอนุมัติรายการ A1–A4 B1–B4 C1–C6 D1 ทั้งหมด)
+| รหัส | งาน |
+|---|---|
+| A1–A4 | corrections-log: ขอบเขตงาน 7→9 · DoD 5→6 · แถวใหม่ test ต้องล้มก่อนเขียนโค้ด · แถวใหม่ ต้นแบบหลายแบบต้องต่างกันจริงพร้อมภาพเทียบ |
+| B1 | `tools/hooks/install-parent.js` + setup script ของสภาพแวดล้อม (ดูหัวข้อ hook ด้านบน) |
+| B2 | Stop: แก้ `js/` (นอก `js/data/`) หรือ `css/` แล้วต้องอ้างภาพใน `test-results/` หรือส่งภาพ (SendUserFile) |
+| B3 | `PixelCat._t.setRand(seed)` · ขั้น determinism บังคับ `setRand(<seed>)` · ใส่ที่ต้น 23 ช่วงจำลองใน 6 ข้อเดิม (v188) |
+| B4 | ขั้น featuremap เทียบตัวเลขเกมใน FEATURE_MAP ข้อ 3, 5.1, 15 กับ `KB` `KBI` `FOOD` `FMAX` `KBN_BAG` |
+| C1 C3 C4 | SKILL verify-app: รัน e2e ทีละคำแล้วภาพรอบก่อนหาย · server ที่ถูกหยุดขึ้น exit 144 ปกติ · หลัง push ต้องดู CI ของ commit นั้น |
+| C2 | `snap(p, ชื่อ, { animations: true })` ถ่ายกลางอนิเมชันในระบบหลักฐาน · ข้อถุงโชคดีใช้แทน `p.screenshot` เอง |
+| C5 | approval-gate รับ Bash: คำสั่ง git ที่ทับไฟล์ในเครื่องต้องให้เจ้าของอนุญาต |
+| C6 | สภาพแวดล้อมอนุญาต japan-guide.com japan.travel maff.go.jp (และ www.) · ตอบ HTTP 200 แล้ว |
+| D1 | ลบประโยคแนบหลักฐานออกจาก CLAUDE.md (hook Stop ตรวจแทน) |
+
+## งานที่ทำใน session 2026-11-22 → 23
 | เวอร์ชัน | งาน |
 |---|---|
 | v137–v142 | (รอบก่อนหน้าใน branch `claude/affectionate-hypatia-hmsdap`) CI ตรวจ VERSION · CLAUDE.md สั้น · FEATURE_MAP · corrections-log · flows แบบผู้ใช้จริง · tsc strict · ESLint กฎแบ่งชั้น · `npm run check` · hook ตรวจไฟล์ |
