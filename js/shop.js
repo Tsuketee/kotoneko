@@ -1,35 +1,9 @@
-// ร้านค้า (tab shop): สมุดเมนูแบ่งแท็บ · แตะของแล้วแผ่นล่างลองใส่และแลกด้วยโคบัง · แลกแล้วไปใส่ที่คลังสะสม (js/profile.js colWear)
-// ถุงโชคดี: หน้าต่างบอกรายชื่อและโอกาสก่อนจ่าย → อนิเมชันเปิดถุง → หน้าต่างโชว์ของที่ได้ · อาหารซื้อด้วย Energy เข้าตู้กับข้าว · ห้ามมีราคาเงินจริง
-// กติกาและราคา: js/koban.js · แบบที่เจ้าของเลือก (2026-11-23): FEATURE_MAP.md ข้อ 15
+// ส่วนกลางของร้านค้า: ภาพสินค้า (แมวลองใส่ · รูปอาหารพิกเซล) · หน้าต่างกลางจอ · ถุงโชคดี · หน้าต่างให้อาหาร · หน้าร้านออนไลน์อยู่ที่ js/netshop.js
+// ถุงโชคดี: หน้าต่างบอกรายชื่อและโอกาสก่อนจ่าย → อนิเมชันเปิดถุง → หน้าต่างโชว์ของที่ได้ (ได้ทันที ไม่ต้องรอส่ง) · ห้ามมีราคาเงินจริง
+// กติกาและราคา: js/koban.js · FEATURE_MAP.md ข้อ 15
 let shLog=false;
-function shState(it){if(it.soon)return'soon';if(kbOwns(it.id)){const p=M.pet,on=it.t==='coat'?(p.coat||'cream')===it.k:it.t==='acc'?p.acc===it.k:false;return on?'on':'own'}return it.goal?'goal':'buy'}
 const shCv=(it,cls,tid)=>`<canvas class="${cls}"${tid?` data-testid="${tid}"`:''} data-coat="${it.t==='coat'?it.k:(M.pet.coat||'cream')}" data-acc="${it.t==='acc'?it.k:(tid?(M.pet.acc||'none'):'none')}" width="48" height="48" ${tid?`role="img" aria-label="${M.pet.name}ลองใส่${kbName(it)}"`:'aria-hidden="true"'}></canvas>`;
-const shThumb=(it,big)=>it.t==='room'?`<span class="shic${big?' big':''}">${icx('home',big?56:30)}</span>`:shCv(it,big?'shcv':'pfth',big?'shop-preview':'');
 const foodImg=(f,cls,tid)=>`<canvas class="${cls}" data-food="${f.k}"${tid?` data-testid="${tid}"`:''} width="32" height="32" role="img" aria-label="${f.n}"></canvas>`;
-// หน้าร้านแบบสมุดเมนู (เจ้าของส่งภาพตัวอย่าง 2026-11-24 · ใช้แค่แนวหน้าตา): แท็บ อาหาร / ลายขน / ของแต่ง · ตาราง 3 ช่องมีเส้นชั้นวางคั่นแถว · ราคาใต้รูป
-// ของที่ซื้อไม่ได้ (ได้จากเป้าการเรียน หรือยังไม่ได้วาด) แสดงเป็นฝาครอบอาหารติดแม่กุญแจ
-let shTab='food';
-function shT(t){shTab=t;render()}
-const SHCLOCHE=`<svg class="shclo" viewBox="0 0 64 48" aria-hidden="true"><path class="shc1" d="M6 40a26 24 0 0 1 52 0z"/><path class="shc2" d="M12 36a20 18 0 0 1 14-16"/><rect class="shc1" x="28" y="10" width="8" height="6" rx="3"/><rect class="shc3" x="2" y="40" width="60" height="5" rx="2.5"/><g class="shc4"><rect x="25" y="27" width="14" height="10" rx="2"/><path d="M28 27v-3a4 4 0 0 1 8 0v3" fill="none" stroke-width="2.4"/></g></svg>`;
-function shCell(it){const s=shState(it),lock=s==='goal'||s==='soon';
- const pr={on:'<span class="shown">ใส่อยู่</span>',own:'<span class="shown">มีแล้ว</span>',soon:'<span class="shsoon">เร็วๆ นี้</span>',goal:`<span class="shpr">${icx('medal',14,'m3')} แม่น ${it.goal}</span>`,buy:`<span class="shpr">${it.p} <span class="shcoin">${icx('koban',14)}</span></span>`}[s];
- return `<button class="shcell${s==='on'?' on':''}" data-testid="shop-item-${it.id}" onclick="shSheet('${it.id}')" aria-label="${kbName(it)} ${s==='buy'?it.p+' โคบัง':s==='own'?'มีแล้ว':s==='on'?'ใส่อยู่':s==='goal'?'ได้จากเป้าการเรียน':'เร็วๆ นี้'}"><span class="shart">${lock?SHCLOCHE:shThumb(it)}</span><b>${kbName(it)}</b>${pr}</button>`}
-function shFoodCell(f){const n=(M.pet.food||{})[f.k]||0;return `<button class="shcell" data-testid="food-item-${f.k}" onclick="shFood('${f.k}')" aria-label="${f.n} ${f.e} Energy ในตู้ ${n}"><span class="shart">${foodImg(f,'fdth')}${n?`<span class="shcnt">×${n}</span>`:''}</span><b>${f.n}</b><span class="shpr">${f.e} <span class="shcoin en">${icx('bolt',13)}</span></span></button>`}
-function shopHtml(){const p=M.pet,L=kbL(),pool=kbPool(),price=kbBagPrice(),cat=kbCat();
- const tabs=[['food','อาหาร'],...(cat?[['coat','ลายขน']]:[]),['deco','ของแต่ง']];if(!tabs.some(t=>t[0]===shTab))shTab='food';
- let h=`<div class="shtop"><h1>ร้านค้า</h1><span class="shchip" title="โคบัง">${icx('koban',20,'kb-i')}<b data-testid="shop-koban">${kbBal()}</b></span><span class="shchip" title="Energy">${icx('bolt',18,'hl-i')}<b>${p.energy}</b></span><button class="shchip shlogb" data-testid="shop-log-toggle" aria-expanded="${shLog}" aria-label="ประวัติโคบัง" onclick="shLog=!shLog;render()">${icx('doc',18)}</button></div>
-<div class="st shsub">แลกของแต่งด้วยโคบังจากการเรียน ซื้ออาหารด้วย Energy ไม่ใช้เงินจริง</div>`;
- if(shLog)h+=`<div class="card shwal"><div class="st">จำได้แม่น +${KB.mast}/ข้อ · รับภารกิจ +${KB.claim} · ครบ 3 อย่าง +${KB.all3} · ติดกัน 7/30 วัน +${KB.s7}/+${KB.s30}</div><ol class="shlog" data-testid="shop-log">${L.slice(-10).reverse().map(r=>`<li><span>${esc(r[3])}</span><b class="${r[1]<0?'neg':''}">${r[1]>0?'+':''}${r[1]}</b></li>`).join('')||'<li><span>ยังไม่มีรายการ เรียนให้จำได้แม่นหรือรับภารกิจเพื่อรับโคบัง</span></li>'}</ol></div>`;
- h+=`<button class="shbag" data-testid="shop-bag-open" ${pool.length?'':'disabled'} onclick="shBagAsk()"><span class="shbi">${icx('gift',26)}</span><span class="shbt"><b>ถุงโชคดี 福袋</b><span class="st">${pool.length?`สุ่ม 1 ชิ้นจาก ${pool.length} ชิ้นที่ยังไม่มี · โอกาสแต่ละชิ้น 1/${pool.length} · ไม่มีของซ้ำ`:'สะสมครบแล้ว ไม่มีของให้สุ่มเพิ่ม'}</span></span>${pool.length?`<span class="shbp">${icx('koban',16)} ${price}</span>`:''}</button>`;
- // เนื้อหาแท็บ
- let cells,note;
- if(shTab==='food'){cells=FOOD.filter(f=>!f.src).map(shFoodCell);note=`ใช้ Energy · ในตู้กับข้าว ${pfoodN(p)} ชิ้น`}
- else if(shTab==='coat'){const it=[kbItem('coat:cream'),...KBI.filter(x=>x.t==='coat')];cells=it.map(shCell);note=`มีแล้ว ${it.filter(x=>kbOwns(x.id)).length}/${it.length}`}
- else{const it=[...(cat?KBI.filter(x=>x.t==='acc'):[]),...KBI.filter(x=>x.t==='room')];cells=it.map(shCell);note=cat?'เครื่องประดับ · ของแต่งห้อง (เร็วๆ นี้)':'ของแต่งห้อง (เร็วๆ นี้)'}
- const rows=[];for(let i=0;i<cells.length;i+=3)rows.push(cells.slice(i,i+3));
- h+=`<div class="shbook"><div class="shtabs" role="tablist">${tabs.map(([t,n])=>`<button role="tab" data-testid="shop-tab-${t}" aria-selected="${shTab===t}" class="${shTab===t?'on':''}" onclick="shT('${t}')">${n}</button>`).join('')}</div>
-<div class="shpaper" role="tabpanel"><div class="shnote">${note}</div>${rows.map(r=>`<div class="shrow">${r.join('')}</div>`).join('')}</div></div>`;
- return h+`<button class="mer" onclick="goCol()"><span class="pmi">${icx('paw',22)}</span><span class="mrt"><b>ใส่ของที่คลังสะสม</b><span class="st">ลายขนและเครื่องประดับที่แลกแล้ว แตะเพื่อใส่หรือถอด</span></span><span aria-hidden="true">›</span></button>`}
 // รูปอาหารแบบพิกเซล 32×32 (ออกแบบ 2026-11-24 · เส้นขอบโทนเดียวกับแมว แสงจากซ้ายบน): ตารางละ 32 แถว อักษรละ 1 พิกเซลตามชุดสี FPAL · '.' = โปร่งใส
 // แก้รูป: เปลี่ยนอักษรในตาราง หรือเพิ่มสีใน FPAL (อักษรใหม่ 1 ตัว) · ทุกชนิดใน FOOD ต้องมีตาราง 32×32 (test "อาหาร: รูปพิกเซล")
 const FPAL={'o':'#dba46f','A':'#ffe3d2','B':'#00000022','C':'#9cc1e4','D':'#7aa5d2','E':'#5d86b5','F':'#dcb784','G':'#b98f58','H':'#d4e6f6','I':'#7cc06a','J':'#fff6e4','K':'#e9cf9f','L':'#3a2d2a','M':'#5a4640','N':'#9b5a24','P':'#c27a35','Q':'#f5dfc4','R':'#e0bc93','S':'#ffffff','T':'#e6e1d8','U':'#b2d895','V':'#86b86b','W':'#f7b3c7','X':'#e488a6','Y':'#fffaf2','Z':'#e9dfcf','a':'#ffe48a','b':'#f4c94e','c':'#e8b25e','d':'#cf8f3f','e':'#a8682a','f':'#f7dfa3','g':'#2b1d14','h':'#7a4a24','i':'#7fbf6a','j':'#5a9a4a','k':'#f7b6c0','l':'#ee96a4','m':'#e2f4fc','n':'#a9d8ef','p':'#7fbde0','q':'#f1e2c9','r':'#dcc29d','s':'#b99a70','t':'#ffffff','u':'#f08aa8','v':'#c98a4a','w':'#9e6430','x':'#f0b394','y':'#d98a68','z':'#b76a4c','0':'#b9573e','1':'#93402c','2':'#6fb36a','3':'#fffdf8','4':'#f3ece0','5':'#33402f','6':'#253024','7':'#d3dbe0','8':'#98a7b2','9':'#6f808c','!':'#4d5e45','#':'#5a3d2b','$':'#eef1f2','%':'#d4dbdf','&':'#b3bec5','*':'#eef6f8','+':'#cfe3e9','-':'#ffd86e','/':'#f0b93c',':':'#ffffff',';':'#f1ece2','<':'#dcd3c4','=':'#ff9a6b','>':'#f07a4f','@':'#ffc6a6','^':'#8cc56f','_':'#5e9a48','~':'#e2bf86','|':'#b48c55','(':'#cdbfb0',')':'#e9e0d6','[':'#e7c48d',']':'#f7b8c8','{':'#e08aa3','}':'#f2a96b','α':'#e0566a','β':'#c23e52','γ':'#f58a98','δ':'#ffffff','ε':'#ffe07a','ζ':'#f5c443','η':'#dca232','θ':'#c98a2a','ι':'#3d2c25','κ':'#2a1d18','λ':'#6a5246','μ':'#dba965','ν':'#c48d45','ξ':'#fffaf0','π':'#ece0c9','ρ':'#b8452f','σ':'#c98b55','τ':'#a96d3d','υ':'#87532b','φ':'#ffe27a','χ':'#f2c23d'};
@@ -577,6 +551,166 @@ const FOODART={niboshi:[
   '.....###BBBBBBBBBBBBBBBB###.....',
   '..BBBBBBBBBBBBBBBBBBBBBBBBBBBB..',
   '................................',
+  '................................'],jerky:[
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '.............#####..............',
+  '............#vcvww#.............',
+  '........#####vvvww#.............',
+  '.......#vcvwwvvvww#####.........',
+  '.......#vvvwwvcvwwvcvww#........',
+  '.......#vvvww#vvvwvvvww#........',
+  '.......#vcvww#vvvwvvvww#........',
+  '........#vvvwwvcvwvcvww#........',
+  '........#vvvwwvvvwwvvvww#.......',
+  '........#vcvww#vvvwvvvww#.......',
+  '........#vvvww#vcvwvcvww#.......',
+  '.....###TTvvvwwvvvwvvvww###.....',
+  '....#TTTTSvcvwwvvvwwvvvwwTT#....',
+  '...#TTTSSSvvvwwSSSSSvcvwwTTT#...',
+  '..#TTTSSSSvvvwwSSSSSvvvwwSTTT#..',
+  '..#TTTTSSSSSSSSSSSSSvvvwwTTTT#..',
+  '..B#TTTTTSSSSSSSSSSSSSSTTTTT#B..',
+  '..BB#TTTTTTTTTTTTTTTTTTTTTT#BB..',
+  '...BB###TTTTTTTTTTTTTTTT###BB...',
+  '....BBBB################BBBB....',
+  '.......BBBBBBBBBBBBBBBBBB.......',
+  '................................',
+  '................................',
+  '................................',
+  '................................'],pate:[
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '.........##############.........',
+  '......###$$$$$$$$$$$$$$###......',
+  '.....#$$$%%%%%%%%%%%%%%$$$#.....',
+  '....#$$%%$$$$$$$$$$$$$$%%$$#....',
+  '....#$$%%$$$$$$$$$$$$$$%%$$#....',
+  '....#%$$$%%%%%%%%%%%%%%$$$&#....',
+  '....#&&&&$$$$$$$$$$$$$$&&&&#....',
+  '....#DDDDDDDDDDDDDDDDDDEEEE#....',
+  '....#DDDDDDDDDDDDDDDDDDEEEE#....',
+  '....#DDDDD333333333333DEEEE#....',
+  '....#DDDDD33333333p333DEEEE#....',
+  '....#DDDDD33pgpppp3p33DEEEE#....',
+  '....#DDDDD33pppppp3p33DEEEE#....',
+  '....#DDDDD33333333p333DEEEE#....',
+  '....#DDDDD333333333333DEEEE#....',
+  '....#DDDDDDDDDDDDDDDDDDEEEE#....',
+  '....#DDDDDDDDDDDDDDDDDDEEEE#....',
+  '....#&&&&&&&&&&&&&&&&&&&&&&#....',
+  '....#%%&&&&&&&&&&&&&&&&&&&&#....',
+  '....#&&&&&&&&&&&&&&&&&&&&&&#....',
+  '...BB##&&&&&&&&&&&&&&&&&&##BB...',
+  '...BBBB##################BBBB...',
+  '......BBBBBBBBBBBBBBBBBBBB......',
+  '................................',
+  '................................'],stew:[
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '.........##############.........',
+  '......###$$$$$$$$$$$$$$###......',
+  '.....#$$$%%%%%%%%%%%%%%$$$#.....',
+  '....#$$%%$$$$$$$$$$$$$$%%$$#....',
+  '....#$$%%$$$$$$$$$$$$$$%%$$#....',
+  '....#%$$$%%%%%%%%%%%%%%$$$&#....',
+  '....#&&&&$$$$$$$$$$$$$$&&&&#....',
+  '....#bbbbbbbbbbbbbbbbbbdddd#....',
+  '....#bbbbbbbbbbbbbbbbbbdddd#....',
+  '....#bbbbb333333333333bdddd#....',
+  '....#bbbbb333h3h3h3333bdddd#....',
+  '....#bbbbb33333333h333bdddd#....',
+  '....#bbbbb33333hh33333bdddd#....',
+  '....#bbbbb33333hh33333bdddd#....',
+  '....#bbbbb333333333333bdddd#....',
+  '....#bbbbbbbbbbbbbbbbbbdddd#....',
+  '....#bbbbbbbbbbbbbbbbbbdddd#....',
+  '....#&&&&&&&&&&&&&&&&&&&&&&#....',
+  '....#%%&&&&&&&&&&&&&&&&&&&&#....',
+  '....#&&&&&&&&&&&&&&&&&&&&&&#....',
+  '...BB##&&&&&&&&&&&&&&&&&&##BB...',
+  '...BBBB##################BBBB...',
+  '......BBBBBBBBBBBBBBBBBBBB......',
+  '................................',
+  '................................'],lamb:[
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '.........##############.........',
+  '......###$$$$$$$$$$$$$$###......',
+  '.....#$$$%%%%%%%%%%%%%%$$$#.....',
+  '....#$$%%$$$$$$$$$$$$$$%%$$#....',
+  '....#$$%%$$$$$$$$$$$$$$%%$$#....',
+  '....#%$$$%%%%%%%%%%%%%%$$$&#....',
+  '....#&&&&$$$$$$$$$$$$$$&&&&#....',
+  '....#iiiiiiiiiiiiiiiiiijjjj#....',
+  '....#iiiiiiiiiiiiiiiiiijjjj#....',
+  '....#iiiii333333333333ijjjj#....',
+  '....#iiiii33333jj33333ijjjj#....',
+  '....#iiiii3333iiii3333ijjjj#....',
+  '....#iiiii33333ii33333ijjjj#....',
+  '....#iiiii333333h33333ijjjj#....',
+  '....#iiiii333333h33333ijjjj#....',
+  '....#iiiiiiiiiiiiiiiiiijjjj#....',
+  '....#iiiiiiiiiiiiiiiiiijjjj#....',
+  '....#&&&&&&&&&&&&&&&&&&&&&&#....',
+  '....#%%&&&&&&&&&&&&&&&&&&&&#....',
+  '....#&&&&&&&&&&&&&&&&&&&&&&#....',
+  '...BB##&&&&&&&&&&&&&&&&&&##BB...',
+  '...BBBB##################BBBB...',
+  '......BBBBBBBBBBBBBBBBBBBB......',
+  '................................',
+  '................................'],salmon:[
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '................................',
+  '.........##############.........',
+  '......###$$$$$$$$$$$$$$###......',
+  '.....#$$$%%%%%%%%%%%%%%$$$#.....',
+  '....#$$%%$$$$$$$$$$$$$$%%$$#....',
+  '....#$$%%$$$$$$$$$$$$$$%%$$#....',
+  '....#%$$$%%%%%%%%%%%%%%$$$&#....',
+  '....#&&&&$$$$$$$$$$$$$$&&&&#....',
+  '....#==================>>>>#....',
+  '....#==================>>>>#....',
+  '....#=====333333333333=>>>>#....',
+  '....#=====3333333333>3=>>>>#....',
+  '....#=====33>g>>>>>>33=>>>>#....',
+  '....#=====33@@@@@@@333=>>>>#....',
+  '....#=====3333333333>3=>>>>#....',
+  '....#=====333333333333=>>>>#....',
+  '....#==================>>>>#....',
+  '....#==================>>>>#....',
+  '....#&&&&&&&&&&&&&&&&&&&&&&#....',
+  '....#%%&&&&&&&&&&&&&&&&&&&&#....',
+  '....#&&&&&&&&&&&&&&&&&&&&&&#....',
+  '...BB##&&&&&&&&&&&&&&&&&&##BB...',
+  '...BBBB##################BBBB...',
+  '......BBBBBBBBBBBBBBBBBBBB......',
+  '................................',
   '................................']};
 const FOODPX=Object.fromEntries(Object.entries(FOODART).map(([k,rows])=>[k,g=>rows.forEach((r,y)=>[...r].forEach((ch,x)=>{if(ch!=='.'){g.fillStyle=FPAL[ch];g.fillRect(x,y,1,1)}}))]));
 function foodDraw(c){const g=c.getContext('2d'),f=FOOD.find(x=>x.k===c.dataset.food),k=f&&f.art||c.dataset.food;g.clearRect(0,0,32,32);if(FOODPX[k])FOODPX[k](g)}
@@ -588,14 +722,6 @@ function shOpen(html,{sheet,tid}={}){document.querySelectorAll('.shov').forEach(
  o.innerHTML=`<div class="cdl${sheet?' shsd':''}" role="dialog" aria-modal="true" data-testid="${tid}">${sheet?'<span class="shgrab" aria-hidden="true"></span>':''}${html}</div>`;
  o.onclick=e=>{if(e.target===o||e.target.closest('[data-x]'))o.remove()};o.onkeydown=e=>{if(e.key==='Escape')o.remove()};document.body.appendChild(o);shDraw(o);return o}
 const shClose=()=>document.querySelectorAll('.shov').forEach(x=>x.remove());
-function shSheet(id){const it=kbItem(id);if(!it)return;const s=shState(it),cat=kbCat(),bal=kbBal();
- const act={buy:`<button class="g" data-testid="shop-buy" ${bal<it.p?'disabled':''} onclick="shBuy('${id}')">แลก ${it.p} โคบัง</button>`,
-  own:`<button class="g" data-testid="shop-go-col" onclick="shClose();goCol()">ไปใส่ที่คลังสะสม</button>`,on:`<button class="g" data-testid="shop-go-col" onclick="shClose();goCol()">ไปที่คลังสะสม</button>`,goal:'',soon:''}[s];
- const note={buy:bal<it.p?`มี ${bal} โคบัง · ขาดอีก ${it.p-bal} โคบัง`:`มี ${bal} โคบัง · แลกแล้วเหลือ ${bal-it.p}`,own:'มีแล้ว · ใส่ได้ที่คลังสะสม',on:'มีแล้ว · ใส่อยู่',goal:`ได้เมื่อจำได้แม่นครบ ${it.goal} ข้อ (ตอนนี้ ${pmast()}) ซื้อไม่ได้`,soon:'กำลังวาดของชิ้นนี้ลงในห้อง เร็วๆ นี้'}[s];
- shOpen(`<div class="shsv">${cat||it.t==='room'?shThumb(it,1):''}<div class="shst"><h2>${kbName(it)}</h2>${it.r?'<span class="bd b3">หายาก</span>':''}<div class="st">${KBT[it.t]}</div><div class="shnote">${note}</div></div></div><div class="btns"><button class="sec" data-x="1" data-testid="shop-sheet-close">ปิด</button>${act}</div>`,{sheet:1,tid:'shop-sheet'})}
-function shBuy(id){const it=kbItem(id);if(!kbSpend(id,it.p,'buy'))return;render();shSheet(id);toast(icx('gift',16)+' ได้'+kbName(it)+'แล้ว ใส่ได้ที่คลังสะสม')}
-function shFood(k){const p=M.pet,f=FOOD.find(x=>x.k===k),n=(p.food||{})[k]||0,full=n>=FMAX,lo=p.energy<f.e;
- shOpen(`<div class="shsv">${foodImg(f,'fdbig')}<div class="shst"><h2>${f.n}</h2><div class="st">สนิท +${f.b} · หิวลด ${f.h}</div><div class="shnote">ในตู้ ${n}/${FMAX} · มี ${p.energy} Energy${lo?' · Energy ไม่พอ ทำภารกิจรายวันเพื่อรับเพิ่ม':full?' · ตู้กับข้าวเต็มแล้ว':''}</div></div></div><div class="btns"><button class="sec" data-x="1" data-testid="shop-sheet-close">ปิด</button><button class="g" data-testid="food-buy" ${lo||full?'disabled':''} onclick="if(fbuy('${k}')){render();shFood('${k}')}">ซื้อ 1 ชิ้น · ${f.e} Energy</button></div>`,{sheet:1,tid:'shop-sheet'})}
 // ---------- ถุงโชคดี ----------
 function shBagAsk(){const pool=kbPool(),c=kbBagPrice(),bal=kbBal();if(!pool.length)return;
  shOpen(`<h2>เปิดถุงโชคดี 福袋</h2><p>ใช้ <b data-testid="shop-bag-price">${c}</b> โคบัง สุ่ม 1 ชิ้นจาก ${pool.length} ชิ้นที่ยังไม่มี</p><p class="st" data-testid="shop-bag-odds">โอกาสได้แต่ละชิ้น 1/${pool.length} (${(100/pool.length).toFixed(1)}%) · ไม่มีของซ้ำ</p><div class="shbl">${pool.map(it=>`<span>${kbName(it)}</span>`).join('')}</div>${bal<c?`<p class="shnote">มี ${bal} โคบัง · ขาดอีก ${c-bal} โคบัง</p>`:''}<div class="btns"><button class="sec" data-x="1">ยกเลิก</button><button class="g" data-testid="shop-bag-confirm" ${bal<c?'disabled':''} onclick="shBagGo()">เปิดถุง</button></div>`,{tid:'shop-bag-dialog'})}
@@ -608,6 +734,6 @@ function shBagGo(){const it=kbBag();shClose();if(!it)return;render();
  document.body.appendChild(a);setTimeout(()=>{a.remove();show()},1500)}
 // ---------- หน้าต่างให้อาหาร (ปุ่ม "ให้อาหาร" บนการ์ดหน้าแรก) ----------
 function feedOpen(){const p=M.pet,fd=p.food||{},none=!pfoodN(p),h=phg(p);if(none){pcue('beg');toast(IC.rice+' '+pline(p,'hungry',false))}
- shOpen(`<h2>ให้อาหาร${p.name}</h2><div class="st">${p.name}${phgN(h)} · ความหิว ${h}/100</div>${none?'<p class="shnote">ตู้กับข้าวว่าง ซื้ออาหารด้วย Energy ที่ร้านค้า</p>':''}<div class="fdg">`+FOOD.flatMap(f=>['','^','~','~^'].map(x=>[f,f.k+x])).filter(([f,key])=>(!f.src&&key===f.k)||(fd[key]||0)>0).map(([f,key])=>{const n=fd[key]||0,tag=(key.includes('~')?' <span class="kbst">ลดราคา</span>':'')+(key.includes('^')?' <span class="kbst warm">อุ่นแล้ว</span>':'');
+ shOpen(`<h2>ให้อาหาร${p.name}</h2><div class="st">${p.name}${phgN(h)} · ความหิว ${h}/100</div>${none?'<p class="shnote">ตู้กับข้าวว่าง สั่งอาหารด้วย Energy ที่ร้านออนไลน์ หรือซื้อที่ร้านสะดวกซื้อในแมพ</p>':''}<div class="fdg">`+FOOD.flatMap(f=>['','^','~','~^'].map(x=>[f,f.k+x])).filter(([f,key])=>(!f.src&&key===f.k)||(fd[key]||0)>0).map(([f,key])=>{const n=fd[key]||0,tag=(key.includes('~')?' <span class="kbst">ลดราคา</span>':'')+(key.includes('^')?' <span class="kbst warm">อุ่นแล้ว</span>':'');
   return `<button class="fdi" data-testid="feed-${key}" ${n?'':'disabled'} onclick="if(pfood('${key}'))shClose()">${foodImg(f,'fdpx',key===f.k?'food-img-'+f.k:'')}<b>${f.n}${tag}</b><span class="fdn">×${n}</span><span class="st">สนิท +${foodBond(f,key)} · หิวลด ${f.h}</span></button>`}).join('')+
-  `</div><div class="btns"><button class="sec" data-x="1" data-testid="feed-close">ปิด</button><button class="g" data-testid="feed-go-shop" onclick="shClose();goTab('shop')">ซื้ออาหารที่ร้าน</button></div>`,{tid:'feed-dialog'})}
+  `</div><div class="btns"><button class="sec" data-x="1" data-testid="feed-close">ปิด</button><button class="g" data-testid="feed-go-shop" onclick="shClose();nsView='list';nsCat='ffood';goTab('shop')">สั่งอาหารที่ร้านออนไลน์</button></div>`,{tid:'feed-dialog'})}

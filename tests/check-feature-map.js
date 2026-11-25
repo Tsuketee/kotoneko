@@ -29,8 +29,8 @@ fs.readFileSync(map, 'utf8').split('\n').forEach((line, i) => {
 // ---------- ตัวเลขเกมที่ FEATURE_MAP เขียนไว้ต้องตรงกับโค้ด: KB KBI FOOD FMAX (js/koban.js) · KBN_BAG (js/konbini.js) ----------
 const vm = require('vm');
 const ctx = vm.createContext({ window: {} });
-for (const f of ['js/koban.js', 'js/konbini.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
-const { KB, KBI, FOOD, FMAX, KBN_BAG } = vm.runInContext('({ KB, KBI, FOOD, FMAX, KBN_BAG })', ctx);
+for (const f of ['js/koban.js', 'js/konbini.js', 'js/netshop.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+const { KB, KBI, FOOD, FMAX, KBN_BAG, NS_SHIP } = vm.runInContext('({ KB, KBI, FOOD, FMAX, KBN_BAG, NS_SHIP })', ctx);
 const lines = fs.readFileSync(map, 'utf8').split('\n'), base = path.basename(map);
 const fixRe = `ถ้าเปลี่ยนถ้อยคำใน FEATURE_MAP ให้แก้ NUMS ใน tests/check-feature-map.js ตาม`;
 let nums = 0;
@@ -61,6 +61,13 @@ const NUMS = [
   ['KBI ลายขนทั่วไป (coat ที่ไม่หายาก) p', prices('coat').join('/'), /\*\*ราคา\*\*: ลายขน (\d+)/],
   ['KBI เครื่องประดับ (acc) p', prices('acc').join('/'), /เครื่องประดับ (\d+)/],
   ['KBI ของแต่งห้อง (room) p', range('room'), /ของแต่งห้อง (\d+–\d+)/],
+  // ร้านออนไลน์ (js/netshop.js): เวลาส่ง ค่าส่งด่วน ราคาของเล่น และอาหารต่างประเทศ (เจ้าของตอบ 2026-11-24)
+  ['NS_SHIP.std.h', NS_SHIP.std.h, /ส่งปกติ (\d+) ชม\./],
+  ['NS_SHIP.exp.h', NS_SHIP.exp.h, /ส่งด่วน (\d+) ชม\./],
+  ['NS_SHIP.exp.en', NS_SHIP.exp.en, /\+(\d+) Energy ถ้ามีอาหาร/],
+  ['NS_SHIP.exp.kb', NS_SHIP.exp.kb, /\+(\d+) โคบัง ถ้ามีของอื่น/],
+  ...KBI.filter(x => x.t === 'toy').map(x => [`KBI ${x.id} p`, x.p, new RegExp(x.n + ' (\\d+) โคบัง')]),
+  ...FOOD.filter(f => f.src === 'net').map(f => [`FOOD ${f.k} e`, f.e, new RegExp(f.n + ' (\\d+) Energy')]),
 ];
 for (const [name, val, re] of NUMS) each(name, re, (at, m) => { if (m[1] !== String(val)) bad.push(`${at} "${m[0]}" ไม่ตรงโค้ด: ${name} = ${val}`); });
 // อาหารในร้านค้าแอป (FOOD ที่ไม่มี src) ตามลำดับ: "<ชื่อ> <Energy> (สนิท +<ความสนิท> หิว −<ความหิวที่ลด>)"

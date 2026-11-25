@@ -152,10 +152,12 @@ test('คอนบินิ: 22:00–05:00 ของสดติดป้าย�
   assert.deepStrictEqual([...day.errors, ...night.errors, ...late.errors], []);
 });
 
-test('คอนบินิ: ของคอนบินิไม่ขึ้นในหน้าร้านค้าแอป · หน้าต่างให้อาหารแสดงของคอนบินิเฉพาะที่มีในตู้', async (b, base) => {
+test('คอนบินิ: ของคอนบินิไม่ขึ้นในร้านออนไลน์ · หน้าต่างให้อาหารแสดงของคอนบินิเฉพาะที่มีในตู้', async (b, base) => {
   const p = await open(b, base, { pet: { food: { niboshi: 2 } } });
   await p.getByTestId('nav-shop').click();
-  assert.strictEqual(await p.locator('[data-testid^="food-item-"]').count(), 8, 'ร้านค้าแอปมีแค่อาหาร 8 เมนูเดิม');
+  const seen = [];
+  for (const c of ['toy', 'home', 'acc', 'ffood', 'old']) { await p.getByTestId('shop-tab-' + c).click(); seen.push(...await p.evaluate(() => [...document.querySelectorAll('[data-testid^="food-item-"]')].map(e => e.dataset.testid.slice(10)))); }
+  assert.deepStrictEqual(seen.sort(), ['dango', 'fish', 'jerky', 'katsuo', 'lamb', 'milk', 'onigiri', 'pate', 'salmon', 'stew', 'sushi', 'tamago', 'udon'], 'ร้านออนไลน์มีอาหารญี่ปุ่น 8 เมนูเดิม + อาหารต่างประเทศ 5 ไม่มีของคอนบินิ');
   await p.getByTestId('nav-home').click();
   await p.getByTestId('pet-feed').click();
   assert.match(await p.getByTestId('feed-niboshi').innerText(), /×2/);

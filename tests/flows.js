@@ -341,8 +341,8 @@ test('08-goal', 'เป้าหมายต่อวัน: คำตอบต�
 });
 
 // ---------- 9. ร้านค้าโคบัง + ตู้กับข้าว ----------
-test('09-shop', 'ร้านค้า: รับภารกิจได้ Energy และโคบัง → ประวัติโคบังบอกที่มา → ซื้อนมด้วย Energy เข้าตู้กับข้าว → หน้าแรกกดให้อาหาร เลือกจากรูปอาหาร → ความสนิทเพิ่ม ของในตู้ลด', async b => {
-  const p = await open(b);
+test('09-shop', 'ร้านออนไลน์: รับภารกิจได้ Energy และโคบัง → ประวัติโคบังบอกที่มา → สั่งนมด้วย Energy ส่งปกติ 4 ชม. → ครบเวลาส่งกล่องโผล่ที่หน้าแรก แตะเปิด นมเข้าตู้กับข้าว → กดให้อาหาร เลือกจากรูปอาหาร → ความสนิทเพิ่ม ของในตู้ลด', async b => {
+  const p = await open(b, { clock: new Date('2026-11-24T09:00:00').getTime() });
   await onboard(p, '5 ข้อ');
   await openKanji(p);
   await p.getByTestId('mode-quiz').click();
@@ -357,11 +357,20 @@ test('09-shop', 'ร้านค้า: รับภารกิจได้ Ene
   await p.getByTestId('shop-log-toggle').click();
   assert.strictEqual((await p.getByTestId('shop-log').innerText()).match(/รับภารกิจ/g).length, 2);
   await rec.shot(p, 'shop');
+  await p.getByTestId('shop-tab-old').click();
   await p.getByTestId('food-item-milk').click();
-  await p.getByTestId('food-buy').click();
-  assert.match(await p.getByTestId('shop-sheet').innerText(), /ในตู้ 1/);
-  await p.getByTestId('shop-sheet-close').click();
+  await p.getByTestId('shop-add').click();
+  await p.getByTestId('ns-cart-open').click();
+  await rec.shot(p, 'cart');
+  await p.getByTestId('ns-pay').click();
+  assert.match(await p.getByTestId('ns-track').innerText(), /ถึงประมาณ 13:00/);
   await p.getByTestId('nav-home').click();
+  assert.strictEqual(await p.getByTestId('pet-energy').getAttribute('aria-valuenow'), '25', 'จ่าย 15 Energy ตอนสั่ง');
+  assert.strictEqual(await p.getByTestId('parcel-open').count(), 0);
+  await p.clock.fastForward('04:00:00');
+  await p.getByTestId('parcel-open').click();
+  await rec.shot(p, 'parcel');
+  await p.getByTestId('parcel-take').click();
   assert.match(await p.getByTestId('pet-bond').innerText(), /4 \/ 120/);
   await p.getByTestId('pet-feed').click();
   await p.getByTestId('food-img-milk').waitFor();
